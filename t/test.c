@@ -30,6 +30,5 @@ int main(void)
     }
 
     teardown();
-    printf("%d\n", n_failures);
     return (n_failures > 0) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
