@@ -15,9 +15,11 @@ enum {
     SUCCESS, FAILURE
 };
 
-extern char *test_desc, test_error[];
+extern char test_desc[], test_error[], test_info[];
 extern test tests[];
 #define TESTS_INIT(...) test tests[] = { __VA_ARGS__, NULL }
+#define DESC(...) test_info[0] = 0, sprintf(test_desc, __VA_ARGS__)
+#define INFO(...) sprintf(test_info, __VA_ARGS__)
 
 #define TAPDIAG "# "
 

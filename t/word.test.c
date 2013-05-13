@@ -19,7 +19,7 @@ int to_string(void)
     char *old = "NERDGEEKPETERPETER",
          new[EC_WORD_LEN + 1];
 
-    test_desc = "ec_word <-> string";
+    DESC("ec_word <-> string");
 
     res = ec_word_from_string(&word, old, &alpha);
     assert_int_eq(res, EC_SUCCESS, "string is a valid sequence");
@@ -38,7 +38,7 @@ int append(void)
          *expect =  "AANERDNERDNERDNERD",
          new[EC_WORD_LEN + 1];
 
-    test_desc = "appending amino acids to word";
+    DESC("appending amino acids to word");
 
     res = ec_word_from_string(&word, old, &alpha);
     assert_int_eq(res, EC_SUCCESS, "string is a valid sequence");
@@ -64,7 +64,7 @@ int prepend(void)
          *expect =  "NERDNERDNERDNERDAA",
          new[EC_WORD_LEN + 1];
 
-    test_desc = "prepending amino acids to word";
+    DESC("prepending amino acids to word");
 
     ec_word_from_string(&word, old, &alpha);
 

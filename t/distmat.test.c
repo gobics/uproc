@@ -16,7 +16,7 @@ int blosum(void)
 {
     int i, k, res;
     ec_distmat mat;
-    test_desc = "reading BLOSUM matrix";
+    DESC("reading BLOSUM matrix");
 
     res = ec_distmat_load(&mat, PATH_PREFIX "IDENTITY", ec_distmat_load_blosum, &alpha);
     assert_int_eq(res, EC_SUCCESS, "opening file succeeded");
@@ -42,7 +42,7 @@ int blosum_twice(void)
 {
     int i, k, res;
     ec_distmat mat[2];
-    test_desc = "reading two BLOSUM matrices from one file";
+    DESC("reading two BLOSUM matrices from one file");
 
     res = ec_distmat_load_many(mat, 2, PATH_PREFIX "IDENTITY_TWICE",
                                ec_distmat_load_blosum, &alpha);

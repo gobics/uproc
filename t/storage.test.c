@@ -58,7 +58,7 @@ void teardown(void)
 
 int test_binary_bufsz(void)
 {
-    test_desc = "buffer size for binary load/store";
+    DESC("buffer size for binary load/store");
     assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_HEADER_FMT), "buffer can fit header");
     assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_PREFIX_FMT), "buffer can fit prefix");
     assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_SUFFIX_FMT), "buffer can fit suffix");
@@ -87,14 +87,14 @@ int test_storage(int (*store)(), int (*load)(), void *arg)
 
 int test_binary(void)
 {
-    test_desc = "writing and reading in binary format";
+    DESC("writing and reading in binary format");
     return test_storage(ec_ecurve_store_binary, ec_ecurve_load_binary, NULL);
 }
 
 int test_plain(void)
 {
     ec_alphabet a;
-    test_desc = "writing and reading in plain text";
+    DESC("writing and reading in plain text");
     ec_alphabet_init(&a, EC_ALPHABET_ALPHA_DEFAULT);
     return test_storage(ec_ecurve_store_plain, ec_ecurve_load_plain, &a);
 }

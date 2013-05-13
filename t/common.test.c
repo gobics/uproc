@@ -13,7 +13,7 @@ void teardown(void)
 
 int sizes(void)
 {
-    test_desc = "sizes of types";
+    DESC("sizes of types");
     assert_uint_eq(EC_PREFIX_MAX, pow(EC_ALPHABET_SIZE, EC_PREFIX_LEN) - 1,
                    "value of EC_PREFIX_MAX");
     assert_uint_gt(~(ec_prefix)0, EC_PREFIX_MAX,

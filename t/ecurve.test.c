@@ -69,7 +69,7 @@ int test_suffix_lookup_val(ec_suffix x, ec_suffix lower, ec_suffix upper, int re
 
 int test_suffix_lookup(void)
 {
-    test_desc = "suffix_lookup()";
+    DESC("suffix_lookup()");
 #define TEST(X, L, U, RES) do {                                 \
     if (test_suffix_lookup_val(X, L, U, RES) != SUCCESS) {      \
         return FAILURE;                                         \
@@ -114,7 +114,7 @@ int test_prefix_lookup_val(ec_prefix key, ec_prefix l_prefix, ec_suffix *l_suffi
 
 int test_prefix_lookup(void)
 {
-    test_desc = "prefix_lookup()";
+    DESC("prefix_lookup()");
 
 #define TEST(X, LP, UP, LS, US, RES) do {                            \
     ec_suffix _ls = (LS), _us = (US);               \

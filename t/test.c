@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *test_desc = "", test_error[1024];
+char test_desc[1024], test_error[1024], test_info[1024];
 
 #define FMT "%s %d - %s\n"
 int main(void)
@@ -25,6 +25,9 @@ int main(void)
         else {
             fprintf(stdout, FMT, "not ok", i + 1, test_desc);
             fprintf(stdout, TAPDIAG "%s", test_error);
+            if (test_info[0]) {
+                fprintf(stdout, TAPDIAG "%s", test_info);
+            }
             n_failures++;
         }
     }
