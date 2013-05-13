@@ -14,8 +14,9 @@
  * \param upper_suffix  OUT: pointer to the lower neighbouring suffix table entry
  *
  * \return
- * `-1` if `key` was less than the first (or greater than the last) prefix that
- * has at least one suffix associated, `0` in case of an exact match, else `1`.
+ * #EC_LOOKUP_OOB if `key` was less than the first (or greater than the last)
+ * prefix that has at least one suffix associated, #EC_LOOKUP_EXACT in case of
+ * an exact match, else #EC_LOOKUP_INEXACT.
  */
 static int prefix_lookup(const struct ec_ecurve_pfxtable *table,
                          ec_prefix key,
@@ -25,12 +26,12 @@ static int prefix_lookup(const struct ec_ecurve_pfxtable *table,
 /** Find exact match or nearest neighbours in suffix array.
  *
  * If `key` is less than the first item in `search` (resp. greater than the
- * last one), -1 is returned and both `*lower` and `*upper` are set to
+ * last one), #EC_LOOKUP_OOB is returned and both `*lower` and `*upper` are set to
  * `0` (resp. `n - 1`).
- * If an exact match is found, returns 0 and sets `*lower` and `*upper` to the
- * index of `key`. 
- * Else, 1 is returned and `*lower` and `*upper` are set to the indices of the
- * values that are closest to `key`, i.e. such that
+ * If an exact match is found, returns #EC_LOOKUP_EXACT and sets `*lower` and
+ * `*upper` to the index of `key`.
+ * Else, #EC_LOOKUP_INEXACT is returned and `*lower` and `*upper` are set to
+ * the indices of the values that are closest to `key`, i.e. such that
  * `search[*lower] < key < search[*upper]`.
  *
  * \param search    array to search
@@ -39,7 +40,7 @@ static int prefix_lookup(const struct ec_ecurve_pfxtable *table,
  * \param lower     OUT: index of the lower neighbour
  * \param upper     OUT: index of the upper neighbour
  *
- * \return -1, 0 or 1 as described above.
+ * \return #EC_LOOKUP_OOB, #EC_LOOKUP_EXACT or #EC_LOOKUP_INEXACT as described above.
  */
 static int suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
                          size_t *lower, size_t *upper);
@@ -95,13 +96,14 @@ ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
     res = prefix_lookup(ecurve->prefix_table, word->prefix,
                         &p_lower, &s_lower, &p_upper, &s_upper);
 
-    if (res == 0) {
-        res = suffix_lookup(s_lower, s_upper - s_lower + 1, word->prefix,
+    if (res == EC_LOOKUP_EXACT) {
+        res = suffix_lookup(s_lower, s_upper - s_lower + 1, word->suffix,
                             &lower, &upper);
+        res = (res == EC_LOOKUP_EXACT) ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
     }
     else {
         lower = 0;
-        upper = (res == -1) ? 0 : 1;
+        upper = (res == EC_LOOKUP_OOB) ? 0 : 1;
     }
 
     /* `lower` and `upper` are relative to `s_lower` -> add the offset from the
@@ -136,7 +138,7 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table, ec_prefix key,
         }
         *lower_suffix = *upper_suffix = table[tmp].first;
         *lower_prefix = *upper_prefix = tmp;
-        return -1;
+        return EC_LOOKUP_OOB;
     }
 
     if (count == (size_t)-1) {
@@ -145,7 +147,7 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table, ec_prefix key,
         }
         *lower_suffix = *upper_suffix = table[tmp].first + table[tmp].count - 1;
         *lower_prefix = *upper_prefix = tmp;
-        return -1;
+        return EC_LOOKUP_OOB;
     }
 
     *lower_suffix = table[key].first;
@@ -166,7 +168,7 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table, ec_prefix key,
         *lower_prefix = *upper_prefix = key;
     }
 
-    return count ? 0 : 1;
+    return count ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
 }
 
 static int
@@ -177,12 +179,12 @@ suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
 
     if (!n || key < search[0]) {
         *lower = *upper = 0;
-        return -1;
+        return EC_LOOKUP_OOB;
     }
 
     if (key > search[n - 1]) {
         *lower = *upper = n - 1;
-        return -1;
+        return EC_LOOKUP_OOB;
     }
 
     while (hi > lo + 1) {
@@ -207,5 +209,5 @@ suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
     }
     *lower = lo;
     *upper = hi;
-    return (lo == hi) ? 0 : 1;
+    return (lo == hi) ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
 }

@@ -75,17 +75,17 @@ int test_suffix_lookup(void)
         return FAILURE;                                         \
     }                                                           \
 } while (0)
-    TEST(0, 1, 1, -1);
-    TEST(1, 1, 1, 0);
-    TEST(2, 1, 3, 1);
-    TEST(3, 3, 3, 0);
-    TEST(4, 3, 5, 1);
-    TEST(9, 5, 10, 1);
-    TEST(42, 10, 44, 1);
-    TEST(44, 44, 44, 0);
-    TEST(131, 131, 131, 0);
-    TEST(133, 133, 133, 0);
-    TEST(134, 133, 1202, 1);
+    TEST(0, 1, 1, EC_LOOKUP_OOB);
+    TEST(1, 1, 1, EC_LOOKUP_EXACT);
+    TEST(2, 1, 3, EC_LOOKUP_INEXACT);
+    TEST(3, 3, 3, EC_LOOKUP_EXACT);
+    TEST(4, 3, 5, EC_LOOKUP_INEXACT);
+    TEST(9, 5, 10, EC_LOOKUP_INEXACT);
+    TEST(42, 10, 44, EC_LOOKUP_INEXACT);
+    TEST(44, 44, 44, EC_LOOKUP_EXACT);
+    TEST(131, 131, 131, EC_LOOKUP_EXACT);
+    TEST(133, 133, 133, EC_LOOKUP_EXACT);
+    TEST(134, 133, 1202, EC_LOOKUP_INEXACT);
 #undef TEST
     return SUCCESS;
 }
@@ -123,17 +123,68 @@ int test_prefix_lookup(void)
     }                                                           \
 } while (0)
 
-    TEST(0, 3, 3, suffix_table[0], suffix_table[0], -1);
-    TEST(3, 3, 3, suffix_table[0], suffix_table[1], 0);
-    TEST(5, 3, 31, suffix_table[1], suffix_table[2], 1);
-    TEST(31, 31, 31, suffix_table[2], suffix_table[4], 0);
-    TEST(32, 31, 53, suffix_table[4], suffix_table[5], 1);
-    TEST(52, 31, 53, suffix_table[4], suffix_table[5], 1);
-    TEST(53, 53, 53, suffix_table[5], suffix_table[6], 0);
-    TEST(99, 99, 99, suffix_table[7], suffix_table[8], 0);
-    TEST(100, 99, 99, suffix_table[8], suffix_table[8], -1);
+    TEST(0, 3, 3, suffix_table[0], suffix_table[0], EC_LOOKUP_OOB);
+    TEST(3, 3, 3, suffix_table[0], suffix_table[1], EC_LOOKUP_EXACT);
+    TEST(5, 3, 31, suffix_table[1], suffix_table[2], EC_LOOKUP_INEXACT);
+    TEST(31, 31, 31, suffix_table[2], suffix_table[4], EC_LOOKUP_EXACT);
+    TEST(32, 31, 53, suffix_table[4], suffix_table[5], EC_LOOKUP_INEXACT);
+    TEST(52, 31, 53, suffix_table[4], suffix_table[5], EC_LOOKUP_INEXACT);
+    TEST(53, 53, 53, suffix_table[5], suffix_table[6], EC_LOOKUP_EXACT);
+    TEST(99, 99, 99, suffix_table[7], suffix_table[8], EC_LOOKUP_EXACT);
+    TEST(100, 99, 99, suffix_table[8], suffix_table[8], EC_LOOKUP_OOB);
 #undef TEST
     return SUCCESS;
 }
 
-TESTS_INIT(test_suffix_lookup, test_prefix_lookup);
+
+int test_ecurve_lookup_val(struct ec_word w,
+                           struct ec_word l_word,
+                           struct ec_word u_word,
+                           int res)
+{
+    struct ec_word lw, uw;
+    ec_class lc, uc;
+
+    INFO("w: %" EC_PREFIX_PRI " %" EC_SUFFIX_PRI, w.prefix, w.suffix);
+
+    assert_int_eq(ec_ecurve_lookup(&ecurve, &w, &lw, &lc, &uw, &uc),
+                  res, "return value");
+
+    assert_uint_eq(lw.prefix, l_word.prefix, "lower prefix");
+    assert_uint_eq(lw.suffix, l_word.suffix, "lower suffix");
+    //assert_uint_eq(lc, l_class, "lower class");
+
+    assert_uint_eq(uw.prefix, u_word.prefix, "upper prefix");
+    assert_uint_eq(uw.suffix, u_word.suffix, "upper suffix");
+    //assert_uint_eq(uc, u_class, "upper class");
+
+    return SUCCESS;
+}
+
+int test_ecurve_lookup(void)
+{
+#define TEST(WP, WS, LP, LS, UP, US, RES) do {                              \
+        struct ec_word _w = {WP, WS},                                       \
+                       _l = {LP, LS},                                       \
+                       _u = {UP, US};                                       \
+        if (test_ecurve_lookup_val(_w, _l, _u, RES) != SUCCESS) {           \
+            return FAILURE;                                                 \
+        }                                                                   \
+    } while (0)
+
+    TEST(0, 1,  3, 1,  3, 1,  EC_LOOKUP_OOB);
+    TEST(0, 44, 3, 1,  3, 1,  EC_LOOKUP_OOB);
+
+    TEST(3, 1,  3, 1,  3, 1,  EC_LOOKUP_EXACT);
+    TEST(3, 2,  3, 1,  3, 3,  EC_LOOKUP_INEXACT);
+
+    TEST(31, 1,  31, 5,  31, 5,  EC_LOOKUP_INEXACT);
+    TEST(31, 7,  31, 5,  31, 10,  EC_LOOKUP_INEXACT);
+    TEST(31, 12,  31, 10,  31, 44,  EC_LOOKUP_INEXACT);
+
+#define A (4551ULL << (3 * EC_AMINO_BITS))
+    TEST(EC_PREFIX_MAX, 1,  99, A, 99, A, EC_LOOKUP_OOB);
+    return SUCCESS;
+}
+
+TESTS_INIT(test_suffix_lookup, test_prefix_lookup, test_ecurve_lookup);

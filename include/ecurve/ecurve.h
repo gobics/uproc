@@ -3,17 +3,29 @@
 
 /** \file ecurve/ecurve.h
  *
- * Look up amino acid words in an ecurve 
+ * Look up amino acid words in an ecurve
  */
 
 #include <stdio.h>
 #include "ecurve/word.h"
 
+/** Lookup return codes */
+enum {
+    /** Exact match */
+    EC_LOOKUP_EXACT,
+
+    /** No exact match */
+    EC_LOOKUP_INEXACT,
+
+    /** Out of bounds */
+    EC_LOOKUP_OOB,
+};
+
 /** Type for an ecurve */
 typedef struct ec_ecurve_s ec_ecurve;
 
 /** Struct defining an ecurve
- * 
+ *
  * Applications should use the #ec_ecurve typedef instead.
  */
 struct ec_ecurve_s {
@@ -39,7 +51,7 @@ struct ec_ecurve_s {
 
         /** Number of associated suffixes */
         size_t count;
-    } 
+    }
     /** Table of prefixes
      *
      * Will be allocated to hold `#EC_PREFIX_MAX + 1` objects
@@ -67,7 +79,7 @@ void ec_ecurve_destroy(ec_ecurve *ecurve);
  * NOTE: `ecurve` may not be empty.
  *
  * If `word` is "outside" of the ecurve, `lower_*` and `upper_*` will be equal.
- * 
+ *
  * \param ecurve            ecurve object
  * \param word              word to search
  * \param lower_neighbour   _OUT_: lower neighbour word
@@ -82,4 +94,4 @@ int ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
                      struct ec_word *lower_neighbour, ec_class *lower_class,
                      struct ec_word *upper_neighbour, ec_class *upper_class);
 
-#endif 
+#endif
