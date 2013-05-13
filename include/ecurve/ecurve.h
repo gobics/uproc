@@ -29,6 +29,9 @@ typedef struct ec_ecurve_s ec_ecurve;
  * Applications should use the #ec_ecurve typedef instead.
  */
 struct ec_ecurve_s {
+    /** Translation alphabet */
+    ec_alphabet alphabet;
+
     /** Number of suffixes */
     size_t suffix_count;
 
@@ -66,7 +69,7 @@ struct ec_ecurve_s {
  *
  * \return `#EC_FAILURE` if memory allocation failed, `#EC_SUCCESS` else
  */
-int ec_ecurve_init(ec_ecurve *ecurve, size_t suffix_count);
+int ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count);
 
 /** Free memory of an ecurve object
  *

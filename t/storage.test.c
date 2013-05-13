@@ -8,17 +8,17 @@
 #include "../src/word.c"
 
 #define TMPFILE "t/ecurve.tmp"
-#define EPSILON 1e6 
 #define elements_of(a) (sizeof (a) / sizeof (a)[0])
 
 ec_ecurve ecurve;
 ec_suffix suffix_table[] = { 1, 3, 5, 10, 44, 131, 133, 1202, 4551ULL << (3 * EC_AMINO_BITS) };
 ec_class class_table[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
+ec_alphabet alpha;
 
 void setup(void)
 {
     unsigned i;
-    ec_ecurve_init(&ecurve, 0);
+    ec_ecurve_init(&ecurve, EC_ALPHABET_ALPHA_DEFAULT, 0);
     ecurve.suffix_count = elements_of(suffix_table);
     ecurve.suffix_table = suffix_table;
     ecurve.class_table = class_table;
@@ -65,14 +65,14 @@ int test_binary_bufsz(void)
     return SUCCESS;
 }
 
-int test_storage(int (*store)(), int (*load)(), void *arg)
+int test_storage(int (*store)(), int (*load)())
 {
     size_t i;
     ec_ecurve new_curve;
 
-    assert_int_eq(ec_ecurve_store(&ecurve, TMPFILE, store, arg),
+    assert_int_eq(ec_ecurve_store(&ecurve, TMPFILE, store),
                   EC_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(ec_ecurve_load(&new_curve, TMPFILE, load, arg),
+    assert_int_eq(ec_ecurve_load(&new_curve, TMPFILE, load),
                   EC_SUCCESS, "loading ecurve succeeded");
 
     assert_uint_eq(ecurve.suffix_count, new_curve.suffix_count, "suffix counts equal");
@@ -88,15 +88,13 @@ int test_storage(int (*store)(), int (*load)(), void *arg)
 int test_binary(void)
 {
     DESC("writing and reading in binary format");
-    return test_storage(ec_ecurve_store_binary, ec_ecurve_load_binary, NULL);
+    return test_storage(ec_ecurve_store_binary, ec_ecurve_load_binary);
 }
 
 int test_plain(void)
 {
-    ec_alphabet a;
     DESC("writing and reading in plain text");
-    ec_alphabet_init(&a, EC_ALPHABET_ALPHA_DEFAULT);
-    return test_storage(ec_ecurve_store_plain, ec_ecurve_load_plain, &a);
+    return test_storage(ec_ecurve_store_plain, ec_ecurve_load_plain);
 }
 
 TESTS_INIT(test_binary_bufsz, test_binary, test_plain);

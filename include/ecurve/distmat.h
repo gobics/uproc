@@ -24,7 +24,7 @@ typedef double ec_dist;
 typedef struct ec_distmat_s ec_distmat;
 
 /** Struct defining a distance matrix
- * 
+ *
  * Applications should use the #ec_distmat typedef instead.
  */
 struct ec_distmat_s {

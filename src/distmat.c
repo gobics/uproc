@@ -62,7 +62,7 @@ error:
 }
 
 int
-ec_distmat_load(ec_distmat *mat, const char *path, 
+ec_distmat_load(ec_distmat *mat, const char *path,
                 int (*load)(ec_distmat *, FILE *, void *), void *arg)
 {
     return ec_distmat_load_many(mat, 1, path, load, arg);

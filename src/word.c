@@ -61,7 +61,7 @@ ec_word_append(struct ec_word *word, ec_amino amino)
     /* "shift" left */
     word->prefix = (word->prefix * EC_ALPHABET_SIZE) % (EC_PREFIX_MAX + 1);
     word->suffix = EC_SUFFIX_MASK(word->suffix << EC_AMINO_BITS);
-    
+
     /* append AA */
     word->prefix += a;
     word->suffix |= amino;

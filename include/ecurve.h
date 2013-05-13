@@ -7,7 +7,7 @@
  * provided typedefs (if possible), to ensure compatibility with newer versions.
  */
 
-/** \file include/ecurve.h 
+/** \file include/ecurve.h
  *
  * Includes all other headers.
  *

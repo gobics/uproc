@@ -3,7 +3,7 @@
 
 /** \file ecurve/alphabet.h
  *
- * Translate characters to/from amino acids 
+ * Translate characters to/from amino acids
  */
 
 #include "ecurve/common.h"
@@ -13,7 +13,7 @@
 typedef struct ec_alphabet_s ec_alphabet;
 
 /** Struct defining an amino acid alphabet
- * 
+ *
  * Applications should use the #ec_alphabet typedef instead.
  */
 struct ec_alphabet_s {
@@ -46,7 +46,7 @@ ec_amino ec_alphabet_char_to_amino(const ec_alphabet *alpha, int c);
  *
  * \param alpha     alphabet to use
  * \param a         amino acid to translate
- * 
+ *
  * \return
  * Corresponding character, or -1 if `a` does not represent a valid amino acid.
  */

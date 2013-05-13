@@ -46,12 +46,14 @@ static int suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
                          size_t *lower, size_t *upper);
 
 int
-ec_ecurve_init(ec_ecurve *ecurve, size_t suffix_count)
+ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count)
 {
     struct ec_ecurve_s *e = ecurve;
     size_t i;
 
-    *e = (struct ec_ecurve_s){ 0, NULL, NULL, NULL };
+    if (ec_alphabet_init(&e->alphabet, alphabet) != EC_SUCCESS) {
+        return EC_FAILURE;
+    }
 
     e->prefix_table = malloc(sizeof *e->prefix_table * (EC_PREFIX_MAX + 1));
     if (!e->prefix_table) {
