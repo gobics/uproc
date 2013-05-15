@@ -86,6 +86,11 @@ ec_ecurve_destroy(ec_ecurve *ecurve)
     free(e->class_table);
 }
 
+void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha)
+{
+    *alpha = ecurve->alphabet;
+}
+
 int
 ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
                  struct ec_word *lower_neighbour, ec_class *lower_class,
