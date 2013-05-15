@@ -83,7 +83,7 @@ void ec_ecurve_destroy(ec_ecurve *ecurve);
  * Copies an ecurves internal alphabet into the provided #ec_alphabet pointer
  *
  * \param ecurve    an ecurve object
- * \param alphabet  _OUT_: alphabet of `ecurve`
+ * \param alpha     _OUT_: alphabet of `ecurve`
  */
 void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha);
 
