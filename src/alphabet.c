@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <assert.h>
+#include <ctype.h>
 
 #include "ecurve/common.h"
 #include "ecurve/alphabet.h"
@@ -11,14 +11,22 @@ ec_alphabet_init(ec_alphabet *alpha, const char *s)
 {
     struct ec_alphabet_s *a = alpha;
     unsigned char i;
+    const char *p;
 
     if (strlen(s) != EC_ALPHABET_SIZE) {
         return EC_FAILURE;
     }
     strcpy(a->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
-        const char *p = strchr(s, i);
-        a->amino_table[i] = (p != NULL) ? (p - s) : -1;
+        a->amino_table[i] = -1;
+    }
+    for (p = s; *p; p++) {
+        i = *p;
+        /* invalid or duplicate character */
+        if (!isupper(i) || a->amino_table[i] != -1) {
+            return EC_FAILURE;
+        }
+        a->amino_table[i] = p - s;
     }
     return EC_SUCCESS;
 }

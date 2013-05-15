@@ -29,7 +29,12 @@ struct ec_alphabet_s {
 #define EC_ALPHABET_ALPHA_PFAM      "WFLMIVCAPTSGNDEQKRHY"
 #define EC_ALPHABET_ALPHA_SAMMON    "WCFYLIVMTASQKRENDGHP"
 
-/** Initialize an alphabet object with the given string */
+/** Initialize an alphabet object with the given string
+ *
+ * The string must be exactly `#EC_ALPHABET_SIZE` characters long and consist
+ * only of uppercase letters. No letter shall be included twice.
+ *
+ */
 int ec_alphabet_init(ec_alphabet *alpha, const char *s);
 
 /** Translate character to amino acid
