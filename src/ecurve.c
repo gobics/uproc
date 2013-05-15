@@ -40,7 +40,8 @@ static int prefix_lookup(const struct ec_ecurve_pfxtable *table,
  * \param lower     OUT: index of the lower neighbour
  * \param upper     OUT: index of the upper neighbour
  *
- * \return #EC_LOOKUP_OOB, #EC_LOOKUP_EXACT or #EC_LOOKUP_INEXACT as described above.
+ * \return `#EC_LOOKUP_EXACT`, `#EC_LOOKUP_OOB` or `#EC_LOOKUP_INEXACT` as
+ * described above.
  */
 static int suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
                          size_t *lower, size_t *upper);

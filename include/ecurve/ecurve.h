@@ -65,6 +65,7 @@ struct ec_ecurve_s {
 /** Initialize an empty ecurve object
  *
  * \param ecurve        ecurve obejct to initialize
+ * \param alphabet      string to initialize the ecurve's alphabet (see ec_alphabet_init())
  * \param suffix_count  number of entries in the suffix table
  *
  * \return `#EC_FAILURE` if memory allocation failed, `#EC_SUCCESS` else
@@ -81,7 +82,13 @@ void ec_ecurve_destroy(ec_ecurve *ecurve);
  *
  * NOTE: `ecurve` may not be empty.
  *
- * If `word` is "outside" of the ecurve, `lower_*` and `upper_*` will be equal.
+ * If `word` was found exactly as it it in the ecurve, `#EC_LOOKUP_EXACT` will
+ * be returned; if `word` is "outside" of the ecurve, `#EC_LOOKUP_OOB` will
+ * be returned.  In both cases, the objects pointed to by `upper_neighbour` and
+ * `upper_class` will be set equal to their `lower_*` counterparts.
+ *
+ * In case of an inexact match, `#EC_LOOKUP_INEXACT` will be returned, `lower_*`
+ * and their `upper_*` counterparts might or might not differ.
  *
  * \param ecurve            ecurve object
  * \param word              word to search
@@ -90,8 +97,8 @@ void ec_ecurve_destroy(ec_ecurve *ecurve);
  * \param upper_neighbour   _OUT_: upper neighbour word
  * \param upper_class       _OUT_: class of the upper neighbour
  *
- * \return `#EC_SUCCESS` in case of an exact match (i.e. lower_neighbour and
- * upper_neighbour are equal), `#EC_FAILURE` else.
+ * \return `#EC_LOOKUP_EXACT`, `#EC_LOOKUP_OOB` or `#EC_LOOKUP_INEXACT` as
+ * described above.
  */
 int ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
                      struct ec_word *lower_neighbour, ec_class *lower_class,
