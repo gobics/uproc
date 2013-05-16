@@ -18,6 +18,9 @@ struct ec_word {
     ec_suffix suffix;
 };
 
+/** Initializer to be used for all `struct ec_word` objects */
+#define EC_WORD_INITIALIZER { 0, 0 }
+
 /** Transform a string to amino acid word
  *
  * Translates the first `EC_WORD_LEN` characters of the given string to a word

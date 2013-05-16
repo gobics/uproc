@@ -272,7 +272,7 @@ plain_load_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix *prefix,
 {
     int res;
     char line[PLAIN_BUFSZ], word_str[EC_WORD_LEN + 1];
-    struct ec_word word = { 0, 0 };
+    struct ec_word word = EC_WORD_INITIALIZER;
 
     res = plain_read_line(stream, line, sizeof line);
     if (res != EC_SUCCESS) {
@@ -300,7 +300,7 @@ plain_load_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix *suffix,
 {
     int res;
     char line[PLAIN_BUFSZ], word_str[EC_WORD_LEN + 1];
-    struct ec_word word = { 0, 0 };
+    struct ec_word word = EC_WORD_INITIALIZER;
 
     res = plain_read_line(stream, line, sizeof line);
     if (res != EC_SUCCESS) {
@@ -336,8 +336,8 @@ plain_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix,
 {
     int res;
     char str[EC_WORD_LEN + 1];
-    struct ec_word word = { prefix, 0 };
-
+    struct ec_word word = EC_WORD_INITIALIZER;
+    word.prefix = prefix;
     res = ec_word_to_string(str, &word, alpha);
     str[EC_PREFIX_LEN] = '\0';
     res = fprintf(stream, PLAIN_PREFIX_PRI, str, suffix_count);
@@ -350,7 +350,8 @@ plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix,
 {
     int res;
     char str[EC_WORD_LEN + 1];
-    struct ec_word word = { 0, suffix };
+    struct ec_word word = EC_WORD_INITIALIZER;
+    word.suffix = suffix;
     res = ec_word_to_string(str, &word, alpha);
     res = fprintf(stream, PLAIN_SUFFIX_PRI, &str[EC_PREFIX_LEN], cls);
     return (res > 0) ? EC_SUCCESS : EC_FAILURE;
