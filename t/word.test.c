@@ -82,4 +82,40 @@ int prepend(void)
     return SUCCESS;
 }
 
-TESTS_INIT(to_string, append, prepend);
+int iter(void)
+{
+    int res;
+
+    ec_worditer iter;
+    size_t index;
+    struct ec_word fwd = EC_WORD_INITIALIZER, rev = EC_WORD_INITIALIZER;
+    char seq[] = "RAAAAAAAAAAAAAAAAAGC!VVVVVVVVVVVVVVVVVVSD!!!", new[20];
+
+    DESC("iterating a sequence");
+
+    ec_worditer_init(&iter, seq, &alpha);
+
+#define TEST(IDX, FWD, REV) do {                                            \
+    res = ec_worditer_next(&iter, &index, &fwd, &rev);                      \
+    assert_int_eq(res, EC_SUCCESS, "iterator yielded something");           \
+    assert_uint_eq(index, IDX, "index correct");                            \
+    ec_word_to_string(new, &fwd, &alpha);                                   \
+    assert_str_eq(new, FWD, "fwd word correct");                            \
+    ec_word_to_string(new, &rev, &alpha);                                   \
+    assert_str_eq(new, REV, "rev word correct");                            \
+} while (0)
+
+    TEST(0,  "RAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAR");
+    TEST(1,  "AAAAAAAAAAAAAAAAAG", "GAAAAAAAAAAAAAAAAA");
+    TEST(2,  "AAAAAAAAAAAAAAAAGC", "CGAAAAAAAAAAAAAAAA");
+    TEST(21, "VVVVVVVVVVVVVVVVVV", "VVVVVVVVVVVVVVVVVV");
+    TEST(22, "VVVVVVVVVVVVVVVVVS", "SVVVVVVVVVVVVVVVVV");
+    TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
+
+    res = ec_worditer_next(&iter, &index, &fwd, &rev);
+    assert_int_eq(res, EC_FAILURE, "iterator exhausted");
+
+    return SUCCESS;
+}
+
+TESTS_INIT(to_string, append, prepend, iter);

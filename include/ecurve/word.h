@@ -75,4 +75,47 @@ void ec_word_append(struct ec_word *word, ec_amino amino);
  */
 void ec_word_prepend(struct ec_word *word, ec_amino amino);
 
+/** Type to iterate over all words in an amino acid sequence */
+typedef struct ec_worditer_s ec_worditer;
+
+/** Struct defining a word iterator */
+struct ec_worditer_s {
+    /** Iterated sequence */
+    const char *sequence;
+
+    /** Index of the next character to read */
+    size_t index;
+
+    /** Translation alphabet */
+    const ec_alphabet *alphabet;
+};
+
+/** Initialize an iterator over a sequence
+ *
+ * The iterator may not be used after the lifetime of the objects pointed to
+ * by `seq` and `alpha` has ended (only the pointer value is stored).
+ *
+ * \param iter  _OUT_: initialized iterator
+ * \param seq   sequence to iterate
+ * \param alpha translation alphabet
+ */
+void ec_worditer_init(ec_worditer *iter, const char *seq,
+                      const ec_alphabet *alpha);
+
+/** Obtain the next word(s) from a word iterator
+ *
+ * Invalid characters are not simply skipped, instead the first complete after
+ * such character is returned next.
+ *
+ * \param iter      iterator
+ * \param index     _OUT_: starting index of the current "forward" word
+ * \param fwd_word  _OUT_: word to append the next character to
+ * \param rev_word  _OUT_: word to prepend the next character to
+ *
+ * \return  `#EC_SUCCESS` if word(s) were read, `#EC_FAILURE` if the iterator
+ * is exhausted (i.e. the end of the sequence was reached)
+ */
+int ec_worditer_next(ec_worditer *iter, size_t *index,
+                     struct ec_word *fwd_word, struct ec_word *rev_word);
+
 #endif
