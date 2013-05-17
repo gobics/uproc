@@ -23,31 +23,31 @@ void setup(void)
     ecurve.suffix_table = suffix_table;
     ecurve.class_table = class_table;
     for (i = 0; i < 3; i++) {
-        ecurve.prefix_table[i].first = NULL;
+        ecurve.prefix_table[i].first = 0;
         ecurve.prefix_table[i].count = -1;
     }
-    ecurve.prefix_table[3].first = &suffix_table[0];
+    ecurve.prefix_table[3].first = 0;
     ecurve.prefix_table[3].count = 2;
     for (i = 4; i < 31; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[1];
+        ecurve.prefix_table[i].first = 1;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[31].first = &suffix_table[2];
+    ecurve.prefix_table[31].first = 2;
     ecurve.prefix_table[31].count = 3;
     for (i = 32; i < 53; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[4];
+        ecurve.prefix_table[i].first = 4;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[53].first = &suffix_table[5];
+    ecurve.prefix_table[53].first = 5;
     ecurve.prefix_table[53].count = 2;
     for (i = 54; i < 99; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[6];
+        ecurve.prefix_table[i].first = 6;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[99].first = &suffix_table[7];
+    ecurve.prefix_table[99].first = 7;
     ecurve.prefix_table[99].count = 2;
 
-    ecurve.prefix_table[100].first = &suffix_table[8];
+    ecurve.prefix_table[100].first = 8;
     ecurve.prefix_table[100].count = -1;
 }
 

@@ -19,9 +19,8 @@
  * an exact match, else #EC_LOOKUP_INEXACT.
  */
 static int prefix_lookup(const struct ec_ecurve_pfxtable *table,
-                         ec_prefix key,
-                         ec_prefix *lower_prefix, ec_suffix **lower_suffix,
-                         ec_prefix *upper_prefix, ec_suffix **upper_suffix);
+                         ec_prefix key, size_t *index, size_t *count,
+                         ec_prefix *lower_prefix, ec_prefix *upper_prefix);
 
 /** Find exact match or nearest neighbours in suffix array.
  *
@@ -61,7 +60,7 @@ ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count)
         return EC_FAILURE;
     }
     for (i = 0; i <= EC_PREFIX_MAX; i++) {
-        e->prefix_table[i].first = NULL;
+        e->prefix_table[i].first = 0;
         e->prefix_table[i].count = 0;
     }
 
@@ -98,15 +97,15 @@ ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
 {
     int res;
     ec_prefix p_lower, p_upper;
-    ec_suffix *s_lower, *s_upper;
-    size_t offset, lower, upper;
+    size_t index, count;
+    size_t lower, upper;
 
     res = prefix_lookup(ecurve->prefix_table, word->prefix,
-                        &p_lower, &s_lower, &p_upper, &s_upper);
+                        &index, &count, &p_lower, &p_upper);
 
     if (res == EC_LOOKUP_EXACT) {
-        res = suffix_lookup(s_lower, s_upper - s_lower + 1, word->suffix,
-                            &lower, &upper);
+        res = suffix_lookup(&ecurve->suffix_table[index], count,
+                            word->suffix, &lower, &upper);
         res = (res == EC_LOOKUP_EXACT) ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
     }
     else {
@@ -114,11 +113,9 @@ ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
         upper = (res == EC_LOOKUP_OOB) ? 0 : 1;
     }
 
-    /* `lower` and `upper` are relative to `s_lower` -> add the offset from the
-     * actual beginning of the suffix table */
-    offset = s_lower - ecurve->suffix_table;
-    lower += offset;
-    upper += offset;
+    /* `lower` and `upper` are relative to `index` */
+    lower += index;
+    upper += index;
 
     /* populate output variables */
     lower_neighbour->prefix = p_lower;
@@ -131,37 +128,36 @@ ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
     return res;
 }
 
-
 static int
-prefix_lookup(const struct ec_ecurve_pfxtable *table, ec_prefix key,
-              ec_prefix *lower_prefix, ec_suffix **lower_suffix,
-              ec_prefix *upper_prefix, ec_suffix **upper_suffix)
+prefix_lookup(const struct ec_ecurve_pfxtable *table,
+              ec_prefix key, size_t *index, size_t *count,
+              ec_prefix *lower_prefix, ec_prefix *upper_prefix)
 {
-    size_t count = table[key].count;
     ec_prefix tmp;
 
-    if (!table[key].first) {
-        for (tmp = key; tmp < EC_PREFIX_MAX && table[tmp].count == (size_t)-1; tmp++) {
-            ;
+    if (table[key].count == (size_t)-1) {
+        if (!table[key].first) {
+            for (tmp = key; tmp < EC_PREFIX_MAX && table[tmp].count == (size_t)-1; tmp++) {
+                ;
+            }
+            *index = 0;
         }
-        *lower_suffix = *upper_suffix = table[tmp].first;
+        else {
+            for (tmp = key; tmp > 0 && table[tmp].count == (size_t)-1; tmp--) {
+                ;
+            }
+            *index = table[tmp].first + table[tmp].count - 1;
+        }
+
+        *count = 1;
         *lower_prefix = *upper_prefix = tmp;
         return EC_LOOKUP_OOB;
     }
 
-    if (count == (size_t)-1) {
-        for (tmp = key; tmp > 0 && table[tmp].count == (size_t)-1; tmp--) {
-            ;
-        }
-        *lower_suffix = *upper_suffix = table[tmp].first + table[tmp].count - 1;
-        *lower_prefix = *upper_prefix = tmp;
-        return EC_LOOKUP_OOB;
-    }
+    *index = table[key].first;
 
-    *lower_suffix = table[key].first;
-
-    if (count == 0) {
-        *upper_suffix = table[key].first + 1;
+    if (table[key].count == 0) {
+        *count = 2;
         for (tmp = key; tmp > 0 && !table[tmp].count; tmp--) {
             ;
         }
@@ -170,13 +166,12 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table, ec_prefix key,
             ;
         }
         *upper_prefix = tmp;
-    }
-    else {
-        *upper_suffix = table[key].first + count - 1;
-        *lower_prefix = *upper_prefix = key;
+        return EC_LOOKUP_INEXACT;
     }
 
-    return count ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
+    *count = table[key].count;
+    *lower_prefix = *upper_prefix = key;
+    return EC_LOOKUP_EXACT;
 }
 
 static int

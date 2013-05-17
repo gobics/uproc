@@ -87,7 +87,8 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
 {
     int res;
     ec_prefix p;
-    ec_suffix s, suffix_count, *prev_last;
+    ec_suffix s, suffix_count;
+    size_t prev_last;
     char alpha[EC_ALPHABET_SIZE + 1];
 
     res = f.header(stream, alpha, &suffix_count);
@@ -100,7 +101,7 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
         return res;
     }
 
-    for (prev_last = NULL, s = p = 0; s < suffix_count;) {
+    for (prev_last = 0, s = p = 0; s < suffix_count;) {
         ec_prefix prefix;
         ec_suffix ps, p_suffixes;
 
@@ -113,7 +114,7 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
             ecurve->prefix_table[p].first = prev_last;
             ecurve->prefix_table[p].count = 0;
         }
-        ecurve->prefix_table[prefix].first = &ecurve->suffix_table[s];
+        ecurve->prefix_table[prefix].first = s;
         ecurve->prefix_table[prefix].count = p_suffixes;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
@@ -124,7 +125,7 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
                 return res;
             }
         }
-        prev_last = &ecurve->suffix_table[s - 1];
+        prev_last = s - 1;
     }
     for (; p < EC_PREFIX_MAX; p++) {
         ecurve->prefix_table[p].first = prev_last;
@@ -148,9 +149,8 @@ store(FILE *stream, const ec_ecurve *ecurve, struct store_funcs f)
     }
 
     for (p = 0; p <= EC_PREFIX_MAX; p++) {
-        ec_suffix *first = ecurve->prefix_table[p].first;
         size_t suffix_count = ecurve->prefix_table[p].count;
-        size_t offset = first - ecurve->suffix_table;
+        size_t offset = ecurve->prefix_table[p].first;
         size_t i;
 
         if (!suffix_count || suffix_count == (size_t) -1) {

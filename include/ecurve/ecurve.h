@@ -49,8 +49,8 @@ struct ec_ecurve_s {
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct ec_ecurve_pfxtable {
-        /** Pointer to the first entry */
-        ec_suffix *first;
+        /** Index of the first entry */
+        size_t first;
 
         /** Number of associated suffixes */
         size_t count;

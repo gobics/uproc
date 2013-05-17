@@ -26,31 +26,31 @@ void setup(void)
     ecurve.suffix_table = suffix_table;
     ecurve.class_table = class_table;
     for (i = 0; i < 3; i++) {
-        ecurve.prefix_table[i].first = NULL;
+        ecurve.prefix_table[i].first = 0;
         ecurve.prefix_table[i].count = -1;
     }
-    ecurve.prefix_table[3].first = &suffix_table[0];
+    ecurve.prefix_table[3].first = 0;
     ecurve.prefix_table[3].count = 2;
     for (i = 4; i < 31; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[1];
+        ecurve.prefix_table[i].first = 1;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[31].first = &suffix_table[2];
+    ecurve.prefix_table[31].first = 2;
     ecurve.prefix_table[31].count = 3;
     for (i = 32; i < 53; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[4];
+        ecurve.prefix_table[i].first = 4;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[53].first = &suffix_table[5];
+    ecurve.prefix_table[53].first = 5;
     ecurve.prefix_table[53].count = 2;
     for (i = 54; i < 99; i++) {
-        ecurve.prefix_table[i].first = &suffix_table[6];
+        ecurve.prefix_table[i].first = 6;
         ecurve.prefix_table[i].count = 0;
     }
-    ecurve.prefix_table[99].first = &suffix_table[7];
+    ecurve.prefix_table[99].first = 7;
     ecurve.prefix_table[99].count = 2;
 
-    ecurve.prefix_table[100].first = &suffix_table[8];
+    ecurve.prefix_table[100].first = 8;
     ecurve.prefix_table[100].count = -1;
 }
 
@@ -91,23 +91,21 @@ int test_suffix_lookup(void)
 }
 
 
-int test_prefix_lookup_val(ec_prefix key, ec_prefix l_prefix, ec_suffix *l_suffix,
-                           ec_prefix u_prefix, ec_suffix *u_suffix, int res)
+int test_prefix_lookup_val(ec_prefix key, ec_prefix l_prefix, ec_prefix u_prefix,
+                           size_t index, size_t count, int res)
 {
     ec_prefix lp, up;
-    ec_suffix *ls, *us;
+    size_t suff, c;
 
-    assert_int_eq(prefix_lookup(ecurve.prefix_table, key, &lp, &ls, &up, &us),
+    INFO("key: %" EC_PREFIX_PRI, key);
+    assert_int_eq(prefix_lookup(ecurve.prefix_table, key, &suff, &c, &lp, &up),
                   res, "return value");
 
     assert_uint_eq(lp, l_prefix, "lower prefix");
-    if (l_suffix) {
-        assert_uint_eq(*ls, *l_suffix, "lower suffix");
-    }
     assert_uint_eq(up, u_prefix, "upper prefix");
-    if (u_suffix) {
-        assert_uint_eq(*us, *u_suffix, "upper suffix");
-    }
+
+    assert_uint_eq(suff, index, "found index");
+    assert_uint_eq(c, count, "found count");
 
     return SUCCESS;
 }
@@ -116,22 +114,21 @@ int test_prefix_lookup(void)
 {
     DESC("prefix_lookup()");
 
-#define TEST(X, LP, UP, LS, US, RES) do {                            \
-    ec_suffix _ls = (LS), _us = (US);               \
-    if (test_prefix_lookup_val(X, LP, &_ls, UP, &_us, RES) != SUCCESS) { \
+#define TEST(X, LP, UP, IDX, COUNT, RES) do {                            \
+    if (test_prefix_lookup_val(X, LP, UP, IDX, COUNT, RES) != SUCCESS) { \
         return FAILURE;                                         \
     }                                                           \
 } while (0)
 
-    TEST(0, 3, 3, suffix_table[0], suffix_table[0], EC_LOOKUP_OOB);
-    TEST(3, 3, 3, suffix_table[0], suffix_table[1], EC_LOOKUP_EXACT);
-    TEST(5, 3, 31, suffix_table[1], suffix_table[2], EC_LOOKUP_INEXACT);
-    TEST(31, 31, 31, suffix_table[2], suffix_table[4], EC_LOOKUP_EXACT);
-    TEST(32, 31, 53, suffix_table[4], suffix_table[5], EC_LOOKUP_INEXACT);
-    TEST(52, 31, 53, suffix_table[4], suffix_table[5], EC_LOOKUP_INEXACT);
-    TEST(53, 53, 53, suffix_table[5], suffix_table[6], EC_LOOKUP_EXACT);
-    TEST(99, 99, 99, suffix_table[7], suffix_table[8], EC_LOOKUP_EXACT);
-    TEST(100, 99, 99, suffix_table[8], suffix_table[8], EC_LOOKUP_OOB);
+    TEST(0, 3, 3,       0, 1, EC_LOOKUP_OOB);
+    TEST(3, 3, 3,       0, 2, EC_LOOKUP_EXACT);
+    TEST(5, 3, 31,      1, 2, EC_LOOKUP_INEXACT);
+    TEST(31, 31, 31,    2, 3, EC_LOOKUP_EXACT);
+    TEST(32, 31, 53,    4, 2, EC_LOOKUP_INEXACT);
+    TEST(52, 31, 53,    4, 2, EC_LOOKUP_INEXACT);
+    TEST(53, 53, 53,    5, 2, EC_LOOKUP_EXACT);
+    TEST(99, 99, 99,    7, 2, EC_LOOKUP_EXACT);
+    TEST(100, 99, 99,   8, 1, EC_LOOKUP_OOB);
 #undef TEST
     return SUCCESS;
 }
@@ -163,6 +160,7 @@ int test_ecurve_lookup_val(struct ec_word w,
 
 int test_ecurve_lookup(void)
 {
+    DESC("ecurve_lookup()");
 #define TEST(WP, WS, LP, LS, UP, US, RES) do {                              \
         struct ec_word _w = {WP, WS},                                       \
                        _l = {LP, LS},                                       \
