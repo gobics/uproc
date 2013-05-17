@@ -26,7 +26,7 @@ int main(void)
             fprintf(stdout, FMT, "not ok", i + 1, test_desc);
             fprintf(stdout, TAPDIAG "%s", test_error);
             if (test_info[0]) {
-                fprintf(stdout, TAPDIAG "%s", test_info);
+                fprintf(stdout, TAPDIAG "%s\n", test_info);
             }
             n_failures++;
         }
