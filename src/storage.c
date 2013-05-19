@@ -263,6 +263,7 @@ plain_load_header(FILE *stream, char *alpha, size_t *suffix_count)
         return res;
     }
     res = sscanf(line, PLAIN_HEADER_SCN, alpha, suffix_count);
+    alpha[EC_ALPHABET_SIZE] = '\0';
     return res == 2 ? EC_SUCCESS : EC_FAILURE;
 }
 
