@@ -17,7 +17,7 @@
 struct mmap_header {
     char alphabet_str[EC_ALPHABET_SIZE];
     size_t suffix_count;
-} __attribute__((aligned(8)));
+};
 
 #define SIZE_HEADER (sizeof (struct mmap_header))
 #define SIZE_PFXTABLE ((EC_PREFIX_MAX + 1) * sizeof (struct ec_ecurve_pfxtable))
