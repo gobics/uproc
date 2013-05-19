@@ -112,10 +112,11 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
 
         for (; p < prefix; p++) {
             ecurve->prefix_table[p].first = prev_last;
-            ecurve->prefix_table[p].count = 0;
+            ecurve->prefix_table[p].count = prev_last ? 0 : -1;
         }
         ecurve->prefix_table[prefix].first = s;
         ecurve->prefix_table[prefix].count = p_suffixes;
+        p++;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
             res = f.suffix(stream, &ecurve->alphabet,
@@ -127,12 +128,10 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
         }
         prev_last = s - 1;
     }
-    for (; p < EC_PREFIX_MAX; p++) {
+    for (; p < EC_PREFIX_MAX + 1; p++) {
         ecurve->prefix_table[p].first = prev_last;
         ecurve->prefix_table[p].count = -1;
     }
-
-
     return EC_SUCCESS;
 }
 
