@@ -1,3 +1,5 @@
+HAVE_MMAP ?= yes
+
 ARCHIVE := ecurve.a
 
 CC ?= cc

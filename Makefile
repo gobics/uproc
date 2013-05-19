@@ -1,6 +1,12 @@
 include config.mk
 
 MODULES := ecurve alphabet distmat word storage
+
+ifdef HAVE_MMAP
+MODULES += mmap
+CPPFLAGS += -DHAVE_MMAP
+endif
+
 OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
 HEADERS := $(INCDIR)/ecurve.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
 
@@ -17,7 +23,7 @@ test : $(TESTFILES)
 	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
 
 test-verbose : $(TESTFILES)
-	@prove -fo -e ""
+	@prove -fo --directives -e ""
 
 $(OBJDIR) :
 	$%mkdir $@

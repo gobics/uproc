@@ -60,6 +60,20 @@ struct ec_ecurve_s {
      * Will be allocated to hold `#EC_PREFIX_MAX + 1` objects
      */
     *prefix_table;
+
+#if HAVE_MMAP
+    /** `mmap()` file descriptor
+     *
+     * The underlying file descriptor if the ecurve is `mmap()ed` or -1.
+     */
+    int mmap_fd;
+
+    /** `mmap()`ed memory region */
+    void *mmap_ptr;
+
+    /** Size of the `mmap()`ed region */
+    size_t mmap_size;
+#endif
 };
 
 /** Initialize an empty ecurve object

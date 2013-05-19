@@ -4,6 +4,10 @@
 #include "ecurve/ecurve.h"
 #include "ecurve/word.h"
 
+#if HAVE_MMAP
+#include "ecurve/mmap.h"
+#endif
+
 /** Perform a lookup in the prefix table.
  *
  * \param table         table of prefixes
@@ -73,6 +77,12 @@ ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count)
             return EC_FAILURE;
         }
     }
+
+#if HAVE_MMAP
+    e->mmap_fd = -1;
+    e->mmap_ptr = NULL;
+    e->mmap_size = 0;
+#endif
     return EC_SUCCESS;
 }
 
@@ -80,6 +90,12 @@ void
 ec_ecurve_destroy(ec_ecurve *ecurve)
 {
     struct ec_ecurve_s *e = ecurve;
+#if HAVE_MMAP
+    if (e->mmap_fd > -1) {
+        ec_mmap_unmap(ecurve);
+        return;
+    }
+#endif
     free(e->prefix_table);
     free(e->suffix_table);
     free(e->class_table);

@@ -1,8 +1,15 @@
+#if HAVE_MMAP
+#define _XOPEN_SOURCE 600
+#endif
+
 #include "test.h"
 #include "ecurve.h"
 
 #undef EC_PREFIX_MAX
 #define EC_PREFIX_MAX 100
+#if HAVE_MMAP
+#include "../src/mmap.c"
+#endif
 #include "../src/ecurve.c"
 #include "../src/storage.c"
 #include "../src/word.c"
@@ -84,6 +91,7 @@ int test_storage(int (*store)(), int (*load)())
     assert_uint_eq(ecurve.suffix_count, new_curve.suffix_count, "suffix counts equal");
     for (i = 0; i < ecurve.suffix_count; i++)
     {
+        INFO("i = %zu", i);
         assert_uint_eq(ecurve.suffix_table[i], new_curve.suffix_table[i], "suffixes equal");
         assert_uint_eq(ecurve.class_table[i], new_curve.class_table[i], "classes equal");
     }
@@ -103,4 +111,38 @@ int test_plain(void)
     return test_storage(ec_ecurve_store_plain, ec_ecurve_load_plain);
 }
 
-TESTS_INIT(test_binary_bufsz, test_binary, test_plain);
+int test_mmap(void)
+{
+#if HAVE_MMAP
+    size_t i;
+    ec_ecurve new_curve;
+
+    DESC("mmapp()ing ecurve");
+
+    assert_int_eq(ec_mmap_store(&ecurve, TMPFILE),
+                  EC_SUCCESS, "storing ecurve succeeded");
+    assert_int_eq(ec_mmap_map(&new_curve, TMPFILE),
+                  EC_SUCCESS, "mmap()ing file succeeded");
+
+    for (i = 0; i < EC_PREFIX_MAX + 1; i++) {
+        INFO("i = %zu", i);
+        assert_uint_eq(ecurve.prefix_table[i].first, new_curve.prefix_table[i].first, "prefixes equal");
+        assert_uint_eq(ecurve.prefix_table[i].count, new_curve.prefix_table[i].count, "prefixes equal");
+    }
+
+    assert_uint_eq(ecurve.suffix_count, new_curve.suffix_count, "suffix counts equal");
+    for (i = 0; i < ecurve.suffix_count; i++)
+    {
+        INFO("i = %zu", i);
+        assert_uint_eq(ecurve.suffix_table[i], new_curve.suffix_table[i], "suffixes equal");
+        assert_uint_eq(ecurve.class_table[i], new_curve.class_table[i], "classes equal");
+    }
+    ec_mmap_unmap(&new_curve);
+    return SUCCESS;
+#else
+    DESC("mmapp()ing ecurve");
+    SKIP("HAVE_MMAP is not defined");
+#endif
+}
+
+TESTS_INIT(test_binary_bufsz, test_binary, test_plain, test_mmap);
