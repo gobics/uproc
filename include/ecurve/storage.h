@@ -21,8 +21,8 @@
  * data in the file using the `load` function, i.e. the choice for the `load`
  * function determines the file format.
  *
- * \param path      file path
  * \param ecurve    pointer to ecurve to which the data will be loaded into
+ * \param path      file path
  * \param load      function to parse the data
  */
 int ec_ecurve_load(ec_ecurve *ecurve, const char *path,
@@ -33,8 +33,8 @@ int ec_ecurve_load(ec_ecurve *ecurve, const char *path,
  * Similar to ec_ecurve_load(), takes a `store` function that determines the
  * file format.
  *
- * \param path      file path
  * \param ecurve    pointer to ecurve to store
+ * \param path      file path
  * \param store     function to parse the data
  */
 int ec_ecurve_store(const ec_ecurve *ecurve, const char *path,
