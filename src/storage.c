@@ -103,7 +103,7 @@ load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
 
     for (prev_last = 0, s = p = 0; s < suffix_count;) {
         ec_prefix prefix;
-        ec_suffix ps, p_suffixes;
+        size_t ps, p_suffixes;
 
         res = f.prefix(stream, &ecurve->alphabet, &prefix, &p_suffixes);
         if (res != EC_SUCCESS) {
