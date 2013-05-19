@@ -12,7 +12,7 @@
 typedef int (*test)(void);
 
 enum {
-    SUCCESS, FAILURE
+    SUCCESS, FAILURE, SKIP
 };
 
 extern char test_desc[], test_error[], test_info[];
@@ -24,6 +24,7 @@ extern test tests[];
 #define TAPDIAG "# "
 
 
+#define SKIP(...) sprintf(test_info, __VA_ARGS__); return SKIP
 #define FAIL(...) sprintf(test_error, __VA_ARGS__); return FAILURE
 
 

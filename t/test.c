@@ -5,7 +5,9 @@
 
 char test_desc[1024], test_error[1024], test_info[1024];
 
-#define FMT "%s %d - %s\n"
+#define FMT_BASE "%s %d - %s"
+#define FMT FMT_BASE "\n"
+#define FMT_SKIP FMT_BASE " # SKIP: %s\n"
 int main(void)
 {
     int i, res;
@@ -21,6 +23,9 @@ int main(void)
         res = tests[i]();
         if (res == SUCCESS) {
             fprintf(stdout, FMT, "ok", i + 1, test_desc);
+        }
+        else if (res == SKIP) {
+            fprintf(stdout, FMT_SKIP, "ok", i + 1, test_desc, test_info);
         }
         else {
             fprintf(stdout, FMT, "not ok", i + 1, test_desc);
