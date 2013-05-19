@@ -75,6 +75,12 @@ int test_storage(int (*store)(), int (*load)())
     assert_int_eq(ec_ecurve_load(&new_curve, TMPFILE, load),
                   EC_SUCCESS, "loading ecurve succeeded");
 
+    for (i = 0; i < EC_PREFIX_MAX + 1; i++) {
+        INFO("i = %zu", i);
+        assert_uint_eq(ecurve.prefix_table[i].first, new_curve.prefix_table[i].first, "prefixes equal");
+        assert_uint_eq(ecurve.prefix_table[i].count, new_curve.prefix_table[i].count, "prefixes equal");
+    }
+
     assert_uint_eq(ecurve.suffix_count, new_curve.suffix_count, "suffix counts equal");
     for (i = 0; i < ecurve.suffix_count; i++)
     {
