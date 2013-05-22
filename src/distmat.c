@@ -7,7 +7,6 @@
 #include "ecurve/distmat.h"
 
 #define EC_DISTMAT_INDEX(x, y) ((x) << EC_AMINO_BITS | (y))
-#define EC_DIST_SCANFMT "%lf"
 
 int
 ec_distmat_init(ec_distmat *mat)
