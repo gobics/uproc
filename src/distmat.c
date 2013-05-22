@@ -27,7 +27,7 @@ void
 ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist)
 {
     struct ec_distmat_s *m = mat;
-    m->dists[EC_DISTMAT_INDEX(x, y)] = m->dists[EC_DISTMAT_INDEX(y, x)] = dist;
+    m->dists[EC_DISTMAT_INDEX(x, y)] = dist;
 }
 
 int
@@ -102,6 +102,7 @@ ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg)
                 dist = strtod(p, &p);
             } while (row[k] != r++);
             ec_distmat_set(mat, aa[n], aa[k], dist);
+            ec_distmat_set(mat, aa[k], aa[n], dist);
         }
         n += 1;
     }

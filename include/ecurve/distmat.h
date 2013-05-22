@@ -49,8 +49,7 @@ int ec_distmat_init(ec_distmat *mat);
 /** Get distance of two amino acids
  *
  * \details
- * Retrieves distance between two amino acids `x` and `y`. Distances are
- * symmetric, i.e. `(x, y) == (y, x)`.
+ * Retrieves distance between two amino acids `x` and `y`.
  *
  * \param mat   distance matrix
  * \param x     amino acid
@@ -60,10 +59,10 @@ int ec_distmat_init(ec_distmat *mat);
  */
 ec_dist ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
 
-/** Set distance of two amino acids (symmetrically)
+/** Set distance of two amino acids
  *
  * \details
- * Sets both distances `(x, y)` and `(y, x)` to `dist`.
+ * Sets distance between `x` and `y` to `dist`.
  *
  * \param mat   distance matrix
  * \param x     amino acid
