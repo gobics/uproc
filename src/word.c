@@ -82,16 +82,10 @@ ec_word_prepend(struct ec_word *word, ec_amino amino)
     word->suffix |= (ec_suffix)a << (EC_AMINO_BITS * (EC_SUFFIX_LEN - 1));
 }
 
-int
-ec_word_cmp(const struct ec_word *w1, const struct ec_word *w2)
+bool
+ec_word_equal(const struct ec_word *word1, const struct ec_word *word2)
 {
-    if (w1->prefix == w2->prefix) {
-        if (w1->suffix == w2->suffix) {
-            return 0;
-        }
-        return w1->suffix > w2->suffix ? 1 : -1;
-    }
-    return w1->prefix > w2->prefix ? 1 : -1;
+    return word1->prefix == word2->prefix && word1->suffix == word2->suffix;
 }
 
 void

@@ -7,6 +7,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "ecurve/alphabet.h"
 
 /** Struct defining an amino acid word */
@@ -74,6 +75,12 @@ void ec_word_append(struct ec_word *word, ec_amino amino);
  * \param amino amino acid to prepend
  */
 void ec_word_prepend(struct ec_word *word, ec_amino amino);
+
+/** Test for equality
+ *
+ * \return `true` if the words are equal or `false` if not.
+ */
+bool ec_word_equal(const struct ec_word *word1, const struct ec_word *word2);
 
 /** Type to iterate over all words in an amino acid sequence */
 typedef struct ec_worditer_s ec_worditer;
