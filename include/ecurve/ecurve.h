@@ -61,7 +61,6 @@ struct ec_ecurve_s {
      */
     *prefix_table;
 
-#if HAVE_MMAP
     /** `mmap()` file descriptor
      *
      * The underlying file descriptor if the ecurve is `mmap()ed` or -1.
@@ -73,7 +72,6 @@ struct ec_ecurve_s {
 
     /** Size of the `mmap()`ed region */
     size_t mmap_size;
-#endif
 };
 
 /** Initialize an empty ecurve object
