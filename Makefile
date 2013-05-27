@@ -1,6 +1,6 @@
 include config.mk
 
-MODULES := ecurve alphabet distmat word storage
+MODULES := ecurve alphabet distmat word storage bst classify
 
 ifdef HAVE_MMAP
 MODULES += mmap
