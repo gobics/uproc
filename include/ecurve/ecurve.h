@@ -121,7 +121,7 @@ void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha);
  * \return `#EC_LOOKUP_EXACT`, `#EC_LOOKUP_OOB` or `#EC_LOOKUP_INEXACT` as
  * described above.
  */
-int ec_ecurve_lookup(ec_ecurve *ecurve, const struct ec_word *word,
+int ec_ecurve_lookup(const ec_ecurve *ecurve, const struct ec_word *word,
                      struct ec_word *lower_neighbour, ec_class *lower_class,
                      struct ec_word *upper_neighbour, ec_class *upper_class);
 
