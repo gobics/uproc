@@ -59,6 +59,21 @@ extern test tests[];
 #define assert_uint_le(X, Y, DESC) assert_uint_op(X, <=, Y, DESC)
 #define assert_uint_lt(X, Y, DESC) assert_uint_op(X, <, Y, DESC)
 
+
+#define EPSILON 1e-5
+
+#define assert_double_eq(X, Y, DESC) do {                                   \
+    double _test_x = (X), _test_y = (Y);                                    \
+    if (abs(_test_x - _test_y) > EPSILON) {                                 \
+        FAIL("Assertion '" DESC " (" #X " == " #Y ")' failed:\n"            \
+             TAPDIAG "  " #X ":\n"                                          \
+             TAPDIAG "    %g\n"                                             \
+             TAPDIAG "  " #Y ":\n"                                          \
+             TAPDIAG "    %g\n",                                            \
+             _test_x, _test_y);                                             \
+    }                                                                       \
+} while (0)
+
 #define assert_strcmp(X, OP, Y, DESC) do {                              \
     char *_test_x = (X), *_test_y = (Y);                                \
     int _test_res = strcmp(_test_x, _test_y);                           \
