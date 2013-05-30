@@ -51,7 +51,6 @@ int ec_distmat_init(ec_distmat *mat);
 
 /** Get distance of two amino acids
  *
- * \details
  * Retrieves distance between two amino acids `x` and `y`.
  *
  * \param mat   distance matrix
@@ -64,7 +63,6 @@ ec_dist ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
 
 /** Set distance of two amino acids
  *
- * \details
  * Sets distance between `x` and `y` to `dist`.
  *
  * \param mat   distance matrix
@@ -79,7 +77,6 @@ void ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist);
 
 /** Load `n` distance matrices from a file, using the given loader function
  *
- * \details
  * \param mat   pointer to the first of `n` distance matrices
  * \param n     number of matrices to load
  * \param path  file to load
@@ -94,7 +91,6 @@ int ec_distmat_load_many(ec_distmat *mat, size_t n, const char *path,
 
 /** Load one distance matrices from a file, using the given loader function
  *
- * \details
  * \param mat   target distance matrix
  * \param path  file to load
  * \param load  function that parses the file and populates the distance matrix
@@ -108,7 +104,6 @@ int ec_distmat_load(ec_distmat *mat, const char *path,
 
 /** Read a BLOSUM-like distance matrix from a stream
  *
- * \details
  * BLOSUM matrices can be obtained from ftp://ftp.ncbi.nih.gov/blast/matrices/
  *
  * \param mat       distance matrix to populate
@@ -122,11 +117,8 @@ int ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg);
 
 /** Read a plain text distance matrix from a stream
  *
- * \details
- *
  * Simply reads `#EC_ALPHABET_SIZE * #EC_ALPHABET_SIZE` numbers, separated by
  * white space, from the stream.
- *
  *
  * \param mat       distance matrix to populate
  * \param stream    input stream to parse (will NOT be closed after reading)

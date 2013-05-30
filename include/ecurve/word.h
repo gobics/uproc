@@ -54,24 +54,23 @@ int ec_word_to_string(char *str, const struct ec_word *word, const ec_alphabet *
 
 /** Append amino acid
  *
- * \details
  * The leftmost amino acid of `word` is removed, for example
- * `ANERD <append> S = NERDS` (in case of a word length of 5).
+ *   `append(ANERD, S) == NERDS`
+ * (in case of a word length of 5).
  *
  * NOTE: It will _not_ be verified whether `amino` is a valid amino acid
  *
- * \param word  _IN/OUT_: word to append to
+ * \param word  word to append to
  * \param amino amino acid to append
  */
 void ec_word_append(struct ec_word *word, ec_amino amino);
 
 /** Prepend amino acid
  *
- * \details
  * Complementary to the append operation, e.g.
- * `NERDS <prepend> A = ANERD`
+ *   `prepend(NERDS, A) == ANERD`.
  *
- * \param word  _IN/OUT_: word to prepend to
+ * \param word  word to prepend to
  * \param amino amino acid to prepend
  */
 void ec_word_prepend(struct ec_word *word, ec_amino amino);
