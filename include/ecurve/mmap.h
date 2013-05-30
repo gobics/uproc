@@ -20,7 +20,8 @@
  * \param ecurve    ecurve to be mapped
  * \param path      file path
  *
- * \return `#EC_FAILURE` in case of an error, `#EC_SUCCESS` else
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_mmap_map(ec_ecurve *ecurve, const char *path);
 
@@ -35,7 +36,8 @@ void ec_mmap_unmap(ec_ecurve *ecurve);
  * \param ecurve    ecurve to store
  * \param path      file path
  *
- * \return `#EC_FAILURE` in case of an error, `#EC_SUCCESS` else
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_mmap_store(const ec_ecurve *ecurve, const char *path);
 

@@ -80,7 +80,8 @@ struct ec_ecurve_s {
  * \param alphabet      string to initialize the ecurve's alphabet (see ec_alphabet_init())
  * \param suffix_count  number of entries in the suffix table
  *
- * \return `#EC_FAILURE` if memory allocation failed, `#EC_SUCCESS` else
+ * \retval #EC_SUCCESS  ecurve was initialized successfully
+ * \retval #EC_FAILURE  memory allocation failed
  */
 int ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count);
 

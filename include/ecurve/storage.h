@@ -24,6 +24,9 @@
  * \param ecurve    pointer to ecurve to which the data will be loaded into
  * \param path      file path
  * \param load      function to parse the data
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_ecurve_load(ec_ecurve *ecurve, const char *path,
                    int (*load)(ec_ecurve *, FILE *));
@@ -36,20 +39,39 @@ int ec_ecurve_load(ec_ecurve *ecurve, const char *path,
  * \param ecurve    pointer to ecurve to store
  * \param path      file path
  * \param store     function to parse the data
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_ecurve_store(const ec_ecurve *ecurve, const char *path,
                     int (*store)(const ec_ecurve *, FILE *));
 
-/** Load ecurve in binary format */
+/** Load ecurve in binary format
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
+ */
 int ec_ecurve_load_binary(ec_ecurve *ecurve, FILE *stream);
 
-/** Store ecurve in binary format */
+/** Store ecurve in binary format
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
+ */
 int ec_ecurve_store_binary(const ec_ecurve *ecurve, FILE *stream);
 
-/** Load ecurve in plain text format */
+/** Load ecurve in plain text format
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
+ */
 int ec_ecurve_load_plain(ec_ecurve *ecurve, FILE *stream);
 
-/** Store ecurve in plain text format */
+/** Store ecurve in plain text format
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
+ */
 int ec_ecurve_store_plain(const ec_ecurve *ecurve, FILE *stream);
 
 #endif

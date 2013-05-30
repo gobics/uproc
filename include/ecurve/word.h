@@ -3,7 +3,7 @@
 
 /** \file ecurve/word.h
  *
- * Manipulate amino acid words
+ * Manipulate amino were acid words
  */
 
 #include <stdint.h>
@@ -24,7 +24,7 @@ struct ec_word {
 
 /** Transform a string to amino acid word
  *
- * Translates the first `EC_WORD_LEN` characters of the given string to a word
+ * Translates the first `#EC_WORD_LEN` characters of the given string to a word
  * object. Failure occurs if the string ends or an invalid character is
  * encountered.
  *
@@ -32,8 +32,8 @@ struct ec_word {
  * \param str   string representation
  * \param alpha alphabet to use for translation
  *
- * \return `#EC_SUCCESS` if the string was translated successfully or
- * `#EC_FAILURE` if the string was too short or contained an invalid character.
+ * \retval #EC_SUCCESS  the string was translated successfully
+ * \retval #EC_FAILURE  the string was too short or contained an invalid character
  */
 int ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet *alpha);
 
@@ -41,14 +41,14 @@ int ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet
  *
  * Translates an amino acid word back to a string. The string will be
  * null-terminated, thus `str` should point to a buffer of at least
- * `#EC_WORD_LEN + 1` bytes
+ * `#EC_WORD_LEN + 1` bytes.
  *
  * \param str   buffer to store the string in
  * \param word  amino acid word
  * \param alpha alphabet to use for translation
  *
- * \return `#EC_SUCCESS` if the word was translated successfully or `#EC_FAILURE`
- * if the word contained an invalid amino acid.
+ * \retval #EC_SUCCESS  the word was translated successfully
+ * \retval #EC_FAILURE  the word contained an invalid amino acid
  */
 int ec_word_to_string(char *str, const struct ec_word *word, const ec_alphabet *alpha);
 
@@ -58,7 +58,7 @@ int ec_word_to_string(char *str, const struct ec_word *word, const ec_alphabet *
  * The leftmost amino acid of `word` is removed, for example
  * `ANERD <append> S = NERDS` (in case of a word length of 5).
  *
- * NOTE: It will _not_ be verified whether `amino` is a valid amino acid.
+ * NOTE: It will _not_ be verified whether `amino` is a valid amino acid
  *
  * \param word  _IN/OUT_: word to append to
  * \param amino amino acid to append
@@ -119,8 +119,9 @@ void ec_worditer_init(ec_worditer *iter, const char *seq,
  * \param fwd_word  _OUT_: word to append the next character to
  * \param rev_word  _OUT_: word to prepend the next character to
  *
- * \return  `#EC_SUCCESS` if word(s) were read, `#EC_FAILURE` if the iterator
- * is exhausted (i.e. the end of the sequence was reached)
+ * \retval #EC_SUCCESS  words were read
+ * \retval #EC_FAILURE  the iteratoris exhausted (i.e. the end of the sequence
+ *                      was reached, no words were read)
  */
 int ec_worditer_next(ec_worditer *iter, size_t *index,
                      struct ec_word *fwd_word, struct ec_word *rev_word);

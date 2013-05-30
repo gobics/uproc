@@ -43,6 +43,9 @@ struct ec_distmat_s {
 /** Initialize a distance matrix object to zeroes
  *
  * \param mat   distance matrix object to initialize
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_distmat_init(ec_distmat *mat);
 
@@ -68,6 +71,9 @@ ec_dist ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
  * \param x     amino acid
  * \param y     another amino acid
  * \param dist  distance between x and y
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 void ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist);
 
@@ -79,6 +85,9 @@ void ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist);
  * \param path  file to load
  * \param load  function that parses the file and populates the distance matrix
  * \param arg   additional argument to `load`
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_distmat_load_many(ec_distmat *mat, size_t n, const char *path,
                          int (*load)(ec_distmat *, FILE *, void *), void *arg);
@@ -90,6 +99,9 @@ int ec_distmat_load_many(ec_distmat *mat, size_t n, const char *path,
  * \param path  file to load
  * \param load  function that parses the file and populates the distance matrix
  * \param arg   additional argument to `load`
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_distmat_load(ec_distmat *mat, const char *path,
                     int (*load)(ec_distmat *, FILE *, void *), void *arg);
@@ -102,6 +114,9 @@ int ec_distmat_load(ec_distmat *mat, const char *path,
  * \param mat       distance matrix to populate
  * \param stream    input stream to parse (will NOT be closed after reading)
  * \param arg       pointer to an #ec_alphabet object to use for translating characters to amino acids
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg);
 
@@ -116,6 +131,9 @@ int ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg);
  * \param mat       distance matrix to populate
  * \param stream    input stream to parse (will NOT be closed after reading)
  * \param arg       (not used)
+ *
+ * \retval #EC_FAILURE  an error occured
+ * \retval #EC_SUCCESS  else
  */
 int ec_distmat_load_plain(ec_distmat *mat, FILE *stream, void *arg);
 
