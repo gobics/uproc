@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <math.h>
+#include <assert.h>
 
 #include "ecurve/common.h"
 #include "ecurve/bst.h"
@@ -10,21 +10,30 @@ struct sc {
     size_t index;
     ec_dist total, dist[EC_SUFFIX_LEN];
 };
-#define SC_INITIALIZER { 0, 0.0, { 0.0 } }
 
 struct sc_max {
     ec_dist score;
     ec_class cls;
 };
-#define SC_MAX_INITIALIZER { -HUGE_VAL, -1 }
 
+
+static void
+sc_init(struct sc *s)
+{
+    size_t i;
+    s->index = -1;
+    s->total = 0.0;
+    for (i = 0; i < EC_SUFFIX_LEN; i++) {
+        s->dist[i] = EC_DIST_MIN;
+    }
+}
 
 static struct sc *
 sc_new(void)
 {
     struct sc *s = malloc(sizeof *s);
     if (s) {
-        *s = (struct sc)SC_INITIALIZER;
+        sc_init(s);
     }
     return s;
 }
@@ -33,20 +42,21 @@ static void
 sc_add(struct sc *score, size_t index, ec_dist dist[static EC_SUFFIX_LEN])
 {
     size_t i, diff;
-    ec_dist a, b;
 
-    if (index < score->index) {
-        return;
+    if (score->index == (size_t) -1) {
+        diff = 0;
+    }
+    else {
+        assert(index >= score->index);
+        diff = index - score->index;
+        for (i = 0; i < diff; i++) {
+            score->total += score->dist[i];
+        }
     }
 
-    diff = index - score->index;
-    for (i = 0; i < diff; i++) {
-        score->total += score->dist[i];
-    }
     for (i = 0; i + diff < EC_SUFFIX_LEN; i++) {
-        a = score->dist[i + diff];
-        b = dist[i];
-        score->dist[i] = a > b ? a : b;
+#define MAX(a, b) (a > b ? a : b)
+        score->dist[i] = MAX(score->dist[i + diff], dist[i]);
     }
     for (; i < EC_SUFFIX_LEN; i++) {
         score->dist[i] = dist[i];
@@ -81,7 +91,7 @@ static int
 scores_finalize(ec_bst *scores, ec_class *predict_cls, ec_dist *predict_score)
 {
     int res;
-    struct sc_max m = SC_MAX_INITIALIZER;
+    struct sc_max m = { EC_DIST_MIN, -1 };
     res = ec_bst_walk(scores, &scores_finalize_cb, &m);
     if (res == EC_SUCCESS) {
         *predict_cls = m.cls;

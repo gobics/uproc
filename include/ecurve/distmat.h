@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include "ecurve/alphabet.h"
 
 /** Alignment distance between two amino acids */
@@ -18,6 +19,9 @@ typedef double ec_dist;
 
 /** scanf() format for #ec_dist */
 #define EC_DIST_SCN "lf"
+
+/** Smallest (or sufficiently small) value of #ec_dist */
+#define EC_DIST_MIN -HUGE_VAL
 
 
 /** Matrix of amino acid distances */

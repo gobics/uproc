@@ -15,9 +15,10 @@ void teardown(void)
 int sc_add_finalize(void)
 {
     DESC("sc_add and sc_finalize");
-    struct sc score = SC_INITIALIZER;
+    struct sc score;
     ec_dist dist[EC_SUFFIX_LEN] = { 0.0 };
 
+    sc_init(&score);
     dist[0] = 0.5;
     sc_add(&score, 1, dist);
     assert_double_eq(score.total, 0.0, "total score");
@@ -40,6 +41,15 @@ int sc_add_finalize(void)
     assert_uint_eq(score.index, 4, "index");
 
     assert_double_eq(sc_finalize(&score), 5.0, "final score");
+
+    sc_init(&score);
+    dist[0] = 1.0;
+    dist[1] = -3.0;
+    sc_add(&score, 0, dist);
+    dist[0] = dist[1] = 0.0;
+    sc_add(&score, 2, dist);
+    assert_double_eq(score.total, -2.0, "negative total score");
+
     return SUCCESS;
 }
 
