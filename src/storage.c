@@ -369,8 +369,8 @@ plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix,
  *------*/
 
 int
-ec_ecurve_load(ec_ecurve *ecurve, const char *path,
-               int (*load)(ec_ecurve *, FILE *))
+ec_storage_load(ec_ecurve *ecurve, const char *path,
+                int (*load)(ec_ecurve *, FILE *))
 {
     int res;
     FILE *stream;
@@ -387,14 +387,14 @@ ec_ecurve_load(ec_ecurve *ecurve, const char *path,
 }
 
 int
-ec_ecurve_load_binary(ec_ecurve *ecurve, FILE *stream)
+ec_storage_load_binary(ec_ecurve *ecurve, FILE *stream)
 {
     struct load_funcs f = { &bin_load_header, &bin_load_prefix, &bin_load_suffix };
     return load(stream, ecurve, f);
 }
 
 int
-ec_ecurve_load_plain(ec_ecurve *ecurve, FILE *stream)
+ec_storage_load_plain(ec_ecurve *ecurve, FILE *stream)
 {
     struct load_funcs f = { &plain_load_header, &plain_load_prefix, &plain_load_suffix };
     return load(stream, ecurve, f);
@@ -406,8 +406,8 @@ ec_ecurve_load_plain(ec_ecurve *ecurve, FILE *stream)
  *-------*/
 
 int
-ec_ecurve_store(const ec_ecurve *ecurve, const char *path,
-                int (*store)(const ec_ecurve *, FILE *))
+ec_storage_store(const ec_ecurve *ecurve, const char *path,
+                 int (*store)(const ec_ecurve *, FILE *))
 {
     int res;
     FILE *stream;
@@ -424,14 +424,14 @@ ec_ecurve_store(const ec_ecurve *ecurve, const char *path,
 }
 
 int
-ec_ecurve_store_binary(const ec_ecurve *ecurve, FILE *stream)
+ec_storage_store_binary(const ec_ecurve *ecurve, FILE *stream)
 {
     struct store_funcs f = { &bin_store_header, &bin_store_prefix, &bin_store_suffix };
     return store(stream, ecurve, f);
 }
 
 int
-ec_ecurve_store_plain(const ec_ecurve *ecurve, FILE *stream)
+ec_storage_store_plain(const ec_ecurve *ecurve, FILE *stream)
 {
     struct store_funcs f = { &plain_store_header, &plain_store_prefix, &plain_store_suffix };
     return store(stream, ecurve, f);

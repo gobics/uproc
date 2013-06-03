@@ -77,9 +77,9 @@ int test_storage(int (*store)(), int (*load)())
     size_t i;
     ec_ecurve new_curve;
 
-    assert_int_eq(ec_ecurve_store(&ecurve, TMPFILE, store),
+    assert_int_eq(ec_storage_store(&ecurve, TMPFILE, store),
                   EC_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(ec_ecurve_load(&new_curve, TMPFILE, load),
+    assert_int_eq(ec_storage_load(&new_curve, TMPFILE, load),
                   EC_SUCCESS, "loading ecurve succeeded");
 
     for (i = 0; i < EC_PREFIX_MAX + 1; i++) {
@@ -102,13 +102,13 @@ int test_storage(int (*store)(), int (*load)())
 int test_binary(void)
 {
     DESC("writing and reading in binary format");
-    return test_storage(ec_ecurve_store_binary, ec_ecurve_load_binary);
+    return test_storage(ec_storage_store_binary, ec_storage_load_binary);
 }
 
 int test_plain(void)
 {
     DESC("writing and reading in plain text");
-    return test_storage(ec_ecurve_store_plain, ec_ecurve_load_plain);
+    return test_storage(ec_storage_store_plain, ec_storage_load_plain);
 }
 
 int test_mmap(void)
