@@ -16,6 +16,8 @@
 #include <ecurve/common.h>
 #include <ecurve/ecurve.h>
 #include <ecurve/word.h>
+#include <ecurve/codon.h>
+#include <ecurve/orf.h>
 #include <ecurve/alphabet.h>
 #include <ecurve/distmat.h>
 #include <ecurve/storage.h>

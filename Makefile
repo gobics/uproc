@@ -1,6 +1,6 @@
 include config.mk
 
-MODULES := ecurve alphabet distmat word storage bst classify
+MODULES := ecurve alphabet distmat word storage bst classify orf codon
 
 ifdef HAVE_MMAP
 MODULES += mmap
@@ -32,6 +32,14 @@ $(OBJDIR)/%.o : $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 	@echo CC -c $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
+$(OBJDIR)/orf.o : $(SRCDIR)/codon_tables.h
+
+
+$(SRCDIR)/codon_tables.h : $(SRCDIR)/gen_codon_tables.c $(SRCDIR)/codon.c
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -o gen_codon_tables $^
+	@./gen_codon_tables > $@
+	@rm gen_codon_tables
+
 t/%.t : t/%.c t/test.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^
@@ -44,6 +52,7 @@ $(ARCHIVE) : $(OBJECTS)
 
 
 clean : clean-obj clean-test clean-doc
+	@rm $(SRCDIR)/codon_tables.h
 
 clean-test :
 	@rm -f $(TESTFILES)

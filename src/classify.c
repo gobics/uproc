@@ -5,6 +5,8 @@
 #include "ecurve/bst.h"
 #include "ecurve/ecurve.h"
 #include "ecurve/distmat.h"
+#include "ecurve/orf.h"
+#include "ecurve/classify.h"
 
 struct sc {
     size_t index;
@@ -160,14 +162,17 @@ scores_add_word(ec_bst *scores, const struct ec_word *word, size_t index,
 }
 
 int
-ec_classify(const char *seq, const ec_distmat distmat[static EC_SUFFIX_LEN],
-            const ec_ecurve *fwd_ecurve, const ec_ecurve *rev_ecurve,
-            ec_class *predict_cls, ec_dist *predict_score)
+ec_classify_protein(const char *seq,
+                    const ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const ec_ecurve *fwd_ecurve,
+                    const ec_ecurve *rev_ecurve,
+                    ec_class *predict_cls,
+                    ec_dist *predict_score)
 {
     int res;
     ec_bst scores;
-    ec_alphabet alpha;
     ec_worditer iter;
+    ec_alphabet alpha;
     size_t index;
     struct ec_word
         fwd_word = EC_WORD_INITIALIZER,
@@ -187,9 +192,59 @@ ec_classify(const char *seq, const ec_distmat distmat[static EC_SUFFIX_LEN],
             goto error;
         }
     }
-    res = scores_finalize(&scores, predict_cls, predict_score);
+    res = EC_SUCCESS;
+    if (ec_bst_isempty(&scores)) {
+        *predict_score = EC_DIST_MIN;
+    }
+    else {
+        scores_finalize(&scores, predict_cls, predict_score);
+    }
 
 error:
     ec_bst_clear(&scores, &free);
+    return res;
+}
+
+int
+ec_classify_dna(const char *seq,
+                enum ec_orf_mode mode,
+                const double codon_scores[EC_CODON_COUNT],
+                double min_score,
+                size_t min_length,
+                const ec_distmat distmat[static EC_SUFFIX_LEN],
+                const ec_ecurve *fwd_ecurve,
+                const ec_ecurve *rev_ecurve,
+                ec_class *predict_cls,
+                ec_dist *predict_score)
+{
+    int res;
+    unsigned i;
+    char *orf[EC_ORF_FRAMES] = { NULL };
+    size_t orf_sz[EC_ORF_FRAMES];
+
+    res = ec_orf_chained(seq, mode, codon_scores, min_score, min_length, orf,
+                         orf_sz);
+    if (res != EC_SUCCESS) {
+        goto error;
+    }
+
+    for (i = 0; i < mode; i++) {
+        if (orf[i]) {
+            res = ec_classify_protein(orf[i], distmat, fwd_ecurve, rev_ecurve,
+                                      &predict_cls[i], &predict_score[i]);
+            if (res != EC_SUCCESS) {
+                goto error;
+            }
+        }
+        else {
+            predict_cls[i] = -1;
+            predict_score[i] = EC_DIST_MIN;
+        }
+    }
+
+error:
+    for (i = 0; i < mode; i++) {
+        free(orf[i]);
+    }
     return res;
 }

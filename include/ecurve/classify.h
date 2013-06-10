@@ -44,9 +44,30 @@
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int
-ec_classify(const char *seq, const ec_distmat distmat[static EC_SUFFIX_LEN],
-            const ec_ecurve *fwd_ecurve, const ec_ecurve *rev_ecurve,
-            ec_class *predict_cls, ec_dist *predict_score);
+int ec_classify_protein(const char *seq,
+                        const ec_distmat distmat[static EC_SUFFIX_LEN],
+                        const ec_ecurve *fwd_ecurve,
+                        const ec_ecurve *rev_ecurve,
+                        ec_class *predict_cls,
+                        ec_dist *predict_score);
+
+
+/** Classify DNA/RNA sequence
+ *
+ * Translates DNA/RNA sequence using ecurve/orf.h and classifies them using
+ * ec_classify_protein(). Depending on the `mode` argument, frames/strands are
+ * scored separately, `predict_cls` and `predict_score` should point into
+ * arrays of sufficient size.
+ */
+int ec_classify_dna(const char *seq,
+                    enum ec_orf_mode mode,
+                    const double codon_scores[EC_CODON_COUNT],
+                    double min_score,
+                    size_t min_length,
+                    const ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const ec_ecurve *fwd_ecurve,
+                    const ec_ecurve *rev_ecurve,
+                    ec_class *predict_cls,
+                    ec_dist *predict_score);
 
 #endif

@@ -21,6 +21,7 @@ enum {
     EC_ITER_STOP,
 };
 
+/** Lowest `n` bits set to one */
 #define EC_BITMASK(n) (~(~0ULL << (n)))
 
 /** Length of the suffix part of a word */
@@ -31,6 +32,55 @@ enum {
 
 /** Total word length */
 #define EC_WORD_LEN (EC_PREFIX_LEN + EC_SUFFIX_LEN)
+
+
+/** Type to represent a nucleotide */
+typedef int ec_nt;
+
+/** Bits used to represent a nucleotide */
+#define EC_NT_BITS 4
+
+/** Nucleotide values */
+enum {
+    /** Adenine */
+    EC_NT_A = (1 << 0),
+
+    /** Cytosine */
+    EC_NT_C = (1 << 1),
+
+    /** Guanine */
+    EC_NT_G = (1 << 2),
+
+    /** Thymine */
+    EC_NT_T = (1 << 3),
+
+    /** Uracil */
+    EC_NT_U = EC_NT_T,
+
+    /** Wildcard matching any base */
+    EC_NT_N = (EC_NT_A | EC_NT_C | EC_NT_G | EC_NT_T),
+
+    /** Result of converting a non-alphabetic ([A-Za-z]) character */
+    EC_NT_NOT_CHAR = -1,
+
+    /** Result of converting a non-IUPAC symbol */
+    EC_NT_NOT_IUPAC = -2,
+};
+
+/** Type used to represent a codon (or codon mask) */
+typedef unsigned ec_codon;
+
+/** Nucleotides in a codon */
+#define EC_CODON_NTS 3
+
+/** Bits used to represent a codon */
+#define EC_CODON_BITS (EC_CODON_NTS * EC_NT_BITS)
+
+/** Number of "real" codons */
+#define EC_CODON_COUNT 64
+
+/** Number of all possible binary representations of a codon or codon mask */
+#define EC_BINARY_CODON_COUNT (1 << EC_CODON_BITS)
 
 
 /** Type to represent one amino acid. */

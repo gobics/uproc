@@ -122,7 +122,7 @@ bstnode_remove(struct bstnode *n)
                 while (p->right) {
                     p = p->right;
                 }
-                /* p's left subtree becomes his former parent's right subtree 
+                /* p's left subtree becomes his former parent's right subtree
                    (p has no right subtree)
                  */
                 if (p->left) {
