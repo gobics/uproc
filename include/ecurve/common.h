@@ -16,6 +16,9 @@ enum {
 
     /** General failure */
     EC_FAILURE,
+
+    /** Iterator exhausted */
+    EC_ITER_STOP,
 };
 
 /** Length of the suffix part of a word */

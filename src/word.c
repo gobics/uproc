@@ -108,7 +108,7 @@ ec_worditer_next(ec_worditer *iter, size_t *index,
     while (n < EC_WORD_LEN) {
         if (!(c = iter->sequence[iter->index++])) {
             /* end of sequence reached -> stop iteration */
-            return EC_FAILURE;
+            return EC_ITER_STOP;
         }
         if ((a = ec_alphabet_char_to_amino(iter->alphabet, c)) == -1) {
             /* invalid character -> begin new word */

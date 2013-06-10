@@ -118,9 +118,9 @@ void ec_worditer_init(ec_worditer *iter, const char *seq,
  * \param fwd_word  _OUT_: word to append the next character to
  * \param rev_word  _OUT_: word to prepend the next character to
  *
- * \retval #EC_SUCCESS  words were read
- * \retval #EC_FAILURE  the iteratoris exhausted (i.e. the end of the sequence
- *                      was reached, no words were read)
+ * \retval #EC_SUCCESS      a pair of words was read
+ * \retval #EC_ITER_STOP    the iterator is exhausted (i.e. the end of the
+ *                          sequence was reached, no words were read)
  */
 int ec_worditer_next(ec_worditer *iter, size_t *index,
                      struct ec_word *fwd_word, struct ec_word *rev_word);
