@@ -5,29 +5,9 @@
 #include "ecurve/common.h"
 #include "ecurve/ecurve.h"
 #include "ecurve/word.h"
+#include "ecurve/storage.h"
 #include "pack.h"
 #include <assert.h>
-
-struct load_funcs
-{
-    int (*header)(FILE *, char *, size_t *);
-    int (*prefix)(FILE *, const ec_alphabet *, ec_prefix *, size_t *);
-    int (*suffix)(FILE *, const ec_alphabet *, ec_suffix *, ec_class *);
-};
-
-/** Load ecurve in sequential format. */
-static int load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f);
-
-struct store_funcs
-{
-     int (*header)(FILE *, const char *, size_t);
-     int (*prefix)(FILE *, const ec_alphabet *, ec_prefix, size_t);
-     int (*suffix)(FILE *, const ec_alphabet *, ec_suffix, ec_class);
-};
-
-/** Store ecurve in sequential format. */
-static int store(FILE *stream, const ec_ecurve *ecurve, struct store_funcs f);
-
 
 /** Format of binary file header.
  * uint32_t: number of prefixes that have suffixes
@@ -80,99 +60,6 @@ static int plain_load_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix *
 static int plain_store_header(FILE *stream, const char *alpha, size_t suffix_count);
 static int plain_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix, size_t suffix_count);
 static int plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix, ec_class cls);
-
-
-static int
-load(FILE *stream, ec_ecurve *ecurve, struct load_funcs f)
-{
-    int res;
-    ec_prefix p;
-    ec_suffix s;
-    size_t suffix_count, prev_last;
-    char alpha[EC_ALPHABET_SIZE + 1];
-
-    res = f.header(stream, alpha, &suffix_count);
-    if (res != EC_SUCCESS) {
-        return res;
-    }
-
-    res = ec_ecurve_init(ecurve, alpha, suffix_count);
-    if (res != EC_SUCCESS) {
-        return res;
-    }
-
-    for (prev_last = 0, s = p = 0; s < suffix_count;) {
-        ec_prefix prefix;
-        size_t ps, p_suffixes;
-
-        res = f.prefix(stream, &ecurve->alphabet, &prefix, &p_suffixes);
-        if (res != EC_SUCCESS) {
-            return res;
-        }
-
-        for (; p < prefix; p++) {
-            ecurve->prefix_table[p].first = prev_last;
-            ecurve->prefix_table[p].count = prev_last ? 0 : -1;
-        }
-        ecurve->prefix_table[prefix].first = s;
-        ecurve->prefix_table[prefix].count = p_suffixes;
-        p++;
-
-        for (ps = 0; ps < p_suffixes; ps++, s++) {
-            res = f.suffix(stream, &ecurve->alphabet,
-                           &ecurve->suffix_table[s],
-                           &ecurve->class_table[s]);
-            if (res != EC_SUCCESS) {
-                return res;
-            }
-        }
-        prev_last = s - 1;
-    }
-    for (; p < EC_PREFIX_MAX + 1; p++) {
-        ecurve->prefix_table[p].first = prev_last;
-        ecurve->prefix_table[p].count = -1;
-    }
-    return EC_SUCCESS;
-}
-
-static int
-store(FILE *stream, const ec_ecurve *ecurve, struct store_funcs f)
-{
-    int res;
-    size_t p;
-
-    res = f.header(stream, ecurve->alphabet.str, ecurve->suffix_count);
-
-    if (res != EC_SUCCESS) {
-        return res;
-    }
-
-    for (p = 0; p <= EC_PREFIX_MAX; p++) {
-        size_t suffix_count = ecurve->prefix_table[p].count;
-        size_t offset = ecurve->prefix_table[p].first;
-        size_t i;
-
-        if (!suffix_count || suffix_count == (size_t) -1) {
-            continue;
-        }
-
-        res = f.prefix(stream, &ecurve->alphabet, p, suffix_count);
-        if (res != EC_SUCCESS) {
-            return res;
-        }
-
-        for (i = 0; i < suffix_count; i++) {
-            res = f.suffix(stream, &ecurve->alphabet,
-                           ecurve->suffix_table[offset + i],
-                           ecurve->class_table[offset + i]);
-            if (res != EC_SUCCESS) {
-                return res;
-            }
-        }
-    }
-    return EC_SUCCESS;
-}
-
 
 static int
 bin_load_header(FILE *stream, char *alpha, size_t *suffix_count)
@@ -363,76 +250,177 @@ plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix,
     return (res > 0) ? EC_SUCCESS : EC_FAILURE;
 }
 
+int
+ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format)
+{
+    int res;
+    ec_prefix p;
+    ec_suffix s;
+    size_t suffix_count, prev_last;
+    char alpha[EC_ALPHABET_SIZE + 1];
+    struct load_funcs
+    {
+        int (*header)(FILE *, char *, size_t *);
+        int (*prefix)(FILE *, const ec_alphabet *, ec_prefix *, size_t *);
+        int (*suffix)(FILE *, const ec_alphabet *, ec_suffix *, ec_class *);
+    } f;
 
-/*------*
- * load *
- *------*/
+    switch (format) {
+        case EC_STORAGE_BINARY:
+            f.header = &bin_load_header;
+            f.prefix = &bin_load_prefix;
+            f.suffix = &bin_load_suffix;
+            break;
+        case EC_STORAGE_PLAIN:
+            f.header = &plain_load_header;
+            f.prefix = &plain_load_prefix;
+            f.suffix = &plain_load_suffix;
+            break;
+        default:
+            return EC_FAILURE;
+    }
+
+    res = f.header(stream, alpha, &suffix_count);
+    if (res != EC_SUCCESS) {
+        return res;
+    }
+
+    res = ec_ecurve_init(ecurve, alpha, suffix_count);
+    if (res != EC_SUCCESS) {
+        return res;
+    }
+
+    for (prev_last = 0, s = p = 0; s < suffix_count;) {
+        ec_prefix prefix;
+        size_t ps, p_suffixes;
+
+        res = f.prefix(stream, &ecurve->alphabet, &prefix, &p_suffixes);
+        if (res != EC_SUCCESS) {
+            return res;
+        }
+
+        for (; p < prefix; p++) {
+            ecurve->prefix_table[p].first = prev_last;
+            ecurve->prefix_table[p].count = prev_last ? 0 : -1;
+        }
+        ecurve->prefix_table[prefix].first = s;
+        ecurve->prefix_table[prefix].count = p_suffixes;
+        p++;
+
+        for (ps = 0; ps < p_suffixes; ps++, s++) {
+            res = f.suffix(stream, &ecurve->alphabet,
+                           &ecurve->suffix_table[s],
+                           &ecurve->class_table[s]);
+            if (res != EC_SUCCESS) {
+                return res;
+            }
+        }
+        prev_last = s - 1;
+    }
+    for (; p < EC_PREFIX_MAX + 1; p++) {
+        ecurve->prefix_table[p].first = prev_last;
+        ecurve->prefix_table[p].count = -1;
+    }
+    return EC_SUCCESS;
+}
 
 int
-ec_storage_load(ec_ecurve *ecurve, const char *path,
-                int (*load)(ec_ecurve *, FILE *))
+ec_storage_load_file(ec_ecurve *ecurve, const char *path, int format)
 {
     int res;
     FILE *stream;
+    const char *mode[] = {
+        [EC_STORAGE_BINARY] = "rb",
+        [EC_STORAGE_PLAIN] = "r",
+    };
 
-    stream = fopen(path, "r");
+    stream = fopen(path, mode[format]);
     if (!stream) {
         return EC_FAILURE;
     }
 
-    res = (*load)(ecurve, stream);
+    res = ec_storage_load_stream(ecurve, stream, format);
     fclose(stream);
 
     return res;
 }
 
 int
-ec_storage_load_binary(ec_ecurve *ecurve, FILE *stream)
+ec_storage_store_stream(const ec_ecurve *ecurve, FILE *stream, int format)
 {
-    struct load_funcs f = { &bin_load_header, &bin_load_prefix, &bin_load_suffix };
-    return load(stream, ecurve, f);
+    int res;
+    size_t p;
+    struct store_funcs
+    {
+        int (*header)(FILE *, const char *, size_t);
+        int (*prefix)(FILE *, const ec_alphabet *, ec_prefix, size_t);
+        int (*suffix)(FILE *, const ec_alphabet *, ec_suffix, ec_class);
+    } f;
+
+    switch (format) {
+        case EC_STORAGE_BINARY:
+            f.header = &bin_store_header;
+            f.prefix = &bin_store_prefix;
+            f.suffix = &bin_store_suffix;
+            break;
+        case EC_STORAGE_PLAIN:
+            f.header = &plain_store_header;
+            f.prefix = &plain_store_prefix;
+            f.suffix = &plain_store_suffix;
+            break;
+        default:
+            return EC_FAILURE;
+    }
+
+    res = f.header(stream, ecurve->alphabet.str, ecurve->suffix_count);
+
+    if (res != EC_SUCCESS) {
+        return res;
+    }
+
+    for (p = 0; p <= EC_PREFIX_MAX; p++) {
+        size_t suffix_count = ecurve->prefix_table[p].count;
+        size_t offset = ecurve->prefix_table[p].first;
+        size_t i;
+
+        if (!suffix_count || suffix_count == (size_t) -1) {
+            continue;
+        }
+
+        res = f.prefix(stream, &ecurve->alphabet, p, suffix_count);
+        if (res != EC_SUCCESS) {
+            return res;
+        }
+
+        for (i = 0; i < suffix_count; i++) {
+            res = f.suffix(stream, &ecurve->alphabet,
+                           ecurve->suffix_table[offset + i],
+                           ecurve->class_table[offset + i]);
+            if (res != EC_SUCCESS) {
+                return res;
+            }
+        }
+    }
+    return EC_SUCCESS;
 }
 
 int
-ec_storage_load_plain(ec_ecurve *ecurve, FILE *stream)
-{
-    struct load_funcs f = { &plain_load_header, &plain_load_prefix, &plain_load_suffix };
-    return load(stream, ecurve, f);
-}
-
-
-/*-------*
- * store *
- *-------*/
-
-int
-ec_storage_store(const ec_ecurve *ecurve, const char *path,
-                 int (*store)(const ec_ecurve *, FILE *))
+ec_storage_store_file(const ec_ecurve *ecurve, const char *path, int format)
 {
     int res;
     FILE *stream;
+    const char *mode[] = {
+        [EC_STORAGE_BINARY] = "wb",
+        [EC_STORAGE_PLAIN] = "w",
+    };
 
-    stream = fopen(path, "w");
+    stream = fopen(path, mode[format]);
     if (!stream) {
         return EC_FAILURE;
     }
 
-    res = (*store)(ecurve, stream);
+    res = ec_storage_store_stream(ecurve, stream, format);
     fclose(stream);
 
     return res;
-}
-
-int
-ec_storage_store_binary(const ec_ecurve *ecurve, FILE *stream)
-{
-    struct store_funcs f = { &bin_store_header, &bin_store_prefix, &bin_store_suffix };
-    return store(stream, ecurve, f);
-}
-
-int
-ec_storage_store_plain(const ec_ecurve *ecurve, FILE *stream)
-{
-    struct store_funcs f = { &plain_store_header, &plain_store_prefix, &plain_store_suffix };
-    return store(stream, ecurve, f);
 }
