@@ -113,7 +113,7 @@ int iter(void)
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
 
     res = ec_worditer_next(&iter, &index, &fwd, &rev);
-    assert_int_eq(res, EC_FAILURE, "iterator exhausted");
+    assert_int_eq(res, EC_ITER_STOP, "iterator exhausted");
 
     return SUCCESS;
 }
