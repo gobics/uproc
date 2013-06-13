@@ -124,8 +124,8 @@ align_suffixes(ec_dist dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
     size_t i;
     ec_amino a1, a2;
     for (i = 0; i < EC_SUFFIX_LEN; i++) {
-        a1 = s1 & ~(~0 << EC_AMINO_BITS);
-        a2 = s2 & ~(~0 << EC_AMINO_BITS);
+        a1 = s1 & EC_BITMASK(EC_AMINO_BITS);
+        a2 = s2 & EC_BITMASK(EC_AMINO_BITS);
         s1 >>= EC_AMINO_BITS;
         s2 >>= EC_AMINO_BITS;
         dist[i] = ec_distmat_get(&distmat[i], a1, a2);

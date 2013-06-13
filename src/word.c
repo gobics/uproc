@@ -4,8 +4,7 @@
 #include "ecurve/common.h"
 #include "ecurve/word.h"
 
-#define AMINO_MASK (~(~0 << EC_AMINO_BITS))
-#define AMINO_AT(x, n) (((x) >> (EC_AMINO_BITS * (n))) & AMINO_MASK)
+#define AMINO_AT(x, n) (((x) >> (EC_AMINO_BITS * (n))) & EC_BITMASK(EC_AMINO_BITS))
 
 int
 ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet *alpha)
@@ -59,8 +58,10 @@ ec_word_append(struct ec_word *word, ec_amino amino)
     ec_amino a = AMINO_AT(word->suffix, EC_SUFFIX_LEN - 1);
 
     /* "shift" left */
-    word->prefix = (word->prefix * EC_ALPHABET_SIZE) % (EC_PREFIX_MAX + 1);
-    word->suffix = EC_SUFFIX_MASK(word->suffix << EC_AMINO_BITS);
+    word->prefix *= EC_ALPHABET_SIZE;
+    word->prefix %= EC_PREFIX_MAX + 1;
+    word->suffix <<= EC_AMINO_BITS;
+    word->suffix &= EC_BITMASK(EC_SUFFIX_LEN * EC_AMINO_BITS);
 
     /* append AA */
     word->prefix += a;

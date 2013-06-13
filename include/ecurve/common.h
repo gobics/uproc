@@ -21,6 +21,8 @@ enum {
     EC_ITER_STOP,
 };
 
+#define EC_BITMASK(n) (~(~0ULL << (n)))
+
 /** Length of the suffix part of a word */
 #define EC_PREFIX_LEN 6
 
@@ -79,9 +81,6 @@ typedef uint64_t ec_suffix;
 
 /** scanf() format for suffixes */
 #define EC_SUFFIX_SCN SCNu64
-
-/** Select only the bits that are relevant for a suffix */
-#define EC_SUFFIX_MASK(x) ((x) & ~(~0ULL << (EC_AMINO_BITS * EC_SUFFIX_LEN)))
 
 
 /** Identifier of a protein class (or "protein family"). */
