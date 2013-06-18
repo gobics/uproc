@@ -8,9 +8,12 @@
 
 #include <stdint.h>
 
-typedef struct ec_bst ec_bst;
+/** Type representing a binary search tree */
+typedef struct ec_bst_s ec_bst;
 
-struct ec_bst {
+/** Struct defining a binary search tree */
+struct ec_bst_s {
+    /** The root node */
     struct bstnode *root;
 };
 
