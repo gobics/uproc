@@ -49,7 +49,7 @@ int ec_classify_protein(const char *seq,
                         const ec_ecurve *fwd_ecurve,
                         const ec_ecurve *rev_ecurve,
                         ec_class *predict_cls,
-                        ec_dist *predict_score);
+                        double *predict_score);
 
 
 /** Classify DNA/RNA sequence
@@ -68,6 +68,6 @@ int ec_classify_dna(const char *seq,
                     const ec_ecurve *fwd_ecurve,
                     const ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,
-                    ec_dist *predict_score);
+                    double *predict_score);
 
 #endif

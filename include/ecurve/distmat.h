@@ -9,20 +9,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "ecurve/common.h"
 #include "ecurve/alphabet.h"
-
-/** Alignment distance between two amino acids */
-typedef double ec_dist;
-
-/** printf() format for #ec_dist */
-#define EC_DIST_PRI "g"
-
-/** scanf() format for #ec_dist */
-#define EC_DIST_SCN "lf"
-
-/** Smallest (or sufficiently small) value of #ec_dist */
-#define EC_DIST_MIN -HUGE_VAL
-
 
 /** Matrix of amino acid distances */
 typedef struct ec_distmat_s ec_distmat;
@@ -33,7 +21,7 @@ typedef struct ec_distmat_s ec_distmat;
  */
 struct ec_distmat_s {
     /** Matrix containing distances */
-    ec_dist dists[EC_ALPHABET_SIZE << EC_AMINO_BITS];
+    double dists[EC_ALPHABET_SIZE << EC_AMINO_BITS];
 };
 
 /** Calculate index for given amino acids x, y
@@ -63,7 +51,7 @@ int ec_distmat_init(ec_distmat *mat);
  *
  * \return  distance between x and y
  */
-ec_dist ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
+double ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
 
 /** Set distance of two amino acids
  *
@@ -77,7 +65,7 @@ ec_dist ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-void ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist);
+void ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, double dist);
 
 /** Load `n` distance matrices from a file, using the given loader function
  *

@@ -10,11 +10,11 @@
 
 struct sc {
     size_t index;
-    ec_dist total, dist[EC_SUFFIX_LEN];
+    double total, dist[EC_SUFFIX_LEN];
 };
 
 struct sc_max {
-    ec_dist score;
+    double score;
     ec_class cls;
 };
 
@@ -26,7 +26,7 @@ sc_init(struct sc *s)
     s->index = -1;
     s->total = 0.0;
     for (i = 0; i < EC_SUFFIX_LEN; i++) {
-        s->dist[i] = EC_DIST_MIN;
+        s->dist[i] = -EC_INFINITY;
     }
 }
 
@@ -41,7 +41,7 @@ sc_new(void)
 }
 
 static void
-sc_add(struct sc *score, size_t index, ec_dist dist[static EC_SUFFIX_LEN])
+sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN])
 {
     size_t i, diff;
 
@@ -66,7 +66,7 @@ sc_add(struct sc *score, size_t index, ec_dist dist[static EC_SUFFIX_LEN])
     score->index = index;
 }
 
-static ec_dist
+static double
 sc_finalize(struct sc *score)
 {
     size_t i;
@@ -80,7 +80,7 @@ static int
 scores_finalize_cb(intmax_t key, void *data, void *opaque)
 {
     ec_class cls = key;
-    ec_dist s = sc_finalize(data);
+    double s = sc_finalize(data);
     struct sc_max *m = opaque;
     if (s > m->score) {
         m->score = s;
@@ -90,10 +90,10 @@ scores_finalize_cb(intmax_t key, void *data, void *opaque)
 }
 
 static int
-scores_finalize(ec_bst *scores, ec_class *predict_cls, ec_dist *predict_score)
+scores_finalize(ec_bst *scores, ec_class *predict_cls, double *predict_score)
 {
     int res;
-    struct sc_max m = { EC_DIST_MIN, -1 };
+    struct sc_max m = { -EC_INFINITY, -1 };
     res = ec_bst_walk(scores, &scores_finalize_cb, &m);
     if (res == EC_SUCCESS) {
         *predict_cls = m.cls;
@@ -104,7 +104,7 @@ scores_finalize(ec_bst *scores, ec_class *predict_cls, ec_dist *predict_score)
 
 static int
 scores_add(ec_bst *scores, ec_class cls, size_t index,
-           ec_dist dist[static EC_SUFFIX_LEN])
+           double dist[static EC_SUFFIX_LEN])
 {
     struct sc *s = ec_bst_get(scores, cls);
     if (!s) {
@@ -120,7 +120,7 @@ scores_add(ec_bst *scores, ec_class cls, size_t index,
 }
 
 static void
-align_suffixes(ec_dist dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
+align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
                const ec_distmat distmat[static EC_SUFFIX_LEN])
 {
     size_t i;
@@ -144,7 +144,7 @@ scores_add_word(ec_bst *scores, const struct ec_word *word, size_t index,
         lower_nb = EC_WORD_INITIALIZER,
         upper_nb = EC_WORD_INITIALIZER;
     ec_class lower_cls, upper_cls;
-    ec_dist dist[EC_SUFFIX_LEN];
+    double dist[EC_SUFFIX_LEN];
 
     if (!ecurve) {
         return EC_SUCCESS;
@@ -167,7 +167,7 @@ ec_classify_protein(const char *seq,
                     const ec_ecurve *fwd_ecurve,
                     const ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,
-                    ec_dist *predict_score)
+                    double *predict_score)
 {
     int res;
     ec_bst scores;
@@ -194,7 +194,7 @@ ec_classify_protein(const char *seq,
     }
     res = EC_SUCCESS;
     if (ec_bst_isempty(&scores)) {
-        *predict_score = EC_DIST_MIN;
+        *predict_score = -EC_INFINITY;
     }
     else {
         scores_finalize(&scores, predict_cls, predict_score);
@@ -215,7 +215,7 @@ ec_classify_dna(const char *seq,
                 const ec_ecurve *fwd_ecurve,
                 const ec_ecurve *rev_ecurve,
                 ec_class *predict_cls,
-                ec_dist *predict_score)
+                double *predict_score)
 {
     int res;
     unsigned i;
@@ -238,7 +238,7 @@ ec_classify_dna(const char *seq,
         }
         else {
             predict_cls[i] = -1;
-            predict_score[i] = EC_DIST_MIN;
+            predict_score[i] = -EC_INFINITY;
         }
     }
 

@@ -16,7 +16,7 @@ ec_distmat_init(ec_distmat *mat)
     return EC_SUCCESS;
 }
 
-ec_dist
+double
 ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y)
 {
     const struct ec_distmat_s *m = mat;
@@ -24,7 +24,7 @@ ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y)
 }
 
 void
-ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, ec_dist dist)
+ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, double dist)
 {
     struct ec_distmat_s *m = mat;
     m->dists[EC_DISTMAT_INDEX(x, y)] = dist;
@@ -97,7 +97,7 @@ ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg)
         row[n] = i;
 
         for (p = line + 1, r = 0, k = 0; k <= n; k++) {
-            int dist;
+            double dist;
             do {
                 dist = strtod(p, &p);
             } while (row[k] != r++);
@@ -114,11 +114,11 @@ int
 ec_distmat_load_plain(ec_distmat *mat, FILE *stream, void *arg)
 {
     size_t i, k;
-    ec_dist dist;
+    double dist;
     (void) arg;
     for (i = 0; i < EC_ALPHABET_SIZE; i++) {
         for (k = 0; k < EC_ALPHABET_SIZE; k++) {
-            if (fscanf(stream, "%" EC_DIST_SCN, &dist) != 1) {
+            if (fscanf(stream, "%lf", &dist) != 1) {
                 return EC_FAILURE;
             }
             ec_distmat_set(mat, i, k, dist);

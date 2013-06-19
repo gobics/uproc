@@ -16,7 +16,7 @@ int sc_add_finalize(void)
 {
     DESC("sc_add and sc_finalize");
     struct sc score;
-    ec_dist dist[EC_SUFFIX_LEN] = { 0.0 };
+    double dist[EC_SUFFIX_LEN] = { 0.0 };
 
     sc_init(&score);
     dist[0] = 0.5;
@@ -56,8 +56,8 @@ int sc_add_finalize(void)
 int scores_add_finalize(void)
 {
     ec_bst scores;
-    ec_dist dist[EC_SUFFIX_LEN] = { 0.0 };
-    ec_dist predict_score;
+    double dist[EC_SUFFIX_LEN] = { 0.0 };
+    double predict_score;
     ec_class predict_cls;
 
     DESC("scores_add and scores_finalize");
