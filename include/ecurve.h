@@ -22,4 +22,5 @@
 #include <ecurve/distmat.h>
 #include <ecurve/storage.h>
 #include <ecurve/mmap.h>
+#include <ecurve/seqio.h>
 #endif
