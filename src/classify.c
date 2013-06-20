@@ -6,6 +6,7 @@
 #include "ecurve/ecurve.h"
 #include "ecurve/distmat.h"
 #include "ecurve/orf.h"
+#include "ecurve/matrix.h"
 #include "ecurve/classify.h"
 
 struct sc {
@@ -208,9 +209,8 @@ error:
 int
 ec_classify_dna(const char *seq,
                 enum ec_orf_mode mode,
-                const double codon_scores[EC_CODON_COUNT],
-                double min_score,
-                size_t min_length,
+                const ec_matrix *codon_scores,
+                const ec_matrix *thresholds,
                 const ec_distmat distmat[static EC_SUFFIX_LEN],
                 const ec_ecurve *fwd_ecurve,
                 const ec_ecurve *rev_ecurve,
@@ -222,8 +222,7 @@ ec_classify_dna(const char *seq,
     char *orf[EC_ORF_FRAMES] = { NULL };
     size_t orf_sz[EC_ORF_FRAMES];
 
-    res = ec_orf_chained(seq, mode, codon_scores, min_score, min_length, orf,
-                         orf_sz);
+    res = ec_orf_chained(seq, mode, codon_scores, thresholds, orf, orf_sz);
     if (res != EC_SUCCESS) {
         goto error;
     }

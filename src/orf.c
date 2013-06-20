@@ -3,9 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "ecurve/common.h"
 #include "ecurve/codon.h"
+#include "ecurve/matrix.h"
 #include "ecurve/orf.h"
 #include "codon_tables.h"
 
@@ -45,7 +47,7 @@ tableindex_to_codon(int idx)
 
 static void
 gen_score_table(double table[static EC_BINARY_CODON_COUNT],
-                const double scores[static EC_CODON_COUNT])
+                const ec_matrix *scores)
 {
     ec_codon c1, c2;
     for (c1 = 0; c1 < EC_BINARY_CODON_COUNT; c1++) {
@@ -55,7 +57,7 @@ gen_score_table(double table[static EC_BINARY_CODON_COUNT],
             for (i = 0; i < EC_CODON_COUNT; i++) {
                 c2 = tableindex_to_codon(i);
                 if (!CODON_IS_STOP(c2) && ec_codon_match(c2, c1)) {
-                    s += scores[i];
+                    s += ec_matrix_get(scores, i, 0);
                     count++;
                 }
             }
@@ -87,9 +89,47 @@ orf_add_codon(struct ec_orf *o, size_t *sz, ec_codon c, double score)
     return EC_SUCCESS;
 }
 
+static void
+gc_content(const char *seq, double *gc, size_t *len)
+{
+    static unsigned gc_map[UCHAR_MAX + 1] = {
+        [(unsigned char)'G'] = 1,
+        [(unsigned char)'C'] = 1,
+        [(unsigned char)'g'] = 1,
+        [(unsigned char)'c'] = 1,
+    };
+    size_t i;
+    unsigned count;
+
+    for (i = count = 0; seq[i]; i++) {
+        count += gc_map[(unsigned char)seq[i]];
+    }
+    *gc = (double) count / i;
+    *len = i;
+}
+
+static double
+get_threshold(const ec_matrix *thresholds, const char *seq)
+{
+    double gc;
+    size_t r, c, rows, cols;
+
+    gc_content(seq, &gc, &c);
+    ec_matrix_dimensions(thresholds, &rows, &cols);
+
+    r = gc * 100;
+    if (r >= rows) {
+        r = rows - 1;
+    }
+    if (c >= cols) {
+        c = cols - 1;
+    }
+    return ec_matrix_get(thresholds, r, c);
+}
+
 int
 ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                const double codon_scores[static EC_CODON_COUNT])
+                const ec_matrix *codon_scores)
 {
     unsigned i;
     struct ec_orfiter_s *it = iter;
@@ -105,7 +145,6 @@ ec_orfiter_init(ec_orfiter *iter, const char *seq,
             return EC_FAILURE;
         }
     }
-
     gen_score_table(it->codon_scores, codon_scores);
     return EC_SUCCESS;
 }
@@ -245,8 +284,8 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 int
 ec_orf_chained(const char *seq,
                enum ec_orf_mode mode,
-               const double codon_scores[static EC_CODON_COUNT],
-               double min_score, size_t min_length,
+               const ec_matrix *codon_scores,
+               const ec_matrix *thresholds,
                char **buf, size_t *sz)
 {
     int res;
@@ -254,6 +293,14 @@ ec_orf_chained(const char *seq,
     struct ec_orf orf;
     unsigned frame;
     ec_orfiter iter;
+    double min_score = 0.0;
+
+    if (codon_scores && thresholds) {
+        min_score = get_threshold(thresholds, seq);
+    }
+    else {
+        min_score = -EC_INFINITY;
+    }
 
     res = ec_orfiter_init(&iter, seq, codon_scores);
     if (res != EC_SUCCESS) {
@@ -263,7 +310,7 @@ ec_orf_chained(const char *seq,
     while ((res = ec_orfiter_next(&iter, &orf, &frame)) == EC_SUCCESS) {
         char *p;
         size_t len_new;
-        if (orf.length < min_length || (codon_scores && orf.score < min_score)) {
+        if (orf.length < EC_WORD_LEN || orf.score < min_score) {
             continue;
         }
         frame %= mode;

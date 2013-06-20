@@ -7,6 +7,7 @@
  */
 
 #include "ecurve/common.h"
+#include "ecurve/matrix.h"
 
 /** Number of possible frames (forward and reverse) */
 #define EC_ORF_FRAMES 6
@@ -75,11 +76,11 @@ enum ec_orf_mode {
  *
  * \param iter          _OUT_: iterator object
  * \param seq           sequence to iterate over
- * \param codon_scores  codon score vector
+ * \param codon_scores  codon scores, must be a #EC_CODON_COUNT x 1 matrix
  *
  */
 int ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                    const double codon_scores[static EC_CODON_COUNT]);
+                    const ec_matrix *codon_scores);
 
 /** Free memory of an ORF iterator */
 void ec_orfiter_destroy(ec_orfiter *iter);
@@ -98,8 +99,9 @@ int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
 
 /** Extract ORFs from a DNA/RNA sequence
  *
- * Concatenates all ORFs of length >= `min_length` and sum of codon scores >=
- * `min_score` separated by #EC_ORF_SEPARATOR.
+ * Concatenates all ORFs of length >= #EC_WORD_LEN and a minimum score obtained
+ * from `thresholds`, depending on the GC content and sequence length.
+ * The result is a string with all those ORFs, separated by #EC_ORF_SEPARATOR.
  *
  * For each n between 0 and `mode - 1`, the buffer `buf[n]` must be a null
  * pointer or pointer to allocated storage of `sz[n]` bytes. If `buf[n]` is too
@@ -109,17 +111,15 @@ int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
  *
  * \param seq           DNA/RNA sequence
  * \param mode          how different frames should be treated
- * \param codon_scores  codon score table
- * \param min_score     minimum codon score sum
- * \param min_length    minimum ORF length
+ * \param codon_scores  codon scores, must be a #EC_CODON_COUNT x 1 matrix
+ * \param thresholds    score threshold matrix
  * \param buf           buffer(s) for output strings
  * \param sz            sizes of output buffers
  */
 int ec_orf_chained(const char *seq,
                    enum ec_orf_mode mode,
-                   const double codon_scores[static EC_CODON_COUNT],
-                   double min_score,
-                   size_t min_length,
+                   const ec_matrix *codon_scores,
+                   const ec_matrix *thresholds,
                    char **buf,
                    size_t *sz);
 

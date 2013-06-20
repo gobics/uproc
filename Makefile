@@ -1,6 +1,6 @@
 include config.mk
 
-MODULES := ecurve alphabet distmat word storage bst classify orf codon
+MODULES := ecurve alphabet distmat word storage bst classify orf codon matrix
 
 ifdef HAVE_MMAP
 MODULES += mmap
