@@ -44,14 +44,14 @@ sc_new(void)
 static void
 sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN])
 {
-    size_t i, diff;
+    size_t i, diff = 0;
 
-    if (score->index == (size_t) -1) {
-        diff = 0;
-    }
-    else {
+    if (score->index != (size_t) -1) {
         assert(index >= score->index);
         diff = index - score->index;
+        if (diff > EC_SUFFIX_LEN) {
+            diff = EC_SUFFIX_LEN;
+        }
         for (i = 0; i < diff; i++) {
             score->total += score->dist[i];
         }
