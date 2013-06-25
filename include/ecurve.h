@@ -13,14 +13,15 @@
  *
  */
 
-#include <ecurve/common.h>
-#include <ecurve/ecurve.h>
-#include <ecurve/word.h>
-#include <ecurve/codon.h>
-#include <ecurve/orf.h>
 #include <ecurve/alphabet.h>
+#include <ecurve/classify.h>
+#include <ecurve/codon.h>
+#include <ecurve/common.h>
 #include <ecurve/distmat.h>
-#include <ecurve/storage.h>
+#include <ecurve/ecurve.h>
 #include <ecurve/mmap.h>
+#include <ecurve/orf.h>
 #include <ecurve/seqio.h>
+#include <ecurve/storage.h>
+#include <ecurve/word.h>
 #endif
