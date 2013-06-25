@@ -9,6 +9,8 @@
 #include "ecurve/common.h"
 #include "ecurve/distmat.h"
 #include "ecurve/ecurve.h"
+#include "ecurve/matrix.h"
+#include "ecurve/orf.h"
 
 
 /** Classify amino acid sequence
