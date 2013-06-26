@@ -26,6 +26,14 @@ struct ec_orf {
     double score;
 };
 
+/** Codon score table */
+typedef struct ec_orf_codonscores_s ec_orf_codonscores;
+
+/** Struct containing codon score table */
+struct ec_orf_codonscores_s {
+    double values[EC_BINARY_CODON_COUNT];
+};
+
 /** Type to iterate over a DNA/RNA sequence and yield all possible ORFs */
 typedef struct ec_orfiter_s ec_orfiter;
 
@@ -34,12 +42,8 @@ struct ec_orfiter_s {
     /** current position in the DNA/RNA sequence */
     const char *pos;
 
-    /** Codon score table
-     *
-     * Calculated from the third argument to ec_orfiter_init() such that
-     * the score of a codon mask is the mean of all codons it matches
-     */
-    double codon_scores[EC_BINARY_CODON_COUNT];
+    /** Codon score table */
+    const struct ec_orf_codonscores_s *codon_scores;
 
     /** Number of processed nucleotide symbols */
     size_t nt_count;
@@ -72,6 +76,21 @@ enum ec_orf_mode {
     EC_ORF_PER_FRAME = EC_ORF_FRAMES,
 };
 
+/** Load codon scores from file */
+int ec_orf_codonscores_load_file(ec_orf_codonscores *scores, const char *path);
+
+/** Load codon scores from stream */
+int ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream);
+
+/** Initialize codon scores from a matrix
+ *
+ * \param scores        score table to initialize
+ * \param score_matrix  a #EC_CODON_COUNT x 1 matrix containing the scores for
+ *                      each "real" codon
+ */
+void ec_orf_codonscores_init(ec_orf_codonscores *scores,
+                             const ec_matrix *score_matrix);
+
 /** Initialize ORF iterator
  *
  * \param iter          _OUT_: iterator object
@@ -80,7 +99,7 @@ enum ec_orf_mode {
  *
  */
 int ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                    const ec_matrix *codon_scores);
+                    const ec_orf_codonscores *codon_scores);
 
 /** Free memory of an ORF iterator */
 void ec_orfiter_destroy(ec_orfiter *iter);
@@ -101,6 +120,13 @@ int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
  *
  * Concatenates all ORFs of length >= #EC_WORD_LEN and a minimum score obtained
  * from `thresholds`, depending on the GC content and sequence length.
+ * The score of an ORF is obtained by summing up the entries of `codon_scores`
+ * for each codon in the sequence.
+ *
+ * If `codon_scores` is a null pointer, each codon gets a zero score, if
+ * `thresholds` is a null pointer, every ORF that is long enough will be
+ * accepted.
+ *
  * The result is a string with all those ORFs, separated by #EC_ORF_SEPARATOR.
  *
  * For each n between 0 and `mode - 1`, the buffer `buf[n]` must be a null
@@ -111,14 +137,14 @@ int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
  *
  * \param seq           DNA/RNA sequence
  * \param mode          how different frames should be treated
- * \param codon_scores  codon scores, must be a #EC_CODON_COUNT x 1 matrix
+ * \param codon_scores  codon scores
  * \param thresholds    score threshold matrix
  * \param buf           buffer(s) for output strings
  * \param sz            sizes of output buffers
  */
 int ec_orf_chained(const char *seq,
                    enum ec_orf_mode mode,
-                   const ec_matrix *codon_scores,
+                   const ec_orf_codonscores *codon_scores,
                    const ec_matrix *thresholds,
                    char **buf,
                    size_t *sz);

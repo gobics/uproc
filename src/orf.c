@@ -34,7 +34,7 @@ reverse_str(char *s)
 }
 
 static ec_codon
-tableindex_to_codon(int idx)
+scoreindex_to_codon(int idx)
 {
     unsigned i = 3;
     ec_codon c = 0;
@@ -43,30 +43,6 @@ tableindex_to_codon(int idx)
         idx >>= 2;
     }
     return c;
-}
-
-static void
-gen_score_table(double table[static EC_BINARY_CODON_COUNT],
-                const ec_matrix *scores)
-{
-    ec_codon c1, c2;
-    for (c1 = 0; c1 < EC_BINARY_CODON_COUNT; c1++) {
-        unsigned i, count = 0;
-        double s = 0.0;
-        if (scores) {
-            for (i = 0; i < EC_CODON_COUNT; i++) {
-                c2 = tableindex_to_codon(i);
-                if (!CODON_IS_STOP(c2) && ec_codon_match(c2, c1)) {
-                    s += ec_matrix_get(scores, i, 0);
-                    count++;
-                }
-            }
-            table[c1] = count ? s / count : 0.0;
-        }
-        else {
-            table[c1] = 0.0;
-        }
-    }
 }
 
 static int
@@ -128,8 +104,63 @@ get_threshold(const ec_matrix *thresholds, const char *seq)
 }
 
 int
+ec_orf_codonscores_load_file(ec_orf_codonscores *scores, const char *path)
+{
+    int res;
+    ec_matrix m;
+
+    res = ec_matrix_load_file(&m, path);
+    if (res != EC_SUCCESS) {
+        return res;
+    }
+    ec_orf_codonscores_init(scores, &m);
+    ec_matrix_destroy(&m);
+    return EC_SUCCESS;
+}
+
+int
+ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream)
+{
+    int res;
+    ec_matrix m;
+
+    res = ec_matrix_load_stream(&m, stream);
+    if (res != EC_SUCCESS) {
+        return res;
+    }
+    ec_orf_codonscores_init(scores, &m);
+    ec_matrix_destroy(&m);
+    return EC_SUCCESS;
+}
+
+void
+ec_orf_codonscores_init(ec_orf_codonscores *scores,
+                        const ec_matrix *score_matrix)
+{
+    ec_codon c1, c2;
+    struct ec_orf_codonscores_s *s = scores;
+    for (c1 = 0; c1 < EC_BINARY_CODON_COUNT; c1++) {
+        unsigned i, count = 0;
+        double sum = 0.0;
+        if (score_matrix) {
+            for (i = 0; i < EC_CODON_COUNT; i++) {
+                c2 = scoreindex_to_codon(i);
+                if (!CODON_IS_STOP(c2) && ec_codon_match(c2, c1)) {
+                    sum += ec_matrix_get(score_matrix, i, 0);
+                    count++;
+                }
+            }
+            s->values[c1] = count ? sum / count : 0.0;
+        }
+        else {
+            s->values[c1] = 0.0;
+        }
+    }
+}
+
+int
 ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                const ec_matrix *codon_scores)
+                const ec_orf_codonscores *codon_scores)
 {
     unsigned i;
     struct ec_orfiter_s *it = iter;
@@ -145,15 +176,18 @@ ec_orfiter_init(ec_orfiter *iter, const char *seq,
             return EC_FAILURE;
         }
     }
-    gen_score_table(it->codon_scores, codon_scores);
+    it->codon_scores = codon_scores;
     return EC_SUCCESS;
 }
 
 void
 ec_orfiter_destroy(ec_orfiter *iter)
 {
+    unsigned i;
     struct ec_orfiter_s *it = iter;
-    free(it->orf[0].data);
+    for (i = 0; i < EC_ORF_FRAMES; i++) {
+        free(it->orf[i].data);
+    }
 }
 
 int
@@ -235,12 +269,13 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
                 continue;
             }
 
-#define ADD_CODON(codon, frame) do {                                \
-    res = orf_add_codon(&it->orf[(frame)], &it->data_sz[(frame)],   \
-                        codon, it->codon_scores[codon]);            \
-    if (res != EC_SUCCESS) {                                        \
-        return EC_FAILURE;                                          \
-    }                                                               \
+#define ADD_CODON(codon, frame) do {                                        \
+    res = orf_add_codon(&it->orf[(frame)], &it->data_sz[(frame)], codon,    \
+                        it->codon_scores ?                                  \
+                            it->codon_scores->values[codon] : 0.0);         \
+    if (res != EC_SUCCESS) {                                                \
+        return EC_FAILURE;                                                  \
+    }                                                                       \
 } while (0)
 
             c_fwd = it->codon[it->frame];
@@ -284,7 +319,7 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 int
 ec_orf_chained(const char *seq,
                enum ec_orf_mode mode,
-               const ec_matrix *codon_scores,
+               const ec_orf_codonscores *codon_scores,
                const ec_matrix *thresholds,
                char **buf, size_t *sz)
 {
@@ -295,7 +330,7 @@ ec_orf_chained(const char *seq,
     ec_orfiter iter;
     double min_score = 0.0;
 
-    if (codon_scores && thresholds) {
+    if (thresholds) {
         min_score = get_threshold(thresholds, seq);
     }
     else {

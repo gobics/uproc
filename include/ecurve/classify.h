@@ -63,7 +63,7 @@ int ec_classify_protein(const char *seq,
  */
 int ec_classify_dna(const char *seq,
                     enum ec_orf_mode mode,
-                    const ec_matrix *codon_scores,
+                    const ec_orf_codonscores *codon_scores,
                     const ec_matrix *thresholds,
                     const ec_distmat distmat[static EC_SUFFIX_LEN],
                     const ec_ecurve *fwd_ecurve,
