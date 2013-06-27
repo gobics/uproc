@@ -21,16 +21,10 @@ enum {
     EC_LOOKUP_OOB,
 };
 
-/** Type for an ecurve */
-typedef struct ec_ecurve_s ec_ecurve;
-
-/** Struct defining an ecurve
- *
- * Applications should use the #ec_ecurve typedef instead.
- */
-struct ec_ecurve_s {
+/** Struct defining an ecurve */
+struct ec_ecurve {
     /** Translation alphabet */
-    ec_alphabet alphabet;
+    struct ec_alphabet alphabet;
 
     /** Number of suffixes */
     size_t suffix_count;
@@ -83,13 +77,14 @@ struct ec_ecurve_s {
  * \retval #EC_SUCCESS  ecurve was initialized successfully
  * \retval #EC_FAILURE  memory allocation failed
  */
-int ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count);
+int ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
+                   size_t suffix_count);
 
 /** Free memory of an ecurve object
  *
  * \param ecurve    ecurve to destroy
  */
-void ec_ecurve_destroy(ec_ecurve *ecurve);
+void ec_ecurve_destroy(struct ec_ecurve *ecurve);
 
 /** Obtain translation alphabet
  *
@@ -98,7 +93,8 @@ void ec_ecurve_destroy(ec_ecurve *ecurve);
  * \param ecurve    an ecurve object
  * \param alpha     _OUT_: alphabet of `ecurve`
  */
-void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha);
+void ec_ecurve_get_alphabet(const struct ec_ecurve *ecurve,
+                            struct ec_alphabet *alpha);
 
 /** Find the closest neighbours of a word in the ecurve
  *
@@ -122,7 +118,7 @@ void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha);
  * \return `#EC_LOOKUP_EXACT`, `#EC_LOOKUP_OOB` or `#EC_LOOKUP_INEXACT` as
  * described above.
  */
-int ec_ecurve_lookup(const ec_ecurve *ecurve, const struct ec_word *word,
+int ec_ecurve_lookup(const struct ec_ecurve *ecurve, const struct ec_word *word,
                      struct ec_word *lower_neighbour, ec_class *lower_class,
                      struct ec_word *upper_neighbour, ec_class *upper_class);
 

@@ -1,7 +1,7 @@
 #include "test.h"
 #include "ecurve.h"
 
-ec_alphabet a;
+struct ec_alphabet a;
 
 void setup(void)
 {}

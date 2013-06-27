@@ -30,7 +30,7 @@ enum ec_storage_format {
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format);
+int ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format);
 
 /** Load ecurve from a file
  *
@@ -44,7 +44,7 @@ int ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_storage_load_file(ec_ecurve *ecurve, const char *path, int format);
+int ec_storage_load_file(struct ec_ecurve *ecurve, const char *path, int format);
 
 /** Write ecurve to FILE stream
  *
@@ -55,7 +55,7 @@ int ec_storage_load_file(ec_ecurve *ecurve, const char *path, int format);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_storage_store_stream(const ec_ecurve *ecurve, FILE *stream, int format);
+int ec_storage_store_stream(const struct ec_ecurve *ecurve, FILE *stream, int format);
 
 /** Store ecurve to a file
  *
@@ -68,6 +68,6 @@ int ec_storage_store_stream(const ec_ecurve *ecurve, FILE *stream, int format);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_storage_store_file(const ec_ecurve *ecurve, const char *path, int format);
+int ec_storage_store_file(const struct ec_ecurve *ecurve, const char *path, int format);
 
 #endif

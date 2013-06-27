@@ -17,10 +17,10 @@
 #define TMPFILE "t/ecurve.tmp"
 #define elements_of(a) (sizeof (a) / sizeof (a)[0])
 
-ec_ecurve ecurve;
+struct ec_ecurve ecurve;
 ec_suffix suffix_table[] = { 1, 3, 5, 10, 44, 131, 133, 1202, 4551ULL << (3 * EC_AMINO_BITS) };
 ec_class class_table[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
-ec_alphabet alpha;
+struct ec_alphabet alpha;
 
 void setup(void)
 {
@@ -75,7 +75,7 @@ int test_binary_bufsz(void)
 int test_storage(int format)
 {
     size_t i;
-    ec_ecurve new_curve;
+    struct ec_ecurve new_curve;
 
     assert_int_eq(ec_storage_store_file(&ecurve, TMPFILE, format),
                   EC_SUCCESS, "storing ecurve succeeded");
@@ -115,7 +115,7 @@ int test_mmap(void)
 {
 #if HAVE_MMAP
     size_t i;
-    ec_ecurve new_curve;
+    struct ec_ecurve new_curve;
 
     DESC("mmapp()ing ecurve");
 

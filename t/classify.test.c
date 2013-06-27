@@ -55,7 +55,7 @@ int sc_add_finalize(void)
 
 int scores_add_finalize(void)
 {
-    ec_bst scores;
+    struct ec_bst scores;
     double dist[EC_SUFFIX_LEN] = { 0.0 };
     double predict_score;
     ec_class predict_cls;

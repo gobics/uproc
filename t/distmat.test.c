@@ -1,7 +1,7 @@
 #include "test.h"
 #include "ecurve.h"
 
-ec_alphabet alpha;
+struct ec_alphabet alpha;
 
 void setup(void)
 {
@@ -15,7 +15,7 @@ void teardown(void)
 int blosum(void)
 {
     int i, k, res;
-    ec_distmat mat;
+    struct ec_distmat mat;
     DESC("reading BLOSUM matrix");
 
     res = ec_distmat_load(&mat, PATH_PREFIX "IDENTITY", ec_distmat_load_blosum, &alpha);
@@ -41,7 +41,7 @@ int blosum(void)
 int blosum_twice(void)
 {
     int i, k, res;
-    ec_distmat mat[2];
+    struct ec_distmat mat[2];
     DESC("reading two BLOSUM matrices from one file");
 
     res = ec_distmat_load_many(mat, 2, PATH_PREFIX "IDENTITY_TWICE",

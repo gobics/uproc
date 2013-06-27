@@ -47,9 +47,9 @@
  * \retval #EC_SUCCESS  else
  */
 int ec_classify_protein(const char *seq,
-                        const ec_distmat distmat[static EC_SUFFIX_LEN],
-                        const ec_ecurve *fwd_ecurve,
-                        const ec_ecurve *rev_ecurve,
+                        const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                        const struct ec_ecurve *fwd_ecurve,
+                        const struct ec_ecurve *rev_ecurve,
                         ec_class *predict_cls,
                         double *predict_score);
 
@@ -63,11 +63,11 @@ int ec_classify_protein(const char *seq,
  */
 int ec_classify_dna(const char *seq,
                     enum ec_orf_mode mode,
-                    const ec_orf_codonscores *codon_scores,
-                    const ec_matrix *thresholds,
-                    const ec_distmat distmat[static EC_SUFFIX_LEN],
-                    const ec_ecurve *fwd_ecurve,
-                    const ec_ecurve *rev_ecurve,
+                    const struct ec_orf_codonscores *codon_scores,
+                    const struct ec_matrix *thresholds,
+                    const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const struct ec_ecurve *fwd_ecurve,
+                    const struct ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,
                     double *predict_score);
 

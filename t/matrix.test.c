@@ -15,7 +15,7 @@ void teardown(void)
 
 int init(void)
 {
-    ec_matrix m;
+    struct ec_matrix m;
     double v[10 * 10] = {
         [1] = 0.5,
         [11] = 1.0, 1.5,
@@ -40,7 +40,7 @@ int init(void)
 
 int storage(void)
 {
-    ec_matrix m;
+    struct ec_matrix m;
     double v[10 * 10] = {
         [1] = 0.5,
         [11] = 1.0, 1.5,

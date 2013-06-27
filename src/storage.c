@@ -31,12 +31,16 @@
 #define BIN_BUFSZ 12
 
 static int bin_load_header(FILE *stream, char *alpha, size_t *suffix_count);
-static int bin_load_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix *prefix, size_t *suffix_count);
-static int bin_load_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix *suffix, ec_class *cls);
+static int bin_load_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                           ec_prefix *prefix, size_t *suffix_count);
+static int bin_load_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                           ec_suffix *suffix, ec_class *cls);
 
 static int bin_store_header(FILE *stream, const char *alpha, size_t suffix_count);
-static int bin_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix, size_t suffix_count);
-static int bin_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix, ec_class cls);
+static int bin_store_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                            ec_prefix prefix, size_t suffix_count);
+static int bin_store_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                            ec_suffix suffix, ec_class cls);
 
 
 #define STR1(x) #x
@@ -53,13 +57,24 @@ static int bin_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix su
 #define PLAIN_SUFFIX_SCN "%"  STR(EC_SUFFIX_LEN) "c %" EC_CLASS_SCN
 
 static int plain_read_line(FILE *stream, char *line, size_t n);
-static int plain_load_header(FILE *stream, char *alpha, size_t *suffix_count);
-static int plain_load_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix *prefix, size_t *suffix_count);
-static int plain_load_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix *suffix, ec_class *cls);
 
-static int plain_store_header(FILE *stream, const char *alpha, size_t suffix_count);
-static int plain_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix, size_t suffix_count);
-static int plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix, ec_class cls);
+static int plain_load_header(FILE *stream, char *alpha, size_t *suffix_count);
+
+static int plain_load_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                             ec_prefix *prefix, size_t *suffix_count);
+
+static int plain_load_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                             ec_suffix *suffix, ec_class *cls);
+
+static int plain_store_header(FILE *stream, const char *alpha,
+                              size_t suffix_count);
+
+static int plain_store_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                              ec_prefix prefix, size_t suffix_count);
+
+static int plain_store_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                              ec_suffix suffix, ec_class cls);
+
 
 static int
 bin_load_header(FILE *stream, char *alpha, size_t *suffix_count)
@@ -82,7 +97,7 @@ bin_load_header(FILE *stream, char *alpha, size_t *suffix_count)
 }
 
 #define BIN_LOAD(NAME, FMT, T1, BIN1, T2, BIN2)                             \
-static int bin_load_ ## NAME(FILE *stream, const ec_alphabet *alpha,        \
+static int bin_load_ ## NAME(FILE *stream, const struct ec_alphabet *alpha, \
                              T1 *out1, T2 *out2)                            \
 {                                                                           \
     unsigned char buf[BIN_BUFSZ];                                           \
@@ -115,14 +130,14 @@ static int bin_store_header(FILE *stream, const char *alpha, size_t suffix_count
     return EC_SUCCESS;
 }
 
-#define BIN_STORE(NAME, FMT, T1, BIN1, T2, BIN2)                            \
-static int bin_store_ ## NAME (FILE *stream, const ec_alphabet *alpha,      \
-                               T1 in1, T2 in2)                              \
-{                                                                           \
-    unsigned char buf[BIN_BUFSZ];                                           \
-    size_t n = pack(buf, FMT, (BIN1)in1, (BIN2)in2);                        \
-    (void) alpha;                                                           \
-    return fwrite(buf, 1, n, stream) == n ? EC_SUCCESS : EC_FAILURE;        \
+#define BIN_STORE(NAME, FMT, T1, BIN1, T2, BIN2)                                \
+static int bin_store_ ## NAME (FILE *stream, const struct ec_alphabet *alpha,   \
+                               T1 in1, T2 in2)                                  \
+{                                                                               \
+    unsigned char buf[BIN_BUFSZ];                                               \
+    size_t n = pack(buf, FMT, (BIN1)in1, (BIN2)in2);                            \
+    (void) alpha;                                                               \
+    return fwrite(buf, 1, n, stream) == n ? EC_SUCCESS : EC_FAILURE;            \
 }
 #define BIN(...) BIN_LOAD(__VA_ARGS__) BIN_STORE(__VA_ARGS__)
 BIN(prefix, BIN_PREFIX_FMT, ec_prefix, uint32_t, size_t, uint64_t)
@@ -154,8 +169,8 @@ plain_load_header(FILE *stream, char *alpha, size_t *suffix_count)
 }
 
 static int
-plain_load_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix *prefix,
-                  size_t *suffix_count)
+plain_load_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                  ec_prefix *prefix, size_t *suffix_count)
 {
     int res;
     char line[PLAIN_BUFSZ], word_str[EC_WORD_LEN + 1];
@@ -182,8 +197,8 @@ plain_load_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix *prefix,
 }
 
 static int
-plain_load_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix *suffix,
-                  ec_class *cls)
+plain_load_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                  ec_suffix *suffix, ec_class *cls)
 {
     int res;
     char line[PLAIN_BUFSZ], word_str[EC_WORD_LEN + 1];
@@ -218,8 +233,8 @@ plain_store_header(FILE *stream, const char *alpha, size_t suffix_count)
 }
 
 static int
-plain_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix,
-                   size_t suffix_count)
+plain_store_prefix(FILE *stream, const struct ec_alphabet *alpha,
+                   ec_prefix prefix, size_t suffix_count)
 {
     int res;
     char str[EC_WORD_LEN + 1];
@@ -235,8 +250,8 @@ plain_store_prefix(FILE *stream, const ec_alphabet *alpha, ec_prefix prefix,
 }
 
 static int
-plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix,
-                  ec_class cls)
+plain_store_suffix(FILE *stream, const struct ec_alphabet *alpha,
+                   ec_suffix suffix, ec_class cls)
 {
     int res;
     char str[EC_WORD_LEN + 1];
@@ -251,7 +266,7 @@ plain_store_suffix(FILE *stream, const ec_alphabet *alpha, ec_suffix suffix,
 }
 
 int
-ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format)
+ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format)
 {
     int res;
     ec_prefix p;
@@ -261,8 +276,8 @@ ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format)
     struct load_funcs
     {
         int (*header)(FILE *, char *, size_t *);
-        int (*prefix)(FILE *, const ec_alphabet *, ec_prefix *, size_t *);
-        int (*suffix)(FILE *, const ec_alphabet *, ec_suffix *, ec_class *);
+        int (*prefix)(FILE *, const struct ec_alphabet *, ec_prefix *, size_t *);
+        int (*suffix)(FILE *, const struct ec_alphabet *, ec_suffix *, ec_class *);
     } f;
 
     switch (format) {
@@ -325,7 +340,7 @@ ec_storage_load_stream(ec_ecurve *ecurve, FILE *stream, int format)
 }
 
 int
-ec_storage_load_file(ec_ecurve *ecurve, const char *path, int format)
+ec_storage_load_file(struct ec_ecurve *ecurve, const char *path, int format)
 {
     int res;
     FILE *stream;
@@ -346,15 +361,16 @@ ec_storage_load_file(ec_ecurve *ecurve, const char *path, int format)
 }
 
 int
-ec_storage_store_stream(const ec_ecurve *ecurve, FILE *stream, int format)
+ec_storage_store_stream(const struct ec_ecurve *ecurve, FILE *stream,
+                        int format)
 {
     int res;
     size_t p;
     struct store_funcs
     {
         int (*header)(FILE *, const char *, size_t);
-        int (*prefix)(FILE *, const ec_alphabet *, ec_prefix, size_t);
-        int (*suffix)(FILE *, const ec_alphabet *, ec_suffix, ec_class);
+        int (*prefix)(FILE *, const struct ec_alphabet *, ec_prefix, size_t);
+        int (*suffix)(FILE *, const struct ec_alphabet *, ec_suffix, ec_class);
     } f;
 
     switch (format) {
@@ -405,7 +421,8 @@ ec_storage_store_stream(const ec_ecurve *ecurve, FILE *stream, int format)
 }
 
 int
-ec_storage_store_file(const ec_ecurve *ecurve, const char *path, int format)
+ec_storage_store_file(const struct ec_ecurve *ecurve, const char *path,
+                      int format)
 {
     int res;
     FILE *stream;

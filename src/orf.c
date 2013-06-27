@@ -85,7 +85,7 @@ gc_content(const char *seq, double *gc, size_t *len)
 }
 
 static double
-get_threshold(const ec_matrix *thresholds, const char *seq)
+get_threshold(const struct ec_matrix *thresholds, const char *seq)
 {
     double gc;
     size_t r, c, rows, cols;
@@ -104,10 +104,10 @@ get_threshold(const ec_matrix *thresholds, const char *seq)
 }
 
 int
-ec_orf_codonscores_load_file(ec_orf_codonscores *scores, const char *path)
+ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores, const char *path)
 {
     int res;
-    ec_matrix m;
+    struct ec_matrix m;
 
     res = ec_matrix_load_file(&m, path);
     if (res != EC_SUCCESS) {
@@ -119,10 +119,10 @@ ec_orf_codonscores_load_file(ec_orf_codonscores *scores, const char *path)
 }
 
 int
-ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream)
+ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores, FILE *stream)
 {
     int res;
-    ec_matrix m;
+    struct ec_matrix m;
 
     res = ec_matrix_load_stream(&m, stream);
     if (res != EC_SUCCESS) {
@@ -134,11 +134,10 @@ ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream)
 }
 
 void
-ec_orf_codonscores_init(ec_orf_codonscores *scores,
-                        const ec_matrix *score_matrix)
+ec_orf_codonscores_init(struct ec_orf_codonscores *scores,
+                        const struct ec_matrix *score_matrix)
 {
     ec_codon c1, c2;
-    struct ec_orf_codonscores_s *s = scores;
     for (c1 = 0; c1 < EC_BINARY_CODON_COUNT; c1++) {
         unsigned i, count = 0;
         double sum = 0.0;
@@ -150,69 +149,66 @@ ec_orf_codonscores_init(ec_orf_codonscores *scores,
                     count++;
                 }
             }
-            s->values[c1] = count ? sum / count : 0.0;
+            scores->values[c1] = count ? sum / count : 0.0;
         }
         else {
-            s->values[c1] = 0.0;
+            scores->values[c1] = 0.0;
         }
     }
 }
 
 int
-ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                const ec_orf_codonscores *codon_scores)
+ec_orfiter_init(struct ec_orfiter *iter, const char *seq,
+                const struct ec_orf_codonscores *codon_scores)
 {
     unsigned i;
-    struct ec_orfiter_s *it = iter;
-    *it = (struct ec_orfiter_s) { .pos = seq };
+    *iter = (struct ec_orfiter) { .pos = seq };
 
     for (i = 0; i < EC_ORF_FRAMES; i++) {
-        it->data_sz[i] = BUFSZ_INIT;
-        it->orf[i].data = malloc(BUFSZ_INIT);
-        if (!it->orf[i].data) {
+        iter->data_sz[i] = BUFSZ_INIT;
+        iter->orf[i].data = malloc(BUFSZ_INIT);
+        if (!iter->orf[i].data) {
             while (i--) {
-                free(it->orf[i].data);
+                free(iter->orf[i].data);
             }
             return EC_FAILURE;
         }
     }
-    it->codon_scores = codon_scores;
+    iter->codon_scores = codon_scores;
     return EC_SUCCESS;
 }
 
 void
-ec_orfiter_destroy(ec_orfiter *iter)
+ec_orfiter_destroy(struct ec_orfiter *iter)
 {
     unsigned i;
-    struct ec_orfiter_s *it = iter;
     for (i = 0; i < EC_ORF_FRAMES; i++) {
-        free(it->orf[i].data);
+        free(iter->orf[i].data);
     }
 }
 
 int
-ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
+ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 {
     int res;
     unsigned i;
     ec_nt nt;
     ec_codon c_fwd, c_rev;
-    struct ec_orfiter_s *it = iter;
 
     while (true) {
         /* yield finished ORFs */
         for (i = 0; i < EC_ORF_FRAMES; i++) {
-            if (!it->yield[i]) {
+            if (!iter->yield[i]) {
                 continue;
             }
 
-            *next = it->orf[i];
+            *next = iter->orf[i];
             *frame = i;
 
             /* reinitialize working ORF */
-            it->orf[i].length = 0;
-            it->orf[i].score = 0;
-            it->yield[i] = false;
+            iter->orf[i].length = 0;
+            iter->orf[i].score = 0;
+            iter->yield[i] = false;
 
             /* chop trailing wildcard aminoacids */
             while (next->length && next->data[next->length - 1] == 'X') {
@@ -232,72 +228,72 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
         }
 
         /* iterator exhausted */
-        if (it->frame >= FRAMES) {
-            assert(!it->pos);
+        if (iter->frame >= FRAMES) {
+            assert(!iter->pos);
             return EC_ITER_STOP;
         }
 
         /* sequence completely processed, yield all ORFs */
-        if (!it->pos) {
+        if (!iter->pos) {
 
-            if (it->nt_count > it->frame) {
-                it->yield[it->frame] = it->yield[it->frame + FRAMES] = true;
+            if (iter->nt_count > iter->frame) {
+                iter->yield[iter->frame] =
+                    iter->yield[iter->frame + FRAMES] = true;
             }
-            it->frame++;
+            iter->frame++;
             continue;
         }
 
         /* process sequence */
-        if (*it->pos) {
-            nt = CHAR_TO_NT(*it->pos++);
+        if (*iter->pos) {
+            nt = CHAR_TO_NT(*iter->pos++);
             if (nt == EC_NT_NOT_CHAR) {
                 continue;
             }
             if (nt == EC_NT_NOT_IUPAC) {
                 nt = CHAR_TO_NT('N');
             }
-            it->nt_count++;
-            it->frame = (it->frame + 1) % FRAMES;
-            assert(it->nt_count % FRAMES == it->frame);
+            iter->nt_count++;
+            iter->frame = (iter->frame + 1) % FRAMES;
 
             for (i = 0; i < FRAMES; i++) {
-                ec_codon_append(&it->codon[i], nt);
+                ec_codon_append(&iter->codon[i], nt);
             }
 
             /* skip partially read codons */
-            if (it->nt_count < FRAMES) {
+            if (iter->nt_count < FRAMES) {
                 continue;
             }
 
-#define ADD_CODON(codon, frame) do {                                        \
-    res = orf_add_codon(&it->orf[(frame)], &it->data_sz[(frame)], codon,    \
-                        it->codon_scores ?                                  \
-                            it->codon_scores->values[codon] : 0.0);         \
-    if (res != EC_SUCCESS) {                                                \
-        return EC_FAILURE;                                                  \
-    }                                                                       \
+#define ADD_CODON(codon, frame) do {                                            \
+    res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)], codon,    \
+                        iter->codon_scores ?                                    \
+                            iter->codon_scores->values[codon] : 0.0);           \
+    if (res != EC_SUCCESS) {                                                    \
+        return EC_FAILURE;                                                      \
+    }                                                                           \
 } while (0)
 
-            c_fwd = it->codon[it->frame];
+            c_fwd = iter->codon[iter->frame];
             if (CODON_IS_STOP(c_fwd)) {
-                it->yield[it->frame] = true;
+                iter->yield[iter->frame] = true;
             }
             else {
-                ADD_CODON(c_fwd, it->frame);
+                ADD_CODON(c_fwd, iter->frame);
             }
 
             c_rev = CODON_COMPLEMENT(c_fwd);
             if (CODON_IS_STOP(c_rev)) {
-                it->yield[it->frame + FRAMES] = true;
+                iter->yield[iter->frame + FRAMES] = true;
             }
             else {
-                ADD_CODON(c_rev, it->frame + FRAMES);
+                ADD_CODON(c_rev, iter->frame + FRAMES);
             }
         }
         else {
             /* guess last nt for the next frame */
-            unsigned frame = (it->nt_count + 1) % FRAMES;
-            c_fwd = it->codon[frame];
+            unsigned frame = (iter->nt_count + 1) % FRAMES;
+            c_fwd = iter->codon[frame];
             ec_codon_append(&c_fwd, EC_NT_N);
             c_rev = CODON_COMPLEMENT(c_fwd);
             if (!CODON_IS_STOP(c_fwd) && CODON_TO_CHAR(c_fwd) != 'X') {
@@ -308,8 +304,8 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
             }
 
             /* "signal" that the end of the sequence was reached */
-            it->frame = 0;
-            it->pos = NULL;
+            iter->frame = 0;
+            iter->pos = NULL;
         }
     }
     assert(0);
@@ -319,15 +315,15 @@ ec_orfiter_next(ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 int
 ec_orf_chained(const char *seq,
                enum ec_orf_mode mode,
-               const ec_orf_codonscores *codon_scores,
-               const ec_matrix *thresholds,
+               const struct ec_orf_codonscores *codon_scores,
+               const struct ec_matrix *thresholds,
                char **buf, size_t *sz)
 {
     int res;
     size_t len_total[EC_ORF_FRAMES] = { 0 };
     struct ec_orf orf;
     unsigned frame;
-    ec_orfiter iter;
+    struct ec_orfiter iter;
     double min_score = 0.0;
 
     if (thresholds) {

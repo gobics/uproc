@@ -1,7 +1,7 @@
 #ifndef EC_MMAP_H
 #define EC_MMAP_H
 
-/** \file mmap.h 
+/** \file mmap.h
  *
  * Directly map a file to an ecurve using POSIX' mmap().
  *
@@ -23,13 +23,13 @@
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_mmap_map(ec_ecurve *ecurve, const char *path);
+int ec_mmap_map(struct ec_ecurve *ecurve, const char *path);
 
 /** Release mapping and close the underlying file descriptor
  *
  * \param ecurve    ecurve mapped with `ec_mmap_map()`
  */
-void ec_mmap_unmap(ec_ecurve *ecurve);
+void ec_mmap_unmap(struct ec_ecurve *ecurve);
 
 /** Store ecurve in a format suitable for `ec_mmap_map()`
  *
@@ -39,6 +39,6 @@ void ec_mmap_unmap(ec_ecurve *ecurve);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_mmap_store(const ec_ecurve *ecurve, const char *path);
+int ec_mmap_store(const struct ec_ecurve *ecurve, const char *path);
 
 #endif

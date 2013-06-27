@@ -27,23 +27,17 @@ struct ec_orf {
 };
 
 /** Codon score table */
-typedef struct ec_orf_codonscores_s ec_orf_codonscores;
-
-/** Struct containing codon score table */
-struct ec_orf_codonscores_s {
+struct ec_orf_codonscores {
     double values[EC_BINARY_CODON_COUNT];
 };
 
-/** Type to iterate over a DNA/RNA sequence and yield all possible ORFs */
-typedef struct ec_orfiter_s ec_orfiter;
-
-/** ORF iterator struct */
-struct ec_orfiter_s {
+/** Iterates over a DNA/RNA sequence and yield all possible ORFs */
+struct ec_orfiter {
     /** current position in the DNA/RNA sequence */
     const char *pos;
 
     /** Codon score table */
-    const struct ec_orf_codonscores_s *codon_scores;
+    const struct ec_orf_codonscores *codon_scores;
 
     /** Number of processed nucleotide symbols */
     size_t nt_count;
@@ -77,10 +71,12 @@ enum ec_orf_mode {
 };
 
 /** Load codon scores from file */
-int ec_orf_codonscores_load_file(ec_orf_codonscores *scores, const char *path);
+int ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores,
+                                 const char *path);
 
 /** Load codon scores from stream */
-int ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream);
+int ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores,
+                                   FILE *stream);
 
 /** Initialize codon scores from a matrix
  *
@@ -88,8 +84,8 @@ int ec_orf_codonscores_load_stream(ec_orf_codonscores *scores, FILE *stream);
  * \param score_matrix  a #EC_CODON_COUNT x 1 matrix containing the scores for
  *                      each "real" codon
  */
-void ec_orf_codonscores_init(ec_orf_codonscores *scores,
-                             const ec_matrix *score_matrix);
+void ec_orf_codonscores_init(struct ec_orf_codonscores *scores,
+                             const struct ec_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *
@@ -98,11 +94,11 @@ void ec_orf_codonscores_init(ec_orf_codonscores *scores,
  * \param codon_scores  codon scores, must be a #EC_CODON_COUNT x 1 matrix
  *
  */
-int ec_orfiter_init(ec_orfiter *iter, const char *seq,
-                    const ec_orf_codonscores *codon_scores);
+int ec_orfiter_init(struct ec_orfiter *iter, const char *seq,
+                    const struct ec_orf_codonscores *codon_scores);
 
 /** Free memory of an ORF iterator */
-void ec_orfiter_destroy(ec_orfiter *iter);
+void ec_orfiter_destroy(struct ec_orfiter *iter);
 
 /** Obtain the next ORF from an iterator
  *
@@ -114,7 +110,7 @@ void ec_orfiter_destroy(ec_orfiter *iter);
  * \retval EC_FAILURE       an error occured
  * \retval EC_ITER_STOP     the end of the sequence was reached
  */
-int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
+int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
 
 /** Extract ORFs from a DNA/RNA sequence
  *
@@ -144,8 +140,8 @@ int ec_orfiter_next(ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
  */
 int ec_orf_chained(const char *seq,
                    enum ec_orf_mode mode,
-                   const ec_orf_codonscores *codon_scores,
-                   const ec_matrix *thresholds,
+                   const struct ec_orf_codonscores *codon_scores,
+                   const struct ec_matrix *thresholds,
                    char **buf,
                    size_t *sz);
 

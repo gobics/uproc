@@ -2,7 +2,7 @@
 #include "ecurve.h"
 
 struct ec_word word, control;
-ec_alphabet alpha;
+struct ec_alphabet alpha;
 
 void setup(void)
 {
@@ -85,8 +85,7 @@ int prepend(void)
 int iter(void)
 {
     int res;
-
-    ec_worditer iter;
+    struct ec_worditer iter;
     size_t index;
     struct ec_word fwd = EC_WORD_INITIALIZER, rev = EC_WORD_INITIALIZER;
     char seq[] = "RAAAAAAAAAAAAAAAAAGC!VVVVVVVVVVVVVVVVVVSD!!!", new[20];

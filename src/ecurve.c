@@ -50,64 +50,62 @@ static int suffix_lookup(const ec_suffix *search, size_t n, ec_suffix key,
                          size_t *lower, size_t *upper);
 
 int
-ec_ecurve_init(ec_ecurve *ecurve, const char *alphabet, size_t suffix_count)
+ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
+               size_t suffix_count)
 {
-    struct ec_ecurve_s *e = ecurve;
     size_t i;
 
-    if (ec_alphabet_init(&e->alphabet, alphabet) != EC_SUCCESS) {
+    if (ec_alphabet_init(&ecurve->alphabet, alphabet) != EC_SUCCESS) {
         return EC_FAILURE;
     }
 
-    e->prefix_table = malloc(sizeof *e->prefix_table * (EC_PREFIX_MAX + 1));
-    if (!e->prefix_table) {
+    ecurve->prefix_table = malloc(sizeof *ecurve->prefix_table * (EC_PREFIX_MAX + 1));
+    if (!ecurve->prefix_table) {
         return EC_FAILURE;
     }
     for (i = 0; i <= EC_PREFIX_MAX; i++) {
-        e->prefix_table[i].first = 0;
-        e->prefix_table[i].count = 0;
+        ecurve->prefix_table[i].first = 0;
+        ecurve->prefix_table[i].count = 0;
     }
 
     if (suffix_count) {
-        e->suffix_count = suffix_count;
-        e->suffix_table = malloc(sizeof *e->suffix_table * suffix_count);
-        e->class_table = malloc(sizeof *e->class_table * suffix_count);
-        if (!e->suffix_table || !e->class_table) {
-            ec_ecurve_destroy(e);
+        ecurve->suffix_count = suffix_count;
+        ecurve->suffix_table = malloc(sizeof *ecurve->suffix_table * suffix_count);
+        ecurve->class_table = malloc(sizeof *ecurve->class_table * suffix_count);
+        if (!ecurve->suffix_table || !ecurve->class_table) {
+            ec_ecurve_destroy(ecurve);
             return EC_FAILURE;
         }
     }
 
-#if HAVE_MMAP
-    e->mmap_fd = -1;
-    e->mmap_ptr = NULL;
-    e->mmap_size = 0;
-#endif
+    ecurve->mmap_fd = -1;
+    ecurve->mmap_ptr = NULL;
+    ecurve->mmap_size = 0;
     return EC_SUCCESS;
 }
 
 void
-ec_ecurve_destroy(ec_ecurve *ecurve)
+ec_ecurve_destroy(struct ec_ecurve *ecurve)
 {
-    struct ec_ecurve_s *e = ecurve;
 #if HAVE_MMAP
-    if (e->mmap_fd > -1) {
+    if (ecurve->mmap_fd > -1) {
         ec_mmap_unmap(ecurve);
         return;
     }
 #endif
-    free(e->prefix_table);
-    free(e->suffix_table);
-    free(e->class_table);
+    free(ecurve->prefix_table);
+    free(ecurve->suffix_table);
+    free(ecurve->class_table);
 }
 
-void ec_ecurve_get_alphabet(const ec_ecurve *ecurve, ec_alphabet *alpha)
+void ec_ecurve_get_alphabet(const struct ec_ecurve *ecurve,
+                            struct ec_alphabet *alpha)
 {
     *alpha = ecurve->alphabet;
 }
 
 int
-ec_ecurve_lookup(const ec_ecurve *ecurve, const struct ec_word *word,
+ec_ecurve_lookup(const struct ec_ecurve *ecurve, const struct ec_word *word,
                  struct ec_word *lower_neighbour, ec_class *lower_class,
                  struct ec_word *upper_neighbour, ec_class *upper_class)
 {

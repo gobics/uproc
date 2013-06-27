@@ -9,30 +9,27 @@
 #define EC_DISTMAT_INDEX(x, y) ((x) << EC_AMINO_BITS | (y))
 
 int
-ec_distmat_init(ec_distmat *mat)
+ec_distmat_init(struct ec_distmat *mat)
 {
-    struct ec_distmat_s *m = mat;
-    *m = (struct ec_distmat_s) { { 0.0 } };
+    *mat = (struct ec_distmat) { { 0.0 } };
     return EC_SUCCESS;
 }
 
 double
-ec_distmat_get(const ec_distmat *mat, ec_amino x, ec_amino y)
+ec_distmat_get(const struct ec_distmat *mat, ec_amino x, ec_amino y)
 {
-    const struct ec_distmat_s *m = mat;
-    return m->dists[EC_DISTMAT_INDEX(x, y)];
+    return mat->dists[EC_DISTMAT_INDEX(x, y)];
 }
 
 void
-ec_distmat_set(ec_distmat *mat, ec_amino x, ec_amino y, double dist)
+ec_distmat_set(struct ec_distmat *mat, ec_amino x, ec_amino y, double dist)
 {
-    struct ec_distmat_s *m = mat;
-    m->dists[EC_DISTMAT_INDEX(x, y)] = dist;
+    mat->dists[EC_DISTMAT_INDEX(x, y)] = dist;
 }
 
 int
-ec_distmat_load_many(ec_distmat *mat, size_t n, const char *path,
-                     int (*load)(ec_distmat *, FILE *, void *), void *arg)
+ec_distmat_load_many(struct ec_distmat *mat, size_t n, const char *path,
+                     int (*load)(struct ec_distmat *, FILE *, void *), void *arg)
 {
     int res = EC_SUCCESS;
     size_t i;
@@ -61,19 +58,19 @@ error:
 }
 
 int
-ec_distmat_load(ec_distmat *mat, const char *path,
-                int (*load)(ec_distmat *, FILE *, void *), void *arg)
+ec_distmat_load(struct ec_distmat *mat, const char *path,
+                int (*load)(struct ec_distmat *, FILE *, void *), void *arg)
 {
     return ec_distmat_load_many(mat, 1, path, load, arg);
 }
 
 int
-ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg)
+ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg)
 {
     int i, n, row[EC_ALPHABET_SIZE];
     ec_amino aa[EC_ALPHABET_SIZE];
     char line[1024];
-    ec_alphabet *alpha = arg;
+    struct ec_alphabet *alpha = arg;
 
     /* skip comments plus header line (which begins with two spaces) */
     do {
@@ -111,7 +108,7 @@ ec_distmat_load_blosum(ec_distmat *mat, FILE *stream, void *arg)
 }
 
 int
-ec_distmat_load_plain(ec_distmat *mat, FILE *stream, void *arg)
+ec_distmat_load_plain(struct ec_distmat *mat, FILE *stream, void *arg)
 {
     size_t i, k;
     double dist;

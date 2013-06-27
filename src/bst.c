@@ -4,35 +4,36 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-struct bstnode {
+struct ec_bst_node {
     intmax_t key;
     void *data;
-    struct bstnode *parent;
-    struct bstnode *left;
-    struct bstnode *right;
+    struct ec_bst_node *parent;
+    struct ec_bst_node *left;
+    struct ec_bst_node *right;
 };
 
-
 /* create a new bst node */
-static struct bstnode *bstnode_new(intmax_t key, void *data, struct bstnode *parent);
+static struct ec_bst_node *bstnode_new(intmax_t key, void *data,
+                                       struct ec_bst_node *parent);
 
 /* free a bst node and all it's descendants recursively */
-static void bstnode_free(struct bstnode *n, void (*callback)(void*));
+static void bstnode_free(struct ec_bst_node *n, void (*callback)(void*));
 
 /* in-order iteration */
-static int bstnode_walk(struct bstnode *n, int (*callback)(intmax_t, void*, void*), void *opaque);
+static int bstnode_walk(struct ec_bst_node *n,
+                        int (*callback)(intmax_t, void*, void*), void *opaque);
 
 /* find node in tree */
-static struct bstnode *bstnode_find(struct bstnode *n, intmax_t key);
+static struct ec_bst_node *bstnode_find(struct ec_bst_node *n, intmax_t key);
 
 /* find node that replaces a node n, move it to n's position and return it */
-static struct bstnode *bstnode_remove(struct bstnode *n);
+static struct ec_bst_node *bstnode_remove(struct ec_bst_node *n);
 
 
-static struct bstnode *
-bstnode_new(intmax_t key, void *data, struct bstnode *parent)
+static struct ec_bst_node *
+bstnode_new(intmax_t key, void *data, struct ec_bst_node *parent)
 {
-    struct bstnode *n = malloc(sizeof *n);
+    struct ec_bst_node *n = malloc(sizeof *n);
 
     if (n) {
         n->key = key;
@@ -45,7 +46,7 @@ bstnode_new(intmax_t key, void *data, struct bstnode *parent)
 }
 
 static void
-bstnode_free(struct bstnode *n, void (*callback)(void*))
+bstnode_free(struct ec_bst_node *n, void (*callback)(void*))
 {
     if (!n) {
         return;
@@ -59,7 +60,7 @@ bstnode_free(struct bstnode *n, void (*callback)(void*))
 }
 
 static int
-bstnode_walk(struct bstnode *n, int (*callback)(intmax_t, void*, void*),
+bstnode_walk(struct ec_bst_node *n, int (*callback)(intmax_t, void*, void*),
              void *opaque)
 {
     int res;
@@ -78,8 +79,8 @@ bstnode_walk(struct bstnode *n, int (*callback)(intmax_t, void*, void*),
     return res;
 }
 
-static struct bstnode *
-bstnode_find(struct bstnode *n, intmax_t key)
+static struct ec_bst_node *
+bstnode_find(struct ec_bst_node *n, intmax_t key)
 {
     if (key == n->key) {
         return n;
@@ -90,13 +91,13 @@ bstnode_find(struct bstnode *n, intmax_t key)
     return !n->right ? n : bstnode_find(n->right, key);
 }
 
-static struct bstnode *
-bstnode_remove(struct bstnode *n)
+static struct ec_bst_node *
+bstnode_remove(struct ec_bst_node *n)
 {
     static int del_from_left = 1;
 
     /* p will replace n */
-    struct bstnode *p;
+    struct ec_bst_node *p;
 
     /* no children */
     if (!n->left && !n->right) {
@@ -164,13 +165,13 @@ bstnode_remove(struct bstnode *n)
 
 
 void
-ec_bst_init(ec_bst *t)
+ec_bst_init(struct ec_bst *t)
 {
     t->root = NULL;
 }
 
 void
-ec_bst_clear(ec_bst *t, void (*callback)(void*))
+ec_bst_clear(struct ec_bst *t, void (*callback)(void*))
 {
     if (!t || !t->root) {
         return;
@@ -180,15 +181,15 @@ ec_bst_clear(ec_bst *t, void (*callback)(void*))
 }
 
 int
-ec_bst_isempty(ec_bst *t)
+ec_bst_isempty(struct ec_bst *t)
 {
     return t->root == NULL;
 }
 
 int
-ec_bst_insert(ec_bst *t, intmax_t key, void *data)
+ec_bst_insert(struct ec_bst *t, intmax_t key, void *data)
 {
-    struct bstnode *n, *ins;
+    struct ec_bst_node *n, *ins;
 
     if (!t->root) {
         t->root = bstnode_new(key, data, NULL);
@@ -213,9 +214,9 @@ ec_bst_insert(ec_bst *t, intmax_t key, void *data)
 }
 
 void *
-ec_bst_get(ec_bst *t, intmax_t key)
+ec_bst_get(struct ec_bst *t, intmax_t key)
 {
-    struct bstnode *n;
+    struct ec_bst_node *n;
 
     if (!t || !t->root) {
         return NULL;
@@ -226,10 +227,10 @@ ec_bst_get(ec_bst *t, intmax_t key)
 }
 
 int
-ec_bst_remove(ec_bst *t, intmax_t key, void (*callback)(void*))
+ec_bst_remove(struct ec_bst *t, intmax_t key, void (*callback)(void*))
 {
     /* node to remove and its parent */
-    struct bstnode *del, *par;
+    struct ec_bst_node *del, *par;
 
     if (!t->root) {
         return EC_FAILURE;
@@ -260,7 +261,8 @@ ec_bst_remove(ec_bst *t, intmax_t key, void (*callback)(void*))
     return EC_SUCCESS;
 }
 
-int ec_bst_walk(ec_bst *t, int (*callback)(intmax_t, void*, void*), void *opaque)
+int ec_bst_walk(struct ec_bst *t, int (*callback)(intmax_t, void*, void*),
+                void *opaque)
 {
     return bstnode_walk(t->root, callback, opaque);
 }

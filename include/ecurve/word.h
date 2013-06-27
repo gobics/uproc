@@ -35,7 +35,8 @@ struct ec_word {
  * \retval #EC_SUCCESS  the string was translated successfully
  * \retval #EC_FAILURE  the string was too short or contained an invalid character
  */
-int ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet *alpha);
+int ec_word_from_string(struct ec_word *word, const char *str,
+                        const struct ec_alphabet *alpha);
 
 /** Build string corresponding to amino acid word
  *
@@ -50,7 +51,8 @@ int ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet
  * \retval #EC_SUCCESS  the word was translated successfully
  * \retval #EC_FAILURE  the word contained an invalid amino acid
  */
-int ec_word_to_string(char *str, const struct ec_word *word, const ec_alphabet *alpha);
+int ec_word_to_string(char *str, const struct ec_word *word,
+                      const struct ec_alphabet *alpha);
 
 /** Append amino acid
  *
@@ -81,11 +83,8 @@ void ec_word_prepend(struct ec_word *word, ec_amino amino);
  */
 bool ec_word_equal(const struct ec_word *word1, const struct ec_word *word2);
 
-/** Type to iterate over all words in an amino acid sequence */
-typedef struct ec_worditer_s ec_worditer;
-
-/** Struct defining a word iterator */
-struct ec_worditer_s {
+/** Iterator over all words in an amino acid sequence */
+struct ec_worditer {
     /** Iterated sequence */
     const char *sequence;
 
@@ -93,7 +92,7 @@ struct ec_worditer_s {
     size_t index;
 
     /** Translation alphabet */
-    const ec_alphabet *alphabet;
+    const struct ec_alphabet *alphabet;
 };
 
 /** Initialize an iterator over a sequence
@@ -105,8 +104,8 @@ struct ec_worditer_s {
  * \param seq   sequence to iterate
  * \param alpha translation alphabet
  */
-void ec_worditer_init(ec_worditer *iter, const char *seq,
-                      const ec_alphabet *alpha);
+void ec_worditer_init(struct ec_worditer *iter, const char *seq,
+                      const struct ec_alphabet *alpha);
 
 /** Obtain the next word(s) from a word iterator
  *
@@ -122,7 +121,7 @@ void ec_worditer_init(ec_worditer *iter, const char *seq,
  * \retval #EC_ITER_STOP    the iterator is exhausted (i.e. the end of the
  *                          sequence was reached, no words were read)
  */
-int ec_worditer_next(ec_worditer *iter, size_t *index,
+int ec_worditer_next(struct ec_worditer *iter, size_t *index,
                      struct ec_word *fwd_word, struct ec_word *rev_word);
 
 #endif

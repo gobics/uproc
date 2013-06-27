@@ -14,11 +14,8 @@
 /** scanf() format for matrix file header */
 #define EC_MATRIX_HEADER_SCN "[%zu , %zu]"
 
-/** Matrix object */
-typedef struct ec_matrix_s ec_matrix;
-
 /** Matrix struct definition */
-struct ec_matrix_s {
+struct ec_matrix {
     /** Number of rows */
     size_t rows;
 
@@ -43,17 +40,18 @@ struct ec_matrix_s {
  * \retval EC_SUCCESS   success
  * \retval EC_FAILURE   memory allocation failed
  */
-int ec_matrix_init(ec_matrix *matrix, size_t rows, size_t cols,
+int ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
                    const double *values);
 
 /** Free resources of a matrix */
-void ec_matrix_destroy(ec_matrix *matrix);
+void ec_matrix_destroy(struct ec_matrix *matrix);
 
 /** Set the value of matrix[row, col] */
-void ec_matrix_set(ec_matrix *matrix, size_t row, size_t col, double value);
+void ec_matrix_set(struct ec_matrix *matrix, size_t row, size_t col,
+                   double value);
 
 /** Get the value of matrix[row, col] */
-double ec_matrix_get(const ec_matrix *matrix, size_t row, size_t col);
+double ec_matrix_get(const struct ec_matrix *matrix, size_t row, size_t col);
 
 /** Obtain matrix dimensions
  *
@@ -61,18 +59,18 @@ double ec_matrix_get(const ec_matrix *matrix, size_t row, size_t col);
  * \param rows      _OUT_: number of rows
  * \param cols      _OUT_: number of columns
  */
-void ec_matrix_dimensions(const ec_matrix *matrix, size_t *rows, size_t *cols);
+void ec_matrix_dimensions(const struct ec_matrix *matrix, size_t *rows, size_t *cols);
 
 /** Load matrix from file */
-int ec_matrix_load_file(ec_matrix *matrix, const char *path);
+int ec_matrix_load_file(struct ec_matrix *matrix, const char *path);
 
 /** Load matrix from stream */
-int ec_matrix_load_stream(ec_matrix *matrix, FILE *stream);
+int ec_matrix_load_stream(struct ec_matrix *matrix, FILE *stream);
 
 /** Store matrix to file */
-int ec_matrix_store_file(const ec_matrix *matrix, const char *path);
+int ec_matrix_store_file(const struct ec_matrix *matrix, const char *path);
 
 /** Store matrix to stream */
-int ec_matrix_store_stream(const ec_matrix *matrix, FILE *stream);
+int ec_matrix_store_stream(const struct ec_matrix *matrix, FILE *stream);
 
 #endif

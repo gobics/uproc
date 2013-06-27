@@ -91,7 +91,7 @@ scores_finalize_cb(intmax_t key, void *data, void *opaque)
 }
 
 static int
-scores_finalize(ec_bst *scores, ec_class *predict_cls, double *predict_score)
+scores_finalize(struct ec_bst *scores, ec_class *predict_cls, double *predict_score)
 {
     int res;
     struct sc_max m = { -EC_INFINITY, -1 };
@@ -104,7 +104,7 @@ scores_finalize(ec_bst *scores, ec_class *predict_cls, double *predict_score)
 }
 
 static int
-scores_add(ec_bst *scores, ec_class cls, size_t index,
+scores_add(struct ec_bst *scores, ec_class cls, size_t index,
            double dist[static EC_SUFFIX_LEN])
 {
     struct sc *s = ec_bst_get(scores, cls);
@@ -122,7 +122,7 @@ scores_add(ec_bst *scores, ec_class cls, size_t index,
 
 static void
 align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
-               const ec_distmat distmat[static EC_SUFFIX_LEN])
+               const struct ec_distmat distmat[static EC_SUFFIX_LEN])
 {
     size_t i;
     ec_amino a1, a2;
@@ -136,9 +136,9 @@ align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
 }
 
 static int
-scores_add_word(ec_bst *scores, const struct ec_word *word, size_t index,
-                const ec_ecurve *ecurve,
-                const ec_distmat distmat[static EC_SUFFIX_LEN])
+scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
+                const struct ec_ecurve *ecurve,
+                const struct ec_distmat distmat[static EC_SUFFIX_LEN])
 {
     int res;
     struct ec_word
@@ -164,16 +164,16 @@ scores_add_word(ec_bst *scores, const struct ec_word *word, size_t index,
 
 int
 ec_classify_protein(const char *seq,
-                    const ec_distmat distmat[static EC_SUFFIX_LEN],
-                    const ec_ecurve *fwd_ecurve,
-                    const ec_ecurve *rev_ecurve,
+                    const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const struct ec_ecurve *fwd_ecurve,
+                    const struct ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,
                     double *predict_score)
 {
     int res;
-    ec_bst scores;
-    ec_worditer iter;
-    ec_alphabet alpha;
+    struct ec_bst scores;
+    struct ec_worditer iter;
+    struct ec_alphabet alpha;
     size_t index;
     struct ec_word
         fwd_word = EC_WORD_INITIALIZER,
@@ -209,11 +209,11 @@ error:
 int
 ec_classify_dna(const char *seq,
                 enum ec_orf_mode mode,
-                const ec_orf_codonscores *codon_scores,
-                const ec_matrix *thresholds,
-                const ec_distmat distmat[static EC_SUFFIX_LEN],
-                const ec_ecurve *fwd_ecurve,
-                const ec_ecurve *rev_ecurve,
+                const struct ec_orf_codonscores *codon_scores,
+                const struct ec_matrix *thresholds,
+                const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                const struct ec_ecurve *fwd_ecurve,
+                const struct ec_ecurve *rev_ecurve,
                 ec_class *predict_cls,
                 double *predict_score)
 {

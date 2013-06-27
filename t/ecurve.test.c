@@ -8,7 +8,7 @@
 
 #define elements_of(a) (sizeof (a) / sizeof (a)[0])
 
-ec_ecurve ecurve;
+struct ec_ecurve ecurve;
 ec_suffix suffix_table[] = { 1, 3, 5, 10, 44, 131, 133, 1202, 4551ULL << (3 * EC_AMINO_BITS) };
 ec_class class_table[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
 

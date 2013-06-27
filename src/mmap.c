@@ -34,72 +34,71 @@ struct mmap_header {
 #define OFFSET_CLASSES(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
 
 int
-ec_mmap_map(ec_ecurve *ecurve, const char *path)
+ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
 {
-    struct ec_ecurve_s *e = ecurve;
     struct stat st;
     struct mmap_header *header;
     char *region, alphabet_str[EC_ALPHABET_SIZE + 1];
 
-    e->mmap_fd = open(path, O_RDONLY);
-    if (e->mmap_fd == -1) {
+    ecurve->mmap_fd = open(path, O_RDONLY);
+    if (ecurve->mmap_fd == -1) {
         return EC_FAILURE;
     }
 
-    if (fstat(e->mmap_fd, &st) == -1) {
+    if (fstat(ecurve->mmap_fd, &st) == -1) {
         return EC_FAILURE;
     }
-    e->mmap_size = st.st_size;
-    e->mmap_ptr = region = mmap(NULL, e->mmap_size, PROT_READ, MAP_PRIVATE, e->mmap_fd, 0);
+    ecurve->mmap_size = st.st_size;
+    ecurve->mmap_ptr =
+        region = mmap(NULL, ecurve->mmap_size, PROT_READ, MAP_PRIVATE,
+                      ecurve->mmap_fd, 0);
 
-    if (e->mmap_ptr == MAP_FAILED) {
+    if (ecurve->mmap_ptr == MAP_FAILED) {
         goto error_close;
     }
 
-    header = e->mmap_ptr;
+    header = ecurve->mmap_ptr;
     memcpy(alphabet_str, header->alphabet_str, EC_ALPHABET_SIZE);
     alphabet_str[EC_ALPHABET_SIZE] = '\0';
-    if (ec_alphabet_init(&e->alphabet, alphabet_str) == EC_FAILURE) {
+    if (ec_alphabet_init(&ecurve->alphabet, alphabet_str) == EC_FAILURE) {
         goto error_munmap;
     }
 
-    e->suffix_count = header->suffix_count;
+    ecurve->suffix_count = header->suffix_count;
     /* file is too small */
-    if (e->mmap_size < SIZE_TOTAL(e->suffix_count)) {
+    if (ecurve->mmap_size < SIZE_TOTAL(ecurve->suffix_count)) {
         goto error_munmap;
     }
 
-    e->prefix_table = (void *)(region + OFFSET_PFXTABLE);
-    e->suffix_table = (void *)(region + OFFSET_SUFFIXES);
-    e->class_table =  (void *)(region + OFFSET_CLASSES(e->suffix_count));
+    ecurve->prefix_table = (void *)(region + OFFSET_PFXTABLE);
+    ecurve->suffix_table = (void *)(region + OFFSET_SUFFIXES);
+    ecurve->class_table =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
 
     return EC_SUCCESS;
 
 error_munmap:
-    munmap(e->mmap_ptr, e->mmap_size);
+    munmap(ecurve->mmap_ptr, ecurve->mmap_size);
 error_close:
-    close(e->mmap_fd);
+    close(ecurve->mmap_fd);
     return EC_FAILURE;
 }
 
 void
-ec_mmap_unmap(ec_ecurve *ecurve)
+ec_mmap_unmap(struct ec_ecurve *ecurve)
 {
-    struct ec_ecurve_s *e = ecurve;
-    munmap(e->mmap_ptr, e->mmap_size);
-    close(e->mmap_fd);
+    munmap(ecurve->mmap_ptr, ecurve->mmap_size);
+    close(ecurve->mmap_fd);
 }
 
 int
-ec_mmap_store(const ec_ecurve *ecurve, const char *path)
+ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
 {
     int fd;
-    const struct ec_ecurve_s *e = ecurve;
     size_t size;
     char *region;
     struct mmap_header header;
 
-    size = SIZE_TOTAL(e->suffix_count);
+    size = SIZE_TOTAL(ecurve->suffix_count);
 
     fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
@@ -115,16 +114,16 @@ ec_mmap_store(const ec_ecurve *ecurve, const char *path)
         goto error_close;
     }
 
-    header.suffix_count = e->suffix_count;
-    memcpy(&header.alphabet_str, e->alphabet.str, EC_ALPHABET_SIZE);
+    header.suffix_count = ecurve->suffix_count;
+    memcpy(&header.alphabet_str, ecurve->alphabet.str, EC_ALPHABET_SIZE);
 
     memcpy(region, &header, SIZE_HEADER);
-    memcpy(region + OFFSET_PFXTABLE, e->prefix_table, SIZE_PFXTABLE);
+    memcpy(region + OFFSET_PFXTABLE, ecurve->prefix_table, SIZE_PFXTABLE);
     memcpy(region + OFFSET_SUFFIXES,
-           e->suffix_table, SIZE_SUFFIXES(e->suffix_count));
+           ecurve->suffix_table, SIZE_SUFFIXES(ecurve->suffix_count));
 
-    memcpy(region + OFFSET_CLASSES(e->suffix_count),
-           e->class_table, SIZE_CLASSES(e->suffix_count));
+    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count),
+           ecurve->class_table, SIZE_CLASSES(ecurve->suffix_count));
 
     munmap(region, size);
     close(fd);

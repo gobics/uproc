@@ -7,7 +7,8 @@
 #define AMINO_AT(x, n) (((x) >> (EC_AMINO_BITS * (n))) & EC_BITMASK(EC_AMINO_BITS))
 
 int
-ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet *alpha)
+ec_word_from_string(struct ec_word *word, const char *str,
+                    const struct ec_alphabet *alpha)
 {
     int i;
     ec_amino a;
@@ -22,7 +23,8 @@ ec_word_from_string(struct ec_word *word, const char *str, const ec_alphabet *al
 }
 
 int
-ec_word_to_string(char *str, const struct ec_word *word, const ec_alphabet *alpha)
+ec_word_to_string(char *str, const struct ec_word *word,
+                  const struct ec_alphabet *alpha)
 {
     int i, c;
     ec_prefix p = word->prefix;
@@ -90,8 +92,8 @@ ec_word_equal(const struct ec_word *word1, const struct ec_word *word2)
 }
 
 void
-ec_worditer_init(ec_worditer *iter, const char *seq,
-                 const ec_alphabet *alpha)
+ec_worditer_init(struct ec_worditer *iter, const char *seq,
+                 const struct ec_alphabet *alpha)
 {
     iter->sequence = seq;
     iter->index = 0;
@@ -99,7 +101,7 @@ ec_worditer_init(ec_worditer *iter, const char *seq,
 }
 
 int
-ec_worditer_next(ec_worditer *iter, size_t *index,
+ec_worditer_next(struct ec_worditer *iter, size_t *index,
                  struct ec_word *fwd_word, struct ec_word *rev_word)
 {
     int c;

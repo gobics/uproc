@@ -7,55 +7,49 @@
 #include "ecurve/common.h"
 
 int
-ec_matrix_init(ec_matrix *matrix, size_t rows, size_t cols,
+ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
                const double *values)
 {
-    struct ec_matrix_s *m = matrix;
+    matrix->rows = rows;
+    matrix->cols = cols;
 
-    m->rows = rows;
-    m->cols = cols;
-
-    m->values = malloc(rows * cols * sizeof *m->values);
-    if (!m->values) {
+    matrix->values = malloc(rows * cols * sizeof *matrix->values);
+    if (!matrix->values) {
         return EC_FAILURE;
     }
     if (values) {
-        memcpy(m->values, values, rows * cols * sizeof *m->values);
+        memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
     }
     return EC_SUCCESS;
 }
 
 void
-ec_matrix_destroy(ec_matrix *matrix)
+ec_matrix_destroy(struct ec_matrix *matrix)
 {
-    struct ec_matrix_s *m = matrix;
-    free(m->values);
+    free(matrix->values);
 }
 
 void
-ec_matrix_set(ec_matrix *matrix, size_t row, size_t col, double value)
+ec_matrix_set(struct ec_matrix *matrix, size_t row, size_t col, double value)
 {
-    struct ec_matrix_s *m = matrix;
-    m->values[row * m->cols + col] = value;
+    matrix->values[row * matrix->cols + col] = value;
 }
 
 double
-ec_matrix_get(const ec_matrix *matrix, size_t row, size_t col)
+ec_matrix_get(const struct ec_matrix *matrix, size_t row, size_t col)
 {
-    const struct ec_matrix_s *m = matrix;
-    return m->values[row * m->cols + col];
+    return matrix->values[row * matrix->cols + col];
 }
 
 void
-ec_matrix_dimensions(const ec_matrix *matrix, size_t *rows, size_t *cols)
+ec_matrix_dimensions(const struct ec_matrix *matrix, size_t *rows, size_t *cols)
 {
-    const struct ec_matrix_s *m = matrix;
-    *rows = m->rows;
-    *cols = m->cols;
+    *rows = matrix->rows;
+    *cols = matrix->cols;
 }
 
 int
-ec_matrix_load_file(ec_matrix *matrix, const char *path)
+ec_matrix_load_file(struct ec_matrix *matrix, const char *path)
 {
     int res;
     FILE *stream = fopen(path, "r");
@@ -68,7 +62,7 @@ ec_matrix_load_file(ec_matrix *matrix, const char *path)
 }
 
 int
-ec_matrix_load_stream(ec_matrix *matrix, FILE *stream)
+ec_matrix_load_stream(struct ec_matrix *matrix, FILE *stream)
 {
     int res;
     size_t i, k, rows, cols;
@@ -96,7 +90,7 @@ ec_matrix_load_stream(ec_matrix *matrix, FILE *stream)
 }
 
 int
-ec_matrix_store_file(const ec_matrix *matrix, const char *path)
+ec_matrix_store_file(const struct ec_matrix *matrix, const char *path)
 {
     int res;
     FILE *stream = fopen(path, "w");
@@ -109,7 +103,7 @@ ec_matrix_store_file(const ec_matrix *matrix, const char *path)
 }
 
 int
-ec_matrix_store_stream(const ec_matrix *matrix, FILE *stream)
+ec_matrix_store_stream(const struct ec_matrix *matrix, FILE *stream)
 {
     int res;
     size_t i, k, rows, cols;

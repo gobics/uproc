@@ -9,14 +9,8 @@
 #include "ecurve/common.h"
 #include <limits.h>
 
-/** Type to represent an amino acid alphabet. */
-typedef struct ec_alphabet_s ec_alphabet;
-
-/** Struct defining an amino acid alphabet
- *
- * Applications should use the #ec_alphabet typedef instead.
- */
-struct ec_alphabet_s {
+/** Struct defining an amino acid alphabet */
+struct ec_alphabet {
     /** Original alphabet string */
     char str[EC_ALPHABET_SIZE + 1];
 
@@ -35,7 +29,7 @@ struct ec_alphabet_s {
  * only of uppercase letters. No letter shall be included twice.
  *
  */
-int ec_alphabet_init(ec_alphabet *alpha, const char *s);
+int ec_alphabet_init(struct ec_alphabet *alpha, const char *s);
 
 /** Translate character to amino acid
  *
@@ -45,7 +39,7 @@ int ec_alphabet_init(ec_alphabet *alpha, const char *s);
  * \return
  * Corresponding amino acid or -1 if `c` is a non-alphabetic character.
  */
-ec_amino ec_alphabet_char_to_amino(const ec_alphabet *alpha, int c);
+ec_amino ec_alphabet_char_to_amino(const struct ec_alphabet *alpha, int c);
 
 /** Translate amino acid to character
  *
@@ -55,6 +49,6 @@ ec_amino ec_alphabet_char_to_amino(const ec_alphabet *alpha, int c);
  * \return
  * Corresponding character, or -1 if `a` does not represent a valid amino acid.
  */
-int ec_alphabet_amino_to_char(const ec_alphabet *alpha, ec_amino a);
+int ec_alphabet_amino_to_char(const struct ec_alphabet *alpha, ec_amino a);
 
 #endif
