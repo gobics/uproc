@@ -4,7 +4,10 @@ ARCHIVE := ecurve.a
 
 CC ?= cc
 CPPFLAGS ?=
-CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -g
+CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -O2
+#CFLAGS += -O0 -g
+#CFLAGS += -pg
+#CFLAGS += -fprofile-arcs -ftest-coverage
 
 AR ?= ar
 ARFLAGS ?= rv

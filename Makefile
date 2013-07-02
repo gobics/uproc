@@ -19,6 +19,12 @@ default : archive
 
 archive : $(ARCHIVE)
 
+main-dna : $(SRCDIR)/main.c $(OBJECTS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^
+
+main-prot : $(SRCDIR)/main.c $(OBJECTS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^
+
 test : $(TESTFILES)
 	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
 
