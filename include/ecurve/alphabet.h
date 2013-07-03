@@ -15,7 +15,7 @@ struct ec_alphabet {
     char str[EC_ALPHABET_SIZE + 1];
 
     /** Lookup table for mapping characters to amino acids */
-    ec_amino amino_table[UCHAR_MAX + 1];
+    ec_amino aminos[UCHAR_MAX + 1];
 };
 
 #define EC_ALPHABET_ALPHA_DEFAULT EC_ALPHABET_ALPHA_BLOS

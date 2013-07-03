@@ -59,20 +59,20 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
         return EC_FAILURE;
     }
 
-    ecurve->prefix_table = malloc(sizeof *ecurve->prefix_table * (EC_PREFIX_MAX + 1));
-    if (!ecurve->prefix_table) {
+    ecurve->prefixes = malloc(sizeof *ecurve->prefixes * (EC_PREFIX_MAX + 1));
+    if (!ecurve->prefixes) {
         return EC_FAILURE;
     }
     for (i = 0; i <= EC_PREFIX_MAX; i++) {
-        ecurve->prefix_table[i].first = 0;
-        ecurve->prefix_table[i].count = 0;
+        ecurve->prefixes[i].first = 0;
+        ecurve->prefixes[i].count = 0;
     }
 
     if (suffix_count) {
         ecurve->suffix_count = suffix_count;
-        ecurve->suffix_table = malloc(sizeof *ecurve->suffix_table * suffix_count);
-        ecurve->class_table = malloc(sizeof *ecurve->class_table * suffix_count);
-        if (!ecurve->suffix_table || !ecurve->class_table) {
+        ecurve->suffixes = malloc(sizeof *ecurve->suffixes * suffix_count);
+        ecurve->classes = malloc(sizeof *ecurve->classes * suffix_count);
+        if (!ecurve->suffixes || !ecurve->classes) {
             ec_ecurve_destroy(ecurve);
             return EC_FAILURE;
         }
@@ -93,9 +93,9 @@ ec_ecurve_destroy(struct ec_ecurve *ecurve)
         return;
     }
 #endif
-    free(ecurve->prefix_table);
-    free(ecurve->suffix_table);
-    free(ecurve->class_table);
+    free(ecurve->prefixes);
+    free(ecurve->suffixes);
+    free(ecurve->classes);
 }
 
 void ec_ecurve_get_alphabet(const struct ec_ecurve *ecurve,
@@ -114,12 +114,12 @@ ec_ecurve_lookup(const struct ec_ecurve *ecurve, const struct ec_word *word,
     size_t index, count;
     size_t lower, upper;
 
-    res = prefix_lookup(ecurve->prefix_table, word->prefix,
-                        &index, &count, &p_lower, &p_upper);
+    res = prefix_lookup(ecurve->prefixes, word->prefix, &index, &count,
+                        &p_lower, &p_upper);
 
     if (res == EC_LOOKUP_EXACT) {
-        res = suffix_lookup(&ecurve->suffix_table[index], count,
-                            word->suffix, &lower, &upper);
+        res = suffix_lookup(&ecurve->suffixes[index], count, word->suffix,
+                            &lower, &upper);
         res = (res == EC_LOOKUP_EXACT) ? EC_LOOKUP_EXACT : EC_LOOKUP_INEXACT;
     }
     else {
@@ -133,11 +133,11 @@ ec_ecurve_lookup(const struct ec_ecurve *ecurve, const struct ec_word *word,
 
     /* populate output variables */
     lower_neighbour->prefix = p_lower;
-    lower_neighbour->suffix = ecurve->suffix_table[lower];
-    *lower_class = ecurve->class_table[lower];
+    lower_neighbour->suffix = ecurve->suffixes[lower];
+    *lower_class = ecurve->classes[lower];
     upper_neighbour->prefix = p_upper;
-    upper_neighbour->suffix = ecurve->suffix_table[upper];
-    *upper_class = ecurve->class_table[upper];
+    upper_neighbour->suffix = ecurve->suffixes[upper];
+    *upper_class = ecurve->classes[upper];
 
     return res;
 }

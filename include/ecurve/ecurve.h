@@ -33,13 +33,13 @@ struct ec_ecurve {
      *
      * Will be allocated to hold `#suffix_count` objects
      */
-    ec_suffix *suffix_table;
+    ec_suffix *suffixes;
 
     /** Table of classes associated with the suffixes
      *
      * Will be allocated to hold `#suffix_count` objects
      */
-    ec_class *class_table;
+    ec_class *classes;
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct ec_ecurve_pfxtable {
@@ -53,7 +53,7 @@ struct ec_ecurve {
      *
      * Will be allocated to hold `#EC_PREFIX_MAX + 1` objects
      */
-    *prefix_table;
+    *prefixes;
 
     /** `mmap()` file descriptor
      *

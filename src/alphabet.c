@@ -17,15 +17,15 @@ ec_alphabet_init(struct ec_alphabet *alpha, const char *s)
     }
     strcpy(alpha->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
-        alpha->amino_table[i] = -1;
+        alpha->aminos[i] = -1;
     }
     for (p = s; *p; p++) {
         i = *p;
         /* invalid or duplicate character */
-        if (!isupper(i) || alpha->amino_table[i] != -1) {
+        if (!isupper(i) || alpha->aminos[i] != -1) {
             return EC_FAILURE;
         }
-        alpha->amino_table[i] = p - s;
+        alpha->aminos[i] = p - s;
     }
     return EC_SUCCESS;
 }
@@ -33,7 +33,7 @@ ec_alphabet_init(struct ec_alphabet *alpha, const char *s)
 ec_amino
 ec_alphabet_char_to_amino(const struct ec_alphabet *alpha, int c)
 {
-    return alpha->amino_table[(unsigned char)c];
+    return alpha->aminos[(unsigned char)c];
 }
 
 int

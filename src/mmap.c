@@ -20,17 +20,17 @@ struct mmap_header {
 };
 
 #define SIZE_HEADER (sizeof (struct mmap_header))
-#define SIZE_PFXTABLE ((EC_PREFIX_MAX + 1) * sizeof (struct ec_ecurve_pfxtable))
+#define SIZE_PREFIXES ((EC_PREFIX_MAX + 1) * sizeof (struct ec_ecurve_pfxtable))
 #define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (ec_suffix))
 #define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (ec_class))
 #define SIZE_TOTAL(suffix_count) \
     (SIZE_HEADER + \
-     SIZE_PFXTABLE + \
+     SIZE_PREFIXES + \
      SIZE_SUFFIXES(suffix_count) + \
      SIZE_CLASSES(suffix_count))
 
-#define OFFSET_PFXTABLE (SIZE_HEADER)
-#define OFFSET_SUFFIXES (OFFSET_PFXTABLE + SIZE_PFXTABLE)
+#define OFFSET_PREFIXES (SIZE_HEADER)
+#define OFFSET_SUFFIXES (OFFSET_PREFIXES + SIZE_PREFIXES)
 #define OFFSET_CLASSES(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
 
 int
@@ -70,9 +70,9 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
         goto error_munmap;
     }
 
-    ecurve->prefix_table = (void *)(region + OFFSET_PFXTABLE);
-    ecurve->suffix_table = (void *)(region + OFFSET_SUFFIXES);
-    ecurve->class_table =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
+    ecurve->prefixes = (void *)(region + OFFSET_PREFIXES);
+    ecurve->suffixes = (void *)(region + OFFSET_SUFFIXES);
+    ecurve->classes =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
 
     return EC_SUCCESS;
 
@@ -118,12 +118,12 @@ ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
     memcpy(&header.alphabet_str, ecurve->alphabet.str, EC_ALPHABET_SIZE);
 
     memcpy(region, &header, SIZE_HEADER);
-    memcpy(region + OFFSET_PFXTABLE, ecurve->prefix_table, SIZE_PFXTABLE);
+    memcpy(region + OFFSET_PREFIXES, ecurve->prefixes, SIZE_PREFIXES);
     memcpy(region + OFFSET_SUFFIXES,
-           ecurve->suffix_table, SIZE_SUFFIXES(ecurve->suffix_count));
+           ecurve->suffixes, SIZE_SUFFIXES(ecurve->suffix_count));
 
     memcpy(region + OFFSET_CLASSES(ecurve->suffix_count),
-           ecurve->class_table, SIZE_CLASSES(ecurve->suffix_count));
+           ecurve->classes, SIZE_CLASSES(ecurve->suffix_count));
 
     munmap(region, size);
     close(fd);

@@ -315,17 +315,17 @@ ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format)
         }
 
         for (; p < prefix; p++) {
-            ecurve->prefix_table[p].first = prev_last;
-            ecurve->prefix_table[p].count = prev_last ? 0 : -1;
+            ecurve->prefixes[p].first = prev_last;
+            ecurve->prefixes[p].count = prev_last ? 0 : -1;
         }
-        ecurve->prefix_table[prefix].first = s;
-        ecurve->prefix_table[prefix].count = p_suffixes;
+        ecurve->prefixes[prefix].first = s;
+        ecurve->prefixes[prefix].count = p_suffixes;
         p++;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
             res = f.suffix(stream, &ecurve->alphabet,
-                           &ecurve->suffix_table[s],
-                           &ecurve->class_table[s]);
+                           &ecurve->suffixes[s],
+                           &ecurve->classes[s]);
             if (res != EC_SUCCESS) {
                 return res;
             }
@@ -333,8 +333,8 @@ ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format)
         prev_last = s - 1;
     }
     for (; p < EC_PREFIX_MAX + 1; p++) {
-        ecurve->prefix_table[p].first = prev_last;
-        ecurve->prefix_table[p].count = -1;
+        ecurve->prefixes[p].first = prev_last;
+        ecurve->prefixes[p].count = -1;
     }
     return EC_SUCCESS;
 }
@@ -395,8 +395,8 @@ ec_storage_store_stream(const struct ec_ecurve *ecurve, FILE *stream,
     }
 
     for (p = 0; p <= EC_PREFIX_MAX; p++) {
-        size_t suffix_count = ecurve->prefix_table[p].count;
-        size_t offset = ecurve->prefix_table[p].first;
+        size_t suffix_count = ecurve->prefixes[p].count;
+        size_t offset = ecurve->prefixes[p].first;
         size_t i;
 
         if (!suffix_count || suffix_count == (size_t) -1) {
@@ -410,8 +410,8 @@ ec_storage_store_stream(const struct ec_ecurve *ecurve, FILE *stream,
 
         for (i = 0; i < suffix_count; i++) {
             res = f.suffix(stream, &ecurve->alphabet,
-                           ecurve->suffix_table[offset + i],
-                           ecurve->class_table[offset + i]);
+                           ecurve->suffixes[offset + i],
+                           ecurve->classes[offset + i]);
             if (res != EC_SUCCESS) {
                 return res;
             }
