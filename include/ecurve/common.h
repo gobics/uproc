@@ -109,7 +109,7 @@ typedef int ec_amino;
  * Prefixes are (in contrast to suffixes, see below) contiguous, i.e. all values
  * from 0 to #EC_PREFIX_MAX represent valid prefixes.
  */
-typedef uint32_t ec_prefix;
+typedef uint_least32_t ec_prefix;
 /** printf() format for prefixes */
 #define EC_PREFIX_PRI PRIu32
 /** scanf() format for prefixes */
@@ -131,7 +131,7 @@ typedef uint32_t ec_prefix;
  * Suffixes are represented as a "bit string" of #EC_SUFFIX_LEN amino acids,
  * each represented #EC_AMINO_BITS bits.
  */
-typedef uint64_t ec_suffix;
+typedef uint_least64_t ec_suffix;
 
 /** printf() format for suffixes */
 #define EC_SUFFIX_PRI PRIu64
@@ -141,7 +141,7 @@ typedef uint64_t ec_suffix;
 
 
 /** Identifier of a protein class (or "protein family"). */
-typedef uint16_t ec_class;
+typedef uint_least16_t ec_class;
 
 /** printf() format for #ec_class */
 #define EC_CLASS_PRI PRIu16
