@@ -17,14 +17,13 @@
  *
  * The following algorithm is used:
  *
- *   - For all words in the sequence `seq`:
- *
- *         -# Look up forward input word in forward ecurve.
- *         -# Align suffix of input and found word(s) using position-sentive
- *            alignment using the distance matrices in `distmat`.
- *         -# Insert alignment distances into the score vector associated with the
- *            found protein class.
- *         -# Repeat for reverse word and ecurve.
+ *   -  For all words in the sequence `seq`:
+ *       -# Look up forward input word in forward ecurve.
+ *       -# Align suffix of input and found word(s) using position-sentive
+ *          alignment using the distance matrices in `distmat`.
+ *       -# Insert alignment distances into the score vector associated with the
+ *          found protein class.
+ *       -# Repeat for reverse word and ecurve.
  *
  *   -  Sum up score vectors of all protein classes and find the class with
  *      maximum score.
