@@ -22,12 +22,6 @@ enum {
     EC_ITER_STOP,
 };
 
-#ifdef INFINITY
-#define EC_INFINITY INFINITY
-#else
-#define EC_INFINITY HUGE_VAL
-#endif
-
 /** Lowest `n` bits set to one */
 #define EC_BITMASK(n) (~(~0ULL << (n)))
 

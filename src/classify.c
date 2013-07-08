@@ -11,7 +11,7 @@
 
 struct sc {
     size_t index;
-    double total, dist[EC_SUFFIX_LEN];
+    double total, dist[EC_WORD_LEN];
 };
 
 struct sc_max {
@@ -26,8 +26,8 @@ sc_init(struct sc *s)
     size_t i;
     s->index = -1;
     s->total = 0.0;
-    for (i = 0; i < EC_SUFFIX_LEN; i++) {
-        s->dist[i] = -EC_INFINITY;
+    for (i = 0; i < EC_WORD_LEN; i++) {
+        s->dist[i] = -INFINITY;
     }
 }
 
@@ -42,9 +42,10 @@ sc_new(void)
 }
 
 static void
-sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN])
+sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN],
+       bool reverse)
 {
-    size_t i, diff = 0;
+    size_t i, diff, offset;
 
     if (score->index != (size_t) -1) {
         assert(index >= score->index);
@@ -53,16 +54,25 @@ sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN])
             diff = EC_SUFFIX_LEN;
         }
         for (i = 0; i < diff; i++) {
-            score->total += score->dist[i];
+            if (isfinite(score->dist[i])) {
+                score->total += score->dist[i];
+                score->dist[i] = -INFINITY;
+            }
         }
     }
+    else {
+        diff = 0;
+    }
+
+    offset = reverse ? 0 : EC_PREFIX_LEN;
 
     for (i = 0; i + diff < EC_SUFFIX_LEN; i++) {
 #define MAX(a, b) (a > b ? a : b)
-        score->dist[i] = MAX(score->dist[i + diff], dist[i]);
+        score->dist[i + offset] = MAX(score->dist[i + offset + diff],
+                                      dist[reverse ? EC_SUFFIX_LEN - i - 1 : i]);
     }
     for (; i < EC_SUFFIX_LEN; i++) {
-        score->dist[i] = dist[i];
+        score->dist[i + offset] = dist[i];
     }
     score->index = index;
 }
@@ -72,7 +82,9 @@ sc_finalize(struct sc *score)
 {
     size_t i;
     for (i = 0; i < EC_SUFFIX_LEN; i++) {
-        score->total += score->dist[i];
+        if (isfinite(score->dist[i])) {
+            score->total += score->dist[i];
+        }
     }
     return score->total;
 }
@@ -94,7 +106,7 @@ static int
 scores_finalize(struct ec_bst *scores, ec_class *predict_cls, double *predict_score)
 {
     int res;
-    struct sc_max m = { -EC_INFINITY, -1 };
+    struct sc_max m = { -INFINITY, -1 };
     res = ec_bst_walk(scores, &scores_finalize_cb, &m);
     if (res == EC_SUCCESS) {
         *predict_cls = m.cls;
@@ -105,7 +117,7 @@ scores_finalize(struct ec_bst *scores, ec_class *predict_cls, double *predict_sc
 
 static int
 scores_add(struct ec_bst *scores, ec_class cls, size_t index,
-           double dist[static EC_SUFFIX_LEN])
+           double dist[static EC_SUFFIX_LEN], bool reverse)
 {
     struct sc *s = ec_bst_get(scores, cls);
     if (!s) {
@@ -116,7 +128,7 @@ scores_add(struct ec_bst *scores, ec_class cls, size_t index,
             return EC_FAILURE;
         }
     }
-    sc_add(s, index, dist);
+    sc_add(s, index, dist, reverse);
     return EC_SUCCESS;
 }
 
@@ -137,7 +149,7 @@ align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
 
 static int
 scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
-                const struct ec_ecurve *ecurve,
+                bool reverse, const struct ec_ecurve *ecurve,
                 const struct ec_distmat distmat[static EC_SUFFIX_LEN])
 {
     int res;
@@ -153,12 +165,12 @@ scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
     ec_ecurve_lookup(ecurve, word, &lower_nb, &lower_cls, &upper_nb, &upper_cls);
 
     align_suffixes(dist, word->suffix, lower_nb.suffix, distmat);
-    res = scores_add(scores, lower_cls, index, dist);
+    res = scores_add(scores, lower_cls, index, dist, reverse);
     if (res != EC_SUCCESS || ec_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
     align_suffixes(dist, word->suffix, upper_nb.suffix, distmat);
-    res = scores_add(scores, upper_cls, index, dist);
+    res = scores_add(scores, upper_cls, index, dist, reverse);
     return res;
 }
 
@@ -184,18 +196,18 @@ ec_classify_protein(const char *seq,
     ec_worditer_init(&iter, seq, &alpha);
 
     while (ec_worditer_next(&iter, &index, &fwd_word, &rev_word) == EC_SUCCESS) {
-        res = scores_add_word(&scores, &fwd_word, index, fwd_ecurve, distmat);
+        res = scores_add_word(&scores, &fwd_word, index, false, fwd_ecurve, distmat);
         if (res != EC_SUCCESS) {
             goto error;
         }
-        res = scores_add_word(&scores, &rev_word, index, rev_ecurve, distmat);
+        res = scores_add_word(&scores, &rev_word, index, true, rev_ecurve, distmat);
         if (res != EC_SUCCESS) {
             goto error;
         }
     }
     res = EC_SUCCESS;
     if (ec_bst_isempty(&scores)) {
-        *predict_score = -EC_INFINITY;
+        *predict_score = -INFINITY;
     }
     else {
         scores_finalize(&scores, predict_cls, predict_score);
@@ -237,7 +249,7 @@ ec_classify_dna(const char *seq,
         }
         else {
             predict_cls[i] = -1;
-            predict_score[i] = -EC_INFINITY;
+            predict_score[i] = -INFINITY;
         }
     }
 

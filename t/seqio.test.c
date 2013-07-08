@@ -1,4 +1,5 @@
 #include <math.h>
+#include <errno.h>
 
 #include "test.h"
 #include "ecurve.h"
@@ -25,12 +26,12 @@ int fasta_no_filter(void)
     size_t id_sz, c_sz, seq_sz;
     unsigned i;
     FILE *stream;
-    
+
     DESC("store and load FASTA sequence without filter");
 
     stream = fopen(TMPFILE, "w");
     if (!stream) {
-        FAIL("can't open temporary file");
+        FAIL("can't open temporary file: %s", strerror(errno));
     }
     i = 3;
     while (i--) {
@@ -40,7 +41,7 @@ int fasta_no_filter(void)
 
     stream = fopen(TMPFILE, "r");
     if (!stream) {
-        FAIL("can't open temporary file");
+        FAIL("can't open temporary file: %s", strerror(errno));
     }
     i = 3;
     while (i--) {
@@ -76,7 +77,7 @@ int fasta_filter(void)
 
     stream = fopen(TMPFILE, "w");
     if (!stream) {
-        FAIL("can't open temporary file");
+        FAIL("can't open temporary file: %s", strerror(errno));
     }
     i = 3;
     while (i--) {
@@ -86,7 +87,7 @@ int fasta_filter(void)
 
     stream = fopen(TMPFILE, "r");
     if (!stream) {
-        FAIL("can't open temporary file");
+        FAIL("can't open temporary file: %s", strerror(errno));
     }
     i = 3;
     while (i--) {

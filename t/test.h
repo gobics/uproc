@@ -25,7 +25,7 @@ extern test tests[];
 
 
 #define SKIP(...) sprintf(test_info, __VA_ARGS__); return SKIP
-#define FAIL(...) sprintf(test_error, __VA_ARGS__); return FAILURE
+#define FAIL(fmt, ...) sprintf(test_error, "Line %d:\t" fmt, __LINE__, __VA_ARGS__); return FAILURE
 
 
 /* ASSERTION MACROS */
@@ -64,7 +64,7 @@ extern test tests[];
 
 #define assert_double_eq(X, Y, DESC) do {                                   \
     double _test_x = (X), _test_y = (Y);                                    \
-    if (abs(_test_x - _test_y) > EPSILON) {                                 \
+    if (fabs(_test_x - _test_y) > EPSILON) {                                \
         FAIL("Assertion '" DESC " (" #X " == " #Y ")' failed:\n"            \
              TAPDIAG "  " #X ":\n"                                          \
              TAPDIAG "    %g\n"                                             \
