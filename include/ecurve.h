@@ -1,11 +1,7 @@
 #ifndef ECURVE_H
 #define ECURVE_H
 
-/** \mainpage
- *
- * While all struct definitions are exposed, applications should use the
- * provided typedefs (if possible), to ensure compatibility with newer versions.
- */
+/** \mainpage */
 
 /** \file include/ecurve.h
  *
