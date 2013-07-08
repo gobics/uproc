@@ -8,7 +8,7 @@ CPPFLAGS += -DHAVE_MMAP
 endif
 
 OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
-HEADERS := $(INCDIR)/ecurve.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
+HEADERS := $(INCDIR)/ecurve.h $(INCDIR)/ecurve/common.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
 
 CPPFLAGS += -I$(INCDIR)
 

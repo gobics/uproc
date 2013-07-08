@@ -330,7 +330,7 @@ ec_orf_chained(const char *seq,
         min_score = get_threshold(thresholds, seq);
     }
     else {
-        min_score = -EC_INFINITY;
+        min_score = -INFINITY;
     }
 
     res = ec_orfiter_init(&iter, seq, codon_scores);
