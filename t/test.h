@@ -25,7 +25,7 @@ extern test tests[];
 
 
 #define SKIP(...) sprintf(test_info, __VA_ARGS__); return SKIP
-#define FAIL(...) sprintf(test_error, __VA_ARGS__); return FAILURE
+#define FAIL(fmt, ...) sprintf(test_error, "Line %d:\t" fmt, __LINE__, __VA_ARGS__); return FAILURE
 
 
 /* ASSERTION MACROS */
