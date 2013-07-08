@@ -64,7 +64,7 @@ extern test tests[];
 
 #define assert_double_eq(X, Y, DESC) do {                                   \
     double _test_x = (X), _test_y = (Y);                                    \
-    if (abs(_test_x - _test_y) > EPSILON) {                                 \
+    if (fabs(_test_x - _test_y) > EPSILON) {                                \
         FAIL("Assertion '" DESC " (" #X " == " #Y ")' failed:\n"            \
              TAPDIAG "  " #X ":\n"                                          \
              TAPDIAG "    %g\n"                                             \
