@@ -4,32 +4,32 @@
 
 #include "ecurve/common.h"
 #include "ecurve/alphabet.h"
-#include "ecurve/distmat.h"
+#include "ecurve/substmat.h"
 
 #define EC_DISTMAT_INDEX(x, y) ((x) << EC_AMINO_BITS | (y))
 
 int
-ec_distmat_init(struct ec_distmat *mat)
+ec_substmat_init(struct ec_substmat *mat)
 {
-    *mat = (struct ec_distmat) { { 0.0 } };
+    *mat = (struct ec_substmat) { { 0.0 } };
     return EC_SUCCESS;
 }
 
 double
-ec_distmat_get(const struct ec_distmat *mat, ec_amino x, ec_amino y)
+ec_substmat_get(const struct ec_substmat *mat, ec_amino x, ec_amino y)
 {
     return mat->dists[EC_DISTMAT_INDEX(x, y)];
 }
 
 void
-ec_distmat_set(struct ec_distmat *mat, ec_amino x, ec_amino y, double dist)
+ec_substmat_set(struct ec_substmat *mat, ec_amino x, ec_amino y, double dist)
 {
     mat->dists[EC_DISTMAT_INDEX(x, y)] = dist;
 }
 
 int
-ec_distmat_load_many(struct ec_distmat *mat, size_t n, const char *path,
-                     int (*load)(struct ec_distmat *, FILE *, void *), void *arg)
+ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path,
+                     int (*load)(struct ec_substmat *, FILE *, void *), void *arg)
 {
     int res = EC_SUCCESS;
     size_t i;
@@ -42,7 +42,7 @@ ec_distmat_load_many(struct ec_distmat *mat, size_t n, const char *path,
 
 
     for (i = 0; i < n; i++) {
-        res = ec_distmat_init(&mat[i]);
+        res = ec_substmat_init(&mat[i]);
         if (res != EC_SUCCESS) {
             goto error;
         }
@@ -58,14 +58,14 @@ error:
 }
 
 int
-ec_distmat_load(struct ec_distmat *mat, const char *path,
-                int (*load)(struct ec_distmat *, FILE *, void *), void *arg)
+ec_substmat_load(struct ec_substmat *mat, const char *path,
+                int (*load)(struct ec_substmat *, FILE *, void *), void *arg)
 {
-    return ec_distmat_load_many(mat, 1, path, load, arg);
+    return ec_substmat_load_many(mat, 1, path, load, arg);
 }
 
 int
-ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg)
+ec_substmat_load_blosum(struct ec_substmat *mat, FILE *stream, void *arg)
 {
     int i, n, row[EC_ALPHABET_SIZE];
     ec_amino aa[EC_ALPHABET_SIZE];
@@ -98,8 +98,8 @@ ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg)
             do {
                 dist = strtod(p, &p);
             } while (row[k] != r++);
-            ec_distmat_set(mat, aa[n], aa[k], dist);
-            ec_distmat_set(mat, aa[k], aa[n], dist);
+            ec_substmat_set(mat, aa[n], aa[k], dist);
+            ec_substmat_set(mat, aa[k], aa[n], dist);
         }
         n += 1;
     }
@@ -108,7 +108,7 @@ ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg)
 }
 
 int
-ec_distmat_load_plain(struct ec_distmat *mat, FILE *stream, void *arg)
+ec_substmat_load_plain(struct ec_substmat *mat, FILE *stream, void *arg)
 {
     size_t i, k;
     double dist;
@@ -118,7 +118,7 @@ ec_distmat_load_plain(struct ec_distmat *mat, FILE *stream, void *arg)
             if (fscanf(stream, "%lf", &dist) != 1) {
                 return EC_FAILURE;
             }
-            ec_distmat_set(mat, i, k, dist);
+            ec_substmat_set(mat, i, k, dist);
         }
     }
     return 0;

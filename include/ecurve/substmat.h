@@ -1,7 +1,7 @@
-#ifndef EC_DISTMAT_H
-#define EC_DISTMAT_H
+#ifndef EC_SUBSTMAT_H
+#define EC_SUBSTMAT_H
 
-/** \file ecurve/distmat.h
+/** \file ecurve/substmat.h
  *
  * Obtain alignment distances between amino acids
  *
@@ -13,17 +13,17 @@
 #include "ecurve/alphabet.h"
 
 /** Matrix of amino acid distances */
-struct ec_distmat {
+struct ec_substmat {
     /** Matrix containing distances */
     double dists[EC_ALPHABET_SIZE << EC_AMINO_BITS];
 };
 
 /** Calculate index for given amino acids x, y
  *
- * Don't use this, it may change in the future. Use ec_distmat_get() and
- * ec_distmat_set().
+ * Don't use this, it may change in the future. Use ec_substmat_get() and
+ * ec_substmat_set().
  */
-#define EC_DISTMAT_INDEX(x, y) ((x) << EC_AMINO_BITS | (y))
+#define EC_SUBSTMAT_INDEX(x, y) ((x) << EC_AMINO_BITS | (y))
 
 
 /** Initialize a distance matrix object to zeroes
@@ -33,7 +33,7 @@ struct ec_distmat {
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_distmat_init(struct ec_distmat *mat);
+int ec_substmat_init(struct ec_substmat *mat);
 
 /** Get distance of two amino acids
  *
@@ -45,7 +45,7 @@ int ec_distmat_init(struct ec_distmat *mat);
  *
  * \return  distance between x and y
  */
-double ec_distmat_get(const struct ec_distmat *mat, ec_amino x, ec_amino y);
+double ec_substmat_get(const struct ec_substmat *mat, ec_amino x, ec_amino y);
 
 /** Set distance of two amino acids
  *
@@ -59,7 +59,7 @@ double ec_distmat_get(const struct ec_distmat *mat, ec_amino x, ec_amino y);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-void ec_distmat_set(struct ec_distmat *mat, ec_amino x, ec_amino y,
+void ec_substmat_set(struct ec_substmat *mat, ec_amino x, ec_amino y,
                     double dist);
 
 /** Load `n` distance matrices from a file, using the given loader function
@@ -73,8 +73,8 @@ void ec_distmat_set(struct ec_distmat *mat, ec_amino x, ec_amino y,
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_distmat_load_many(struct ec_distmat *mat, size_t n, const char *path,
-                         int (*load)(struct ec_distmat *, FILE *, void *),
+int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path,
+                         int (*load)(struct ec_substmat *, FILE *, void *),
                          void *arg);
 
 /** Load one distance matrices from a file, using the given loader function
@@ -87,8 +87,8 @@ int ec_distmat_load_many(struct ec_distmat *mat, size_t n, const char *path,
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_distmat_load(struct ec_distmat *mat, const char *path,
-                    int (*load)(struct ec_distmat *, FILE *, void *),
+int ec_substmat_load(struct ec_substmat *mat, const char *path,
+                    int (*load)(struct ec_substmat *, FILE *, void *),
                     void *arg);
 
 /** Read a BLOSUM-like distance matrix from a stream
@@ -102,7 +102,7 @@ int ec_distmat_load(struct ec_distmat *mat, const char *path,
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg);
+int ec_substmat_load_blosum(struct ec_substmat *mat, FILE *stream, void *arg);
 
 /** Read a plain text distance matrix from a stream
  *
@@ -116,6 +116,6 @@ int ec_distmat_load_blosum(struct ec_distmat *mat, FILE *stream, void *arg);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_distmat_load_plain(struct ec_distmat *mat, FILE *stream, void *arg);
+int ec_substmat_load_plain(struct ec_substmat *mat, FILE *stream, void *arg);
 
 #endif

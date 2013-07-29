@@ -7,7 +7,7 @@
  */
 
 #include "ecurve/common.h"
-#include "ecurve/distmat.h"
+#include "ecurve/substmat.h"
 #include "ecurve/ecurve.h"
 #include "ecurve/matrix.h"
 #include "ecurve/orf.h"
@@ -20,7 +20,7 @@
  *   -  For all words in the sequence `seq`:
  *       -# Look up forward input word in forward ecurve.
  *       -# Align suffix of input and found word(s) using position-sentive
- *          alignment using the distance matrices in `distmat`.
+ *          alignment using the distance matrices in `substmat`.
  *       -# Insert alignment distances into the score vector associated with the
  *          found protein class.
  *       -# Repeat for reverse word and ecurve.
@@ -36,7 +36,7 @@
  * If both are non-null, they should use the same alphabet.
  *
  * \param seq           amino acid sequence
- * \param distmat       distance matrices for aligning the suffixes
+ * \param substmat       distance matrices for aligning the suffixes
  * \param fwd_ecurve    ecurve for looking up forward words
  * \param rev_ecurve    ecurve for looking up reverse words
  * \param predict_cls   _OUT_: protein class with highest score
@@ -46,7 +46,7 @@
  * \retval #EC_SUCCESS  else
  */
 int ec_classify_protein(const char *seq,
-                        const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
                         const struct ec_ecurve *fwd_ecurve,
                         const struct ec_ecurve *rev_ecurve,
                         ec_class *predict_cls,
@@ -64,7 +64,7 @@ int ec_classify_dna(const char *seq,
                     enum ec_orf_mode mode,
                     const struct ec_orf_codonscores *codon_scores,
                     const struct ec_matrix *thresholds,
-                    const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const struct ec_substmat substmat[static EC_SUFFIX_LEN],
                     const struct ec_ecurve *fwd_ecurve,
                     const struct ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,

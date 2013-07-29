@@ -4,7 +4,7 @@
 #include "ecurve/common.h"
 #include "ecurve/bst.h"
 #include "ecurve/ecurve.h"
-#include "ecurve/distmat.h"
+#include "ecurve/substmat.h"
 #include "ecurve/orf.h"
 #include "ecurve/matrix.h"
 #include "ecurve/classify.h"
@@ -134,7 +134,7 @@ scores_add(struct ec_bst *scores, ec_class cls, size_t index,
 
 static void
 align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
-               const struct ec_distmat distmat[static EC_SUFFIX_LEN])
+               const struct ec_substmat substmat[static EC_SUFFIX_LEN])
 {
     size_t i;
     ec_amino a1, a2;
@@ -143,14 +143,14 @@ align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
         a2 = s2 & EC_BITMASK(EC_AMINO_BITS);
         s1 >>= EC_AMINO_BITS;
         s2 >>= EC_AMINO_BITS;
-        dist[i] = ec_distmat_get(&distmat[i], a1, a2);
+        dist[i] = ec_substmat_get(&substmat[i], a1, a2);
     }
 }
 
 static int
 scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
                 bool reverse, const struct ec_ecurve *ecurve,
-                const struct ec_distmat distmat[static EC_SUFFIX_LEN])
+                const struct ec_substmat substmat[static EC_SUFFIX_LEN])
 {
     int res;
     struct ec_word
@@ -164,19 +164,19 @@ scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
     }
     ec_ecurve_lookup(ecurve, word, &lower_nb, &lower_cls, &upper_nb, &upper_cls);
 
-    align_suffixes(dist, word->suffix, lower_nb.suffix, distmat);
+    align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
     res = scores_add(scores, lower_cls, index, dist, reverse);
     if (res != EC_SUCCESS || ec_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
-    align_suffixes(dist, word->suffix, upper_nb.suffix, distmat);
+    align_suffixes(dist, word->suffix, upper_nb.suffix, substmat);
     res = scores_add(scores, upper_cls, index, dist, reverse);
     return res;
 }
 
 int
 ec_classify_protein(const char *seq,
-                    const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                    const struct ec_substmat substmat[static EC_SUFFIX_LEN],
                     const struct ec_ecurve *fwd_ecurve,
                     const struct ec_ecurve *rev_ecurve,
                     ec_class *predict_cls,
@@ -196,11 +196,11 @@ ec_classify_protein(const char *seq,
     ec_worditer_init(&iter, seq, &alpha);
 
     while (ec_worditer_next(&iter, &index, &fwd_word, &rev_word) == EC_SUCCESS) {
-        res = scores_add_word(&scores, &fwd_word, index, false, fwd_ecurve, distmat);
+        res = scores_add_word(&scores, &fwd_word, index, false, fwd_ecurve, substmat);
         if (res != EC_SUCCESS) {
             goto error;
         }
-        res = scores_add_word(&scores, &rev_word, index, true, rev_ecurve, distmat);
+        res = scores_add_word(&scores, &rev_word, index, true, rev_ecurve, substmat);
         if (res != EC_SUCCESS) {
             goto error;
         }
@@ -223,7 +223,7 @@ ec_classify_dna(const char *seq,
                 enum ec_orf_mode mode,
                 const struct ec_orf_codonscores *codon_scores,
                 const struct ec_matrix *thresholds,
-                const struct ec_distmat distmat[static EC_SUFFIX_LEN],
+                const struct ec_substmat substmat[static EC_SUFFIX_LEN],
                 const struct ec_ecurve *fwd_ecurve,
                 const struct ec_ecurve *rev_ecurve,
                 ec_class *predict_cls,
@@ -241,7 +241,7 @@ ec_classify_dna(const char *seq,
 
     for (i = 0; i < mode; i++) {
         if (orf[i]) {
-            res = ec_classify_protein(orf[i], distmat, fwd_ecurve, rev_ecurve,
+            res = ec_classify_protein(orf[i], substmat, fwd_ecurve, rev_ecurve,
                                       &predict_cls[i], &predict_score[i]);
             if (res != EC_SUCCESS) {
                 goto error;

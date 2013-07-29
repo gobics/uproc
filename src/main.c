@@ -21,7 +21,7 @@ enum args {
 int main(int argc, char **argv)
 {
     int res;
-    struct ec_distmat distmat[EC_SUFFIX_LEN];
+    struct ec_substmat substmat[EC_SUFFIX_LEN];
 #ifdef MAIN_DNA
     struct ec_orf_codonscores codon_scores;
     struct ec_matrix thresholds;
@@ -39,8 +39,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = ec_distmat_load_many(distmat, EC_SUFFIX_LEN, argv[DISTMAT],
-                               &ec_distmat_load_plain, NULL);
+    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[DISTMAT],
+                               &ec_substmat_load_plain, NULL);
     BAIL;
 
 #ifdef MAIN_DNA
@@ -79,9 +79,9 @@ int main(int argc, char **argv)
         fflush(stdout);
 #ifdef MAIN_DNA
         res = ec_classify_dna(seq, EC_ORF_ALL, &codon_scores, &thresholds,
-                              distmat, &fwd, &rev, &cls, &score);
+                              substmat, &fwd, &rev, &cls, &score);
 #else
-        res = ec_classify_protein(seq, distmat, &fwd, &rev, &cls, &score);
+        res = ec_classify_protein(seq, substmat, &fwd, &rev, &cls, &score);
 #endif
         if (res == EC_FAILURE) {
             break;
