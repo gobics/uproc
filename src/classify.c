@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 
 #include "ecurve/common.h"
 #include "ecurve/bst.h"
@@ -41,14 +41,40 @@ sc_new(void)
     return s;
 }
 
+
+static void
+reverse_array(void *p, size_t n, size_t sz)
+{
+    unsigned char *s = p, tmp;
+    size_t i, k, i1, i2;
+
+    for (i = 0; i < n / 2; i++) {
+        for (k = 0; k < sz; k++) {
+            i1 = sz * i + k;
+            i2 = sz * (n - i - 1) + k;
+            tmp = s[i1];
+            s[i1] = s[i2];
+            s[i2] = tmp;
+        }
+    }
+}
+
 static void
 sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN],
        bool reverse)
 {
-    size_t i, diff, offset;
+    size_t i, diff;
+    double tmp[EC_WORD_LEN];
+
+    for (i = 0; i < EC_PREFIX_LEN; i++) {
+        tmp[i] = -INFINITY;
+    }
+    memcpy(tmp + EC_PREFIX_LEN, dist, sizeof *dist * EC_SUFFIX_LEN);
+    if (reverse) {
+        reverse_array(tmp, EC_WORD_LEN, sizeof *tmp);
+    }
 
     if (score->index != (size_t) -1) {
-        assert(index >= score->index);
         diff = index - score->index;
         if (diff > EC_SUFFIX_LEN) {
             diff = EC_SUFFIX_LEN;
@@ -64,15 +90,12 @@ sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN],
         diff = 0;
     }
 
-    offset = reverse ? 0 : EC_PREFIX_LEN;
-
-    for (i = 0; i + diff < EC_SUFFIX_LEN; i++) {
+    for (i = 0; i + diff < EC_WORD_LEN; i++) {
 #define MAX(a, b) (a > b ? a : b)
-        score->dist[i + offset] = MAX(score->dist[i + offset + diff],
-                                      dist[reverse ? EC_SUFFIX_LEN - i - 1 : i]);
+        score->dist[i] = MAX(score->dist[i + diff], tmp[i]);
     }
-    for (; i < EC_SUFFIX_LEN; i++) {
-        score->dist[i + offset] = dist[i];
+    for (; i < EC_WORD_LEN; i++) {
+        score->dist[i] = tmp[i];
     }
     score->index = index;
 }
@@ -119,7 +142,20 @@ static int
 scores_add(struct ec_bst *scores, ec_class cls, size_t index,
            double dist[static EC_SUFFIX_LEN], bool reverse)
 {
-    struct sc *s = ec_bst_get(scores, cls);
+    size_t i;
+    bool positive = false;
+    struct sc *s;
+
+    for (i = 0; i < EC_SUFFIX_LEN; i++) {
+        if (dist[i] > 0.0) {
+            positive = true;
+        }
+    }
+    if (!positive) {
+        return EC_SUCCESS;
+    }
+
+    s = ec_bst_get(scores, cls);
     if (!s) {
         if (!(s = sc_new())) {
             return EC_FAILURE;
@@ -143,7 +179,7 @@ align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
         a2 = s2 & EC_BITMASK(EC_AMINO_BITS);
         s1 >>= EC_AMINO_BITS;
         s2 >>= EC_AMINO_BITS;
-        dist[i] = ec_substmat_get(&substmat[i], a1, a2);
+        dist[i] = ec_substmat_get(&substmat[i], a2, a1);
     }
 }
 

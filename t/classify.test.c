@@ -60,6 +60,18 @@ int sc_add_finalize(void)
     sc_add(&score, 0, dist, false);
     assert_double_eq(sc_finalize(&score), -2.0, "negative total score");
 
+    sc_init(&score);
+    memcpy(dist, (double[EC_SUFFIX_LEN]){ 0.0 }, sizeof dist);
+    dist[0] = 1.0;
+    dist[1] = 0.5;
+    sc_add(&score, 0, dist, false);
+    sc_add(&score, 1, dist, false);
+    sc_add(&score, 2, dist, false);
+    dist[0] = dist[1] = 0.0;
+    dist[4] = 2.0;
+    sc_add(&score, 2, dist, true);
+    assert_double_eq(sc_finalize(&score), 5.0, "correct score with overlaps");
+
     return SUCCESS;
 }
 
