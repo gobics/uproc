@@ -76,8 +76,8 @@ sc_add(struct sc *score, size_t index, double dist[static EC_SUFFIX_LEN],
 
     if (score->index != (size_t) -1) {
         diff = index - score->index;
-        if (diff > EC_SUFFIX_LEN) {
-            diff = EC_SUFFIX_LEN;
+        if (diff > EC_WORD_LEN) {
+            diff = EC_WORD_LEN;
         }
         for (i = 0; i < diff; i++) {
             if (isfinite(score->dist[i])) {
@@ -104,7 +104,7 @@ static double
 sc_finalize(struct sc *score)
 {
     size_t i;
-    for (i = 0; i < EC_SUFFIX_LEN; i++) {
+    for (i = 0; i < EC_WORD_LEN; i++) {
         if (isfinite(score->dist[i])) {
             score->total += score->dist[i];
         }
