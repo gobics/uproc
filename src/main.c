@@ -39,8 +39,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[DISTMAT],
-                               &ec_substmat_load_plain, NULL);
+    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[DISTMAT]);
     BAIL;
 
 #ifdef MAIN_DNA
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
                                       NULL, NULL,
                                       &seq, &seq_sz)) == EC_SUCCESS)
     {
-        printf("%.10s: ", id);
+        printf("%.30s: ", id);
         fflush(stdout);
 #ifdef MAIN_DNA
         res = ec_classify_dna(seq, EC_ORF_ALL, &codon_scores, &thresholds,

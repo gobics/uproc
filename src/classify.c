@@ -179,7 +179,7 @@ align_suffixes(double dist[static EC_SUFFIX_LEN], ec_suffix s1, ec_suffix s2,
         a2 = s2 & EC_BITMASK(EC_AMINO_BITS);
         s1 >>= EC_AMINO_BITS;
         s2 >>= EC_AMINO_BITS;
-        dist[i] = ec_substmat_get(&substmat[i], a2, a1);
+        dist[i] = ec_substmat_get(&substmat[i], a1, a2);
     }
 }
 
