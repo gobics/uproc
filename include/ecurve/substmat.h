@@ -67,55 +67,20 @@ void ec_substmat_set(struct ec_substmat *mat, ec_amino x, ec_amino y,
  * \param mat   pointer to the first of `n` distance matrices
  * \param n     number of matrices to load
  * \param path  file to load
- * \param load  function that parses the file and populates the distance matrix
- * \param arg   additional argument to `load`
  *
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path,
-                         int (*load)(struct ec_substmat *, FILE *, void *),
-                         void *arg);
+int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path);
 
 /** Load one distance matrices from a file, using the given loader function
  *
  * \param mat   target distance matrix
  * \param path  file to load
- * \param load  function that parses the file and populates the distance matrix
- * \param arg   additional argument to `load`
  *
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_substmat_load(struct ec_substmat *mat, const char *path,
-                    int (*load)(struct ec_substmat *, FILE *, void *),
-                    void *arg);
-
-/** Read a BLOSUM-like distance matrix from a stream
- *
- * BLOSUM matrices can be obtained from ftp://ftp.ncbi.nih.gov/blast/matrices/
- *
- * \param mat       distance matrix to populate
- * \param stream    input stream to parse (will NOT be closed after reading)
- * \param arg       pointer to an #ec_alphabet object to use for translating characters to amino acids
- *
- * \retval #EC_FAILURE  an error occured
- * \retval #EC_SUCCESS  else
- */
-int ec_substmat_load_blosum(struct ec_substmat *mat, FILE *stream, void *arg);
-
-/** Read a plain text distance matrix from a stream
- *
- * Simply reads `#EC_ALPHABET_SIZE * #EC_ALPHABET_SIZE` numbers, separated by
- * white space, from the stream.
- *
- * \param mat       distance matrix to populate
- * \param stream    input stream to parse (will NOT be closed after reading)
- * \param arg       (not used)
- *
- * \retval #EC_FAILURE  an error occured
- * \retval #EC_SUCCESS  else
- */
-int ec_substmat_load_plain(struct ec_substmat *mat, FILE *stream, void *arg);
+int ec_substmat_load(struct ec_substmat *mat, const char *path);
 
 #endif
