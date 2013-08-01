@@ -2,10 +2,18 @@ include config.mk
 
 MODULES := ecurve alphabet substmat word storage bst classify orf codon matrix seqio
 
-ifdef HAVE_MMAP
+ifeq ($(HAVE_MMAP), yes)
 MODULES += mmap
 CPPFLAGS += -DHAVE_MMAP
 endif
+
+ifeq ($(HAVE_OPENMP), yes)
+MAIN_SOURCE := main_omp.c
+CFLAGS += -fopenmp
+else
+MAIN_SOURCE := main.c
+endif
+
 
 OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
 HEADERS := $(INCDIR)/ecurve.h $(INCDIR)/ecurve/common.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
@@ -15,15 +23,15 @@ CPPFLAGS += -I$(INCDIR)
 TESTSOURCES := $(wildcard t/*.test.c)
 TESTFILES := $(TESTSOURCES:.c=.t)
 
-default : archive
+default : archive main-dna main-prot
 
 archive : $(ARCHIVE)
 
-main-dna : $(SRCDIR)/main.c $(OBJECTS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^
+main-dna : $(SRCDIR)/$(MAIN_SOURCE) $(OBJECTS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
 
-main-prot : $(SRCDIR)/main.c $(OBJECTS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^
+main-prot : $(SRCDIR)/$(MAIN_SOURCE) $(OBJECTS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
 
 test : $(TESTFILES)
 	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
