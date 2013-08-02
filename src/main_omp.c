@@ -5,7 +5,7 @@
 #include "ecurve.h"
 
 
-#define CHUNK_SIZE (1 << 9)
+#define MAX_CHUNK_SIZE (1 << 12)
 
 #define BAIL do { if (res != EC_SUCCESS) {                  \
     fprintf(stderr, "failure in line %d\n", __LINE__ - 1);   \
@@ -26,15 +26,15 @@ enum args {
 
 struct input
 {
-    char *id[CHUNK_SIZE], *seq[CHUNK_SIZE];
-    size_t id_sz[CHUNK_SIZE], seq_sz[CHUNK_SIZE];
+    char *id[MAX_CHUNK_SIZE], *seq[MAX_CHUNK_SIZE];
+    size_t id_sz[MAX_CHUNK_SIZE], seq_sz[MAX_CHUNK_SIZE];
     size_t n;
 } in;
 
 struct output
 {
-    ec_class cls[CHUNK_SIZE];
-    double score[CHUNK_SIZE];
+    ec_class cls[MAX_CHUNK_SIZE];
+    double score[MAX_CHUNK_SIZE];
     size_t n;
 } out;
 
@@ -55,7 +55,8 @@ dup_str(char **dest, size_t *dest_sz, const char *src)
 }
 
 int
-input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf)
+input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf,
+           size_t chunk_size)
 {
     int res = EC_SUCCESS;
     size_t i;
@@ -63,7 +64,7 @@ input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf)
     char *id = NULL, *seq = NULL;
     size_t id_sz, seq_sz;
 
-    for (i = 0; i < CHUNK_SIZE && res == EC_SUCCESS; i++) {
+    for (i = 0; i < chunk_size && res == EC_SUCCESS; i++) {
         res = ec_seqio_fasta_read(stream, filter, &id, &id_sz, NULL, NULL,
                                   &seq, &seq_sz);
         if (res != EC_SUCCESS) {
@@ -83,7 +84,7 @@ input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf)
         res = EC_SUCCESS;
     }
 
-    for (; i < CHUNK_SIZE; i++) {
+    for (; i < chunk_size; i++) {
         free(buf->id[i]);
         free(buf->seq[i]);
         buf->id[i] = buf->seq[i] = NULL;
@@ -104,7 +105,19 @@ output_print(FILE *stream, struct output *buf, unsigned offset)
     }
 }
 
-
+size_t
+get_chunk_size(void)
+{
+    size_t sz;
+    char *end, *value = getenv("EC_CHUNK_SIZE");
+    if (value) {
+        sz = strtoull(value, &end, 10);
+        if (!*end && sz && sz < MAX_CHUNK_SIZE) {
+            return sz;
+        }
+    }
+    return MAX_CHUNK_SIZE;
+}
 
 int
 main(int argc, char **argv)
@@ -122,6 +135,8 @@ main(int argc, char **argv)
 
     FILE *stream;
     struct ec_seqio_filter filter;
+
+    size_t chunk_size = get_chunk_size();
 
     if (argc < ARGC - 1) {
         return EXIT_FAILURE;
@@ -189,13 +204,13 @@ main(int argc, char **argv)
             {
 #pragma omp section
                 {
-                    res = input_read(stream, &filter, &in);
+                    res = input_read(stream, &filter, &in, chunk_size);
                     more_input = res == EC_SUCCESS;
                 }
 #pragma omp section
                 {
                     if (i_chunk) {
-                        output_print(stdout, &out, (i_chunk - 1) * CHUNK_SIZE);
+                        output_print(stdout, &out, (i_chunk - 1) * chunk_size);
                     }
                 }
             }
