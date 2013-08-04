@@ -22,6 +22,9 @@ enum {
     EC_ITER_STOP,
 };
 
+/** Epsilon value for comparing floating point numbers */
+#define EC_EPSILON 1e-5
+
 /** Lowest `n` bits set to one */
 #define EC_BITMASK(n) (~(~0ULL << (n)))
 

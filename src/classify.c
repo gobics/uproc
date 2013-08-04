@@ -14,11 +14,6 @@ struct sc {
     double total, dist[EC_WORD_LEN];
 };
 
-struct sc_max {
-    double score;
-    ec_class cls;
-};
-
 
 static void
 sc_init(struct sc *s)
@@ -112,12 +107,80 @@ sc_finalize(struct sc *score)
     return score->total;
 }
 
+struct all_cb_context {
+    struct {
+        double score;
+        ec_class cls;
+    } *preds;
+    size_t i;
+};
+
 static int
-scores_finalize_cb(intmax_t key, void *data, void *opaque)
+finalize_all_cb(intmax_t key, void *data, void *opaque)
+{
+    struct all_cb_context *ctx = opaque;
+    ctx->preds[ctx->i].cls = key;
+    ctx->preds[ctx->i].score = sc_finalize(data);
+    ctx->i++;
+    return EC_SUCCESS;
+}
+
+static int
+finalize_all(struct ec_bst *score_tree, size_t *n,
+                    ec_class **predict_cls, double **predict_scores)
+{
+    int res = EC_SUCCESS;
+    struct all_cb_context ctx;
+    size_t i, count = ec_bst_size(score_tree);
+
+    ctx.i = 0;
+    ctx.preds = malloc(count * sizeof *ctx.preds);
+    if (!ctx.preds) {
+        return EC_FAILURE;
+    }
+
+    (void) ec_bst_walk(score_tree, &finalize_all_cb, &ctx);
+
+    if (!*predict_cls || count > *n) {
+        void *tmp;
+        tmp = realloc(*predict_cls, count * sizeof **predict_cls);
+        if (!tmp) {
+            res = EC_FAILURE;
+            goto error;
+        }
+        *predict_cls = tmp;
+
+        tmp = realloc(*predict_scores, count * sizeof **predict_scores);
+        if (!tmp) {
+            res = EC_FAILURE;
+            goto error;
+        }
+        *predict_scores = tmp;
+    }
+    *n = count;
+    for (i = 0; i < count; i++) {
+        (*predict_cls)[i] = ctx.preds[i].cls;
+        (*predict_scores)[i] = ctx.preds[i].score;
+    }
+
+    res = EC_SUCCESS;
+error:
+    free(ctx.preds);
+    return res;
+}
+
+
+struct max_cb_context {
+    double score;
+    ec_class cls;
+};
+
+static int
+finalize_max_cb(intmax_t key, void *data, void *opaque)
 {
     ec_class cls = key;
     double s = sc_finalize(data);
-    struct sc_max *m = opaque;
+    struct max_cb_context *m = opaque;
     if (s > m->score) {
         m->score = s;
         m->cls = cls;
@@ -126,11 +189,11 @@ scores_finalize_cb(intmax_t key, void *data, void *opaque)
 }
 
 static int
-scores_finalize(struct ec_bst *scores, ec_class *predict_cls, double *predict_score)
+finalize_max(struct ec_bst *scores, ec_class *predict_cls, double *predict_score)
 {
     int res;
-    struct sc_max m = { -INFINITY, -1 };
-    res = ec_bst_walk(scores, &scores_finalize_cb, &m);
+    struct max_cb_context m = { -INFINITY, -1 };
+    res = ec_bst_walk(scores, &finalize_max_cb, &m);
     if (res == EC_SUCCESS) {
         *predict_cls = m.cls;
         *predict_score = m.score;
@@ -210,16 +273,15 @@ scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
     return res;
 }
 
-int
-ec_classify_protein(const char *seq,
-                    const struct ec_substmat substmat[static EC_SUFFIX_LEN],
-                    const struct ec_ecurve *fwd_ecurve,
-                    const struct ec_ecurve *rev_ecurve,
-                    ec_class *predict_cls,
-                    double *predict_score)
+static int
+scores_compute(
+        const char *seq,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        struct ec_bst *scores)
 {
     int res;
-    struct ec_bst scores;
     struct ec_worditer iter;
     struct ec_alphabet alpha;
     size_t index;
@@ -227,43 +289,84 @@ ec_classify_protein(const char *seq,
         fwd_word = EC_WORD_INITIALIZER,
         rev_word = EC_WORD_INITIALIZER;
 
-    ec_bst_init(&scores);
     ec_ecurve_get_alphabet(fwd_ecurve ? fwd_ecurve : rev_ecurve, &alpha);
     ec_worditer_init(&iter, seq, &alpha);
 
-    while (ec_worditer_next(&iter, &index, &fwd_word, &rev_word) == EC_SUCCESS) {
-        res = scores_add_word(&scores, &fwd_word, index, false, fwd_ecurve, substmat);
+    while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_SUCCESS) {
+        res = scores_add_word(scores, &fwd_word, index, false, fwd_ecurve, substmat);
         if (res != EC_SUCCESS) {
-            goto error;
+            break;
         }
-        res = scores_add_word(&scores, &rev_word, index, true, rev_ecurve, substmat);
+        res = scores_add_word(scores, &rev_word, index, true, rev_ecurve, substmat);
         if (res != EC_SUCCESS) {
-            goto error;
+            break;
         }
     }
-    res = EC_SUCCESS;
-    if (ec_bst_isempty(&scores)) {
-        *predict_score = -INFINITY;
-    }
-    else {
-        scores_finalize(&scores, predict_cls, predict_score);
+    if (res == EC_ITER_STOP) {
+        res = EC_SUCCESS;
     }
 
+    return res;
+}
+
+int
+ec_classify_protein_all(
+        const char *seq,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        size_t *predict_count,
+        ec_class **predict_cls,
+        double **predict_score)
+{
+    int res;
+    struct ec_bst scores;
+    ec_bst_init(&scores);
+    res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
+    if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
+        *predict_count = 0;
+        goto error;
+    }
+    res = finalize_all(&scores, predict_count, predict_cls, predict_score);
 error:
     ec_bst_clear(&scores, &free);
     return res;
 }
 
 int
-ec_classify_dna(const char *seq,
-                enum ec_orf_mode mode,
-                const struct ec_orf_codonscores *codon_scores,
-                const struct ec_matrix *thresholds,
-                const struct ec_substmat substmat[static EC_SUFFIX_LEN],
-                const struct ec_ecurve *fwd_ecurve,
-                const struct ec_ecurve *rev_ecurve,
-                ec_class *predict_cls,
-                double *predict_score)
+ec_classify_protein_max(
+        const char *seq,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        ec_class *predict_cls,
+        double *predict_score)
+{
+    int res;
+    struct ec_bst scores;
+    ec_bst_init(&scores);
+    res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
+    if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
+        goto error;
+    }
+    res = finalize_max(&scores, predict_cls, predict_score);
+error:
+    ec_bst_clear(&scores, &free);
+    return res;
+}
+
+int
+ec_classify_dna_all(
+        const char *seq,
+        enum ec_orf_mode mode,
+        const struct ec_orf_codonscores *codon_scores,
+        const struct ec_matrix *thresholds,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        size_t *predict_count,
+        ec_class **predict_cls,
+        double **predict_score)
 {
     int res;
     unsigned i;
@@ -277,14 +380,58 @@ ec_classify_dna(const char *seq,
 
     for (i = 0; i < mode; i++) {
         if (orf[i]) {
-            res = ec_classify_protein(orf[i], substmat, fwd_ecurve, rev_ecurve,
-                                      &predict_cls[i], &predict_score[i]);
+            res = ec_classify_protein_all(orf[i], substmat,
+                    fwd_ecurve, rev_ecurve,
+                    &predict_count[i], &predict_cls[i], &predict_score[i]);
             if (res != EC_SUCCESS) {
                 goto error;
             }
         }
         else {
-            predict_cls[i] = -1;
+            predict_count[i] = 0;
+        }
+    }
+
+error:
+    for (i = 0; i < mode; i++) {
+        free(orf[i]);
+    }
+    return res;
+}
+
+int
+ec_classify_dna_max(
+        const char *seq,
+        enum ec_orf_mode mode,
+        const struct ec_orf_codonscores *codon_scores,
+        const struct ec_matrix *thresholds,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        ec_class *predict_cls,
+        double *predict_score)
+{
+    int res;
+    unsigned i;
+    char *orf[EC_ORF_FRAMES] = { NULL };
+    size_t orf_sz[EC_ORF_FRAMES];
+
+    res = ec_orf_chained(seq, mode, codon_scores, thresholds, orf, orf_sz);
+    if (res != EC_SUCCESS) {
+        goto error;
+    }
+
+    for (i = 0; i < mode; i++) {
+        if (orf[i]) {
+            res = ec_classify_protein_max(orf[i], substmat,
+                    fwd_ecurve, rev_ecurve,
+                    &predict_cls[i], &predict_score[i]);
+            if (res != EC_SUCCESS) {
+                goto error;
+            }
+        }
+        else {
+            predict_cls[i] = 0;
             predict_score[i] = -INFINITY;
         }
     }

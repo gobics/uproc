@@ -10,7 +10,7 @@ CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -Os
 #CFLAGS += -pg
 #CFLAGS += -fprofile-arcs -ftest-coverage
 
-LIBS ?= -lrt
+LIBS ?= -lm
 
 AR ?= ar
 ARFLAGS ?= rv

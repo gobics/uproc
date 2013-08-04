@@ -6,12 +6,16 @@
  * Simple binary search tree implementation
  */
 
+#include <stdlib.h>
 #include <stdint.h>
 
 /** Binary search tree */
 struct ec_bst {
     /** The root node (struct ec_bst_node is defined in the implementation) */
     struct ec_bst_node *root;
+
+    /** Number of nodes */
+    size_t size;
 };
 
 
@@ -29,6 +33,9 @@ void ec_bst_clear(struct ec_bst *t, void (*callback)(void*));
 
 /** Return non-zero if the tree is empty */
 int ec_bst_isempty(struct ec_bst *t);
+
+/** Obtain the number of nodes */
+size_t ec_bst_size(const struct ec_bst *t);
 
 /** Insert item
  *

@@ -35,39 +35,71 @@
  * that direction.
  * If both are non-null, they should use the same alphabet.
  *
+ * Yields all classifications (unsorted).
+ *
  * \param seq           amino acid sequence
  * \param substmat       distance matrices for aligning the suffixes
  * \param fwd_ecurve    ecurve for looking up forward words
  * \param rev_ecurve    ecurve for looking up reverse words
- * \param predict_cls   _OUT_: protein class with highest score
- * \param predict_score _OUT_: score
+ * \param predict_count _OUT_: number of predictions
+ * \param predict_cls   _OUT_: protein classes
+ * \param predict_score _OUT_: scores
  *
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_classify_protein(const char *seq,
-                        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
-                        const struct ec_ecurve *fwd_ecurve,
-                        const struct ec_ecurve *rev_ecurve,
-                        ec_class *predict_cls,
-                        double *predict_score);
+int ec_classify_protein_all(
+        const char *seq,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        size_t *predict_count,
+        ec_class **predict_cls,
+        double **predict_score);
+
+/** Like ec_classify_protein_all(), but yielding only the prediction with
+ * maximum score.
+ */
+int ec_classify_protein_max(
+        const char *seq,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        ec_class *predict_cls,
+        double *predict_score);
 
 
 /** Classify DNA/RNA sequence
  *
  * Translates DNA/RNA sequence using ecurve/orf.h and classifies them using
- * ec_classify_protein(). Depending on the `mode` argument, frames/strands are
- * scored separately, `predict_cls` and `predict_score` should point into
+ * ec_classify_protein_all(). Depending on the `mode` argument, frames/strands
+ * are scored separately, `predict_cls` and `predict_score` should point into
  * arrays of sufficient size.
  */
-int ec_classify_dna(const char *seq,
-                    enum ec_orf_mode mode,
-                    const struct ec_orf_codonscores *codon_scores,
-                    const struct ec_matrix *thresholds,
-                    const struct ec_substmat substmat[static EC_SUFFIX_LEN],
-                    const struct ec_ecurve *fwd_ecurve,
-                    const struct ec_ecurve *rev_ecurve,
-                    ec_class *predict_cls,
-                    double *predict_score);
+int ec_classify_dna_all(
+        const char *seq,
+        enum ec_orf_mode mode,
+        const struct ec_orf_codonscores *codon_scores,
+        const struct ec_matrix *thresholds,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        size_t *predict_count,
+        ec_class **predict_cls,
+        double **predict_score);
+
+/** Like ec_classify_dna_all(), but yielding only the prediction with maximum
+ * score.
+ */
+int ec_classify_dna_max(
+        const char *seq,
+        enum ec_orf_mode mode,
+        const struct ec_orf_codonscores *codon_scores,
+        const struct ec_matrix *thresholds,
+        const struct ec_substmat substmat[static EC_SUFFIX_LEN],
+        const struct ec_ecurve *fwd_ecurve,
+        const struct ec_ecurve *rev_ecurve,
+        ec_class *predict_cls,
+        double *predict_score);
 
 #endif

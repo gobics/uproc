@@ -32,6 +32,7 @@ int main(int argc, char **argv)
     struct ec_seqio_filter filter;
     char *id = NULL, *seq = NULL;
     size_t id_sz, seq_sz;
+
     ec_class cls;
     double score;
 
@@ -77,10 +78,10 @@ int main(int argc, char **argv)
         printf("%.30s: ", id);
         fflush(stdout);
 #ifdef MAIN_DNA
-        res = ec_classify_dna(seq, EC_ORF_ALL, &codon_scores, &thresholds,
-                              substmat, &fwd, &rev, &cls, &score);
+        res = ec_classify_dna_max(seq, EC_ORF_ALL, &codon_scores, &thresholds,
+                                  substmat, &fwd, &rev, &cls, &score);
 #else
-        res = ec_classify_protein(seq, substmat, &fwd, &rev, &cls, &score);
+        res = ec_classify_protein_max(seq, substmat, &fwd, &rev, &cls, &score);
 #endif
         if (res == EC_FAILURE) {
             break;

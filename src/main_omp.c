@@ -35,7 +35,7 @@ struct output
 {
     ec_class cls[MAX_CHUNK_SIZE];
     double score[MAX_CHUNK_SIZE];
-    size_t n;
+    size_t n, count[MAX_CHUNK_SIZE];
 } out;
 
 int
@@ -100,8 +100,10 @@ output_print(FILE *stream, struct output *buf, unsigned offset)
 {
     size_t i;
     for (i = 0; i < buf->n; i++) {
-        fprintf(stream, "%zu, %" EC_CLASS_PRI ", %1.3f\n",
-                i + offset + 1, buf->cls[i], buf->score[i]);
+        if (buf->score[i] > 0.0) {
+            fprintf(stream, "%zu, %" EC_CLASS_PRI ", %1.3f\n",
+                    i + offset + 1, buf->cls[i], buf->score[i]);
+        }
     }
 }
 
@@ -129,7 +131,7 @@ main(int argc, char **argv)
     struct ec_substmat substmat[EC_SUFFIX_LEN];
 #ifdef MAIN_DNA
     struct ec_orf_codonscores codon_scores;
-    struct ec_matrix thresholds;
+    struct ec_matrix orf_thresholds;
 #endif
     struct ec_ecurve fwd, rev;
 
@@ -149,7 +151,7 @@ main(int argc, char **argv)
     res = ec_orf_codonscores_load_file(&codon_scores, argv[CODONSCORES]);
     BAIL;
 
-    res = ec_matrix_load_file(&thresholds, argv[THRESHOLDS]);
+    res = ec_matrix_load_file(&orf_thresholds, argv[THRESHOLDS]);
     BAIL;
 #endif
 
@@ -177,22 +179,16 @@ main(int argc, char **argv)
         {
 #pragma omp for schedule(dynamic) nowait
             for (i = 0; i < in.n; i++) {
-                if (in.seq[i]) {
 #ifdef MAIN_DNA
-                    res = ec_classify_dna(in.seq[i], EC_ORF_ALL, &codon_scores,
-                            &thresholds, substmat, &fwd, &rev,
-                            &out.cls[i], &out.score[i]);
+                res = ec_classify_dna_max(in.seq[i], EC_ORF_ALL, &codon_scores,
+                        &orf_thresholds, substmat, &fwd, &rev,
+                        &out.cls[i], &out.score[i]);
 #else
-                    res = ec_classify_protein(in.seq[i], substmat, &fwd, &rev,
-                            &out.cls[i], &out.score[i]);
+                res = ec_classify_protein_max(in.seq[i], substmat, &fwd, &rev,
+                        &out.cls[i], &out.score[i]);
 #endif
-                    if (res != EC_SUCCESS) {
-                        out.score[i] = -INFINITY;
-                    }
-                }
-                else {
-                    printf("%zu\n", i);
-
+                if (res != EC_SUCCESS) {
+                    out.count[i] = 0;
                 }
             }
         }
@@ -221,7 +217,7 @@ main(int argc, char **argv)
     ec_mmap_unmap(&fwd);
     ec_mmap_unmap(&rev);
 #ifdef MAIN_DNA
-    ec_matrix_destroy(&thresholds);
+    ec_matrix_destroy(&orf_thresholds);
 #endif
     fclose(stream);
     return res == EC_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;

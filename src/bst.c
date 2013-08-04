@@ -168,6 +168,7 @@ void
 ec_bst_init(struct ec_bst *t)
 {
     t->root = NULL;
+    t->size = 0;
 }
 
 void
@@ -177,13 +178,19 @@ ec_bst_clear(struct ec_bst *t, void (*callback)(void*))
         return;
     }
     bstnode_free(t->root, callback);
-    t->root = NULL;
+    ec_bst_init(t);
 }
 
 int
 ec_bst_isempty(struct ec_bst *t)
 {
     return t->root == NULL;
+}
+
+size_t
+ec_bst_size(const struct ec_bst *t)
+{
+    return t->size;
 }
 
 int
@@ -193,6 +200,7 @@ ec_bst_insert(struct ec_bst *t, intmax_t key, void *data)
 
     if (!t->root) {
         t->root = bstnode_new(key, data, NULL);
+        t->size = 1;
         return t->root ? EC_SUCCESS : EC_FAILURE;
     }
 
@@ -210,7 +218,12 @@ ec_bst_insert(struct ec_bst *t, intmax_t key, void *data)
         n->right = ins;
     }
 
-    return ins ? EC_SUCCESS : EC_FAILURE;
+    if (!ins) {
+        return EC_FAILURE;
+    }
+
+    t->size++;
+    return EC_SUCCESS;
 }
 
 void *
@@ -258,6 +271,7 @@ ec_bst_remove(struct ec_bst *t, intmax_t key, void (*callback)(void*))
         callback(del->data);
     }
     free(del);
+    t->size--;
     return EC_SUCCESS;
 }
 

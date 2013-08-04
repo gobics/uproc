@@ -7,11 +7,9 @@ MODULES += mmap
 CPPFLAGS += -DHAVE_MMAP
 endif
 
+EXECUTABLES := main-dna main-prot
 ifeq ($(HAVE_OPENMP), yes)
-MAIN_SOURCE := main_omp.c
-CFLAGS += -fopenmp
-else
-MAIN_SOURCE := main.c
+EXECUTABLES += main-dna-omp main-prot-omp
 endif
 
 
@@ -23,15 +21,21 @@ CPPFLAGS += -I$(INCDIR)
 TESTSOURCES := $(wildcard t/*.test.c)
 TESTFILES := $(TESTSOURCES:.c=.t)
 
-default : archive main-dna main-prot
+default : archive $(EXECUTABLES)
 
 archive : $(ARCHIVE)
 
-main-dna : $(SRCDIR)/$(MAIN_SOURCE) $(OBJECTS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
+main-dna : $(SRCDIR)/main.c $(OBJECTS)
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
 
-main-prot : $(SRCDIR)/$(MAIN_SOURCE) $(OBJECTS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
+main-prot : $(SRCDIR)/main.c $(OBJECTS)
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
+
+main-prot-omp : $(SRCDIR)/main_omp.c $(OBJECTS)
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -fopenmp -DMAIN_PROT -o $@ $^ $(LIBS)
+
+main-dna-omp : $(SRCDIR)/main_omp.c $(OBJECTS)
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -fopenmp -DMAIN_DNA -o $@ $^ $(LIBS)
 
 test : $(TESTFILES)
 	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
@@ -40,14 +44,13 @@ test-verbose : $(TESTFILES)
 	@prove -fo --directives -e ""
 
 $(OBJDIR) :
-	$%mkdir $@
+	@-mkdir $@
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 	@echo CC -c $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/orf.o : $(SRCDIR)/codon_tables.h
-
 
 $(SRCDIR)/codon_tables.h : $(SRCDIR)/gen_codon_tables.c $(SRCDIR)/codon.c
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -o gen_codon_tables $^
@@ -64,9 +67,8 @@ $(ARCHIVE) : $(OBJECTS)
 	@echo RANLIB $@
 	@$(RANLIB) $@
 
-
 clean : clean-obj clean-test clean-doc
-	@rm $(SRCDIR)/codon_tables.h
+	@rm -f $(SRCDIR)/codon_tables.h
 
 clean-test :
 	@rm -f $(TESTFILES)
