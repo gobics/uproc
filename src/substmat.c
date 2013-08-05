@@ -42,8 +42,8 @@ ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path)
 
     ec_matrix_dimensions(&matrix, &rows, &cols);
     if (rows * cols != n * EC_ALPHABET_SIZE * EC_ALPHABET_SIZE) {
-        ec_matrix_destroy(&matrix);
-        return EC_FAILURE;
+        res = EC_FAILURE;
+        goto error;
     }
 
     for (i = 0; i < n; i++) {
@@ -58,7 +58,9 @@ ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path)
             }
         }
     }
-    return EC_SUCCESS;
+error:
+    ec_matrix_destroy(&matrix);
+    return res;
 }
 
 int
