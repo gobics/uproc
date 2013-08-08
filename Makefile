@@ -82,4 +82,7 @@ clean-doc :
 doc :
 	@doxygen Doxyfile
 
-.PHONY : clean clean-obj test test-verbose clean-test doc clean-doc
+convert :
+	cd convert && $(MAKE)
+
+.PHONY : clean clean-obj test test-verbose clean-test doc clean-doc convert
