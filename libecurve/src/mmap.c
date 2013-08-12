@@ -36,6 +36,7 @@ struct mmap_header {
 int
 ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
 {
+#if HAVE_MMAP
     struct stat st;
     struct mmap_header *header;
     char *region, alphabet_str[EC_ALPHABET_SIZE + 1];
@@ -80,19 +81,28 @@ error_munmap:
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
 error_close:
     close(ecurve->mmap_fd);
+#else
+    (void) ecurve;
+    (void) path;
+#endif
     return EC_FAILURE;
 }
 
 void
 ec_mmap_unmap(struct ec_ecurve *ecurve)
 {
+#if HAVE_MMAP
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
     close(ecurve->mmap_fd);
+#else
+    (void) ecurve;
+#endif
 }
 
 int
 ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
 {
+#if HAVE_MMAP
     int fd;
     size_t size;
     char *region;
@@ -131,5 +141,9 @@ ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
 
 error_close:
     close(fd);
+#else
+    (void) ecurve;
+    (void) path;
+#endif
     return EC_FAILURE;
 }

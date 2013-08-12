@@ -1,7 +1,8 @@
-HAVE_MMAP ?= yes
-HAVE_OPENMP ?= yes
+HAVE_MATLAB := yes
+HAVE_MMAP := yes
+HAVE_OPENMP := yes
 
-ARCHIVE := ecurve.a
+ARCHIVENAME := libecurve.a
 
 CC ?= cc
 CPPFLAGS ?=
@@ -19,3 +20,10 @@ RANLIB ?= ranlib
 OBJDIR := obj
 SRCDIR := src
 INCDIR := include
+
+ifeq ($(HAVE_MMAP), yes)
+CPPFLAGS += -DHAVE_MMAP=1
+endif
+ifeq ($(HAVE_OPENMP), yes)
+CFLAGS += -fopenmp
+endif

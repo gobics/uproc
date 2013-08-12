@@ -1,83 +1,45 @@
 include config.mk
 
-MODULES := ecurve alphabet substmat word storage bst classify orf codon matrix seqio
+CPPFLAGS += -Ilibecurve/$(INCDIR)
 
-ifeq ($(HAVE_MMAP), yes)
-MODULES += mmap
-CPPFLAGS += -DHAVE_MMAP
+ARCHIVE := libecurve/$(ARCHIVENAME)
+TARGETS = ecurve-dna ecurve-prot ecurve-convert
+
+MATLAB_ROOT := /opt/matlab
+MATLAB_ARCH := glnxa64
+MATLAB_INCDIR := $(MATLAB_ROOT)/extern/include
+MATLAB_LIBDIR := $(MATLAB_ROOT)/bin/$(MATLAB_ARCH)
+
+ifeq ($(HAVE_MATLAB), yes)
+TARGETS += ecurve-mat2bin
 endif
 
-ifeq ($(HAVE_OPENMP), yes)
-CFLAGS += -fopenmp
-endif
+
+default : $(TARGETS)
 
 
-OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
-HEADERS := $(INCDIR)/ecurve.h $(INCDIR)/ecurve/common.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
-
-CPPFLAGS += -I$(INCDIR)
-
-TESTSOURCES := $(wildcard t/*.test.c)
-TESTFILES := $(TESTSOURCES:.c=.t)
-
-default : archive ecurve-dna ecurve-prot
-
-archive : $(ARCHIVE)
-
-ecurve-dna : $(SRCDIR)/main.c $(OBJECTS)
+ecurve-dna : main.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
 
-ecurve-prot : $(SRCDIR)/main.c $(OBJECTS)
+ecurve-prot : main.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
 
-test : $(TESTFILES)
-	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
 
-test-verbose : $(TESTFILES)
-	@prove -fo --directives -e ""
-
-$(OBJDIR) :
-	@-mkdir $@
-
-$(OBJDIR)/%.o : $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
-	@echo CC -c $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
-$(OBJDIR)/orf.o : $(SRCDIR)/codon_tables.h
-
-$(SRCDIR)/codon_tables.h : $(SRCDIR)/gen_codon_tables.c $(SRCDIR)/codon.c
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -o gen_codon_tables $^
-	@./gen_codon_tables > $@
-	@rm gen_codon_tables
-
-t/%.t : t/%.c t/test.c $(ARCHIVE)
+ecurve-mat2bin : mat2bin.c $(ARCHIVE)
 	@echo CC $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -I$(MATLAB_INCDIR) -o $@ $^ -L$(MATLAB_LIBDIR) $(LIBS) -lmat
 
-$(ARCHIVE) : $(OBJECTS)
-	@echo AR $@
-	@$(AR) $(ARFLAGS) $@ $?
-	@echo RANLIB $@
-	@$(RANLIB) $@
+ecurve-% : %.c $(ARCHIVE)
+	@echo CC $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
 
-clean : clean-obj clean-test clean-doc
-	@rm -f $(SRCDIR)/codon_tables.h
+$(ARCHIVE) :
+	@$(MAKE) -C libecurve $(ARCHIVENAME)
 
-clean-test :
-	@rm -f $(TESTFILES)
+clean :
+	rm -f $(TARGETS)
+	$(MAKE) -C libecurve clean
 
-clean-obj :
-	@rm -rf $(OBJDIR)
-
-clean-doc :
-	@rm -rf doc
-
-doc :
-	@doxygen Doxyfile
-
-convert :
-	cd convert && $(MAKE)
-
-.PHONY : clean clean-obj test test-verbose clean-test doc clean-doc convert
+.PHONY : clean

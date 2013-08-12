@@ -36,7 +36,7 @@ enum args
 int
 main(int argc, char **argv)
 {
-    int res;
+    int res = EC_FAILURE;
     struct ec_ecurve ecurve;
     time_t start, end;
     char in_fmt, out_fmt;
