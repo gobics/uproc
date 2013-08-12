@@ -4,7 +4,6 @@
 #include <time.h>
 #include <errno.h>
 
-#define HAVE_MMAP 1
 #include "ecurve.h"
 
 #if HAVE_MMAP
