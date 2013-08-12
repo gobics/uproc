@@ -119,9 +119,12 @@ static int
 finalize_all_cb(intmax_t key, void *data, void *opaque)
 {
     struct all_cb_context *ctx = opaque;
-    ctx->preds[ctx->i].cls = key;
-    ctx->preds[ctx->i].score = sc_finalize(data);
-    ctx->i++;
+    double score = sc_finalize(data);
+    if (score > 0.0) {
+        ctx->preds[ctx->i].cls = key;
+        ctx->preds[ctx->i].score = score;
+        ctx->i++;
+    }
     return EC_SUCCESS;
 }
 
@@ -131,15 +134,16 @@ finalize_all(struct ec_bst *score_tree, size_t *n,
 {
     int res = EC_SUCCESS;
     struct all_cb_context ctx;
-    size_t i, count = ec_bst_size(score_tree);
+    size_t i, count;
 
     ctx.i = 0;
-    ctx.preds = malloc(count * sizeof *ctx.preds);
+    ctx.preds = malloc(ec_bst_size(score_tree) * sizeof *ctx.preds);
     if (!ctx.preds) {
         return EC_FAILURE;
     }
 
     (void) ec_bst_walk(score_tree, &finalize_all_cb, &ctx);
+    count = ctx.i;
 
     if (!*predict_cls || count > *n) {
         void *tmp;
@@ -205,19 +209,7 @@ static int
 scores_add(struct ec_bst *scores, ec_class cls, size_t index,
            double dist[static EC_SUFFIX_LEN], bool reverse)
 {
-    size_t i;
-    bool positive = false;
     struct sc *s;
-
-    for (i = 0; i < EC_SUFFIX_LEN; i++) {
-        if (dist[i] > 0.0) {
-            positive = true;
-        }
-    }
-    if (!positive) {
-        return EC_SUCCESS;
-    }
-
     s = ec_bst_get(scores, cls);
     if (!s) {
         if (!(s = sc_new())) {
