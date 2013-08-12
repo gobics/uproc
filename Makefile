@@ -7,9 +7,8 @@ MODULES += mmap
 CPPFLAGS += -DHAVE_MMAP
 endif
 
-EXECUTABLES := main-dna main-prot
 ifeq ($(HAVE_OPENMP), yes)
-EXECUTABLES += main-dna-omp main-prot-omp
+CFLAGS += -fopenmp
 endif
 
 
@@ -21,21 +20,17 @@ CPPFLAGS += -I$(INCDIR)
 TESTSOURCES := $(wildcard t/*.test.c)
 TESTFILES := $(TESTSOURCES:.c=.t)
 
-default : archive $(EXECUTABLES)
+default : archive ecurve-dna ecurve-prot
 
 archive : $(ARCHIVE)
 
-main-dna : $(SRCDIR)/main.c $(OBJECTS)
+ecurve-dna : $(SRCDIR)/main.c $(OBJECTS)
+	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
 
-main-prot : $(SRCDIR)/main.c $(OBJECTS)
+ecurve-prot : $(SRCDIR)/main.c $(OBJECTS)
+	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
-
-main-prot-omp : $(SRCDIR)/main_omp.c $(OBJECTS)
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -fopenmp -DMAIN_PROT -o $@ $^ $(LIBS)
-
-main-dna-omp : $(SRCDIR)/main_omp.c $(OBJECTS)
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -fopenmp -DMAIN_DNA -o $@ $^ $(LIBS)
 
 test : $(TESTFILES)
 	@prove -Q -e "" || echo "some tests failed. run 'make test-verbose' for detailed output"
