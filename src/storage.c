@@ -7,7 +7,6 @@
 #include "ecurve/word.h"
 #include "ecurve/storage.h"
 #include "pack.h"
-#include <assert.h>
 
 /** Format of binary file header.
  * uint32_t: number of prefixes that have suffixes

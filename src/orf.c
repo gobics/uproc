@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,7 +228,6 @@ ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 
         /* iterator exhausted */
         if (iter->frame >= FRAMES) {
-            assert(!iter->pos);
             return EC_ITER_STOP;
         }
 
@@ -308,7 +306,6 @@ ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
             iter->pos = NULL;
         }
     }
-    assert(0);
     return EC_FAILURE;
 }
 
