@@ -19,6 +19,7 @@
 enum ec_storage_format {
     EC_STORAGE_PLAIN,
     EC_STORAGE_BINARY,
+    EC_STORAGE_MMAP,
 };
 
 /** Load ecurve from FILE stream

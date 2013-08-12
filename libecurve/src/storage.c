@@ -4,6 +4,7 @@
 
 #include "ecurve/common.h"
 #include "ecurve/ecurve.h"
+#include "ecurve/mmap.h"
 #include "ecurve/word.h"
 #include "ecurve/storage.h"
 #include "pack.h"
@@ -348,6 +349,10 @@ ec_storage_load_file(struct ec_ecurve *ecurve, const char *path, int format)
         [EC_STORAGE_PLAIN] = "r",
     };
 
+    if (format == EC_STORAGE_MMAP) {
+        return ec_mmap_map(ecurve, path);
+    }
+
     stream = fopen(path, mode[format]);
     if (!stream) {
         return EC_FAILURE;
@@ -429,6 +434,10 @@ ec_storage_store_file(const struct ec_ecurve *ecurve, const char *path,
         [EC_STORAGE_BINARY] = "wb",
         [EC_STORAGE_PLAIN] = "w",
     };
+
+    if (format == EC_STORAGE_MMAP) {
+        return ec_mmap_store(ecurve, path);
+    }
 
     stream = fopen(path, mode[format]);
     if (!stream) {
