@@ -98,7 +98,7 @@ int scores_add_finalize(void)
     scores_add(&scores, 42, 2, dist, false);
     scores_add(&scores, 42, 2, dist, true);
 
-    scores_finalize(&scores, &predict_cls, &predict_score);
+    finalize_max(&scores, &predict_cls, &predict_score);
     assert_double_eq(predict_score, 3.0, "'predicted' score");
     assert_uint_eq(predict_cls, 42, "'predicted' class");
 
