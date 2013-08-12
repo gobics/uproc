@@ -12,13 +12,13 @@
     exit(EXIT_FAILURE); } } while (0)
 
 enum args {
-    DISTMAT = 1,
+    FWD = 1,
+    REV,
+    DISTMAT,
 #ifdef MAIN_DNA
     CODONSCORES,
     THRESHOLDS,
 #endif
-    FWD,
-    REV,
     INFILE,
     ARGC,
 };
