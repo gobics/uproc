@@ -10,6 +10,10 @@ int
 ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
                const double *values)
 {
+    if (rows == 1) {
+        rows = cols;
+        cols = 1;
+    }
     matrix->rows = rows;
     matrix->cols = cols;
 

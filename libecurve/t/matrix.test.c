@@ -38,6 +38,25 @@ int init(void)
     return SUCCESS;
 }
 
+int vector(void)
+{
+    int i;
+    struct ec_matrix v1, v2;
+    double values[100] = { [4] = 3.4, [11] = 4.5, [27] = 3.14, [98] = 42.0 };
+    DESC("vector-like matrices");
+    ec_matrix_init(&v1, 1, 100, values);
+    ec_matrix_init(&v2, 100, 1, values);
+    for (i = 0; i < 100; i++) {
+        assert_double_eq(ec_matrix_get(&v1, 0, i), ec_matrix_get(&v1, i, 0), "v1 symmetric");
+        assert_double_eq(ec_matrix_get(&v2, 0, i), ec_matrix_get(&v2, i, 0), "v2 symmetric");
+        assert_double_eq(ec_matrix_get(&v1, i, 0), ec_matrix_get(&v2, i, 0), "v1 eq v2 (by row)");
+        assert_double_eq(ec_matrix_get(&v1, 0, i), ec_matrix_get(&v2, 0, i), "v1 eq v2 (by col)");
+    }
+    ec_matrix_destroy(&v1);
+    ec_matrix_destroy(&v2);
+    return SUCCESS;
+}
+
 int storage(void)
 {
     struct ec_matrix m;
@@ -69,4 +88,4 @@ int storage(void)
 }
 
 
-TESTS_INIT(init, storage);
+TESTS_INIT(init, vector, storage);
