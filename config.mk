@@ -1,11 +1,11 @@
-HAVE_MATLAB := yes
+HAVE_MATLAB := no
 HAVE_MMAP := yes
 HAVE_OPENMP := yes
 
 ARCHIVENAME := libecurve.a
 
 CC ?= cc
-CPPFLAGS ?=
+CPPFLAGS ?= -D_GNU_SOURCE
 CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -Os
 #CFLAGS += -O0 -g
 #CFLAGS += -pg
