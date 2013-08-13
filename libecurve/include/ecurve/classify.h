@@ -86,7 +86,8 @@ int ec_classify_dna_all(
         const struct ec_ecurve *rev_ecurve,
         size_t *predict_count,
         ec_class **predict_cls,
-        double **predict_score);
+        double **predict_score,
+        size_t *orf_lengths);
 
 /** Like ec_classify_dna_all(), but yielding only the prediction with maximum
  * score.
@@ -100,6 +101,7 @@ int ec_classify_dna_max(
         const struct ec_ecurve *fwd_ecurve,
         const struct ec_ecurve *rev_ecurve,
         ec_class *predict_cls,
-        double *predict_score);
+        double *predict_score,
+        size_t *orf_lengths);
 
 #endif

@@ -358,7 +358,8 @@ ec_classify_dna_all(
         const struct ec_ecurve *rev_ecurve,
         size_t *predict_count,
         ec_class **predict_cls,
-        double **predict_score)
+        double *predict_score[EC_ORF_FRAMES],
+        size_t *orf_lengths)
 {
     int res;
     unsigned i;
@@ -375,12 +376,14 @@ ec_classify_dna_all(
             res = ec_classify_protein_all(orf[i], substmat,
                     fwd_ecurve, rev_ecurve,
                     &predict_count[i], &predict_cls[i], &predict_score[i]);
+            orf_lengths[i] = strlen(orf[i]);
             if (res != EC_SUCCESS) {
                 goto error;
             }
         }
         else {
             predict_count[i] = 0;
+            orf_lengths[i] = 0;
         }
     }
 
@@ -401,7 +404,8 @@ ec_classify_dna_max(
         const struct ec_ecurve *fwd_ecurve,
         const struct ec_ecurve *rev_ecurve,
         ec_class *predict_cls,
-        double *predict_score)
+        double *predict_score,
+        size_t *orf_lengths)
 {
     int res;
     unsigned i;
@@ -418,6 +422,7 @@ ec_classify_dna_max(
             res = ec_classify_protein_max(orf[i], substmat,
                     fwd_ecurve, rev_ecurve,
                     &predict_cls[i], &predict_score[i]);
+            orf_lengths[i] = strlen(orf[i]);
             if (res != EC_SUCCESS) {
                 goto error;
             }
@@ -425,6 +430,7 @@ ec_classify_dna_max(
         else {
             predict_cls[i] = 0;
             predict_score[i] = -INFINITY;
+            orf_lengths[i] = 0;
         }
     }
 
