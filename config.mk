@@ -1,6 +1,6 @@
-HAVE_MATLAB := no
-HAVE_MMAP := yes
-HAVE_OPENMP := yes
+HAVE_MATLAB ?= no
+HAVE_MMAP ?= yes
+HAVE_OPENMP ?= yes
 
 ARCHIVENAME := libecurve.a
 
