@@ -72,14 +72,14 @@ int test_binary_bufsz(void)
     return SUCCESS;
 }
 
-int test_storage(int format)
+int test_storage(int format, char *filename)
 {
     size_t i;
     struct ec_ecurve new_curve;
 
-    assert_int_eq(ec_storage_store_file(&ecurve, TMPFILE, format),
+    assert_int_eq(ec_storage_store_file(&ecurve, filename, format),
                   EC_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(ec_storage_load_file(&new_curve, TMPFILE, format),
+    assert_int_eq(ec_storage_load_file(&new_curve, filename, format),
                   EC_SUCCESS, "loading ecurve succeeded");
 
     for (i = 0; i < EC_PREFIX_MAX + 1; i++) {
@@ -102,13 +102,13 @@ int test_storage(int format)
 int test_binary(void)
 {
     DESC("writing and reading in binary format");
-    return test_storage(EC_STORAGE_BINARY);
+    return test_storage(EC_STORAGE_BINARY, TMPFILE ".bin");
 }
 
 int test_plain(void)
 {
     DESC("writing and reading in plain text");
-    return test_storage(EC_STORAGE_PLAIN);
+    return test_storage(EC_STORAGE_PLAIN, TMPFILE ".plain");
 }
 
 int test_mmap(void)
@@ -119,9 +119,9 @@ int test_mmap(void)
 
     DESC("mmapp()ing ecurve");
 
-    assert_int_eq(ec_mmap_store(&ecurve, TMPFILE),
+    assert_int_eq(ec_mmap_store(&ecurve, TMPFILE ".mmap"),
                   EC_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(ec_mmap_map(&new_curve, TMPFILE),
+    assert_int_eq(ec_mmap_map(&new_curve, TMPFILE ".mmap"),
                   EC_SUCCESS, "mmap()ing file succeeded");
 
     for (i = 0; i < EC_PREFIX_MAX + 1; i++) {
