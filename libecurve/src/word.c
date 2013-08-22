@@ -86,6 +86,13 @@ ec_word_prepend(struct ec_word *word, ec_amino amino)
 }
 
 bool
+ec_word_startswith(const struct ec_word *word, ec_amino amino)
+{
+    ec_amino first = word->prefix / ((EC_PREFIX_MAX + 1) / (EC_ALPHABET_SIZE));
+    return first == amino;
+}
+
+bool
 ec_word_equal(const struct ec_word *word1, const struct ec_word *word2)
 {
     return word1->prefix == word2->prefix && word1->suffix == word2->suffix;

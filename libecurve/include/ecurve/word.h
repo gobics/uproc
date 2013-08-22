@@ -77,6 +77,9 @@ void ec_word_append(struct ec_word *word, ec_amino amino);
  */
 void ec_word_prepend(struct ec_word *word, ec_amino amino);
 
+/** Compare first amino acid of a word */
+bool ec_word_startswith(const struct ec_word *word, ec_amino amino);
+
 /** Test for equality
  *
  * \return `true` if the words are equal or `false` if not.

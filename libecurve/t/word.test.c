@@ -82,6 +82,31 @@ int prepend(void)
     return SUCCESS;
 }
 
+int startswith(void)
+{
+    ec_amino a = ec_alphabet_char_to_amino(&alpha, 'R');
+    DESC("testing whether a word starts with a certain amino acid");
+
+    ec_word_from_string(&word, "RRRRRRRRRRRRRRRRRR", &alpha);
+    assert_int_eq(ec_word_startswith(&word, a), 1, "word starts with R");
+
+    ec_word_append(&word, ec_alphabet_char_to_amino(&alpha, 'T'));
+    assert_int_eq(ec_word_startswith(&word, a), 1,
+            "after appending T, word still starts with R");
+
+    a = ec_alphabet_char_to_amino(&alpha, 'V');
+    ec_word_prepend(&word, a);
+    assert_int_eq(ec_word_startswith(&word, a), 1,
+            "after prepending V, word starts with V");
+
+    a = ec_alphabet_char_to_amino(&alpha, 'S');
+    ec_word_prepend(&word, a);
+    assert_int_eq(ec_word_startswith(&word, a), 1,
+            "after prepending S, word starts with S");
+
+    return SUCCESS;
+}
+
 int iter(void)
 {
     int res;
@@ -115,6 +140,7 @@ int iter(void)
     assert_int_eq(res, EC_ITER_STOP, "iterator exhausted");
 
     return SUCCESS;
+#undef TEST
 }
 
-TESTS_INIT(to_string, append, prepend, iter);
+TESTS_INIT(to_string, append, prepend, startswith, iter);
