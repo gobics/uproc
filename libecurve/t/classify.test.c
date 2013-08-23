@@ -83,7 +83,7 @@ int scores_add_finalize(void)
     ec_class predict_cls;
 
     DESC("scores_add and scores_finalize");
-    ec_bst_init(&scores);
+    ec_bst_init(&scores, EC_BST_UINT);
 
     dist[4] = 1.0;
     scores_add(&scores, 10, 0, dist, false);

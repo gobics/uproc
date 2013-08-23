@@ -93,9 +93,27 @@ ec_word_startswith(const struct ec_word *word, ec_amino amino)
 }
 
 bool
-ec_word_equal(const struct ec_word *word1, const struct ec_word *word2)
+ec_word_equal(const struct ec_word *w1, const struct ec_word *w2)
 {
-    return word1->prefix == word2->prefix && word1->suffix == word2->suffix;
+    return w1->prefix == w2->prefix && w1->suffix == w2->suffix;
+}
+
+int
+ec_word_cmp(const struct ec_word *w1, const struct ec_word *w2)
+{
+    if (w1->prefix == w2->prefix) {
+        if (w1->suffix == w2->suffix) {
+            return 0;
+        }
+        if (w1->suffix < w2->suffix) {
+            return -1;
+        }
+        return 1;
+    }
+    if (w1->prefix < w2->prefix) {
+        return -1;
+    }
+    return 1;
 }
 
 void

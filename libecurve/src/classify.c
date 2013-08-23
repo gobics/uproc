@@ -116,12 +116,12 @@ struct all_cb_context {
 };
 
 static int
-finalize_all_cb(intmax_t key, void *data, void *opaque)
+finalize_all_cb(union ec_bst_key key, void *data, void *opaque)
 {
     struct all_cb_context *ctx = opaque;
     double score = sc_finalize(data);
     if (score > 0.0) {
-        ctx->preds[ctx->i].cls = key;
+        ctx->preds[ctx->i].cls = key.uint;
         ctx->preds[ctx->i].score = score;
         ctx->i++;
     }
@@ -180,9 +180,9 @@ struct max_cb_context {
 };
 
 static int
-finalize_max_cb(intmax_t key, void *data, void *opaque)
+finalize_max_cb(union ec_bst_key key, void *data, void *opaque)
 {
-    ec_class cls = key;
+    ec_class cls = key.uint;
     double s = sc_finalize(data);
     struct max_cb_context *m = opaque;
     if (s > m->score) {
@@ -210,12 +210,12 @@ scores_add(struct ec_bst *scores, ec_class cls, size_t index,
            double dist[static EC_SUFFIX_LEN], bool reverse)
 {
     struct sc *s;
-    s = ec_bst_get(scores, cls);
+    s = ec_bst_get_uint(scores, cls);
     if (!s) {
         if (!(s = sc_new())) {
             return EC_FAILURE;
         }
-        if (ec_bst_insert(scores, cls, s) != EC_SUCCESS) {
+        if (ec_bst_insert_uint(scores, cls, s) != EC_SUCCESS) {
             return EC_FAILURE;
         }
     }
@@ -313,7 +313,7 @@ ec_classify_protein_all(
 {
     int res;
     struct ec_bst scores;
-    ec_bst_init(&scores);
+    ec_bst_init(&scores, EC_BST_UINT);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
     if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
         *predict_count = 0;
@@ -336,7 +336,7 @@ ec_classify_protein_max(
 {
     int res;
     struct ec_bst scores;
-    ec_bst_init(&scores);
+    ec_bst_init(&scores, EC_BST_UINT);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
     if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
         goto error;

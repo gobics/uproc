@@ -84,7 +84,15 @@ bool ec_word_startswith(const struct ec_word *word, ec_amino amino);
  *
  * \return `true` if the words are equal or `false` if not.
  */
-bool ec_word_equal(const struct ec_word *word1, const struct ec_word *word2);
+bool ec_word_equal(const struct ec_word *w1, const struct ec_word *w2);
+
+/** Compare words
+ *
+ * Comparison is done lexcographically (prefix first, suffix second).
+ *
+ * \return  -1, 0 or 1 if `w1` is less than, equal to, or greater than `w2`.
+ */
+int ec_word_cmp(const struct ec_word *w1, const struct ec_word *w2);
 
 /** Iterator over all words in an amino acid sequence */
 struct ec_worditer {
