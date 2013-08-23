@@ -16,7 +16,12 @@ union ec_bst_key {
     struct ec_word word;
 };
 
-enum ec_bst_type {
+union ec_bst_data {
+    uintmax_t uint;
+    void *ptr;
+};
+
+enum ec_bst_keytype {
     EC_BST_UINT,
     EC_BST_WORD,
 };
@@ -29,13 +34,15 @@ struct ec_bst {
     /** Number of nodes */
     size_t size;
 
-    /** Function to compare keys */
-    int (*cmp)(union ec_bst_key, union ec_bst_key);
+    /** Key type */
+    enum ec_bst_keytype key_type;
 };
 
+typedef int (*ec_bst_cb_walk)(union ec_bst_key, union ec_bst_data, void*);
+typedef int (*ec_bst_cb_remove)(union ec_bst_data);
 
 /** Initialize an empty binary search tree */
-void ec_bst_init(struct ec_bst *t, enum ec_bst_type type);
+void ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type);
 
 /** Remove all nodes from tree; leaves an empty tree
  *
@@ -44,7 +51,7 @@ void ec_bst_init(struct ec_bst *t, enum ec_bst_type type);
  * \param t         bst instance
  * \param callback  callback function or null pointer
  */
-void ec_bst_clear(struct ec_bst *t, void (*callback)(void*));
+void ec_bst_clear(struct ec_bst *t, ec_bst_cb_remove callback);
 
 /** Return non-zero if the tree is empty */
 int ec_bst_isempty(struct ec_bst *t);
@@ -61,9 +68,7 @@ size_t ec_bst_size(const struct ec_bst *t);
  * \retval #EC_SUCCESS  item was inserted
  * \retval #EC_FAILURE  `key` was already present or memory allocation failed
  */
-int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, void *data);
-int ec_bst_insert_uint(struct ec_bst *t, uintmax_t key, void *data);
-int ec_bst_insert_word(struct ec_bst *t, struct ec_word key, void *data);
+int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
 
 /** Get item
  *
@@ -72,9 +77,7 @@ int ec_bst_insert_word(struct ec_bst *t, struct ec_word key, void *data);
  *
  * \return stored pointer, or null pointer if key not found
  */
-void *ec_bst_get(struct ec_bst *t, union ec_bst_key key);
-void *ec_bst_get_uint(struct ec_bst *t, uintmax_t key);
-void *ec_bst_get_word(struct ec_bst *t, struct ec_word key);
+int ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data);
 
 /** Remove item
  *
@@ -88,13 +91,12 @@ void *ec_bst_get_word(struct ec_bst *t, struct ec_word key);
  * \retval #EC_SUCCESS  an item was removed
  * \retval #EC_FAILURE  `key` not found in the tree
  */
-int ec_bst_remove(struct ec_bst *t, union ec_bst_key key, void (*callback)(void*));
-int ec_bst_remove_uint(struct ec_bst *t, uintmax_t key, void (*callback)(void*));
-int ec_bst_remove_word(struct ec_bst *t, struct ec_word key, void (*callback)(void*));
+int ec_bst_remove(struct ec_bst *t, union ec_bst_key key,
+        ec_bst_cb_remove callback);
 
 /** In-order iteration
  *
- * Iterate over all nodes, passing key, value and a caller-provided `opaque`
+ * Iterate over all nodes, passing key, data and a caller-provided `opaque`
  * pointer to the function pointed to by `callback`. If the callback function
  * does _not_ return #EC_SUCCESS, iteration is aborted and that value is
  * returned.
@@ -107,7 +109,9 @@ int ec_bst_remove_word(struct ec_bst *t, struct ec_word key, void (*callback)(vo
  * #EC_SUCCESS if the iteration completed successfully, else whatever the
  * callback function returned.
  */
-int ec_bst_walk(struct ec_bst *t, int (*callback)(union ec_bst_key, void*, void*),
-                void *opaque);
+int ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk, void *opaque);
+
+
+int ec_bst_free_ptr(union ec_bst_data val);
 
 #endif

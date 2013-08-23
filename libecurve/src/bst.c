@@ -6,26 +6,25 @@
 
 struct ec_bst_node {
     union ec_bst_key key;
-    void *data;
+    union ec_bst_data data;
     struct ec_bst_node *parent;
     struct ec_bst_node *left;
     struct ec_bst_node *right;
 };
 
-static int cmp_uint(union ec_bst_key x, union ec_bst_key y);
-
-static int cmp_word(union ec_bst_key x, union ec_bst_key y);
+static int cmp_keys(struct ec_bst *t, union ec_bst_key x, union ec_bst_key y);
 
 /* create a new bst node */
-static struct ec_bst_node *bstnode_new(union ec_bst_key key, void *data,
+static struct ec_bst_node *bstnode_new(union ec_bst_key key,
+        union ec_bst_data data,
         struct ec_bst_node *parent);
 
 /* free a bst node and all it's descendants recursively */
-static void bstnode_free(struct ec_bst_node *n, void (*callback)(void*));
+static void bstnode_free(struct ec_bst_node *n, ec_bst_cb_remove callback);
 
 /* in-order iteration */
-static int bstnode_walk(struct ec_bst_node *n,
-        int (*callback)(union ec_bst_key, void*, void*), void *opaque);
+static int bstnode_walk(struct ec_bst_node *n, ec_bst_cb_walk callback,
+        void *opaque);
 
 /* find node in tree */
 static struct ec_bst_node *bstnode_find(struct ec_bst *t,
@@ -36,26 +35,30 @@ static struct ec_bst_node *bstnode_remove(struct ec_bst_node *n);
 
 
 /* compare unsigned integers */
-static int cmp_uint(union ec_bst_key x, union ec_bst_key y)
+static int
+cmp_keys(struct ec_bst *t, union ec_bst_key x, union ec_bst_key y)
 {
-    uintmax_t a = x.uint, b = y.uint;
-    if (a == b) {
-        return 0;
+    switch (t->key_type) {
+        case EC_BST_UINT:
+            {
+                uintmax_t a = x.uint, b = y.uint;
+                if (a == b) {
+                    return 0;
+                }
+                if (a < b) {
+                    return -1;
+                }
+                return 1;
+            }
+        case EC_BST_WORD:
+            return ec_word_cmp(&x.word, &y.word);
     }
-    if (a < b) {
-        return -1;
-    }
-    return 1;
-}
-
-/* compare ec_word values */
-static int cmp_word(union ec_bst_key x, union ec_bst_key y)
-{
-    return ec_word_cmp(&x.word, &y.word);
+    abort();
+    return 42;
 }
 
 static struct ec_bst_node *
-bstnode_new(union ec_bst_key key, void *data, struct ec_bst_node *parent)
+bstnode_new(union ec_bst_key key, union ec_bst_data data, struct ec_bst_node *parent)
 {
     struct ec_bst_node *n = malloc(sizeof *n);
 
@@ -70,7 +73,7 @@ bstnode_new(union ec_bst_key key, void *data, struct ec_bst_node *parent)
 }
 
 static void
-bstnode_free(struct ec_bst_node *n, void (*callback)(void*))
+bstnode_free(struct ec_bst_node *n, ec_bst_cb_remove callback)
 {
     if (!n) {
         return;
@@ -84,8 +87,7 @@ bstnode_free(struct ec_bst_node *n, void (*callback)(void*))
 }
 
 static int
-bstnode_walk(struct ec_bst_node *n, int (*callback)(union ec_bst_key, void*, void*),
-             void *opaque)
+bstnode_walk(struct ec_bst_node *n, ec_bst_cb_walk callback, void *opaque)
 {
     int res;
     if (!n) {
@@ -95,7 +97,7 @@ bstnode_walk(struct ec_bst_node *n, int (*callback)(union ec_bst_key, void*, voi
     if (res != EC_SUCCESS) {
         return res;
     }
-    res = (*callback)(n->key, n->data, opaque);
+    res = callback(n->key, n->data, opaque);
     if (res != EC_SUCCESS) {
         return res;
     }
@@ -106,7 +108,7 @@ bstnode_walk(struct ec_bst_node *n, int (*callback)(union ec_bst_key, void*, voi
 static struct ec_bst_node *
 bstnode_find(struct ec_bst *t, struct ec_bst_node *n, union ec_bst_key key)
 {
-    int cmp = t->cmp(key, n->key);
+    int cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
         return n;
     }
@@ -190,24 +192,15 @@ bstnode_remove(struct ec_bst_node *n)
 
 
 void
-ec_bst_init(struct ec_bst *t, enum ec_bst_type type)
+ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type)
 {
     t->root = NULL;
     t->size = 0;
-    switch (type) {
-        case EC_BST_WORD:
-            t->cmp = cmp_word;
-            break;
-
-        case EC_BST_UINT:
-        default:
-            t->cmp = cmp_uint;
-            break;
-    }
+    t->key_type = key_type;
 }
 
 void
-ec_bst_clear(struct ec_bst *t, void (*callback)(void*))
+ec_bst_clear(struct ec_bst *t, ec_bst_cb_remove callback)
 {
     if (!t || !t->root) {
         return;
@@ -230,7 +223,7 @@ ec_bst_size(const struct ec_bst *t)
 }
 
 int
-ec_bst_insert(struct ec_bst *t, union ec_bst_key key, void *data)
+ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
 {
     struct ec_bst_node *n, *ins;
     int cmp;
@@ -243,7 +236,7 @@ ec_bst_insert(struct ec_bst *t, union ec_bst_key key, void *data)
 
     n = bstnode_find(t, t->root, key);
 
-    cmp = t->cmp(key, n->key);
+    cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
         return EC_FAILURE;
     }
@@ -264,37 +257,25 @@ ec_bst_insert(struct ec_bst *t, union ec_bst_key key, void *data)
     return EC_SUCCESS;
 }
 
-#define INSERT(member, type) \
-int                                                                         \
-ec_bst_insert_ ## member(struct ec_bst *t, type key, void *data)            \
-{                                                                           \
-    union ec_bst_key k = { .member = key };                                 \
-    return ec_bst_insert(t, k, data);                                       \
-}
-
-void *
-ec_bst_get(struct ec_bst *t, union ec_bst_key key)
+int
+ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data)
 {
     struct ec_bst_node *n;
 
     if (!t || !t->root) {
-        return NULL;
+        return EC_FAILURE;
     }
 
     n = bstnode_find(t, t->root, key);
-    return t->cmp(key, n->key) == 0 ? n->data : NULL;
-}
-
-#define GET(member, type) \
-void *                                                                      \
-ec_bst_get_ ## member(struct ec_bst *t, type key)                           \
-{                                                                           \
-    union ec_bst_key k = { .member = key };                                 \
-    return ec_bst_get(t, k);                                                \
+    if (cmp_keys(t, key, n->key) == 0) {
+        *data = n->data;
+        return EC_SUCCESS;
+    }
+    return EC_FAILURE;
 }
 
 int
-ec_bst_remove(struct ec_bst *t, union ec_bst_key key, void (*callback)(void*))
+ec_bst_remove(struct ec_bst *t, union ec_bst_key key, ec_bst_cb_remove callback)
 {
     /* node to remove and its parent */
     struct ec_bst_node *del, *par;
@@ -304,7 +285,7 @@ ec_bst_remove(struct ec_bst *t, union ec_bst_key key, void (*callback)(void*))
     }
 
     del = bstnode_find(t, t->root, key);
-    if (t->cmp(key, del->key) != 0) {
+    if (cmp_keys(t, key, del->key) != 0) {
         return EC_FAILURE;
     }
     par = del->parent;
@@ -329,25 +310,15 @@ ec_bst_remove(struct ec_bst *t, union ec_bst_key key, void (*callback)(void*))
     return EC_SUCCESS;
 }
 
-#define REMOVE(member, type) \
-int                                                                         \
-ec_bst_remove_ ## member(struct ec_bst *t, type key,                        \
-        void (*callback)(void*))                                            \
-{                                                                           \
-    union ec_bst_key k = { .member = key };                                 \
-    return ec_bst_remove(t, k, callback);                                   \
-}
-
-#define WRAP(member, type)  \
-    INSERT(member, type)    \
-    GET(member, type)       \
-    REMOVE(member, type)
-
-WRAP(word, struct ec_word)
-WRAP(uint, uintmax_t)
-
-int ec_bst_walk(struct ec_bst *t,
-        int (*callback)(union ec_bst_key, void*, void*), void *opaque)
+int
+ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk callback, void *opaque)
 {
     return bstnode_walk(t->root, callback, opaque);
+}
+
+int
+ec_bst_free_ptr(union ec_bst_data val)
+{
+    free(val.ptr);
+    return EC_SUCCESS;
 }

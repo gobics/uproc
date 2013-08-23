@@ -116,10 +116,10 @@ struct all_cb_context {
 };
 
 static int
-finalize_all_cb(union ec_bst_key key, void *data, void *opaque)
+finalize_all_cb(union ec_bst_key key, union ec_bst_data data, void *opaque)
 {
     struct all_cb_context *ctx = opaque;
-    double score = sc_finalize(data);
+    double score = sc_finalize(data.ptr);
     if (score > 0.0) {
         ctx->preds[ctx->i].cls = key.uint;
         ctx->preds[ctx->i].score = score;
@@ -180,10 +180,10 @@ struct max_cb_context {
 };
 
 static int
-finalize_max_cb(union ec_bst_key key, void *data, void *opaque)
+finalize_max_cb(union ec_bst_key key, union ec_bst_data data, void *opaque)
 {
     ec_class cls = key.uint;
-    double s = sc_finalize(data);
+    double s = sc_finalize(data.ptr);
     struct max_cb_context *m = opaque;
     if (s > m->score) {
         m->score = s;
@@ -197,7 +197,7 @@ finalize_max(struct ec_bst *scores, ec_class *predict_cls, double *predict_score
 {
     int res;
     struct max_cb_context m = { -INFINITY, -1 };
-    res = ec_bst_walk(scores, &finalize_max_cb, &m);
+    res = ec_bst_walk(scores, finalize_max_cb, &m);
     if (res == EC_SUCCESS) {
         *predict_cls = m.cls;
         *predict_score = m.score;
@@ -209,17 +209,19 @@ static int
 scores_add(struct ec_bst *scores, ec_class cls, size_t index,
            double dist[static EC_SUFFIX_LEN], bool reverse)
 {
-    struct sc *s;
-    s = ec_bst_get_uint(scores, cls);
-    if (!s) {
-        if (!(s = sc_new())) {
+    int res;
+    union ec_bst_key key = { .uint = cls };
+    union ec_bst_data data;
+    res = ec_bst_get(scores, key, &data);
+    if (res == EC_FAILURE) {
+        if (!(data.ptr = sc_new())) {
             return EC_FAILURE;
         }
-        if (ec_bst_insert_uint(scores, cls, s) != EC_SUCCESS) {
+        if (ec_bst_insert(scores, key, data) != EC_SUCCESS) {
             return EC_FAILURE;
         }
     }
-    sc_add(s, index, dist, reverse);
+    sc_add(data.ptr, index, dist, reverse);
     return EC_SUCCESS;
 }
 
@@ -321,7 +323,7 @@ ec_classify_protein_all(
     }
     res = finalize_all(&scores, predict_count, predict_cls, predict_score);
 error:
-    ec_bst_clear(&scores, &free);
+    ec_bst_clear(&scores, ec_bst_free_ptr);
     return res;
 }
 
@@ -343,7 +345,7 @@ ec_classify_protein_max(
     }
     res = finalize_max(&scores, predict_cls, predict_score);
 error:
-    ec_bst_clear(&scores, &free);
+    ec_bst_clear(&scores, ec_bst_free_ptr);
     return res;
 }
 
