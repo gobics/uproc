@@ -12,25 +12,24 @@
 
 #define MAX_CHUNK_SIZE (1 << 10)
 
-struct input
-{
-    char *seq[MAX_CHUNK_SIZE];
-    size_t seq_sz[MAX_CHUNK_SIZE];
-    size_t n;
-} in;
-
-struct output
+struct buffer
 {
 #ifdef MAIN_DNA
     ec_class *cls[MAX_CHUNK_SIZE][EC_ORF_FRAMES];
     double *score[MAX_CHUNK_SIZE][EC_ORF_FRAMES];
-    size_t n, count[MAX_CHUNK_SIZE][EC_ORF_FRAMES], seq_len[MAX_CHUNK_SIZE][EC_ORF_FRAMES];
+    size_t count[MAX_CHUNK_SIZE][EC_ORF_FRAMES], seq_len[MAX_CHUNK_SIZE][EC_ORF_FRAMES];
 #else
     ec_class *cls[MAX_CHUNK_SIZE];
     double *score[MAX_CHUNK_SIZE];
-    size_t n, count[MAX_CHUNK_SIZE], seq_len[MAX_CHUNK_SIZE];
+    size_t count[MAX_CHUNK_SIZE], seq_len[MAX_CHUNK_SIZE];
 #endif
-} out;
+    char *id[MAX_CHUNK_SIZE];
+    size_t id_sz[MAX_CHUNK_SIZE];
+
+    char *seq[MAX_CHUNK_SIZE];
+    size_t seq_sz[MAX_CHUNK_SIZE];
+    size_t n;
+} buf[2];
 
 int
 dup_str(char **dest, size_t *dest_sz, const char *src)
@@ -49,7 +48,7 @@ dup_str(char **dest, size_t *dest_sz, const char *src)
 }
 
 int
-input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf,
+input_read(FILE *stream, struct ec_seqio_filter *filter, struct buffer *buf,
            size_t chunk_size)
 {
     int res = EC_SUCCESS;
@@ -61,9 +60,19 @@ input_read(FILE *stream, struct ec_seqio_filter *filter, struct input *buf,
     for (i = 0; i < chunk_size && res == EC_SUCCESS; i++) {
         res = ec_seqio_fasta_read(stream, filter, &id, &id_sz, NULL, NULL,
                 &seq, &seq_sz);
+        char *p;
         if (res != EC_SUCCESS) {
             break;
         }
+        p = strpbrk(id, ", \f\n\r\t\v");
+        if (p) {
+            *p = '\0';
+        }
+        res = dup_str(&buf->id[i], &buf->id_sz[i], id);
+        if (res != EC_SUCCESS) {
+            break;
+        }
+
         res = dup_str(&buf->seq[i], &buf->seq_sz[i], seq);
         if (res != EC_SUCCESS) {
             break;
@@ -98,8 +107,7 @@ threshold(struct ec_matrix *thresh, size_t seq_len)
 }
 
 void
-output_print(FILE *stream, struct output *buf, unsigned offset,
-             struct ec_matrix *thresholds, unsigned orf_mode)
+output_print(FILE *stream, struct buffer *buf, unsigned offset, struct ec_matrix *thresholds, unsigned orf_mode)
 {
     size_t i, j, count;
     ec_class *cls;
@@ -113,8 +121,12 @@ output_print(FILE *stream, struct output *buf, unsigned offset,
             thresh = threshold(thresholds, buf->seq_len[i][frame]);
             for (j = 0; j < count; j++) {
                 if (score[j] > thresh) {
-                    fprintf(stream, "%zu,%u,%" EC_CLASS_PRI ",%1.3f\n",
-                            i + offset + 1, frame + 1, cls[j], score[j]);
+                    fprintf(stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
+                            i + offset + 1,
+                            buf->id[i],
+                            frame + 1,
+                            cls[j],
+                            score[j]);
                 }
             }
         }
@@ -126,8 +138,11 @@ output_print(FILE *stream, struct output *buf, unsigned offset,
         thresh = threshold(thresholds, buf->seq_len[i]);
         for (j = 0; j < count; j++) {
             if (score[j] > thresh) {
-                fprintf(stream, "%zu,%" EC_CLASS_PRI ",%1.3f\n",
-                        i + offset + 1, cls[j], score[j]);
+                fprintf(stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
+                        i + offset + 1,
+                        buf->id[i],
+                        cls[j],
+                        score[j]);
             }
         }
 #endif
@@ -180,7 +195,7 @@ int
 main(int argc, char **argv)
 {
     int res;
-    size_t i, i_chunk = 0;
+    size_t i, i_chunk = 0, i_buf = 0;
     bool more_input;
 
     struct ec_ecurve fwd, rev;
@@ -195,6 +210,7 @@ main(int argc, char **argv)
     FILE *stream;
     struct ec_seqio_filter filter;
 
+    struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
 
     int opt;
@@ -309,22 +325,23 @@ main(int argc, char **argv)
     }
 
     do {
+        in = &buf[!i_buf];
+        out = &buf[i_buf];
 #pragma omp parallel private(i, res)
         {
 #pragma omp for schedule(dynamic) nowait
-            for (i = 0; i < in.n; i++) {
+            for (i = 0; i < out->n; i++) {
 #ifdef MAIN_DNA
-                res = ec_classify_dna_all(in.seq[i], orf_mode, &codon_scores,
+                res = ec_classify_dna_all(out->seq[i], orf_mode, &codon_scores,
                         &orf_thresholds, substmat, &fwd, &rev,
-                        out.count[i], out.cls[i], out.score[i], out.seq_len[i]);
+                        out->count[i], out->cls[i], out->score[i], out->seq_len[i]);
 #else
-                res = ec_classify_protein_all(in.seq[i], substmat, &fwd, &rev,
-                        &out.count[i], &out.cls[i], &out.score[i]);
-                out.seq_len[i] = strlen(in.seq[i]);
+                res = ec_classify_protein_all(out->seq[i], substmat, &fwd, &rev,
+                        &out->count[i], &out->cls[i], &out->score[i]);
+                out->seq_len[i] = strlen(out->seq[i]);
 #endif
             }
         }
-        out.n = in.n;
 
 #pragma omp parallel
         {
@@ -332,19 +349,20 @@ main(int argc, char **argv)
             {
 #pragma omp section
                 {
-                    res = input_read(stream, &filter, &in, chunk_size);
+                    res = input_read(stream, &filter, in, chunk_size);
                     more_input = res == EC_SUCCESS;
                 }
 #pragma omp section
                 {
                     if (i_chunk) {
-                        output_print(stdout, &out, (i_chunk - 1) * chunk_size,
+                        output_print(stdout, out, (i_chunk - 1) * chunk_size,
                                 &score_thresholds, orf_mode);
                     }
                 }
             }
         }
         i_chunk += 1;
+        i_buf ^= 1;
     } while (more_input);
 
     ec_ecurve_destroy(&fwd);
@@ -359,12 +377,16 @@ main(int argc, char **argv)
     for (i = 0; i < chunk_size; i++) {
 #ifdef MAIN_DNA
         for (unsigned f = 0; f < orf_mode; f++) {
-            free(out.score[i][f]);
-            free(out.cls[i][f]);
+            free(buf[0].score[i][f]);
+            free(buf[0].cls[i][f]);
+            free(buf[1].score[i][f]);
+            free(buf[1].cls[i][f]);
         }
 #else
-        free(out.score[i]);
-        free(out.cls[i]);
+        free(buf[0].score[i]);
+        free(buf[0].cls[i]);
+        free(buf[1].score[i]);
+        free(buf[1].cls[i]);
 #endif
     }
     return res == EC_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
