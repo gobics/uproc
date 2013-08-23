@@ -73,8 +73,8 @@ int ec_classify_protein_max(
  *
  * Translates DNA/RNA sequence using ecurve/orf.h and classifies them using
  * ec_classify_protein_all(). Depending on the `mode` argument, frames/strands
- * are scored separately, `predict_cls` and `predict_score` should point into
- * arrays of sufficient size.
+ * are scored separately, `predict_cls`, `predict_score` and `orf_lengths`
+ * should point into arrays of sufficient size.
  */
 int ec_classify_dna_all(
         const char *seq,
