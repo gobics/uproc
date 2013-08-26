@@ -222,7 +222,7 @@ ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
                 reverse_str(next->data);
             }
 
-            return EC_SUCCESS;
+            return EC_ITER_YIELD;
         }
 
         /* iterator exhausted */
@@ -334,7 +334,7 @@ ec_orf_chained(const char *seq,
         return res;
     }
 
-    while (EC_ITER_YIELD(res, ec_orfiter_next(&iter, &orf, &frame))) {
+    while ((res = ec_orfiter_next(&iter, &orf, &frame)) == EC_ITER_YIELD) {
         char *p;
         size_t len_new;
         if (orf.length < EC_WORD_LEN || orf.score < min_score) {

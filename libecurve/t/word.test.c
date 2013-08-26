@@ -121,7 +121,7 @@ int iter(void)
 
 #define TEST(IDX, FWD, REV) do {                                            \
     res = ec_worditer_next(&iter, &index, &fwd, &rev);                      \
-    assert_int_eq(res, EC_SUCCESS, "iterator yielded something");           \
+    assert_int_eq(res, EC_ITER_YIELD, "iterator yielded something");        \
     assert_uint_eq(index, IDX, "index correct");                            \
     ec_word_to_string(new, &fwd, &alpha);                                   \
     assert_str_eq(new, FWD, "fwd word correct");                            \

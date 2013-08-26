@@ -51,7 +51,7 @@ struct ec_seqio_filter {
  * \param ignore        characters to ignore
  * \param warn          characters to warn about
  */
-void ec_seqio_filter_init(struct ec_seqio_filter *filter, 
+void ec_seqio_filter_init(struct ec_seqio_filter *filter,
                           enum ec_seqio_filter_flags flags,
                           enum ec_seqio_filter_mode default_mode,
                           const char *accept, const char *ignore,
@@ -65,6 +65,11 @@ void ec_seqio_filter_init(struct ec_seqio_filter *filter,
  * The `char** / size_t*` pairs (`id / id_size` etc.) behave like `lineptr / n`
  * in POSIX' `getline()`
  * (see http://pubs.opengroup.org/onlinepubs/9699919799/functions/getline.html).
+ *
+ * \retval #EC_ITER_YIELD   one data set was read
+ * \retval #EC_ITER_STOP    the iterator is exhausted (i.e. the end of the
+ *                          stream was reached, no sequence data was read)
+ * \retval other            an error occured
  */
 int ec_seqio_fasta_read(FILE *stream, struct ec_seqio_filter *filter,
                   char **id, size_t *id_size,

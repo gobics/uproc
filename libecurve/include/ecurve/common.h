@@ -18,6 +18,9 @@ enum {
     /** General failure */
     EC_FAILURE,
 
+    /** Iterator produced an item */
+    EC_ITER_YIELD,
+
     /** Iterator exhausted */
     EC_ITER_STOP,
 
@@ -37,9 +40,7 @@ enum {
     EC_ESYSCALL,
 };
 
-#define EC_ISERROR(e) ((e) != EC_SUCCESS && (e) != EC_ITER_STOP)
-
-#define EC_ITER_YIELD(e, f) (((e) = (f)), (e) == EC_SUCCESS)
+#define EC_ISERROR(e) ((e) != EC_SUCCESS && (e) != EC_ITER_YIELD && (e) != EC_ITER_STOP)
 
 /** Epsilon value for comparing floating point numbers */
 #define EC_EPSILON 1e-5

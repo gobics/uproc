@@ -54,27 +54,28 @@ input_read(FILE *stream, struct ec_seqio_filter *filter, struct buffer *buf,
     int res = EC_SUCCESS;
     size_t i;
 
-    char *id = NULL, *seq = NULL;
+    char *id = NULL, *seq = NULL, *p;
     size_t id_sz, seq_sz;
 
-    for (i = 0; i < chunk_size && res == EC_SUCCESS; i++) {
+    for (i = 0; i < chunk_size; i++) {
         res = ec_seqio_fasta_read(stream, filter, &id, &id_sz, NULL, NULL,
                 &seq, &seq_sz);
-        char *p;
-        if (res != EC_SUCCESS) {
+        if (res != EC_ITER_YIELD) {
             break;
         }
+
         p = strpbrk(id, ", \f\n\r\t\v");
         if (p) {
             *p = '\0';
         }
+
         res = dup_str(&buf->id[i], &buf->id_sz[i], id);
-        if (res != EC_SUCCESS) {
+        if (EC_ISERROR(res)) {
             break;
         }
 
         res = dup_str(&buf->seq[i], &buf->seq_sz[i], seq);
-        if (res != EC_SUCCESS) {
+        if (EC_ISERROR(res)) {
             break;
         }
     }

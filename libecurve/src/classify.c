@@ -287,7 +287,7 @@ scores_compute(
     ec_ecurve_get_alphabet(fwd_ecurve ? fwd_ecurve : rev_ecurve, &alpha);
     ec_worditer_init(&iter, seq, &alpha);
 
-    while (EC_ITER_YIELD(res, ec_worditer_next(&iter, &index, &fwd_word, &rev_word))) {
+    while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_ITER_YIELD) {
         res = scores_add_word(scores, &fwd_word, index, false, fwd_ecurve, substmat);
         if (EC_ISERROR(res)) {
             break;

@@ -106,9 +106,9 @@ void ec_orfiter_destroy(struct ec_orfiter *iter);
  * \param orf   _OUT_: read ORF
  * \param frame _OUT_: from which frame the ORF was obtained
  *
- * \retval EC_SUCCESS       an ORF was read successfully
- * \retval EC_FAILURE       an error occured
- * \retval EC_ITER_STOP     the end of the sequence was reached
+ * \retval #EC_ITER_YIELD   an ORF was read successfully
+ * \retval #EC_ITER_STOP    the end of the sequence was reached
+ * \retval other            an error occured
  */
 int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
 
