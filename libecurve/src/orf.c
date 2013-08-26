@@ -53,7 +53,7 @@ orf_add_codon(struct ec_orf *o, size_t *sz, ec_codon c, double score)
     if (o->length + 1 == *sz) {
         char *tmp = realloc(o->data, *sz + BUFSZ_STEP);
         if (!tmp) {
-            return EC_FAILURE;
+            return EC_ENOMEM;
         }
         o->data = tmp;
         *sz += BUFSZ_STEP;
@@ -109,7 +109,7 @@ ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores, const char *path
     struct ec_matrix m;
 
     res = ec_matrix_load_file(&m, path);
-    if (res != EC_SUCCESS) {
+    if (EC_ISERROR(res)) {
         return res;
     }
     ec_orf_codonscores_init(scores, &m);
@@ -124,7 +124,7 @@ ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores, FILE *stream)
     struct ec_matrix m;
 
     res = ec_matrix_load_stream(&m, stream);
-    if (res != EC_SUCCESS) {
+    if (EC_ISERROR(res)) {
         return res;
     }
     ec_orf_codonscores_init(scores, &m);
@@ -170,7 +170,7 @@ ec_orfiter_init(struct ec_orfiter *iter, const char *seq,
             while (i--) {
                 free(iter->orf[i].data);
             }
-            return EC_FAILURE;
+            return EC_ENOMEM;
         }
     }
     iter->codon_scores = codon_scores;
@@ -189,7 +189,6 @@ ec_orfiter_destroy(struct ec_orfiter *iter)
 int
 ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
 {
-    int res;
     unsigned i;
     ec_nt nt;
     ec_codon c_fwd, c_rev;
@@ -263,13 +262,13 @@ ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next, unsigned *frame)
                 continue;
             }
 
-#define ADD_CODON(codon, frame) do {                                            \
-    res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)], codon,    \
-                        iter->codon_scores ?                                    \
-                            iter->codon_scores->values[codon] : 0.0);           \
-    if (res != EC_SUCCESS) {                                                    \
-        return EC_FAILURE;                                                      \
-    }                                                                           \
+#define ADD_CODON(codon, frame) do {                                        \
+    int res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)],   \
+            codon,                                                          \
+            iter->codon_scores ?  iter->codon_scores->values[codon] : 0.0); \
+    if (EC_ISERROR(res)) {                                                  \
+        return res;                                                         \
+    }                                                                       \
 } while (0)
 
             c_fwd = iter->codon[iter->frame];
@@ -331,11 +330,11 @@ ec_orf_chained(const char *seq,
     }
 
     res = ec_orfiter_init(&iter, seq, codon_scores);
-    if (res != EC_SUCCESS) {
-        return EC_FAILURE;
+    if (EC_ISERROR(res)) {
+        return res;
     }
 
-    while ((res = ec_orfiter_next(&iter, &orf, &frame)) == EC_SUCCESS) {
+    while (EC_ITER_YIELD(res, ec_orfiter_next(&iter, &orf, &frame))) {
         char *p;
         size_t len_new;
         if (orf.length < EC_WORD_LEN || orf.score < min_score) {
@@ -348,7 +347,7 @@ ec_orf_chained(const char *seq,
         if (!buf[frame] || len_new > sz[frame]) {
             p = realloc(buf[frame], len_new);
             if (!p) {
-                res = EC_FAILURE;
+                res = EC_ENOMEM;
                 goto error;
             }
             buf[frame] = p;
@@ -362,7 +361,9 @@ ec_orf_chained(const char *seq,
         strcpy(p, orf.data);
         len_total[frame] = len_new;
     }
-    res = EC_SUCCESS;
+    if (!EC_ISERROR(res)) {
+        res = EC_SUCCESS;
+    }
 
 error:
     ec_orfiter_destroy(&iter);

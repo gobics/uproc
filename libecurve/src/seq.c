@@ -30,8 +30,9 @@ static int
 grow_buf(char **buf, size_t *n)
 {
     char *tmp = realloc(*buf, *n + BUFSZ_STEP);
-    if (!tmp)
-        return EC_FAILURE;
+    if (!tmp) {
+        return EC_ENOMEM;
+    }
     *n += BUFSZ_STEP;
     *buf = tmp;
     return EC_SUCCESS;
@@ -73,7 +74,7 @@ ec_seq_fasta_read(FILE *stream, struct ec_seq_filter *filter,
 #define INIT_BUF(buf, sz) do {                              \
     if (!*buf) {                                            \
         if (!(*buf = malloc(BUFSZ_INIT))) {                 \
-            return EC_FAILURE;                              \
+            return EC_ENOMEM;                               \
         }                                                   \
         *sz = BUFSZ_INIT;                                   \
     }                                                       \
@@ -81,8 +82,9 @@ ec_seq_fasta_read(FILE *stream, struct ec_seq_filter *filter,
 
 #define GROW_BUF(buf, sz) do {                              \
     if (i >= *sz - 1) {                                     \
-        if (grow_buf(buf, sz) != EC_SUCCESS) {              \
-            return EC_FAILURE;                              \
+        int res = grow_buf(buf, sz);                        \
+        if (EC_ISERROR(res)) {                              \
+            return res;                                     \
         }                                                   \
     }                                                       \
 } while (0)
@@ -105,7 +107,7 @@ ec_seq_fasta_read(FILE *stream, struct ec_seq_filter *filter,
             return EC_ITER_STOP;
         }
         ungetc(c, stream);
-        return EC_FAILURE;
+        return EC_EINVAL;
     }
 
     /* read ID */

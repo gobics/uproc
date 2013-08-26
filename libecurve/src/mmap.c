@@ -37,17 +37,18 @@ int
 ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
 {
 #if HAVE_MMAP
+    int res;
     struct stat st;
     struct mmap_header *header;
     char *region, alphabet_str[EC_ALPHABET_SIZE + 1];
 
     ecurve->mmap_fd = open(path, O_RDONLY);
     if (ecurve->mmap_fd == -1) {
-        return EC_FAILURE;
+        return EC_ESYSCALL;
     }
 
     if (fstat(ecurve->mmap_fd, &st) == -1) {
-        return EC_FAILURE;
+        return EC_ESYSCALL;
     }
     ecurve->mmap_size = st.st_size;
     ecurve->mmap_ptr =
@@ -55,19 +56,22 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
                       ecurve->mmap_fd, 0);
 
     if (ecurve->mmap_ptr == MAP_FAILED) {
+        res = EC_ESYSCALL;
         goto error_close;
     }
 
     header = ecurve->mmap_ptr;
     memcpy(alphabet_str, header->alphabet_str, EC_ALPHABET_SIZE);
     alphabet_str[EC_ALPHABET_SIZE] = '\0';
-    if (ec_alphabet_init(&ecurve->alphabet, alphabet_str) == EC_FAILURE) {
+    res = ec_alphabet_init(&ecurve->alphabet, alphabet_str);
+    if (EC_ISERROR(res)) {
         goto error_munmap;
     }
 
     ecurve->suffix_count = header->suffix_count;
     /* file is too small */
     if (ecurve->mmap_size < SIZE_TOTAL(ecurve->suffix_count)) {
+        res = EC_FAILURE;
         goto error_munmap;
     }
 
@@ -85,7 +89,7 @@ error_close:
     (void) ecurve;
     (void) path;
 #endif
-    return EC_FAILURE;
+    return res;
 }
 
 void
@@ -103,7 +107,7 @@ int
 ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
 {
 #if HAVE_MMAP
-    int fd;
+    int fd, res = EC_SUCCESS;
     size_t size;
     char *region;
     struct mmap_header header;
@@ -112,15 +116,17 @@ ec_mmap_store(const struct ec_ecurve *ecurve, const char *path)
 
     fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
-        return EC_FAILURE;
+        return EC_ESYSCALL;
     }
 
     if (posix_fallocate(fd, 0, size)) {
-        return EC_FAILURE;
+        res = EC_ESYSCALL;
+        goto error_close;
     }
 
     region = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
     if (region == MAP_FAILED) {
+        res = EC_ESYSCALL;
         goto error_close;
     }
 
@@ -145,5 +151,5 @@ error_close:
     (void) ecurve;
     (void) path;
 #endif
-    return EC_FAILURE;
+    return res;
 }

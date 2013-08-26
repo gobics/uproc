@@ -13,7 +13,7 @@ ec_alphabet_init(struct ec_alphabet *alpha, const char *s)
     const char *p;
 
     if (strlen(s) != EC_ALPHABET_SIZE) {
-        return EC_FAILURE;
+        return EC_EINVAL;
     }
     strcpy(alpha->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
@@ -23,7 +23,7 @@ ec_alphabet_init(struct ec_alphabet *alpha, const char *s)
         i = *p;
         /* invalid or duplicate character */
         if (!isupper(i) || alpha->aminos[i] != -1) {
-            return EC_FAILURE;
+            return EC_EINVAL;
         }
         alpha->aminos[i] = p - s;
     }

@@ -228,11 +228,13 @@ insert_or_update(struct ec_bst *t, union ec_bst_key key,
 {
     struct ec_bst_node *n, *ins;
     int cmp;
-
     if (!t->root) {
         t->root = bstnode_new(key, data, NULL);
-        t->size = 1;
-        return t->root ? EC_SUCCESS : EC_FAILURE;
+        if (t->root) {
+            t->size = 1;
+            return EC_SUCCESS;
+        }
+        return EC_ENOMEM;
     }
 
     n = bstnode_find(t, t->root, key);
@@ -243,7 +245,7 @@ insert_or_update(struct ec_bst *t, union ec_bst_key key,
             n->data = data;
             return EC_SUCCESS;
         }
-        return EC_FAILURE;
+        return EC_EEXIST;
     }
     else if (cmp < 0) {
         ins = bstnode_new(key, data, n);
@@ -255,7 +257,7 @@ insert_or_update(struct ec_bst *t, union ec_bst_key key,
     }
 
     if (!ins) {
-        return EC_FAILURE;
+        return EC_ENOMEM;
     }
 
     t->size++;
@@ -278,9 +280,8 @@ int
 ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data)
 {
     struct ec_bst_node *n;
-
-    if (!t || !t->root) {
-        return EC_FAILURE;
+    if (!t->root) {
+        return EC_ENOENT;
     }
 
     n = bstnode_find(t, t->root, key);
@@ -288,7 +289,7 @@ ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data)
         *data = n->data;
         return EC_SUCCESS;
     }
-    return EC_FAILURE;
+    return EC_ENOENT;
 }
 
 int
@@ -296,14 +297,13 @@ ec_bst_remove(struct ec_bst *t, union ec_bst_key key, ec_bst_cb_remove callback)
 {
     /* node to remove and its parent */
     struct ec_bst_node *del, *par;
-
     if (!t->root) {
-        return EC_FAILURE;
+        return EC_ENOENT;
     }
 
     del = bstnode_find(t, t->root, key);
     if (cmp_keys(t, key, del->key) != 0) {
-        return EC_FAILURE;
+        return EC_ENOENT;
     }
     par = del->parent;
 

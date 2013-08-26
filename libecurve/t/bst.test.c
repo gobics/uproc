@@ -54,7 +54,7 @@ int stuff(void)
     assert_int_eq(ec_bst_size(&t), 3, "ec_bst_size returns the right number of items\n");
 
     INS((unsigned long long) -1337, 0);
-    assert_int_eq(res, EC_FAILURE, "duplicate insertion failed");
+    assert_int_eq(res, EC_EEXIST, "duplicate insertion failed");
 
     UPD(22, 32);
     assert_int_eq(res, EC_SUCCESS, "updating nonexistent key succeeded");
@@ -72,13 +72,13 @@ int stuff(void)
     assert_int_eq(res, EC_SUCCESS, "removing existent key succeeded");
 
     GET(42);
-    assert_int_eq(res, EC_FAILURE, "getting nonexistent key failed");
+    assert_int_eq(res, EC_ENOENT, "getting nonexistent key failed");
 
     GET(43);
-    assert_int_eq(res, EC_FAILURE, "getting nonexistent key failed");
+    assert_int_eq(res, EC_ENOENT, "getting nonexistent key failed");
 
     RM(42);
-    assert_int_eq(res, EC_FAILURE, "removing nonexistent key failed");
+    assert_int_eq(res, EC_ENOENT, "removing nonexistent key failed");
 
     return SUCCESS;
 }

@@ -19,7 +19,7 @@ ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
 
     matrix->values = malloc(rows * cols * sizeof *matrix->values);
     if (!matrix->values) {
-        return EC_FAILURE;
+        return EC_ENOMEM;
     }
     if (values) {
         memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
@@ -58,7 +58,7 @@ ec_matrix_load_file(struct ec_matrix *matrix, const char *path)
     int res;
     FILE *stream = fopen(path, "r");
     if (!stream) {
-        return EC_FAILURE;
+        return EC_ESYSCALL;
     }
     res = ec_matrix_load_stream(matrix, stream);
     fclose(stream);
@@ -73,11 +73,11 @@ ec_matrix_load_stream(struct ec_matrix *matrix, FILE *stream)
     double val;
 
     if (fscanf(stream, EC_MATRIX_HEADER_SCN, &rows, &cols) != 2) {
-        return EC_FAILURE;
+        return EC_EINVAL;
     }
 
     res = ec_matrix_init(matrix, rows, cols, NULL);
-    if (res != EC_SUCCESS) {
+    if (EC_ISERROR(res)) {
         return res;
     }
 
@@ -85,7 +85,7 @@ ec_matrix_load_stream(struct ec_matrix *matrix, FILE *stream)
         for (k = 0; k < cols; k++) {
             if (fscanf(stream, "%lf", &val) != 1) {
                 ec_matrix_destroy(matrix);
-                return EC_FAILURE;
+                return EC_EINVAL;
             }
             ec_matrix_set(matrix, i, k, val);
         }
@@ -99,7 +99,7 @@ ec_matrix_store_file(const struct ec_matrix *matrix, const char *path)
     int res;
     FILE *stream = fopen(path, "w");
     if (!stream) {
-        return EC_FAILURE;
+        return EC_ESYSCALL;
     }
     res = ec_matrix_store_stream(matrix, stream);
     fclose(stream);

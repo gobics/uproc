@@ -53,15 +53,17 @@ int
 ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
                size_t suffix_count)
 {
+    int res;
     size_t i;
 
-    if (ec_alphabet_init(&ecurve->alphabet, alphabet) != EC_SUCCESS) {
-        return EC_FAILURE;
+    res = ec_alphabet_init(&ecurve->alphabet, alphabet);
+    if (EC_ISERROR(res)) {
+        return res;
     }
 
     ecurve->prefixes = malloc(sizeof *ecurve->prefixes * (EC_PREFIX_MAX + 1));
     if (!ecurve->prefixes) {
-        return EC_FAILURE;
+        return EC_ENOMEM;
     }
     for (i = 0; i <= EC_PREFIX_MAX; i++) {
         ecurve->prefixes[i].first = 0;
@@ -74,7 +76,7 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
         ecurve->classes = malloc(sizeof *ecurve->classes * suffix_count);
         if (!ecurve->suffixes || !ecurve->classes) {
             ec_ecurve_destroy(ecurve);
-            return EC_FAILURE;
+            return EC_ENOMEM;
         }
     }
 

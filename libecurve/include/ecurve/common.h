@@ -20,7 +20,26 @@ enum {
 
     /** Iterator exhausted */
     EC_ITER_STOP,
+
+    /** Memory allocation failed */
+    EC_ENOMEM,
+
+    /** Invalid argument */
+    EC_EINVAL,
+
+    /** Object doesn't exist  */
+    EC_ENOENT,
+
+    /** Object already exists */
+    EC_EEXIST,
+
+    /** A system call (that sets `errno`) returned an error */
+    EC_ESYSCALL,
 };
+
+#define EC_ISERROR(e) ((e) != EC_SUCCESS && (e) != EC_ITER_STOP)
+
+#define EC_ITER_YIELD(e, f) (((e) = (f)), (e) == EC_SUCCESS)
 
 /** Epsilon value for comparing floating point numbers */
 #define EC_EPSILON 1e-5

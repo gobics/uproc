@@ -139,7 +139,7 @@ finalize_all(struct ec_bst *score_tree, size_t *n,
     ctx.i = 0;
     ctx.preds = malloc(ec_bst_size(score_tree) * sizeof *ctx.preds);
     if (!ctx.preds) {
-        return EC_FAILURE;
+        return EC_ENOMEM;
     }
 
     (void) ec_bst_walk(score_tree, &finalize_all_cb, &ctx);
@@ -149,14 +149,14 @@ finalize_all(struct ec_bst *score_tree, size_t *n,
         void *tmp;
         tmp = realloc(*predict_cls, count * sizeof **predict_cls);
         if (!tmp) {
-            res = EC_FAILURE;
+            res = EC_ENOMEM;
             goto error;
         }
         *predict_cls = tmp;
 
         tmp = realloc(*predict_scores, count * sizeof **predict_scores);
         if (!tmp) {
-            res = EC_FAILURE;
+            res = EC_ENOMEM;
             goto error;
         }
         *predict_scores = tmp;
@@ -198,7 +198,7 @@ finalize_max(struct ec_bst *scores, ec_class *predict_cls, double *predict_score
     int res;
     struct max_cb_context m = { -INFINITY, -1 };
     res = ec_bst_walk(scores, finalize_max_cb, &m);
-    if (res == EC_SUCCESS) {
+    if (!EC_ISERROR(res)) {
         *predict_cls = m.cls;
         *predict_score = m.score;
     }
@@ -213,13 +213,14 @@ scores_add(struct ec_bst *scores, ec_class cls, size_t index,
     union ec_bst_key key = { .uint = cls };
     union ec_bst_data data;
     res = ec_bst_get(scores, key, &data);
-    if (res == EC_FAILURE) {
+    if (res == EC_ENOENT) {
         if (!(data.ptr = sc_new())) {
-            return EC_FAILURE;
+            return EC_ENOMEM;
         }
-        if (ec_bst_insert(scores, key, data) != EC_SUCCESS) {
-            return EC_FAILURE;
-        }
+        res = ec_bst_insert(scores, key, data);
+    }
+    if (EC_ISERROR(res)) {
+        return res;
     }
     sc_add(data.ptr, index, dist, reverse);
     return EC_SUCCESS;
@@ -259,7 +260,7 @@ scores_add_word(struct ec_bst *scores, const struct ec_word *word, size_t index,
 
     align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
     res = scores_add(scores, lower_cls, index, dist, reverse);
-    if (res != EC_SUCCESS || ec_word_equal(&lower_nb, &upper_nb)) {
+    if (EC_ISERROR(res) || ec_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
     align_suffixes(dist, word->suffix, upper_nb.suffix, substmat);
@@ -286,17 +287,17 @@ scores_compute(
     ec_ecurve_get_alphabet(fwd_ecurve ? fwd_ecurve : rev_ecurve, &alpha);
     ec_worditer_init(&iter, seq, &alpha);
 
-    while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_SUCCESS) {
+    while (EC_ITER_YIELD(res, ec_worditer_next(&iter, &index, &fwd_word, &rev_word))) {
         res = scores_add_word(scores, &fwd_word, index, false, fwd_ecurve, substmat);
-        if (res != EC_SUCCESS) {
+        if (EC_ISERROR(res)) {
             break;
         }
         res = scores_add_word(scores, &rev_word, index, true, rev_ecurve, substmat);
-        if (res != EC_SUCCESS) {
+        if (EC_ISERROR(res)) {
             break;
         }
     }
-    if (res == EC_ITER_STOP) {
+    if (!EC_ISERROR(res)) {
         res = EC_SUCCESS;
     }
 
@@ -317,7 +318,7 @@ ec_classify_protein_all(
     struct ec_bst scores;
     ec_bst_init(&scores, EC_BST_UINT);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
-    if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
+    if (EC_ISERROR(res) || ec_bst_isempty(&scores)) {
         *predict_count = 0;
         goto error;
     }
@@ -340,7 +341,7 @@ ec_classify_protein_max(
     struct ec_bst scores;
     ec_bst_init(&scores, EC_BST_UINT);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
-    if (res != EC_SUCCESS || ec_bst_isempty(&scores)) {
+    if (EC_ISERROR(res) || ec_bst_isempty(&scores)) {
         goto error;
     }
     res = finalize_max(&scores, predict_cls, predict_score);
@@ -369,7 +370,7 @@ ec_classify_dna_all(
     size_t orf_sz[EC_ORF_FRAMES];
 
     res = ec_orf_chained(seq, mode, codon_scores, thresholds, orf, orf_sz);
-    if (res != EC_SUCCESS) {
+    if (EC_ISERROR(res)) {
         goto error;
     }
 
@@ -379,7 +380,7 @@ ec_classify_dna_all(
                     fwd_ecurve, rev_ecurve,
                     &predict_count[i], &predict_cls[i], &predict_score[i]);
             orf_lengths[i] = strlen(orf[i]);
-            if (res != EC_SUCCESS) {
+            if (EC_ISERROR(res)) {
                 goto error;
             }
         }
@@ -415,7 +416,7 @@ ec_classify_dna_max(
     size_t orf_sz[EC_ORF_FRAMES];
 
     res = ec_orf_chained(seq, mode, codon_scores, thresholds, orf, orf_sz);
-    if (res != EC_SUCCESS) {
+    if (EC_ISERROR(res)) {
         goto error;
     }
 
@@ -425,7 +426,7 @@ ec_classify_dna_max(
                     fwd_ecurve, rev_ecurve,
                     &predict_cls[i], &predict_score[i]);
             orf_lengths[i] = strlen(orf[i]);
-            if (res != EC_SUCCESS) {
+            if (EC_ISERROR(res)) {
                 goto error;
             }
         }
