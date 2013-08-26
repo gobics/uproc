@@ -222,8 +222,9 @@ ec_bst_size(const struct ec_bst *t)
     return t->size;
 }
 
-int
-ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
+static int
+insert_or_update(struct ec_bst *t, union ec_bst_key key,
+        union ec_bst_data data, bool update)
 {
     struct ec_bst_node *n, *ins;
     int cmp;
@@ -238,6 +239,10 @@ ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
 
     cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
+        if (update) {
+            n->data = data;
+            return EC_SUCCESS;
+        }
         return EC_FAILURE;
     }
     else if (cmp < 0) {
@@ -255,6 +260,18 @@ ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
 
     t->size++;
     return EC_SUCCESS;
+}
+
+int
+ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
+{
+    return insert_or_update(t, key, data, false);
+}
+
+int
+ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
+{
+    return insert_or_update(t, key, data, true);
 }
 
 int

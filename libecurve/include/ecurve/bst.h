@@ -70,6 +70,20 @@ size_t ec_bst_size(const struct ec_bst *t);
  */
 int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
 
+/** Update item
+ *
+ * Like ec_bst_insert(), but doesn't fail if an item with the same key was
+ * already present.
+ *
+ * \param t     bst instance
+ * \param key   search key
+ * \param data  pointer to be stored
+ *
+ * \retval #EC_SUCCESS  item was inserted/updated
+ * \retval #EC_FAILURE  `key` was already present or memory allocation failed
+ */
+int ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
+
 /** Get item
  *
  * \param t     bst instance
