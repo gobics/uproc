@@ -15,11 +15,11 @@ ec_word_from_string(struct ec_word *word, const char *str,
     for (i = 0; str[i] && i < EC_WORD_LEN; i++) {
         a = ec_alphabet_char_to_amino(alpha, str[i]);
         if (a < 0) {
-            return EC_FAILURE;
+            return EC_EINVAL;
         }
         ec_word_append(word, a);
     }
-    return (i < EC_WORD_LEN) ? EC_FAILURE : EC_SUCCESS;
+    return (i < EC_WORD_LEN) ? EC_EINVAL : EC_SUCCESS;
 }
 
 int
@@ -34,7 +34,7 @@ ec_word_to_string(char *str, const struct ec_word *word,
     while (i--) {
         c = ec_alphabet_amino_to_char(alpha, p % EC_ALPHABET_SIZE);
         if (c < 0) {
-            return EC_FAILURE;
+            return EC_EINVAL;
         }
         str[i] = c;
         p /= EC_ALPHABET_SIZE;
@@ -44,7 +44,7 @@ ec_word_to_string(char *str, const struct ec_word *word,
     while (i--) {
         c = ec_alphabet_amino_to_char(alpha, AMINO_AT(s, 0));
         if (c < 0) {
-            return EC_FAILURE;
+            return EC_EINVAL;
         }
         str[i + EC_PREFIX_LEN] = c;
         s >>= EC_AMINO_BITS;
@@ -148,5 +148,5 @@ ec_worditer_next(struct ec_worditer *iter, size_t *index,
         ec_word_prepend(rev_word, a);
     }
     *index = iter->index - EC_WORD_LEN;
-    return EC_SUCCESS;
+    return EC_ITER_YIELD;
 }
