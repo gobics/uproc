@@ -10,6 +10,7 @@
  */
 
 #include <ecurve/alphabet.h>
+#include <ecurve/bst.h>
 #include <ecurve/classify.h>
 #include <ecurve/codon.h>
 #include <ecurve/common.h>
