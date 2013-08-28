@@ -71,7 +71,6 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
     }
 
     if (suffix_count) {
-        ecurve->suffix_count = suffix_count;
         ecurve->suffixes = malloc(sizeof *ecurve->suffixes * suffix_count);
         ecurve->classes = malloc(sizeof *ecurve->classes * suffix_count);
         if (!ecurve->suffixes || !ecurve->classes) {
@@ -79,6 +78,11 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
             return EC_ENOMEM;
         }
     }
+    else {
+        ecurve->suffixes = NULL;
+        ecurve->classes = NULL;
+    }
+    ecurve->suffix_count = suffix_count;
 
     ecurve->mmap_fd = -1;
     ecurve->mmap_ptr = NULL;
