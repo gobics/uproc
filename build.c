@@ -337,13 +337,12 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-
     res = build(stream, direction, &ecurve);
     if (EC_ISERROR(res)) {
         fprintf(stderr, "an error occured\n");
     }
     fprintf(stderr, "storing..\n");
     ec_storage_store_file(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN);
-
+    ec_ecurve_destroy(&ecurve);
     return EXIT_SUCCESS;
 }
