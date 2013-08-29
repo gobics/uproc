@@ -1,4 +1,5 @@
 #include "ecurve.h"
+#include <ctype.h>
 
 enum direction
 {
@@ -16,6 +17,9 @@ static int
 parse_class(const char *id, ec_class *cls)
 {
     int res;
+    while (*id && !isdigit(*id)) {
+        id++;
+    }
 
     res = sscanf(id, "%" EC_CLASS_SCN, cls);
     return res == 1 ? EC_SUCCESS : EC_FAILURE;
