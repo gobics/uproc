@@ -155,13 +155,16 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table,
 {
     ec_prefix tmp;
 
+    /* outside of the "edge" */
     if (table[key].count == (size_t)-1) {
+        /* below the first prefix that has an entry */
         if (!table[key].first) {
             for (tmp = key; tmp < EC_PREFIX_MAX && table[tmp].count == (size_t)-1; tmp++) {
                 ;
             }
             *index = 0;
         }
+        /* above the last prefix */
         else {
             for (tmp = key; tmp > 0 && table[tmp].count == (size_t)-1; tmp--) {
                 ;
@@ -176,6 +179,8 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table,
 
     *index = table[key].first;
 
+    /* inexact match, walk outward to find the closest non-empty neighbour
+     * prefixes */
     if (table[key].count == 0) {
         *count = 2;
         for (tmp = key; tmp > 0 && !table[tmp].count; tmp--) {
