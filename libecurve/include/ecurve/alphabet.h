@@ -18,11 +18,6 @@ struct ec_alphabet {
     ec_amino aminos[UCHAR_MAX + 1];
 };
 
-#define EC_ALPHABET_ALPHA_DEFAULT EC_ALPHABET_ALPHA_BLOS
-#define EC_ALPHABET_ALPHA_BLOS      "AGSTPKRQEDNHYWFMLIVC"
-#define EC_ALPHABET_ALPHA_PFAM      "WFLMIVCAPTSGNDEQKRHY"
-#define EC_ALPHABET_ALPHA_SAMMON    "WCFYLIVMTASQKRENDGHP"
-
 /** Initialize an alphabet object with the given string
  *
  * The string must be exactly `#EC_ALPHABET_SIZE` characters long and consist

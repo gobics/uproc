@@ -6,7 +6,7 @@ struct ec_alphabet alpha;
 
 void setup(void)
 {
-    ec_alphabet_init(&alpha, EC_ALPHABET_ALPHA_DEFAULT);
+    ec_alphabet_init(&alpha, ALPHABET);
 }
 
 void teardown(void)

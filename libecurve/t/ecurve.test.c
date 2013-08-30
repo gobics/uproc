@@ -21,7 +21,7 @@ void teardown(void)
 void setup(void)
 {
     unsigned i;
-    ec_ecurve_init(&ecurve, EC_ALPHABET_ALPHA_DEFAULT, 0);
+    ec_ecurve_init(&ecurve, ALPHABET, 0);
     ecurve.suffix_count = elements_of(suffixes);
     ecurve.suffixes = suffixes;
     ecurve.classes = classes;

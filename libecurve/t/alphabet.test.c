@@ -57,7 +57,7 @@ int init_correct(void)
 int init_default(void)
 {
     DESC("init with default alphabet");
-    assert_int_eq(ec_alphabet_init(&a, EC_ALPHABET_ALPHA_DEFAULT), EC_SUCCESS,
+    assert_int_eq(ec_alphabet_init(&a, ALPHABET), EC_SUCCESS,
                   "success with default alphabet");
     return SUCCESS;
 }

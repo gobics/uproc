@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #define PATH_PREFIX "t/"
+#define ALPHABET "AGSTPKRQEDNHYWFMLIVC"
 
 typedef int (*test)(void);
 
