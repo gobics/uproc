@@ -84,7 +84,7 @@ struct ec_ecurve {
  * \param suffix_count  number of entries in the suffix table
  *
  * \retval #EC_SUCCESS  ecurve was initialized successfully
- * \retval #EC_FAILURE  memory allocation failed
+ * \retval #EC_ENOMEM   memory allocation failed
  */
 int ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
                    size_t suffix_count);

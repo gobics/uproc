@@ -40,6 +40,7 @@ enum {
     EC_ESYSCALL,
 };
 
+/** Test return code for error */
 #define EC_ISERROR(e) ((e) != EC_SUCCESS && (e) != EC_ITER_YIELD && (e) != EC_ITER_STOP)
 
 /** Epsilon value for comparing floating point numbers */

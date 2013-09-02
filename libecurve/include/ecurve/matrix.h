@@ -38,7 +38,7 @@ struct ec_matrix {
  * \param values    initial values
  *
  * \retval EC_SUCCESS   success
- * \retval EC_FAILURE   memory allocation failed
+ * \retval EC_ENOMEM    memory allocation failed
  */
 int ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
                    const double *values);

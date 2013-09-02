@@ -20,8 +20,9 @@
  * \param ecurve    ecurve to be mapped
  * \param path      file path
  *
- * \retval #EC_FAILURE  an error occured
- * \retval #EC_SUCCESS  else
+ * \retval #EC_ESYSCALL     an error occured while calling an OS function
+ * \retval #EC_EINVAL       malformed file
+ * \retval #EC_SUCCESS      else
  */
 int ec_mmap_map(struct ec_ecurve *ecurve, const char *path);
 
@@ -36,8 +37,8 @@ void ec_mmap_unmap(struct ec_ecurve *ecurve);
  * \param ecurve    ecurve to store
  * \param path      file path
  *
- * \retval #EC_FAILURE  an error occured
- * \retval #EC_SUCCESS  else
+ * \retval #EC_ESYSCALL     an error occured while calling an OS function
+ * \retval #EC_SUCCESS      else
  */
 int ec_mmap_store(const struct ec_ecurve *ecurve, const char *path);
 

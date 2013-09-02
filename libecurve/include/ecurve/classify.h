@@ -45,8 +45,8 @@
  * \param predict_cls   _OUT_: protein classes
  * \param predict_score _OUT_: scores
  *
- * \retval #EC_FAILURE  an error occured
- * \retval #EC_SUCCESS  else
+ * \retval #EC_SUCCESS  success
+ * \retval #EC_ENOMEM   memory allocation failed
  */
 int ec_classify_protein_all(
         const char *seq,

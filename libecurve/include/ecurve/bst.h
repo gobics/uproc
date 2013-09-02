@@ -66,7 +66,8 @@ size_t ec_bst_size(const struct ec_bst *t);
  * \param data  pointer to be stored
  *
  * \retval #EC_SUCCESS  item was inserted
- * \retval #EC_FAILURE  `key` was already present or memory allocation failed
+ * \retval #EC_EEXIST   `key` is already present
+ * \retval #EC_ENOMEM   memory allocation failed
  */
 int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
 
@@ -80,7 +81,7 @@ int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data
  * \param data  pointer to be stored
  *
  * \retval #EC_SUCCESS  item was inserted/updated
- * \retval #EC_FAILURE  `key` was already present or memory allocation failed
+ * \retval #EC_ENOMEM   memory allocation failed
  */
 int ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
 
@@ -88,8 +89,10 @@ int ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data
  *
  * \param t     bst instance
  * \param key   search key
+ * \param data  _OUT_: data associated with `key`
  *
- * \return stored pointer, or null pointer if key not found
+ * \retval #EC_SUCCESS  an item for `key` was found and stored in `*data`
+ * \retval #EC_ENOENT   no item found, `*data` remains unchanged
  */
 int ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data);
 
@@ -102,8 +105,8 @@ int ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data);
  * \param key       key of the item to remove
  * \param callback  callback function or null pointer
  *
- * \retval #EC_SUCCESS  an item was removed
- * \retval #EC_FAILURE  `key` not found in the tree
+ * \retval #EC_SUCCESS  item was removed
+ * \retval #EC_ENOENT  `key` not found in the tree
  */
 int ec_bst_remove(struct ec_bst *t, union ec_bst_key key,
         ec_bst_cb_remove callback);
@@ -123,9 +126,13 @@ int ec_bst_remove(struct ec_bst *t, union ec_bst_key key,
  * #EC_SUCCESS if the iteration completed successfully, else whatever the
  * callback function returned.
  */
-int ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk, void *opaque);
+int ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk callback, void *opaque);
 
 
+/** Free the `ptr` member of a union ec_bst_data
+ *
+ * Can be used as a callback for ec_bst_clear() or ec_bst_remove().
+ */
 int ec_bst_free_ptr(union ec_bst_data val);
 
 #endif
