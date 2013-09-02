@@ -42,4 +42,4 @@ clean :
 	rm -f $(TARGETS)
 	$(MAKE) -C libecurve clean
 
-.PHONY : clean
+.PHONY : clean $(ARCHIVE)
