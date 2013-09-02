@@ -43,16 +43,18 @@ struct ec_ecurve {
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct ec_ecurve_pfxtable {
-        /** Index of the first entry
+        /** Index of the first associated entry in #suffixes
          *
-         * If there is no entry for the given prefix, this member contains the
-         * same value as for the previous prefix (recursively).
+         * If there is no entry for the given prefix, this member contains
+         * `#first + #count - 1` of the last "non-empty" prefix (equal to
+         * `#first - 1` of the next non-empty one). In case of an "edge prefix"
+         * the value is either `0` or `#suffix_count - 1`.
          */
         size_t first;
 
         /** Number of associated suffixes
          *
-         * A value of `(size_t) -1` indicates an "edge node", meaning that
+         * A value of `(size_t) -1` indicates an "edge prefix", meaning that
          * there is no lower (resp. higher) prefix value with an associated
          * suffix in the ecurve.
          */
