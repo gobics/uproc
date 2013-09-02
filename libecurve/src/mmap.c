@@ -63,6 +63,11 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
     }
 
     header = ecurve->mmap_ptr;
+    if (ecurve->mmap_size != SIZE_TOTAL(header->suffix_count)) {
+        res = EC_EINVAL;
+        goto error_munmap;
+    }
+
     memcpy(alphabet_str, header->alphabet_str, EC_ALPHABET_SIZE);
     alphabet_str[EC_ALPHABET_SIZE] = '\0';
     res = ec_alphabet_init(&ecurve->alphabet, alphabet_str);
@@ -71,12 +76,6 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
     }
 
     ecurve->suffix_count = header->suffix_count;
-    /* file is too small */
-    if (ecurve->mmap_size < SIZE_TOTAL(ecurve->suffix_count)) {
-        res = EC_FAILURE;
-        goto error_munmap;
-    }
-
     ecurve->prefixes = (void *)(region + OFFSET_PREFIXES);
     ecurve->suffixes = (void *)(region + OFFSET_SUFFIXES);
     ecurve->classes =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
