@@ -1,12 +1,6 @@
 #include "ecurve.h"
 #include <ctype.h>
 
-enum direction
-{
-    FORWARD,
-    REVERSE,
-};
-
 struct ecurve_entry
 {
     struct ec_word word;
@@ -52,8 +46,7 @@ walk_cb_insert_nondups(union ec_bst_key key, union ec_bst_data data,
 
 static int
 extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
-        enum direction direction, struct ecurve_entry **entries,
-        size_t *n_entries)
+        struct ecurve_entry **entries, size_t *n_entries)
 {
     int res;
     char *id = NULL, *seq = NULL;
@@ -67,11 +60,9 @@ extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
     struct ecurve_entry *entries_insert;
 
     struct ec_worditer iter;
-    struct ec_word fwd_word, rev_word, *word;
+    struct ec_word fwd_word, rev_word;
 
     ec_bst_init(&tree, EC_BST_WORD);
-
-    word = direction == FORWARD ? &fwd_word : &rev_word;
 
     while ((res = ec_seqio_fasta_read(stream, NULL, &id, &id_sz, NULL, NULL,
                 &seq, &seq_sz)) == EC_ITER_YIELD) {
@@ -79,17 +70,23 @@ extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
         ec_worditer_init(&iter, seq, alpha);
 
         while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_ITER_YIELD) {
-            if (!ec_word_startswith(word, first)) {
+            if (!ec_word_startswith(&fwd_word, first)) {
                 continue;
             }
-            tree_key.word = *word;
-            tree_data.uint = cls;
-            res = ec_bst_insert(&tree, tree_key, tree_data);
+            tree_key.word = fwd_word;
+            res = ec_bst_get(&tree, tree_key, &tree_data);
 
-            /* word was already present -> mark as duplicate */
-            if (res == EC_EEXIST) {
-                tree_data.uint = -1;
-                res = ec_bst_update(&tree, tree_key, tree_data);
+            /* word was already present -> mark as duplicate if stored class
+             * differs */
+            if (res == EC_SUCCESS) {
+                if (tree_data.uint != cls) {
+                    tree_data.uint = -1;
+                    res = ec_bst_update(&tree, tree_key, tree_data);
+                }
+            }
+            else if (res == EC_ENOENT) {
+                tree_data.uint = cls;
+                res = ec_bst_insert(&tree, tree_key, tree_data);
             }
 
             if (EC_ISERROR(res)) {
@@ -262,7 +259,7 @@ append_entries(struct ec_ecurve *ecurve, ec_amino first,
 
 
 static int
-build(FILE *stream, enum direction direction, struct ec_ecurve *ecurve)
+build(FILE *stream, struct ec_ecurve *ecurve)
 {
     int res;
     struct ecurve_entry *entries = NULL;
@@ -275,7 +272,7 @@ build(FILE *stream, enum direction direction, struct ec_ecurve *ecurve)
         free(entries);
         rewind(stream);
 
-        res = extract_uniques(stream, first, &ecurve->alphabet, direction, &entries, &n_entries);
+        res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
         if (EC_ISERROR(res)) {
             goto error;
         }
@@ -297,36 +294,20 @@ int
 main(int argc, char **argv)
 {
     int res;
-    enum direction direction;
     FILE *stream;
 
     struct ec_ecurve ecurve;
 
     enum args {
-        DIRECTION = 1,
-        ALPHABET,
+        ALPHABET = 1,
         INFILE,
         OUTFILE,
         ARGC
     };
 
-    if (argc < ARGC) {
+    if (argc != ARGC) {
         fprintf(stderr, "usage: %s f|r ALPHABET INFILE OUTFILE\n", argv[0]);
         return EXIT_FAILURE;
-    }
-
-    switch (argv[DIRECTION][0]) {
-        case 'f':
-            direction = FORWARD;
-            break;
-
-        case 'r':
-            direction = REVERSE;
-            break;
-
-        default:
-            fprintf(stderr, "first argument must be 'f' (forward) or 'r' (reverse)\n");
-            return EXIT_FAILURE;
     }
 
     res = ec_ecurve_init(&ecurve, argv[ALPHABET], 0);
@@ -341,7 +322,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = build(stream, direction, &ecurve);
+    res = build(stream, &ecurve);
     if (EC_ISERROR(res)) {
         fprintf(stderr, "an error occured\n");
     }
