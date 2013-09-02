@@ -1,3 +1,4 @@
+#if HAVE_MMAP
 /* for posix_fallocate */
 #define _XOPEN_SOURCE 600
 #include <fcntl.h>
@@ -9,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#endif
 
 #include "ecurve/common.h"
 #include "ecurve/mmap.h"
