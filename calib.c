@@ -12,11 +12,16 @@
 #include "ecurve.h"
 
 #define SEQ_COUNT_MULTIPLIER 10000
-#define POW_MIN 6
-#define POW_MAX 12
+#define POW_MIN 5
+#define POW_MAX 11
 #define POW_DIFF (POW_MAX - POW_MIN)
 #define LEN_MAX (1 << POW_MAX)
 #define ALPHABET "ARNDCQEGHILKMFPSTWYV"
+
+#define INTERP_MIN 20
+#define INTERP_MAX 5000
+
+#define OUT_PREFIX_DEFAULT "prot_thresh_e"
 
 void *
 xrealloc(void *ptr, size_t sz)
@@ -45,7 +50,7 @@ choice(const struct ec_matrix *p, size_t n)
             sum += 1.0 / n;
         }
     }
-    return i-1;
+    return i - 1;
 }
 
 void
@@ -94,44 +99,102 @@ double_cmp(const void *p1, const void *p2)
 }
 
 
-
-
-#if 0
-int
-store(const char *path, double thresh2[static POW_DIFF], double thresh3[static POW_DIFF])
+void
+spline(double *x, double *y, int n, double *y2)
 {
-    int res = EC_SUCCESS;
-    mxArray *a;
-    void *data;
-    MATFile *stream = matOpen(path, "w");
-    if (!stream) {
-        return EC_FAILURE;
+    int i;
+    double p, sig, u[n];
+
+    y2[0] = y2[n-1] = u[0] = 0.0;
+
+    for (i = 1; i < n - 1; i++) {
+        sig = (x[i] - x[i-1]) / (x[i+1] - x[i-1]);
+        p = sig * y2[i-1] + 2.0;
+        y2[i] = (sig - 1.0) / p;
+        u[i] = (y[i+1] - y[i]) / (x[i+1] - x[i]) - (y[i] - y[i-1]) / (x[i] - x[i-1]);
+        u[i] = (6.0 * u[i] / (x[i+1] - x[i-1]) - sig * u[i-1]) / p;
     }
 
-    a = mxCreateDoubleMatrix(POW_DIFF, 1, mxREAL);
-    if (!a) {
-        res = EC_FAILURE;
-        goto error;
+    for (i = n - 1; i > 0; i--) {
+        y2[i-1] *= y2[i];
+        y2[i-1] += u[i-1];
     }
-    memcpy(mxGetPr(a), thresh2, POW_DIFF * sizeof *thresh2);
-    if (matPutVariable(stream, "Thresholds_2", a) != 0) {
-        mxDestroyArray(a);
-        res = EC_FAILURE;
-        goto error;
-    }
-
-    memcpy(mxGetPr(a), thresh3, POW_DIFF * sizeof *thresh3);
-    if (matPutVariable(stream, "Thresholds_3", a) != 0) {
-        mxDestroyArray(a);
-        res = EC_FAILURE;
-        goto error;
-    }
-
-error:
-    matClose(stream);
-    return res;
 }
-#endif
+
+int
+splint(double *xa, double *ya, double *y2a, int m, double *x, double *y, int n)
+{
+    int i, k_low, k_high, k;
+    double h, b, a;
+
+    k_low = 0;
+    k_high = m - 1;
+
+    for (i = 0; i < n; i++) {
+        if (i && (xa[k_low] > x[i] || xa[k_high] < x[i])) {
+            k_low = 0;
+            k_high = m - 1;
+        }
+
+        while (k_high - k_low > 1) {
+            k = (k_high + k_low) / 2;
+            if (xa[k] > x[i]) {
+                k_high = k;
+            }
+            else {
+                k_low = k;
+            }
+        }
+
+        h = xa[k_high] - xa[k_low];
+        if (h == 0.0) {
+            return EC_EINVAL;
+        }
+
+        a = (xa[k_high] - x[i]) / h;
+        b = (x[i] - xa[k_low]) / h;
+        y[i] = a * ya[k_low]
+            + b * ya[k_high]
+            + ((a*a*a - a) * y2a[k_low] + (b*b*b - b) * y2a[k_high])
+            * (h*h) / 6.0;
+    }
+    return 0;
+}
+
+int
+store_interpolated(double thresh[static POW_DIFF + 1],
+        const char *prefix, size_t number)
+{
+    int res, i;
+    double y2a[POW_DIFF + 1],
+           xa[POW_DIFF + 1],
+           x[INTERP_MAX], y[INTERP_MAX];
+    char filename[1024];
+
+    struct ec_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
+
+
+    for (i = 0; i < POW_DIFF + 1; i++) {
+        xa[i] = i;
+    }
+
+    spline(xa, thresh, POW_DIFF + 1, y2a);
+
+    for (i = 0; i < INTERP_MAX; i++) {
+        double xi = i;
+        if (i < INTERP_MIN) {
+            xi = INTERP_MIN;
+        }
+        x[i] = log2(xi) - POW_MIN;
+    }
+    splint(xa, thresh, y2a, POW_DIFF + 1, x, y, INTERP_MAX);
+
+    sprintf(filename, "%.100s%zu", prefix, number);
+
+    ec_matrix_store_file(&thresh_interp, filename);
+
+    return EC_SUCCESS;
+}
 
 
 enum args
@@ -141,26 +204,32 @@ enum args
     SUBSTMAT,
     AA_PROBS,
     ARGC,
+    OUT_PREFIX = ARGC,
 };
 
 int main(int argc, char **argv)
 {
     int res;
-    unsigned i;
     struct ec_alphabet alpha;
     struct ec_matrix alpha_probs;
     struct ec_substmat substmat[EC_SUFFIX_LEN];
     struct ec_ecurve fwd, rev;
     double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
-    if (argc != ARGC) {
+    char *outfile_prefix = OUT_PREFIX_DEFAULT;
+
+    if (argc < ARGC) {
         fprintf(stderr, "usage: %s"
                 " forward.ecurve"
                 " reverse.ecurve"
                 " substmat.matrix"
                 " aa_prob.matrix"
+                " [output_file_prefix]"
                 "\n", argv[0]);
         return EXIT_FAILURE;
+    }
+    if (argc > OUT_PREFIX) {
+        outfile_prefix = argv[OUT_PREFIX];
     }
 
     res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[SUBSTMAT]);
@@ -220,22 +289,9 @@ int main(int argc, char **argv)
         }
         free(all_pred);
     }
-    printf("[ ");
-    for (i = 0; i <= POW_DIFF; i++) {
-        printf("%g, ", thresh2[i]);
-    }
-    printf("]\n[ ");
-    for (i = 0; i <= POW_DIFF; i++) {
-        printf("%g, ", thresh3[i]);
-    }
-    printf("]");
 
+    store_interpolated(thresh2, outfile_prefix, 2);
+    store_interpolated(thresh3, outfile_prefix, 3);
 
-#if 0
-    if (argc < ARGC - 1) {
-        print_usage();
-        return EXIT_FAILURE;
-    }
-#endif
     return EXIT_SUCCESS;
 }
