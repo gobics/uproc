@@ -23,6 +23,8 @@
 
 #define OUT_PREFIX_DEFAULT "prot_thresh_e"
 
+#define ELEMENTS_OF(x) (sizeof (x) / sizeof (x)[0])
+
 void *
 xrealloc(void *ptr, size_t sz)
 {
@@ -99,101 +101,88 @@ double_cmp(const void *p1, const void *p2)
 }
 
 
-void
-spline(double *x, double *y, int n, double *y2)
-{
-    int i;
-    double p, sig, u[n];
-
-    y2[0] = y2[n-1] = u[0] = 0.0;
-
-    for (i = 1; i < n - 1; i++) {
-        sig = (x[i] - x[i-1]) / (x[i+1] - x[i-1]);
-        p = sig * y2[i-1] + 2.0;
-        y2[i] = (sig - 1.0) / p;
-        u[i] = (y[i+1] - y[i]) / (x[i+1] - x[i]) - (y[i] - y[i-1]) / (x[i] - x[i-1]);
-        u[i] = (6.0 * u[i] / (x[i+1] - x[i-1]) - sig * u[i-1]) / p;
-    }
-
-    for (i = n - 1; i > 0; i--) {
-        y2[i-1] *= y2[i];
-        y2[i-1] += u[i-1];
-    }
-}
-
 int
-splint(double *xa, double *ya, double *y2a, int m, double *x, double *y, int n)
+csinterp(const double *xa, const double *ya, int m, const double *x, double *y, int n)
 {
-    int i, k_low, k_high, k;
-    double h, b, a;
+    int i, low, high, mid;
+    double h, b, a, u[m], ya2[m];
 
-    k_low = 0;
-    k_high = m - 1;
+    ya2[0] = ya2[m-1] = u[0] = 0.0;
+
+    for (i = 1; i < m - 1; i++) {
+        a = (xa[i] - xa[i-1]) / (xa[i+1] - xa[i-1]);
+        b = a * ya2[i-1] + 2.0;
+        ya2[i] = (a - 1.0) / b;
+        u[i] = (ya[i+1] - ya[i]) / (xa[i+1] - xa[i]) - (ya[i] - ya[i-1]) / (xa[i] - xa[i-1]);
+        u[i] = (6.0 * u[i] / (xa[i+1] - xa[i-1]) - a * u[i-1]) / b;
+    }
+
+    for (i = m - 1; i > 0; i--) {
+        ya2[i-1] *= ya2[i];
+        ya2[i-1] += u[i-1];
+    }
+
+    low = 0;
+    high = m - 1;
 
     for (i = 0; i < n; i++) {
-        if (i && (xa[k_low] > x[i] || xa[k_high] < x[i])) {
-            k_low = 0;
-            k_high = m - 1;
+        if (i && (xa[low] > x[i] || xa[high] < x[i])) {
+            low = 0;
+            high = m - 1;
         }
 
-        while (k_high - k_low > 1) {
-            k = (k_high + k_low) / 2;
-            if (xa[k] > x[i]) {
-                k_high = k;
+        while (high - low > 1) {
+            mid = (high + low) / 2;
+            if (xa[mid] > x[i]) {
+                high = mid;
             }
             else {
-                k_low = k;
+                low = mid;
             }
         }
 
-        h = xa[k_high] - xa[k_low];
+        h = xa[high] - xa[low];
         if (h == 0.0) {
             return EC_EINVAL;
         }
 
-        a = (xa[k_high] - x[i]) / h;
-        b = (x[i] - xa[k_low]) / h;
-        y[i] = a * ya[k_low]
-            + b * ya[k_high]
-            + ((a*a*a - a) * y2a[k_low] + (b*b*b - b) * y2a[k_high])
+        a = (xa[high] - x[i]) / h;
+        b = (x[i] - xa[low]) / h;
+        y[i] = a * ya[low]
+            + b * ya[high]
+            + ((a*a*a - a) * ya2[low] + (b*b*b - b) * ya2[high])
             * (h*h) / 6.0;
     }
     return 0;
 }
 
+
 int
 store_interpolated(double thresh[static POW_DIFF + 1],
         const char *prefix, size_t number)
 {
-    int res, i;
-    double y2a[POW_DIFF + 1],
-           xa[POW_DIFF + 1],
+    size_t i;
+    double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
     char filename[1024];
 
     struct ec_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
 
-
-    for (i = 0; i < POW_DIFF + 1; i++) {
+    for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
     }
 
-    spline(xa, thresh, POW_DIFF + 1, y2a);
-
-    for (i = 0; i < INTERP_MAX; i++) {
+    for (i = 0; i < ELEMENTS_OF(x); i++) {
         double xi = i;
         if (i < INTERP_MIN) {
             xi = INTERP_MIN;
         }
         x[i] = log2(xi) - POW_MIN;
     }
-    splint(xa, thresh, y2a, POW_DIFF + 1, x, y, INTERP_MAX);
 
+    csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
     sprintf(filename, "%.100s%zu", prefix, number);
-
-    ec_matrix_store_file(&thresh_interp, filename);
-
-    return EC_SUCCESS;
+    return ec_matrix_store_file(&thresh_interp, filename);
 }
 
 
