@@ -21,6 +21,9 @@ enum {
     EC_LOOKUP_OOB,
 };
 
+#define EC_ECURVE_EDGE ((size_t) -1)
+#define EC_ECURVE_ISEDGE(p) ((p).count == EC_ECURVE_EDGE)
+
 /** Struct defining an ecurve */
 struct ec_ecurve {
     /** Translation alphabet */
@@ -106,6 +109,22 @@ void ec_ecurve_destroy(struct ec_ecurve *ecurve);
  */
 void ec_ecurve_get_alphabet(const struct ec_ecurve *ecurve,
                             struct ec_alphabet *alpha);
+
+/* Append one partial ecurve to another
+ *
+ * They may not overlap, i.e. the last non-empty prefix of `dest` needs to be
+ * less than the first non-empty prefix of `src`.
+ *
+ * `dest` may not be "mmap()ed"
+ *
+ * \param dest  ecurve to append to
+ * \param src   ecurve to append
+ *
+ * \retval #EC_EINVAL   `dest` is mmap()ed or `dest` and `src` overlap
+ * \retval #EC_ENOMEM   memory allocation failed
+ * \retval #EC_SUCCESS  else
+ */
+int ec_ecurve_append(struct ec_ecurve *dest, const struct ec_ecurve *src);
 
 /** Find the closest neighbours of a word in the ecurve
  *

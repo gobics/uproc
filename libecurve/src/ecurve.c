@@ -104,6 +104,65 @@ ec_ecurve_destroy(struct ec_ecurve *ecurve)
     free(ecurve->classes);
 }
 
+int
+ec_ecurve_append(struct ec_ecurve *dest, const struct ec_ecurve *src)
+{
+    void *tmp;
+    size_t new_suffix_count;
+    ec_prefix dest_last, src_first, p;
+
+    if (dest->mmap_ptr) {
+        return EC_EINVAL;
+    }
+
+    for (dest_last = EC_PREFIX_MAX; dest_last > 0; dest_last--) {
+        if (!EC_ECURVE_ISEDGE(dest->prefixes[dest_last])) {
+            break;
+        }
+    }
+    for (src_first = 0; src_first < EC_PREFIX_MAX; src_first++) {
+        if (!EC_ECURVE_ISEDGE(src->prefixes[src_first])) {
+            break;
+        }
+    }
+    /* must not overlap! */
+    if (src_first <= dest_last) {
+        return EC_EINVAL;
+    }
+
+    new_suffix_count = dest->suffix_count + src->suffix_count;
+    tmp = realloc(dest->suffixes, new_suffix_count * sizeof *dest->suffixes);
+    if (!tmp) {
+        return EC_ENOMEM;
+    }
+    dest->suffixes = tmp;
+
+    tmp = realloc(dest->classes, new_suffix_count * sizeof *dest->classes);
+    if (!tmp) {
+        return EC_ENOMEM;
+    }
+    dest->classes = tmp;
+    memcpy(dest->suffixes + dest->suffix_count,
+            src->suffixes,
+            src->suffix_count * sizeof *src->suffixes);
+    memcpy(dest->classes + dest->suffix_count,
+            src->classes,
+            src->suffix_count * sizeof *src->classes);
+
+    //->prefixes[dest_last].first = dest->suffix_count - 2;
+    for (p = dest_last + 1; p < src_first; p++) {
+        dest->prefixes[p].count = 0;
+        dest->prefixes[p].first = dest->suffix_count - 1;
+    }
+    for (p = src_first; p <= EC_PREFIX_MAX; p++) {
+        dest->prefixes[p].first = src->prefixes[p].first + dest->suffix_count;
+        dest->prefixes[p].count = src->prefixes[p].count;
+    }
+    dest->suffix_count = new_suffix_count;
+
+    return EC_SUCCESS;
+}
+
 void ec_ecurve_get_alphabet(const struct ec_ecurve *ecurve,
                             struct ec_alphabet *alpha)
 {
@@ -156,17 +215,17 @@ prefix_lookup(const struct ec_ecurve_pfxtable *table,
     ec_prefix tmp;
 
     /* outside of the "edge" */
-    if (table[key].count == (size_t)-1) {
+    if (EC_ECURVE_ISEDGE(table[key])) {
         /* below the first prefix that has an entry */
         if (!table[key].first) {
-            for (tmp = key; tmp < EC_PREFIX_MAX && table[tmp].count == (size_t)-1; tmp++) {
+            for (tmp = key; tmp < EC_PREFIX_MAX && EC_ECURVE_ISEDGE(table[tmp]); tmp++) {
                 ;
             }
             *index = 0;
         }
         /* above the last prefix */
         else {
-            for (tmp = key; tmp > 0 && table[tmp].count == (size_t)-1; tmp--) {
+            for (tmp = key; tmp > 0 && EC_ECURVE_ISEDGE(table[tmp]); tmp--) {
                 ;
             }
             *index = table[tmp].first + table[tmp].count - 1;

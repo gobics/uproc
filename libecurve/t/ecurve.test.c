@@ -4,6 +4,7 @@
 #undef EC_PREFIX_MAX
 #define EC_PREFIX_MAX 100
 #include "../src/ecurve.c"
+#include "../src/storage.c"
 #include "../src/word.c"
 
 #define elements_of(a) (sizeof (a) / sizeof (a)[0])
@@ -185,4 +186,36 @@ int test_ecurve_lookup(void)
     return SUCCESS;
 }
 
-TESTS_INIT(test_suffix_lookup, test_prefix_lookup, test_ecurve_lookup);
+int test_append(void)
+{
+    struct ec_ecurve a1, a2, b;
+    int res;
+    size_t i;
+    ec_prefix p;
+
+    DESC("appending ecurve");
+
+    res = ec_storage_load_file(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load_file(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load_file(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN);
+
+    res = ec_ecurve_append(&a1, &a2);
+
+    assert_uint_eq(a1.suffix_count, b.suffix_count, "suffix counts equal");
+
+    for (p = 0; p <= EC_PREFIX_MAX; p++) {
+        INFO("p = %" EC_PREFIX_PRI, p);
+        assert_uint_eq(a1.prefixes[p].count, b.prefixes[p].count, "prefix table equal");
+        assert_uint_eq(a1.prefixes[p].first, b.prefixes[p].first, "prefix table equal");
+    }
+
+    for (i = 0; i < a1.suffix_count; i++) {
+        INFO("i = %zu", i);
+        assert_uint_eq(a1.suffixes[i], b.suffixes[i], "suffix equal");
+        assert_uint_eq(a1.classes[i], b.classes[i], "class equal");
+    }
+
+    return SUCCESS;
+}
+
+TESTS_INIT(test_suffix_lookup, test_prefix_lookup, test_ecurve_lookup, test_append);
