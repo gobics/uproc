@@ -172,86 +172,45 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
 
 
 static int
-grow(struct ec_ecurve *e, size_t n)
+insert_entries(struct ec_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
 {
-    void *tmp;
-    size_t sz = e->suffix_count + n;
-    if (!sz) {
-        return EC_SUCCESS;
+    size_t i, k;
+    ec_prefix p, current_prefix, next_prefix;
+
+    current_prefix = entries[0].word.prefix;
+
+    for (p = 0; p < current_prefix; p++) {
+        ecurve->prefixes[p].first = 0;
+        ecurve->prefixes[p].count = EC_ECURVE_EDGE;
     }
 
-    tmp = realloc(e->suffixes, sz * sizeof *e->suffixes);
-    if (!tmp) {
-        return EC_ENOMEM;
-    }
-    e->suffixes = tmp;
-
-    tmp = realloc(e->classes, sz * sizeof *e->classes);
-    if (!tmp) {
-        return EC_ENOMEM;
-    }
-    e->classes = tmp;
-
-    e->suffix_count = sz;
-    return EC_SUCCESS;
-}
-
-static int
-append_entries(struct ec_ecurve *ecurve, ec_amino first,
-        struct ecurve_entry *entries, size_t n_entries)
-{
-    ec_prefix p, current_prefix, next_prefix, last_prefix;
-    size_t i, prev_last, offs;
-    struct ec_word word = EC_WORD_INITIALIZER;
-
-    ec_word_prepend(&word, first);
-    current_prefix = word.prefix;
-
-    ec_word_append(&word, 0);
-    ec_word_prepend(&word, first + 1);
-    last_prefix = word.prefix - 1;
-
-    offs = prev_last = ecurve->suffix_count;
-    if (prev_last) {
-        prev_last -= 1;
-    }
-
-    if (EC_ISERROR(grow(ecurve, n_entries))) {
-        return EC_ENOMEM;
-    }
-
-    /* set the first prefix because the gap-filling loop below won't catch it if i == 0 */
-    ecurve->prefixes[current_prefix].first = prev_last;
-    ecurve->prefixes[current_prefix].count = prev_last ? 0 : -1;
-
-    for (i = 0; i < n_entries; i++) {
-        next_prefix = entries[i].word.prefix;
-
-        if (next_prefix != current_prefix) {
-            /* fill the gap between old and new prefix */
-            prev_last = offs + i;
-            if (prev_last) {
-                prev_last -= 1;
-            }
-            for (p = current_prefix + 1; p < next_prefix; p++) {
-                ecurve->prefixes[p].first = prev_last;
-                ecurve->prefixes[p].count = prev_last ? 0 : -1;
-            }
-
-            /* set entries for the new prefix */
-            ecurve->prefixes[next_prefix].first = offs + i;
-            ecurve->prefixes[next_prefix].count = 0;
-            current_prefix = next_prefix;
+    for (i = 0; i < n_entries;) {
+        ecurve->prefixes[current_prefix].first = i;
+        for (k = i; k < n_entries && entries[k].word.prefix == current_prefix; k++) {
+            ecurve->suffixes[k] = entries[k].word.suffix;
+            ecurve->classes[k] = entries[k].cls;
+            ;
         }
-        ecurve->suffixes[offs + i] = entries[i].word.suffix;
-        ecurve->classes[offs + i] = entries[i].cls;
-        ecurve->prefixes[current_prefix].count += 1;
+        ecurve->prefixes[current_prefix].first = i;
+        ecurve->prefixes[current_prefix].count = k - i;
+
+        if (k == n_entries) {
+            break;
+        }
+
+        next_prefix = entries[k].word.prefix;
+
+        for (p = current_prefix + 1; p < next_prefix; p++) {
+            ecurve->prefixes[p].first = k - 1;
+            ecurve->prefixes[p].count = EC_ECURVE_EDGE;
+        }
+        current_prefix = next_prefix;
+        i = k;
     }
 
-    /* fill the remaining entries */
-    for (p = current_prefix + 1; p <= last_prefix; p++) {
-        ecurve->prefixes[p].first = prev_last;
-        ecurve->prefixes[p].count = (first == EC_ALPHABET_SIZE - 1) ? -1 : 0;
+    for (p = current_prefix + 1; p <= EC_PREFIX_MAX; p++) {
+        ecurve->prefixes[p].first = n_entries - 1;
+        ecurve->prefixes[p].count = EC_ECURVE_EDGE;
     }
 
     return EC_SUCCESS;
@@ -259,12 +218,13 @@ append_entries(struct ec_ecurve *ecurve, ec_amino first,
 
 
 static int
-build(FILE *stream, struct ec_ecurve *ecurve)
+build(FILE *stream, struct ec_ecurve *ecurve, const char *alphabet)
 {
     int res;
     struct ecurve_entry *entries = NULL;
     size_t n_entries;
     ec_amino first;
+    struct ec_ecurve new;
 
     for (first = 0; first < EC_ALPHABET_SIZE; first++) {
         fflush(stderr);
@@ -279,13 +239,31 @@ build(FILE *stream, struct ec_ecurve *ecurve)
 
         n_entries = filter_singletons(entries, n_entries);
 
-        res = append_entries(ecurve, first, entries, n_entries);
+        if (!first) {
+            res = ec_ecurve_init(ecurve, alphabet, n_entries);
+            if (EC_ISERROR(res)) {
+                goto error;
+            }
+            insert_entries(ecurve, entries, n_entries);
+        }
+        else {
+            res = ec_ecurve_init(&new, alphabet, n_entries);
+            if (EC_ISERROR(res)) {
+                goto error;
+            }
 
-        if (EC_ISERROR(res)) {
-            goto error;
+            insert_entries(&new, entries, n_entries);
+            res = ec_ecurve_append(ecurve, &new);
+            if (EC_ISERROR(res)) {
+                goto error;
+            }
         }
     }
+
+    if (0) {
 error:
+        ec_ecurve_destroy(ecurve);
+    }
     free(entries);
     return res;
 }
@@ -322,7 +300,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = build(stream, &ecurve);
+    res = build(stream, &ecurve, argv[ALPHABET]);
     if (EC_ISERROR(res)) {
         fprintf(stderr, "an error occured\n");
     }
