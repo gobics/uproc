@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "ecurve/common.h"
 #include "ecurve/ecurve.h"
