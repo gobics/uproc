@@ -139,6 +139,7 @@ ec_ecurve_append(struct ec_ecurve *dest, const struct ec_ecurve *src)
         return EC_ENOMEM;
     }
     dest->classes = tmp;
+
     memcpy(dest->suffixes + dest->suffix_count,
             src->suffixes,
             src->suffix_count * sizeof *src->suffixes);
@@ -146,7 +147,6 @@ ec_ecurve_append(struct ec_ecurve *dest, const struct ec_ecurve *src)
             src->classes,
             src->suffix_count * sizeof *src->classes);
 
-    //->prefixes[dest_last].first = dest->suffix_count - 2;
     for (p = dest_last + 1; p < src_first; p++) {
         dest->prefixes[p].count = 0;
         dest->prefixes[p].first = dest->suffix_count - 1;
