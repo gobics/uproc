@@ -314,9 +314,13 @@ ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format)
             return res;
         }
 
+        if (prefix > EC_PREFIX_MAX) {
+            return EC_EINVAL;
+        }
+
         for (; p < prefix; p++) {
             ecurve->prefixes[p].first = prev_last;
-            ecurve->prefixes[p].count = prev_last ? 0 : -1;
+            ecurve->prefixes[p].count = prev_last ? 0 : EC_ECURVE_EDGE;
         }
         ecurve->prefixes[prefix].first = s;
         ecurve->prefixes[prefix].count = p_suffixes;
@@ -334,7 +338,7 @@ ec_storage_load_stream(struct ec_ecurve *ecurve, FILE *stream, int format)
     }
     for (; p < EC_PREFIX_MAX + 1; p++) {
         ecurve->prefixes[p].first = prev_last;
-        ecurve->prefixes[p].count = -1;
+        ecurve->prefixes[p].count = EC_ECURVE_EDGE;
     }
     return EC_SUCCESS;
 }
@@ -403,7 +407,7 @@ ec_storage_store_stream(const struct ec_ecurve *ecurve, FILE *stream,
         size_t offset = ecurve->prefixes[p].first;
         size_t i;
 
-        if (!suffix_count || suffix_count == (size_t) -1) {
+        if (!suffix_count || EC_ECURVE_ISEDGE(ecurve->prefixes[p])) {
             continue;
         }
 
