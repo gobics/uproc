@@ -66,10 +66,6 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
     if (!ecurve->prefixes) {
         return EC_ENOMEM;
     }
-    for (i = 0; i <= EC_PREFIX_MAX; i++) {
-        ecurve->prefixes[i].first = 0;
-        ecurve->prefixes[i].count = 0;
-    }
 
     if (suffix_count) {
         ecurve->suffixes = malloc(sizeof *ecurve->suffixes * suffix_count);
