@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     }
     mxDestroyArray(mInd);
 
-    ec_storage_store_file(&ec, argv[2], EC_STORAGE_BINARY);
+    ec_storage_store_file(&ec, argv[2], EC_STORAGE_PLAIN);
 
     matClose(f);
     return EXIT_SUCCESS;

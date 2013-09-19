@@ -11,7 +11,7 @@ MATLAB_INCDIR := $(MATLAB_ROOT)/extern/include
 MATLAB_LIBDIR := $(MATLAB_ROOT)/bin/$(MATLAB_ARCH)
 
 ifeq ($(HAVE_MATLAB), yes)
-TARGETS += ecurve-mat2bin
+TARGETS += ecurve-mat2plain
 endif
 
 
@@ -27,7 +27,7 @@ ecurve-prot : main.c $(ARCHIVE)
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
 
 
-ecurve-mat2bin : mat2bin.c $(ARCHIVE)
+ecurve-mat2plain : mat2plain.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -I$(MATLAB_INCDIR) -o $@ $^ -L$(MATLAB_LIBDIR) $(LIBS) -lmat
 
