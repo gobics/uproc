@@ -3,7 +3,7 @@ include config.mk
 CPPFLAGS += -Ilibecurve/$(INCDIR)
 
 ARCHIVE := libecurve/$(ARCHIVENAME)
-TARGETS = ecurve-dna ecurve-prot ecurve-convert ecurve-build ecurve-calib
+TARGETS = upro-dna upro-prot ecurve-convert ecurve-build ecurve-calib
 
 MATLAB_ROOT := /opt/matlab
 MATLAB_ARCH := glnxa64
@@ -18,11 +18,11 @@ endif
 default : $(TARGETS)
 
 
-ecurve-dna : main.c $(ARCHIVE)
+upro-dna : main.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_DNA -o $@ $^ $(LIBS)
 
-ecurve-prot : main.c $(ARCHIVE)
+upro-prot : main.c $(ARCHIVE)
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -DMAIN_PROT -o $@ $^ $(LIBS)
 
