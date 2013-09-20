@@ -340,7 +340,7 @@ ec_orf_chained(const char *seq,
         if (orf.length < EC_WORD_LEN || orf.score < min_score) {
             continue;
         }
-        frame %= mode;
+        frame /= (EC_ORF_FRAMES / mode);
         len_new = len_total[frame] + orf.length + 1;
 
         /* resize buffer if necessary */
