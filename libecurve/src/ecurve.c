@@ -55,7 +55,6 @@ ec_ecurve_init(struct ec_ecurve *ecurve, const char *alphabet,
                size_t suffix_count)
 {
     int res;
-    size_t i;
 
     res = ec_alphabet_init(&ecurve->alphabet, alphabet);
     if (EC_ISERROR(res)) {
