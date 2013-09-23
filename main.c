@@ -151,6 +151,50 @@ output_print(FILE *stream, struct buffer *buf, unsigned offset, struct ec_matrix
     }
 }
 
+void
+output_count(struct ec_bst *counts, struct buffer *buf, struct ec_matrix *thresholds, unsigned orf_mode)
+{
+    size_t i, j, count;
+    ec_class *cls;
+    double *score, thresh;
+    union ec_bst_key key;
+    union ec_bst_data value;
+    for (i = 0; i < buf->n; i++) {
+#ifdef MAIN_DNA
+        for (unsigned frame = 0; frame < orf_mode; frame++) {
+            count = buf->count[i][frame];
+            cls = buf->cls[i][frame];
+            score = buf->score[i][frame];
+            thresh = threshold(thresholds, buf->seq_len[i][frame]);
+            for (j = 0; j < count; j++) {
+                if (score[j] > thresh) {
+                    key.uint = cls[j];
+                    value.uint = 0;
+                    (void) ec_bst_get(counts, key, &value);
+                    value.uint++;
+                    ec_bst_update(counts, key, value);
+                }
+            }
+        }
+#else
+        (void) orf_mode;
+        count = buf->count[i];
+        cls = buf->cls[i];
+        score = buf->score[i];
+        thresh = threshold(thresholds, buf->seq_len[i]);
+        for (j = 0; j < count; j++) {
+            if (score[j] > thresh) {
+                key.uint = cls[j];
+                value.uint = 0;
+                (void) ec_bst_get(counts, key, &value);
+                value.uint++;
+                ec_bst_update(counts, key, value);
+            }
+        }
+#endif
+    }
+}
+
 size_t
 get_chunk_size(void)
 {
@@ -165,6 +209,13 @@ get_chunk_size(void)
     return MAX_CHUNK_SIZE;
 }
 
+
+int cb_walk_print(union ec_bst_key k, union ec_bst_data v, void *opaque)
+{
+    FILE *stream = opaque;
+    fprintf(stream, "%ju: %ju\n", k.uint, v.uint);
+    return EC_SUCCESS;
+}
 
 enum opts
 {
@@ -218,7 +269,11 @@ main(int argc, char **argv)
     int format = EC_STORAGE_MMAP;
     unsigned orf_mode = EC_ORF_PER_STRAND;
 
-#define SHORT_OPTS_PROT "hBPM"
+    struct ec_bst counts_tree;
+
+    enum { OUT_ALL, OUT_COUNTS } output_mode = OUT_ALL;
+
+#define SHORT_OPTS_PROT "hBPMc"
 #ifdef MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "126"
 #else
@@ -231,6 +286,7 @@ main(int argc, char **argv)
         { "binary", no_argument,        NULL, 'B' },
         { "plain",  no_argument,        NULL, 'P' },
         { "mmap",   no_argument,        NULL, 'M' },
+        { "counts", no_argument,        NULL, 'c' },
         { 0, 0, 0, 0 }
     };
 
@@ -261,6 +317,9 @@ main(int argc, char **argv)
             case '6':
                 orf_mode = EC_ORF_PER_FRAME;
                 break;
+            case 'c':
+                output_mode = OUT_COUNTS;
+                break;
             case 'v':
                 print_version(argv[0]);
                 return EXIT_SUCCESS;
@@ -268,6 +327,8 @@ main(int argc, char **argv)
                 return EXIT_FAILURE;
         }
     }
+
+    ec_bst_init(&counts_tree, EC_BST_UINT);
 
     if (argc < optind + ARGC - 1) {
         print_usage(argv[0]);
@@ -314,6 +375,7 @@ main(int argc, char **argv)
     ec_seqio_filter_init(&filter, EC_SEQIO_F_RESET, EC_SEQIO_WARN,
             "ACGTURYSWKMBDHVN.-", NULL, NULL);
 
+
     if (argc == optind + ARGC) {
         stream = fopen(argv[optind + INFILE], "r");
         if (!stream) {
@@ -333,12 +395,13 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
             for (i = 0; i < out->n; i++) {
 #ifdef MAIN_DNA
-                res = ec_classify_dna_all(out->seq[i], orf_mode, &codon_scores,
-                        &orf_thresholds, substmat, &fwd, &rev,
-                        out->count[i], out->cls[i], out->score[i], out->seq_len[i]);
+                res = ec_classify_dna_all(out->seq[i], orf_mode,
+                        &codon_scores, &orf_thresholds, substmat, &fwd,
+                        &rev, out->count[i], out->cls[i], out->score[i],
+                        out->seq_len[i]);
 #else
-                res = ec_classify_protein_all(out->seq[i], substmat, &fwd, &rev,
-                        &out->count[i], &out->cls[i], &out->score[i]);
+                res = ec_classify_protein_all(out->seq[i], substmat, &fwd,
+                        &rev, &out->count[i], &out->cls[i], &out->score[i]);
                 out->seq_len[i] = strlen(out->seq[i]);
 #endif
             }
@@ -356,8 +419,13 @@ main(int argc, char **argv)
 #pragma omp section
                 {
                     if (i_chunk) {
-                        output_print(stdout, out, (i_chunk - 1) * chunk_size,
-                                &score_thresholds, orf_mode);
+                        if (output_mode == OUT_ALL) {
+                            output_print(stdout, out, (i_chunk - 1) * chunk_size,
+                                    &score_thresholds, orf_mode);
+                        }
+                        else if (output_mode == OUT_COUNTS) {
+                            output_count(&counts_tree, out, &score_thresholds, orf_mode);
+                        }
                     }
                 }
             }
@@ -390,5 +458,11 @@ main(int argc, char **argv)
         free(buf[1].cls[i]);
 #endif
     }
+
+    if (output_mode == OUT_COUNTS) {
+        ec_bst_walk(&counts_tree, cb_walk_print, stdout);
+        ec_bst_clear(&counts_tree, NULL);
+    }
+
     return res == EC_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
 }
