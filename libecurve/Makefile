@@ -8,6 +8,7 @@ OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
 HEADERS := $(INCDIR)/ecurve.h $(INCDIR)/ecurve/common.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
 
 CPPFLAGS += -I$(INCDIR)
+CFLAGS += -fPIC
 
 TESTSOURCES := $(wildcard t/*.test.c)
 TESTFILES := $(TESTSOURCES:.c=.t)
