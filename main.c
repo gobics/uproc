@@ -108,90 +108,68 @@ threshold(struct ec_matrix *thresh, size_t seq_len)
 }
 
 void
-output_print(FILE *stream, struct buffer *buf, unsigned offset, struct ec_matrix *thresholds, unsigned orf_mode)
-{
-    size_t i, j, count;
-    ec_class *cls;
-    double *score, thresh;
-    for (i = 0; i < buf->n; i++) {
-#ifdef MAIN_DNA
-        for (unsigned frame = 0; frame < orf_mode; frame++) {
-            count = buf->count[i][frame];
-            cls = buf->cls[i][frame];
-            score = buf->score[i][frame];
-            thresh = threshold(thresholds, buf->seq_len[i][frame]);
-            for (j = 0; j < count; j++) {
-                if (score[j] > thresh) {
-                    fprintf(stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
-                            i + offset + 1,
-                            buf->id[i],
-                            frame + 1,
-                            cls[j],
-                            score[j]);
-                }
-            }
-        }
-#else
-        (void) orf_mode;
-        count = buf->count[i];
-        cls = buf->cls[i];
-        score = buf->score[i];
-        thresh = threshold(thresholds, buf->seq_len[i]);
-        for (j = 0; j < count; j++) {
-            if (score[j] > thresh) {
-                fprintf(stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
-                        i + offset + 1,
-                        buf->id[i],
-                        cls[j],
-                        score[j]);
-            }
-        }
-#endif
-
-    }
-}
-
-void
-output_count(struct ec_bst *counts, struct buffer *buf, struct ec_matrix *thresholds, unsigned orf_mode)
+output(struct buffer *buf,
+        struct ec_matrix *thresholds, unsigned orf_mode,
+        FILE *pr_stream, size_t pr_seq_offset,
+        struct ec_bst *counts,
+        size_t *unexplained,
+        size_t *total)
 {
     size_t i, j, count;
     ec_class *cls;
     double *score, thresh;
     union ec_bst_key key;
     union ec_bst_data value;
+    *total += buf->n;
     for (i = 0; i < buf->n; i++) {
+        bool explained = false;
 #ifdef MAIN_DNA
         for (unsigned frame = 0; frame < orf_mode; frame++) {
             count = buf->count[i][frame];
             cls = buf->cls[i][frame];
             score = buf->score[i][frame];
             thresh = threshold(thresholds, buf->seq_len[i][frame]);
-            for (j = 0; j < count; j++) {
-                if (score[j] > thresh) {
-                    key.uint = cls[j];
-                    value.uint = 0;
-                    (void) ec_bst_get(counts, key, &value);
-                    value.uint++;
-                    ec_bst_update(counts, key, value);
-                }
-            }
-        }
 #else
         (void) orf_mode;
         count = buf->count[i];
         cls = buf->cls[i];
         score = buf->score[i];
         thresh = threshold(thresholds, buf->seq_len[i]);
-        for (j = 0; j < count; j++) {
-            if (score[j] > thresh) {
-                key.uint = cls[j];
-                value.uint = 0;
-                (void) ec_bst_get(counts, key, &value);
-                value.uint++;
-                ec_bst_update(counts, key, value);
+#endif
+            for (j = 0; j < count; j++) {
+                if (score[j] > thresh) {
+                    explained = true;
+                    if (counts) {
+                        key.uint = cls[j];
+                        value.uint = 0;
+                        (void) ec_bst_get(counts, key, &value);
+                        value.uint++;
+                        ec_bst_update(counts, key, value);
+                    }
+                    if (pr_stream) {
+#ifdef MAIN_DNA
+                        fprintf(pr_stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
+                                i + pr_seq_offset + 1,
+                                buf->id[i],
+                                frame + 1,
+                                cls[j],
+                                score[j]);
+#else
+                        fprintf(pr_stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
+                                i + pr_seq_offset + 1,
+                                buf->id[i],
+                                cls[j],
+                                score[j]);
+#endif
+                    }
+                }
             }
+#ifdef MAIN_DNA
         }
 #endif
+        if (unexplained) {
+            *unexplained += !explained;
+        }
     }
 }
 
@@ -247,7 +225,7 @@ int
 main(int argc, char **argv)
 {
     int res;
-    size_t i, i_chunk = 0, i_buf = 0;
+    size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool more_input;
 
     struct ec_ecurve fwd, rev;
@@ -269,11 +247,11 @@ main(int argc, char **argv)
     int format = EC_STORAGE_MMAP;
     unsigned orf_mode = EC_ORF_PER_STRAND;
 
-    struct ec_bst counts_tree;
+    FILE *out_stream = NULL;
+    size_t unexplained = 0, *out_unexplained = NULL;
+    struct ec_bst count_tree, *out_counts = NULL;
 
-    enum { OUT_ALL, OUT_COUNTS } output_mode = OUT_ALL;
-
-#define SHORT_OPTS_PROT "hBPMc"
+#define SHORT_OPTS_PROT "hBPMpcf"
 #ifdef MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "126"
 #else
@@ -286,7 +264,9 @@ main(int argc, char **argv)
         { "binary", no_argument,        NULL, 'B' },
         { "plain",  no_argument,        NULL, 'P' },
         { "mmap",   no_argument,        NULL, 'M' },
+        { "predictions", no_argument,   NULL, 'p' },
         { "counts", no_argument,        NULL, 'c' },
+        { "fsu",    no_argument,        NULL, 'f' },
         { 0, 0, 0, 0 }
     };
 
@@ -317,8 +297,14 @@ main(int argc, char **argv)
             case '6':
                 orf_mode = EC_ORF_PER_FRAME;
                 break;
+            case 'p':
+                out_stream = stdout;
+                break;
             case 'c':
-                output_mode = OUT_COUNTS;
+                out_counts = &count_tree;
+                break;
+            case 'f':
+                out_unexplained = &unexplained;
                 break;
             case 'v':
                 print_version(argv[0]);
@@ -328,7 +314,11 @@ main(int argc, char **argv)
         }
     }
 
-    ec_bst_init(&counts_tree, EC_BST_UINT);
+    if (!out_stream && !out_counts && !out_unexplained) {
+        out_stream = stdout;
+    }
+
+    ec_bst_init(&count_tree, EC_BST_UINT);
 
     if (argc < optind + ARGC - 1) {
         print_usage(argv[0]);
@@ -419,13 +409,9 @@ main(int argc, char **argv)
 #pragma omp section
                 {
                     if (i_chunk) {
-                        if (output_mode == OUT_ALL) {
-                            output_print(stdout, out, (i_chunk - 1) * chunk_size,
-                                    &score_thresholds, orf_mode);
-                        }
-                        else if (output_mode == OUT_COUNTS) {
-                            output_count(&counts_tree, out, &score_thresholds, orf_mode);
-                        }
+                        output(out, &score_thresholds, orf_mode,
+                                out_stream, (i_chunk - 1) * chunk_size,
+                                out_counts, out_unexplained, &n_seqs);
                     }
                 }
             }
@@ -459,9 +445,12 @@ main(int argc, char **argv)
 #endif
     }
 
-    if (output_mode == OUT_COUNTS) {
-        ec_bst_walk(&counts_tree, cb_walk_print, stdout);
-        ec_bst_clear(&counts_tree, NULL);
+    if (out_unexplained) {
+        fprintf(stdout, "%zu\n%zu\n", n_seqs - unexplained, unexplained);
+    }
+    if (out_counts) {
+        ec_bst_walk(&count_tree, cb_walk_print, stdout);
+        ec_bst_clear(&count_tree, NULL);
     }
 
     return res == EC_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
