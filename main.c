@@ -32,9 +32,9 @@ struct buffer
 } buf[2];
 
 int
-dup_str(char **dest, size_t *dest_sz, const char *src)
+dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
 {
-    size_t len = strlen(src) + 1;
+    len += 1;
     if (len > *dest_sz) {
         char *tmp = realloc(*dest, len);
         if (!tmp) {
@@ -48,33 +48,34 @@ dup_str(char **dest, size_t *dest_sz, const char *src)
 }
 
 int
-input_read(FILE *stream, struct ec_seqio_filter *filter, struct buffer *buf,
+input_read(FILE *stream, struct buffer *buf,
            size_t chunk_size)
 {
     int res = EC_SUCCESS;
     size_t i;
 
-    char *id = NULL, *seq = NULL, *p;
-    size_t id_sz, seq_sz;
+    struct ec_fasta_reader rd;
+
+    ec_fasta_reader_init(&rd, 8192);
 
     for (i = 0; i < chunk_size; i++) {
-        res = ec_seqio_fasta_read(stream, filter, &id, &id_sz, NULL, NULL,
-                &seq, &seq_sz);
+        char *p;
+        res = ec_fasta_read(stream, &rd);
         if (res != EC_ITER_YIELD) {
             break;
         }
 
-        p = strpbrk(id, ", \f\n\r\t\v");
+        p = strpbrk(rd.header, ", \f\n\r\t\v");
         if (p) {
             *p = '\0';
         }
 
-        res = dup_str(&buf->id[i], &buf->id_sz[i], id);
+        res = dup_str(&buf->id[i], &buf->id_sz[i], rd.header, rd.header_len);
         if (EC_ISERROR(res)) {
             break;
         }
 
-        res = dup_str(&buf->seq[i], &buf->seq_sz[i], seq);
+        res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd.seq, rd.seq_len);
         if (EC_ISERROR(res)) {
             break;
         }
@@ -89,8 +90,6 @@ input_read(FILE *stream, struct ec_seqio_filter *filter, struct buffer *buf,
         buf->seq[i] = NULL;
     }
 
-    free(id);
-    free(seq);
     return res;
 }
 
@@ -238,7 +237,6 @@ main(int argc, char **argv)
 #endif
 
     FILE *stream;
-    struct ec_seqio_filter filter;
 
     struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
@@ -362,10 +360,6 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    ec_seqio_filter_init(&filter, EC_SEQIO_F_RESET, EC_SEQIO_WARN,
-            "ACGTURYSWKMBDHVN.-", NULL, NULL);
-
-
     if (argc == optind + ARGC) {
         stream = fopen(argv[optind + INFILE], "r");
         if (!stream) {
@@ -403,7 +397,7 @@ main(int argc, char **argv)
             {
 #pragma omp section
                 {
-                    res = input_read(stream, &filter, in, chunk_size);
+                    res = input_read(stream, in, chunk_size);
                     more_input = res == EC_SUCCESS;
                 }
 #pragma omp section

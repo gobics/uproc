@@ -49,8 +49,10 @@ extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
         struct ecurve_entry **entries, size_t *n_entries)
 {
     int res;
-    char *id = NULL, *seq = NULL;
-    size_t id_sz, seq_sz, index;
+
+    struct ec_fasta_reader rd;
+
+    size_t index;
 
     struct ec_bst tree;
     union ec_bst_key tree_key;
@@ -62,12 +64,12 @@ extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
     struct ec_worditer iter;
     struct ec_word fwd_word, rev_word;
 
+    ec_fasta_reader_init(&rd, 8192);
     ec_bst_init(&tree, EC_BST_WORD);
 
-    while ((res = ec_seqio_fasta_read(stream, NULL, &id, &id_sz, NULL, NULL,
-                &seq, &seq_sz)) == EC_ITER_YIELD) {
-        res = parse_class(id, &cls);
-        ec_worditer_init(&iter, seq, alpha);
+    while ((res = ec_fasta_read(stream, &rd)) == EC_ITER_YIELD) {
+        res = parse_class(rd.header, &cls);
+        ec_worditer_init(&iter, rd.seq, alpha);
 
         while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_ITER_YIELD) {
             if (!ec_word_startswith(&fwd_word, first)) {
@@ -97,8 +99,6 @@ extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
             break;
         }
     }
-    free(id);
-    free(seq);
     if (EC_ISERROR(res)) {
         goto error;
     }
