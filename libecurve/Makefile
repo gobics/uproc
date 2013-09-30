@@ -26,7 +26,7 @@ $(OBJDIR) :
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 	@echo CC -c $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $< $(LDFLAGS) $(LIBS)
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
 $(OBJDIR)/orf.o : $(SRCDIR)/codon_tables.h
 
