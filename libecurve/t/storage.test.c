@@ -77,9 +77,9 @@ int test_storage(int format, char *filename)
     size_t i;
     struct ec_ecurve new_curve;
 
-    assert_int_eq(ec_storage_store_file(&ecurve, filename, format),
+    assert_int_eq(ec_storage_store(&ecurve, filename, format, 0),
                   EC_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(ec_storage_load_file(&new_curve, filename, format),
+    assert_int_eq(ec_storage_load(&new_curve, filename, format),
                   EC_SUCCESS, "loading ecurve succeeded");
 
     for (i = 0; i < EC_PREFIX_MAX + 1; i++) {

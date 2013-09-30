@@ -195,9 +195,9 @@ int test_append(void)
 
     DESC("appending ecurve");
 
-    res = ec_storage_load_file(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN);
-    res = ec_storage_load_file(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN);
-    res = ec_storage_load_file(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN);
 
     res = ec_ecurve_append(&a1, &a2);
 

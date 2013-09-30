@@ -76,7 +76,7 @@ int ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores,
 
 /** Load codon scores from stream */
 int ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores,
-                                   FILE *stream);
+                                   gzFile stream);
 
 /** Initialize codon scores from a matrix
  *

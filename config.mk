@@ -1,6 +1,7 @@
 HAVE_MATLAB ?= no
 HAVE_MMAP ?= yes
 HAVE_OPENMP ?= yes
+HAVE_ZLIB ?= yes
 
 ARCHIVENAME := libecurve.a
 
@@ -26,4 +27,8 @@ CPPFLAGS += -DHAVE_MMAP=1
 endif
 ifeq ($(HAVE_OPENMP), yes)
 CFLAGS += -fopenmp
+endif
+ifeq ($(HAVE_ZLIB), yes)
+CFLAGS += -DHAVE_ZLIB=1
+LIBS += -lz
 endif

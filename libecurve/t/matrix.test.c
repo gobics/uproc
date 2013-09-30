@@ -70,7 +70,7 @@ int storage(void)
 
     ec_matrix_init(&m, 10, 10, v);
 
-    assert_int_eq(ec_matrix_store_file(&m, TMPFILE),
+    assert_int_eq(ec_matrix_store_file(&m, TMPFILE, EC_STORAGE_GZIP),
                   EC_SUCCESS, "storing matrix succeeded");
     ec_matrix_destroy(&m);
     assert_int_eq(ec_matrix_load_file(&m, TMPFILE),

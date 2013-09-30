@@ -182,7 +182,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
     sprintf(filename, "%.100s%zu", prefix, number);
-    return ec_matrix_store_file(&thresh_interp, filename);
+    return ec_matrix_store_file(&thresh_interp, filename, EC_STORAGE_GZIP);
 }
 
 

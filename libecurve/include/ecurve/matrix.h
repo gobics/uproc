@@ -7,6 +7,7 @@
  */
 
 #include <stdlib.h>
+#include "ecurve/gz.h"
 
 /** printf() format for matrix file header */
 #define EC_MATRIX_HEADER_PRI "[%zu, %zu]\n"
@@ -65,12 +66,13 @@ void ec_matrix_dimensions(const struct ec_matrix *matrix, size_t *rows, size_t *
 int ec_matrix_load_file(struct ec_matrix *matrix, const char *path);
 
 /** Load matrix from stream */
-int ec_matrix_load_stream(struct ec_matrix *matrix, FILE *stream);
+int ec_matrix_load_stream(struct ec_matrix *matrix, gzFile stream);
 
 /** Store matrix to file */
-int ec_matrix_store_file(const struct ec_matrix *matrix, const char *path);
+int ec_matrix_store_file(const struct ec_matrix *matrix, const char *path,
+                         int flags);
 
 /** Store matrix to stream */
-int ec_matrix_store_stream(const struct ec_matrix *matrix, FILE *stream);
+int ec_matrix_store_stream(const struct ec_matrix *matrix, gzFile stream);
 
 #endif

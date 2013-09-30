@@ -8,6 +8,8 @@
 #include "ecurve/codon.h"
 #include "ecurve/matrix.h"
 #include "ecurve/orf.h"
+#include "ecurve/gz.h"
+
 #include "codon_tables.h"
 
 #define FRAMES (EC_ORF_FRAMES / 2)
@@ -118,7 +120,7 @@ ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores, const char *path
 }
 
 int
-ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores, FILE *stream)
+ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores, gzFile stream)
 {
     int res;
     struct ec_matrix m;

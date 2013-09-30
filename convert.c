@@ -39,22 +39,26 @@ main(int argc, char **argv)
     struct ec_ecurve ecurve;
     time_t start, end;
     char in_fmt, out_fmt;
+    int flags = 0;
 
     if (argc != ARGC) {
         fprintf(stderr, "%d %d\n", argc, ARGC);
         fprintf(stderr,
                 "usage: %s in_format in_filename out_format out_filename\n"
                 "Available formats:\n"
-                "   P   plain text\n"
-                "   B   binary\n"
+                "   P[Z]   plain text\n"
+                "   B[Z]   binary\n"
 #if HAVE_MMAP
                 "   M   mmap()-able\n",
 #endif
                 argv[0]);
         return EXIT_FAILURE;
     }
-    in_fmt = *argv[IN_FMT];
-    out_fmt = *argv[OUT_FMT];
+    in_fmt = argv[IN_FMT][0];
+    out_fmt = argv[OUT_FMT][0];
+    if (argv[OUT_FMT][1] == 'Z') {
+        flags |= EC_STORAGE_GZIP;
+    }
 
     if (!strchr(FORMATS, in_fmt)) {
         fprintf(stderr, "invalid input format: %c\n", *argv[IN_FMT]);
@@ -69,11 +73,11 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (in_fmt) {
         case 'P':
-            res = ec_storage_load_file(&ecurve, argv[IN_PATH],
+            res = ec_storage_load(&ecurve, argv[IN_PATH],
                     EC_STORAGE_PLAIN);
             break;
         case 'B':
-            res = ec_storage_load_file(&ecurve, argv[IN_PATH],
+            res = ec_storage_load(&ecurve, argv[IN_PATH],
                     EC_STORAGE_BINARY);
             break;
         case 'M':
@@ -92,12 +96,12 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (out_fmt) {
         case 'P':
-            res = ec_storage_store_file(&ecurve, argv[OUT_PATH],
-                    EC_STORAGE_PLAIN);
+            res = ec_storage_store(&ecurve, argv[OUT_PATH],
+                    EC_STORAGE_PLAIN, flags);
             break;
         case 'B':
-            res = ec_storage_store_file(&ecurve, argv[OUT_PATH],
-                    EC_STORAGE_BINARY);
+            res = ec_storage_store(&ecurve, argv[OUT_PATH],
+                    EC_STORAGE_BINARY, flags);
             break;
         case 'M':
             res = ec_mmap_store(&ecurve, argv[OUT_PATH]);

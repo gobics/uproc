@@ -305,7 +305,7 @@ main(int argc, char **argv)
         fprintf(stderr, "an error occured\n");
     }
     fprintf(stderr, "storing..\n");
-    ec_storage_store_file(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN);
+    ec_storage_store(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN, EC_STORAGE_GZIP);
     ec_ecurve_destroy(&ecurve);
     return EXIT_SUCCESS;
 }

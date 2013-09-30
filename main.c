@@ -361,12 +361,12 @@ main(int argc, char **argv)
     }
 #endif
 
-    res = ec_storage_load_file(&fwd, argv[optind + FWD], format);
+    res = ec_storage_load(&fwd, argv[optind + FWD], format);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
-    res = ec_storage_load_file(&rev, argv[optind + REV], format);
+    res = ec_storage_load(&rev, argv[optind + REV], format);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;

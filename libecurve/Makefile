@@ -8,6 +8,7 @@ OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o, $(MODULES)))
 HEADERS := $(INCDIR)/ecurve.h $(INCDIR)/ecurve/common.h $(addprefix $(INCDIR)/ecurve/,$(addsuffix .h, $(MODULES)))
 
 CPPFLAGS += -I$(INCDIR)
+CFLAGS += -fPIC
 
 TESTSOURCES := $(wildcard t/*.test.c)
 TESTFILES := $(TESTSOURCES:.c=.t)
@@ -25,18 +26,18 @@ $(OBJDIR) :
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 	@echo CC -c $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $< $(LDFLAGS) $(LIBS)
 
 $(OBJDIR)/orf.o : $(SRCDIR)/codon_tables.h
 
 $(SRCDIR)/codon_tables.h : $(SRCDIR)/gen_codon_tables.c $(SRCDIR)/codon.c
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -o gen_codon_tables $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -o gen_codon_tables $^ $(LDFLAGS) $(LIBS)
 	@./gen_codon_tables > $@
 	@rm gen_codon_tables
 
 t/%.t : t/%.c t/test.c $(ARCHIVENAME)
 	@echo CC $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(ARCHIVENAME) : $(OBJECTS)
 	@echo AR $@
