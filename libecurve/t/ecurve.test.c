@@ -196,10 +196,17 @@ int test_append(void)
     DESC("appending ecurve");
 
     res = ec_storage_load(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN);
+    assert_int_eq(res, EC_SUCCESS, "loading a1 succeeded");
     res = ec_storage_load(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN);
+    assert_int_eq(res, EC_SUCCESS, "loading a2 succeeded");
     res = ec_storage_load(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN);
+    assert_int_eq(res, EC_SUCCESS, "loading b succeeded");
 
     res = ec_ecurve_append(&a1, &a2);
+    assert_int_eq(res, EC_SUCCESS, "appending succeeded");
+
+    res = ec_ecurve_append(&a1, &a2);
+    assert_int_eq(res, EC_EINVAL, "appending again failed with EC_EINVAL");
 
     assert_uint_eq(a1.suffix_count, b.suffix_count, "suffix counts equal");
 
