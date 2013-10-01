@@ -39,7 +39,7 @@ main(int argc, char **argv)
     struct ec_ecurve ecurve;
     time_t start, end;
     char in_fmt, out_fmt;
-    int flags = 0;
+    enum ec_io_type iotype = EC_IO_STDIO;
 
     if (argc != ARGC) {
         fprintf(stderr, "%d %d\n", argc, ARGC);
@@ -57,7 +57,7 @@ main(int argc, char **argv)
     in_fmt = argv[IN_FMT][0];
     out_fmt = argv[OUT_FMT][0];
     if (argv[OUT_FMT][1] == 'Z') {
-        flags |= EC_STORAGE_GZIP;
+        iotype = EC_IO_GZIP;
     }
 
     if (!strchr(FORMATS, in_fmt)) {
@@ -74,11 +74,11 @@ main(int argc, char **argv)
     switch (in_fmt) {
         case 'P':
             res = ec_storage_load(&ecurve, argv[IN_PATH],
-                    EC_STORAGE_PLAIN);
+                    EC_STORAGE_PLAIN, EC_IO_GZIP);
             break;
         case 'B':
             res = ec_storage_load(&ecurve, argv[IN_PATH],
-                    EC_STORAGE_BINARY);
+                    EC_STORAGE_BINARY, EC_IO_GZIP);
             break;
         case 'M':
             res = ec_mmap_map(&ecurve, argv[IN_PATH]);
@@ -97,11 +97,11 @@ main(int argc, char **argv)
     switch (out_fmt) {
         case 'P':
             res = ec_storage_store(&ecurve, argv[OUT_PATH],
-                    EC_STORAGE_PLAIN, flags);
+                    EC_STORAGE_PLAIN, iotype);
             break;
         case 'B':
             res = ec_storage_store(&ecurve, argv[OUT_PATH],
-                    EC_STORAGE_BINARY, flags);
+                    EC_STORAGE_BINARY, iotype);
             break;
         case 'M':
             res = ec_mmap_store(&ecurve, argv[OUT_PATH]);

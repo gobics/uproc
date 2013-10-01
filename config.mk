@@ -8,7 +8,7 @@ ARCHIVENAME := libecurve.a
 CC ?= cc
 CPPFLAGS ?= -D_GNU_SOURCE
 CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -Os
-#CFLAGS += -O0 -g
+CFLAGS += -O0 -g
 #CFLAGS += -pg
 #CFLAGS += -fprofile-arcs -ftest-coverage
 
@@ -29,6 +29,6 @@ ifeq ($(HAVE_OPENMP), yes)
 CFLAGS += -fopenmp
 endif
 ifeq ($(HAVE_ZLIB), yes)
-CFLAGS += -DHAVE_ZLIB=1
+CPPFLAGS += -DHAVE_ZLIB=1 -DHAVE_FILENO=1
 LIBS += -lz
 endif

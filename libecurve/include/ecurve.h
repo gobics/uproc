@@ -16,6 +16,7 @@
 #include <ecurve/common.h>
 #include <ecurve/ecurve.h>
 #include <ecurve/fasta.h>
+#include <ecurve/io.h>
 #include <ecurve/mmap.h>
 #include <ecurve/orf.h>
 #include <ecurve/storage.h>

@@ -323,38 +323,38 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[optind + SUBSTMAT]);
+    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[optind + SUBSTMAT], EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load substitution matrices\n");
         return EXIT_FAILURE;
     }
 
-    res = ec_matrix_load_file(&score_thresholds, argv[optind + SCORE_THRESHOLDS]);
+    res = ec_matrix_load_file(&score_thresholds, argv[optind + SCORE_THRESHOLDS], EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load score thresholds\n");
         return EXIT_FAILURE;
     }
 
 #ifdef MAIN_DNA
-    res = ec_orf_codonscores_load_file(&codon_scores, argv[optind + CODON_SCORES]);
+    res = ec_orf_codonscores_load_file(&codon_scores, argv[optind + CODON_SCORES], EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load codon scores\n");
         return EXIT_FAILURE;
     }
 
-    res = ec_matrix_load_file(&orf_thresholds, argv[optind + ORF_THRESHOLDS]);
+    res = ec_matrix_load_file(&orf_thresholds, argv[optind + ORF_THRESHOLDS], EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load ORF thresholds\n");
         return EXIT_FAILURE;
     }
 #endif
 
-    res = ec_storage_load(&fwd, argv[optind + FWD], format);
+    res = ec_storage_load(&fwd, argv[optind + FWD], format, EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
-    res = ec_storage_load(&rev, argv[optind + REV], format);
+    res = ec_storage_load(&rev, argv[optind + REV], format, EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;

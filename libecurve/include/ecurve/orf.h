@@ -7,6 +7,7 @@
  */
 
 #include "ecurve/common.h"
+#include "ecurve/io.h"
 #include "ecurve/matrix.h"
 
 /** Number of possible frames (forward and reverse) */
@@ -72,11 +73,11 @@ enum ec_orf_mode {
 
 /** Load codon scores from file */
 int ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores,
-                                 const char *path);
+        const char *path, enum ec_io_type iotype);
 
 /** Load codon scores from stream */
 int ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores,
-                                   gzFile stream);
+        ec_io_stream *stream);
 
 /** Initialize codon scores from a matrix
  *
@@ -85,7 +86,7 @@ int ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores,
  *                      each "real" codon
  */
 void ec_orf_codonscores_init(struct ec_orf_codonscores *scores,
-                             const struct ec_matrix *score_matrix);
+        const struct ec_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *

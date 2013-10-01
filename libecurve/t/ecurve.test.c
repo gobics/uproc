@@ -195,11 +195,11 @@ int test_append(void)
 
     DESC("appending ecurve");
 
-    res = ec_storage_load(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&a1, "t/ecurve_append.a1.plain", EC_STORAGE_PLAIN, EC_IO_STDIO);
     assert_int_eq(res, EC_SUCCESS, "loading a1 succeeded");
-    res = ec_storage_load(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&a2, "t/ecurve_append.a2.plain", EC_STORAGE_PLAIN, EC_IO_STDIO);
     assert_int_eq(res, EC_SUCCESS, "loading a2 succeeded");
-    res = ec_storage_load(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN);
+    res = ec_storage_load(&b, "t/ecurve_append.b.plain", EC_STORAGE_PLAIN, EC_IO_STDIO);
     assert_int_eq(res, EC_SUCCESS, "loading b succeeded");
 
     res = ec_ecurve_append(&a1, &a2);

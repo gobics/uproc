@@ -5,12 +5,12 @@
 
 #include "ecurve/common.h"
 #include "ecurve/ecurve.h"
+#include "ecurve/io.h"
 #include "ecurve/mmap.h"
 #include "ecurve/word.h"
 #include "ecurve/storage.h"
 #include "pack.h"
 
-#include "ecurve/gz.h"
 
 
 /** Format of binary file header.
@@ -34,20 +34,20 @@
 /* buffer size must be large enough to handle all formats above */
 #define BIN_BUFSZ 12
 
-static int bin_load_header(gzFile stream, char *alpha, size_t *suffix_count);
-static int bin_load_prefix(gzFile stream, const struct ec_alphabet *alpha,
+static int bin_load_header(ec_io_stream *stream, char *alpha, size_t *suffix_count);
+static int bin_load_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                            ec_prefix *prefix, size_t *suffix_count);
-static int bin_load_suffix(gzFile stream, const struct ec_alphabet *alpha,
+static int bin_load_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                            ec_suffix *suffix, ec_class *cls);
 
-static int bin_store_header(gzFile stream, const char *alpha, size_t suffix_count);
-static int bin_store_prefix(gzFile stream, const struct ec_alphabet *alpha,
+static int bin_store_header(ec_io_stream *stream, const char *alpha, size_t suffix_count);
+static int bin_store_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                             ec_prefix prefix, size_t suffix_count);
-static int bin_store_suffix(gzFile stream, const struct ec_alphabet *alpha,
+static int bin_store_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                             ec_suffix suffix, ec_class cls);
 
-static int load_stream(struct ec_ecurve *ecurve, gzFile stream, int format);
-static int store_stream(const struct ec_ecurve *ecurve, gzFile stream,
+static int load_stream(struct ec_ecurve *ecurve, ec_io_stream *stream, int format);
+static int store_stream(const struct ec_ecurve *ecurve, ec_io_stream *stream,
                         int format);
 
 #define STR1(x) #x
@@ -63,39 +63,39 @@ static int store_stream(const struct ec_ecurve *ecurve, gzFile stream,
 #define PLAIN_SUFFIX_PRI "%." STR(EC_SUFFIX_LEN) "s %" EC_CLASS_PRI "\n"
 #define PLAIN_SUFFIX_SCN "%"  STR(EC_SUFFIX_LEN) "c %" EC_CLASS_SCN
 
-static int plain_read_line(gzFile stream, char *line, size_t n);
+static int plain_read_line(ec_io_stream *stream, char *line, size_t n);
 
-static int plain_load_header(gzFile stream, char *alpha, size_t *suffix_count);
+static int plain_load_header(ec_io_stream *stream, char *alpha, size_t *suffix_count);
 
-static int plain_load_prefix(gzFile stream, const struct ec_alphabet *alpha,
+static int plain_load_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                              ec_prefix *prefix, size_t *suffix_count);
 
-static int plain_load_suffix(gzFile stream, const struct ec_alphabet *alpha,
+static int plain_load_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                              ec_suffix *suffix, ec_class *cls);
 
-static int plain_store_header(gzFile stream, const char *alpha,
+static int plain_store_header(ec_io_stream *stream, const char *alpha,
                               size_t suffix_count);
 
-static int plain_store_prefix(gzFile stream, const struct ec_alphabet *alpha,
+static int plain_store_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                               ec_prefix prefix, size_t suffix_count);
 
-static int plain_store_suffix(gzFile stream, const struct ec_alphabet *alpha,
+static int plain_store_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                               ec_suffix suffix, ec_class cls);
 
 
 static int
-bin_load_header(gzFile stream, char *alpha, size_t *suffix_count)
+bin_load_header(ec_io_stream *stream, char *alpha, size_t *suffix_count)
 {
     unsigned char buf[BIN_BUFSZ];
-    int n = pack_bytes(BIN_HEADER_FMT);
+    size_t n = pack_bytes(BIN_HEADER_FMT);
     uint64_t tmp;
 
-    if (gzread(stream, alpha, EC_ALPHABET_SIZE) != EC_ALPHABET_SIZE) {
+    if (ec_io_read(alpha, 1, EC_ALPHABET_SIZE, stream) != EC_ALPHABET_SIZE) {
         return EC_FAILURE;
     }
     alpha[EC_ALPHABET_SIZE] = '\0';
 
-    if (gzread(stream, buf, n) != n) {
+    if (ec_io_read(buf, 1, n, stream) != n) {
         return EC_FAILURE;
     }
     unpack(buf, BIN_HEADER_FMT, &tmp);
@@ -103,48 +103,48 @@ bin_load_header(gzFile stream, char *alpha, size_t *suffix_count)
     return EC_SUCCESS;
 }
 
-#define BIN_LOAD(NAME, FMT, T1, BIN1, T2, BIN2)                                 \
-static int bin_load_ ## NAME(gzFile stream, const struct ec_alphabet *alpha,    \
-                             T1 *out1, T2 *out2)                                \
-{                                                                               \
-    unsigned char buf[BIN_BUFSZ];                                               \
-    BIN1 tmp1;                                                                  \
-    BIN2 tmp2;                                                                  \
-    int n = pack_bytes(FMT);                                                    \
-    (void) alpha;                                                               \
-    if (gzread(stream, buf, n) != n) {                                          \
-        return EC_FAILURE;                                                      \
-    }                                                                           \
-    unpack(buf, FMT, &tmp1, &tmp2);                                             \
-    *out1 = tmp1;                                                               \
-    *out2 = tmp2;                                                               \
-    return EC_SUCCESS;                                                          \
+#define BIN_LOAD(NAME, FMT, T1, BIN1, T2, BIN2)                             \
+static int bin_load_ ## NAME(ec_io_stream *stream,                          \
+        const struct ec_alphabet *alpha, T1 *out1, T2 *out2)                \
+{                                                                           \
+    unsigned char buf[BIN_BUFSZ];                                           \
+    BIN1 tmp1;                                                              \
+    BIN2 tmp2;                                                              \
+    size_t n = pack_bytes(FMT);                                             \
+    (void) alpha;                                                           \
+    if (ec_io_read(buf, 1, n, stream) != n) {                               \
+        return EC_FAILURE;                                                  \
+    }                                                                       \
+    unpack(buf, FMT, &tmp1, &tmp2);                                         \
+    *out1 = tmp1;                                                           \
+    *out2 = tmp2;                                                           \
+    return EC_SUCCESS;                                                      \
 }
 
 
-static int bin_store_header(gzFile stream, const char *alpha, size_t suffix_count)
+static int bin_store_header(ec_io_stream *stream, const char *alpha, size_t suffix_count)
 {
     unsigned char buf[BIN_BUFSZ];
-    int n;
+    size_t n;
 
-    if (gzwrite(stream, alpha, EC_ALPHABET_SIZE) != EC_ALPHABET_SIZE) {
+    if (ec_io_write(alpha, 1, EC_ALPHABET_SIZE, stream) != EC_ALPHABET_SIZE) {
         return EC_FAILURE;
     }
     n = pack(buf, BIN_HEADER_FMT, (uint64_t)suffix_count);
-    if (gzwrite(stream, buf, n) != n) {
+    if (ec_io_write(buf, 1, n, stream) != n) {
         return EC_FAILURE;
     }
     return EC_SUCCESS;
 }
 
 #define BIN_STORE(NAME, FMT, T1, BIN1, T2, BIN2)                                \
-static int bin_store_ ## NAME (gzFile stream, const struct ec_alphabet *alpha,  \
-                               T1 in1, T2 in2)                                  \
+static int bin_store_ ## NAME (ec_io_stream *stream,                            \
+                               const struct ec_alphabet *alpha, T1 in1, T2 in2) \
 {                                                                               \
     unsigned char buf[BIN_BUFSZ];                                               \
-    int n = pack(buf, FMT, (BIN1)in1, (BIN2)in2);                               \
+    size_t n = pack(buf, FMT, (BIN1)in1, (BIN2)in2);                            \
     (void) alpha;                                                               \
-    return gzwrite(stream, buf, n) == n ? EC_SUCCESS : EC_FAILURE;              \
+    return ec_io_write(buf, 1, n, stream) == n ? EC_SUCCESS : EC_FAILURE;       \
 }
 #define BIN(...) BIN_LOAD(__VA_ARGS__) BIN_STORE(__VA_ARGS__)
 BIN(prefix, BIN_PREFIX_FMT, ec_prefix, uint32_t, size_t, uint64_t)
@@ -152,10 +152,10 @@ BIN(suffix, BIN_SUFFIX_FMT, ec_suffix, uint64_t, ec_class, uint16_t)
 
 
 static int
-plain_read_line(gzFile stream, char *line, size_t n)
+plain_read_line(ec_io_stream *stream, char *line, size_t n)
 {
     do {
-        if (!gzgets(stream, line, n)) {
+        if (!ec_io_gets(line, n, stream)) {
             return EC_FAILURE;
         }
     } while (line[0] == PLAIN_COMMENT_CHAR);
@@ -163,7 +163,7 @@ plain_read_line(gzFile stream, char *line, size_t n)
 }
 
 static int
-plain_load_header(gzFile stream, char *alpha, size_t *suffix_count)
+plain_load_header(ec_io_stream *stream, char *alpha, size_t *suffix_count)
 {
     char line[PLAIN_BUFSZ];
     int res = plain_read_line(stream, line, sizeof line);
@@ -176,7 +176,7 @@ plain_load_header(gzFile stream, char *alpha, size_t *suffix_count)
 }
 
 static int
-plain_load_prefix(gzFile stream, const struct ec_alphabet *alpha,
+plain_load_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                   ec_prefix *prefix, size_t *suffix_count)
 {
     int res;
@@ -204,7 +204,7 @@ plain_load_prefix(gzFile stream, const struct ec_alphabet *alpha,
 }
 
 static int
-plain_load_suffix(gzFile stream, const struct ec_alphabet *alpha,
+plain_load_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                   ec_suffix *suffix, ec_class *cls)
 {
     int res;
@@ -232,15 +232,15 @@ plain_load_suffix(gzFile stream, const struct ec_alphabet *alpha,
 }
 
 static int
-plain_store_header(gzFile stream, const char *alpha, size_t suffix_count)
+plain_store_header(ec_io_stream *stream, const char *alpha, size_t suffix_count)
 {
     int res;
-    res = gzprintf(stream, PLAIN_HEADER_PRI, alpha, suffix_count);
+    res = ec_io_printf(stream, PLAIN_HEADER_PRI, alpha, suffix_count);
     return (res > 0) ? EC_SUCCESS : EC_FAILURE;
 }
 
 static int
-plain_store_prefix(gzFile stream, const struct ec_alphabet *alpha,
+plain_store_prefix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                    ec_prefix prefix, size_t suffix_count)
 {
     int res;
@@ -252,12 +252,12 @@ plain_store_prefix(gzFile stream, const struct ec_alphabet *alpha,
         return res;
     }
     str[EC_PREFIX_LEN] = '\0';
-    res = gzprintf(stream, PLAIN_PREFIX_PRI, str, suffix_count);
+    res = ec_io_printf(stream, PLAIN_PREFIX_PRI, str, suffix_count);
     return (res > 0) ? EC_SUCCESS : EC_FAILURE;
 }
 
 static int
-plain_store_suffix(gzFile stream, const struct ec_alphabet *alpha,
+plain_store_suffix(ec_io_stream *stream, const struct ec_alphabet *alpha,
                    ec_suffix suffix, ec_class cls)
 {
     int res;
@@ -268,12 +268,12 @@ plain_store_suffix(gzFile stream, const struct ec_alphabet *alpha,
     if (res != EC_SUCCESS) {
         return res;
     }
-    res = gzprintf(stream, PLAIN_SUFFIX_PRI, &str[EC_PREFIX_LEN], cls);
+    res = ec_io_printf(stream, PLAIN_SUFFIX_PRI, &str[EC_PREFIX_LEN], cls);
     return (res > 0) ? EC_SUCCESS : EC_FAILURE;
 }
 
 static int
-load_stream(struct ec_ecurve *ecurve, gzFile stream, int format)
+load_stream(struct ec_ecurve *ecurve, ec_io_stream *stream, int format)
 {
     int res;
     ec_prefix p;
@@ -282,9 +282,9 @@ load_stream(struct ec_ecurve *ecurve, gzFile stream, int format)
     char alpha[EC_ALPHABET_SIZE + 1];
     struct load_funcs
     {
-        int (*header)(gzFile, char *, size_t *);
-        int (*prefix)(gzFile, const struct ec_alphabet *, ec_prefix *, size_t *);
-        int (*suffix)(gzFile, const struct ec_alphabet *, ec_suffix *, ec_class *);
+        int (*header)(ec_io_stream *, char *, size_t *);
+        int (*prefix)(ec_io_stream *, const struct ec_alphabet *, ec_prefix *, size_t *);
+        int (*suffix)(ec_io_stream *, const struct ec_alphabet *, ec_suffix *, ec_class *);
     } f;
 
     switch (format) {
@@ -351,10 +351,11 @@ load_stream(struct ec_ecurve *ecurve, gzFile stream, int format)
 }
 
 int
-ec_storage_load(struct ec_ecurve *ecurve, const char *path, int format)
+ec_storage_load(struct ec_ecurve *ecurve, const char *path,
+        enum ec_storage_format format, enum ec_io_type iotype)
 {
     int res;
-    gzFile stream;
+    ec_io_stream *stream;
     const char *mode[] = {
         [EC_STORAGE_BINARY] = "rb",
         [EC_STORAGE_PLAIN] = "r",
@@ -364,26 +365,25 @@ ec_storage_load(struct ec_ecurve *ecurve, const char *path, int format)
         return ec_mmap_map(ecurve, path);
     }
 
-    stream = gzopen(path, mode[format]);
+    stream = ec_io_open(path, mode[format], iotype);
     if (!stream) {
         return EC_FAILURE;
     }
-    (void) gzbuffer(stream, EC_GZ_BUFSZ);
     res = load_stream(ecurve, stream, format);
-    gzclose(stream);
+    ec_io_close(stream);
     return res;
 }
 
 static int
-store_stream(const struct ec_ecurve *ecurve, gzFile stream, int format)
+store_stream(const struct ec_ecurve *ecurve, ec_io_stream *stream, int format)
 {
     int res;
     size_t p;
     struct store_funcs
     {
-        int (*header)(gzFile, const char *, size_t);
-        int (*prefix)(gzFile, const struct ec_alphabet *, ec_prefix, size_t);
-        int (*suffix)(gzFile, const struct ec_alphabet *, ec_suffix, ec_class);
+        int (*header)(ec_io_stream *, const char *, size_t);
+        int (*prefix)(ec_io_stream *, const struct ec_alphabet *, ec_prefix, size_t);
+        int (*suffix)(ec_io_stream *, const struct ec_alphabet *, ec_suffix, ec_class);
     } f;
 
     switch (format) {
@@ -434,36 +434,25 @@ store_stream(const struct ec_ecurve *ecurve, gzFile stream, int format)
 }
 
 int
-ec_storage_store(const struct ec_ecurve *ecurve, const char *path, int format,
-        int flags)
+ec_storage_store(const struct ec_ecurve *ecurve, const char *path,
+        enum ec_storage_format format, enum ec_io_type iotype)
 {
     int res;
-    gzFile stream;
-    static const char *modes_avail[] = {
+    ec_io_stream *stream;
+    static const char *mode[] = {
         [EC_STORAGE_BINARY] = "wb",
         [EC_STORAGE_PLAIN] = "w",
     };
-    char mode[4] = "";
 
     if (format == EC_STORAGE_MMAP) {
         return ec_mmap_store(ecurve, path);
     }
 
-    strcpy(mode, modes_avail[format]);
-#if HAVE_ZLIB
-    if (!(flags & EC_STORAGE_GZIP)) {
-        strcat(mode, "T");
-    }
-#else
-    (void) flags;
-#endif
-
-    stream = gzopen(path, mode);
+    stream = ec_io_open(path, mode[format], iotype);
     if (!stream) {
         return EC_FAILURE;
     }
-    (void) gzbuffer(stream, EC_GZ_BUFSZ);
     res = store_stream(ecurve, stream, format);
-    gzclose(stream);
+    ec_io_close(stream);
     return res;
 }

@@ -221,12 +221,13 @@ int main(int argc, char **argv)
         outfile_prefix = argv[OUT_PREFIX];
     }
 
-    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[SUBSTMAT]);
+    res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, argv[SUBSTMAT],
+            EC_IO_GZIP);
     if (res != EC_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    res = ec_matrix_load_file(&alpha_probs, argv[AA_PROBS]);
+    res = ec_matrix_load_file(&alpha_probs, argv[AA_PROBS], EC_IO_GZIP);
     ec_alphabet_init(&alpha, ALPHABET);
 
     res = ec_mmap_map(&fwd, argv[FWD]);

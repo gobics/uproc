@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "ecurve/common.h"
+#include "ecurve/io.h"
 #include "ecurve/alphabet.h"
 
 /** Matrix of amino acid distances */
@@ -71,7 +72,8 @@ void ec_substmat_set(struct ec_substmat *mat, ec_amino x, ec_amino y,
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path);
+int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path,
+        enum ec_io_type iotype);
 
 /** Load one distance matrices from a file, using the given loader function
  *
@@ -81,6 +83,7 @@ int ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path);
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_substmat_load(struct ec_substmat *mat, const char *path);
+int ec_substmat_load(struct ec_substmat *mat, const char *path,
+        enum ec_io_type iotype);
 
 #endif

@@ -4,6 +4,7 @@
 
 #include "ecurve/common.h"
 #include "ecurve/alphabet.h"
+#include "ecurve/io.h"
 #include "ecurve/matrix.h"
 #include "ecurve/substmat.h"
 
@@ -29,13 +30,14 @@ ec_substmat_set(struct ec_substmat *mat, ec_amino x, ec_amino y, double dist)
 }
 
 int
-ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path)
+ec_substmat_load_many(struct ec_substmat *mat, size_t n, const char *path,
+        enum ec_io_type iotype)
 {
     int res;
     size_t i, j, k, rows, cols;
 
     struct ec_matrix matrix;
-    res = ec_matrix_load_file(&matrix, path);
+    res = ec_matrix_load_file(&matrix, path, iotype);
     if (res != EC_SUCCESS) {
         return res;
     }
@@ -64,7 +66,8 @@ error:
 }
 
 int
-ec_substmat_load(struct ec_substmat *mat, const char *path)
+ec_substmat_load(struct ec_substmat *mat, const char *path,
+        enum ec_io_type iotype)
 {
-    return ec_substmat_load_many(mat, 1, path);
+    return ec_substmat_load_many(mat, 1, path, iotype);
 }

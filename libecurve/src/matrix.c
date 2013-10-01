@@ -6,7 +6,7 @@
 #include "ecurve/matrix.h"
 #include "ecurve/common.h"
 #include "ecurve/storage.h"
-#include "ecurve/gz.h"
+#include "ecurve/io.h"
 
 int
 ec_matrix_init(struct ec_matrix *matrix, size_t rows, size_t cols,
@@ -55,28 +55,28 @@ ec_matrix_dimensions(const struct ec_matrix *matrix, size_t *rows, size_t *cols)
 }
 
 int
-ec_matrix_load_file(struct ec_matrix *matrix, const char *path)
+ec_matrix_load_file(struct ec_matrix *matrix, const char *path,
+        enum ec_io_type iotype)
 {
     int res;
-    gzFile stream = gzopen(path, "r");
+    ec_io_stream *stream = ec_io_open(path, "r", iotype);
     if (!stream) {
-        return EC_ESYSCALL;
+        return EC_FAILURE;
     }
-    (void) gzbuffer(stream, EC_GZ_BUFSZ);
     res = ec_matrix_load_stream(matrix, stream);
-    gzclose(stream);
+    (void) ec_io_close(stream);
     return res;
 }
 
 int
-ec_matrix_load_stream(struct ec_matrix *matrix, gzFile stream)
+ec_matrix_load_stream(struct ec_matrix *matrix, ec_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
     double val;
     char buf[1024];
 
-    if (!gzgets(stream, buf, sizeof buf) ||
+    if (!ec_io_gets(buf, sizeof buf, stream) ||
         sscanf(buf, EC_MATRIX_HEADER_SCN, &rows, &cols) != 2)
     {
         return EC_EINVAL;
@@ -89,7 +89,7 @@ ec_matrix_load_stream(struct ec_matrix *matrix, gzFile stream)
 
     for (i = 0; i < rows; i++) {
         for (k = 0; k < cols; k++) {
-            if (!gzgets(stream, buf, sizeof buf) ||
+            if (!ec_io_gets(buf, sizeof buf, stream) ||
                 sscanf(buf, "%lf", &val) != 1) {
                 ec_matrix_destroy(matrix);
                 return EC_EINVAL;
@@ -102,40 +102,32 @@ ec_matrix_load_stream(struct ec_matrix *matrix, gzFile stream)
 
 int
 ec_matrix_store_file(const struct ec_matrix *matrix, const char *path,
-                     int flags)
+        enum ec_io_type iotype)
 {
     int res;
     char *mode = "w";
-#if HAVE_ZLIB
-    if (!(flags & EC_STORAGE_GZIP)) {
-        mode = "wT";
-    }
-#else
-    (void) flags;
-#endif
-    gzFile stream = gzopen(path, mode);
+    ec_io_stream *stream = ec_io_open(path, mode, iotype);
     if (!stream) {
-        return EC_ESYSCALL;
+        return EC_FAILURE;
     }
-    (void) gzbuffer(stream, EC_GZ_BUFSZ);
     res = ec_matrix_store_stream(matrix, stream);
-    gzclose(stream);
+    ec_io_close(stream);
     return res;
 }
 
 int
-ec_matrix_store_stream(const struct ec_matrix *matrix, gzFile stream)
+ec_matrix_store_stream(const struct ec_matrix *matrix, ec_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
     ec_matrix_dimensions(matrix, &rows, &cols);
-    res = gzprintf(stream, EC_MATRIX_HEADER_PRI, rows, cols);
+    res = ec_io_printf(stream, EC_MATRIX_HEADER_PRI, rows, cols);
     if (res < 0) {
         return EC_FAILURE;
     }
     for (i = 0; i < rows; i++) {
         for (k = 0; k < cols; k++) {
-            res = gzprintf(stream, "%lf\n", ec_matrix_get(matrix, i, k));
+            res = ec_io_printf(stream, "%lf\n", ec_matrix_get(matrix, i, k));
             if (res < 0) {
                 return EC_FAILURE;
             }

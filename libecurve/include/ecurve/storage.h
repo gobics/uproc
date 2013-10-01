@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "ecurve/io.h"
 #include "ecurve/ecurve.h"
 
 /** Values to use as the `format` argument */
@@ -35,7 +36,8 @@ enum ec_storage_flags {
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
-int ec_storage_load(struct ec_ecurve *ecurve, const char *path, int format);
+int ec_storage_load(struct ec_ecurve *ecurve, const char *path,
+        enum ec_storage_format format, enum ec_io_type iotype);
 
 /** Store ecurve to a file
  *
@@ -43,13 +45,13 @@ int ec_storage_load(struct ec_ecurve *ecurve, const char *path, int format);
  *
  * \param ecurve    pointer to ecurve to store
  * \param path      file path
- * \param format    format to use, must be one of the values defined in #ec_storage_format
- * \param flags     bitwise OR of values defined in #ec_storage_flags
+ * \param format    format to use, see #ec_storage_format
+ * \param iotype    IO type, see #ec_io_type
  *
  * \retval #EC_FAILURE  an error occured
  * \retval #EC_SUCCESS  else
  */
 int ec_storage_store(const struct ec_ecurve *ecurve, const char *path,
-                     int format, int flags);
+        enum ec_storage_format format, enum ec_io_type iotype);
 
 #endif

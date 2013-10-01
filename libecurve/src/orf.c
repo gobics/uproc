@@ -8,7 +8,7 @@
 #include "ecurve/codon.h"
 #include "ecurve/matrix.h"
 #include "ecurve/orf.h"
-#include "ecurve/gz.h"
+#include "ecurve/io.h"
 
 #include "codon_tables.h"
 
@@ -105,12 +105,13 @@ get_threshold(const struct ec_matrix *thresholds, const char *seq)
 }
 
 int
-ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores, const char *path)
+ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores,
+        const char *path, enum ec_io_type iotype)
 {
     int res;
     struct ec_matrix m;
 
-    res = ec_matrix_load_file(&m, path);
+    res = ec_matrix_load_file(&m, path, iotype);
     if (EC_ISERROR(res)) {
         return res;
     }
@@ -120,7 +121,8 @@ ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores, const char *path
 }
 
 int
-ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores, gzFile stream)
+ec_orf_codonscores_load_stream(struct ec_orf_codonscores *scores,
+        ec_io_stream *stream)
 {
     int res;
     struct ec_matrix m;
