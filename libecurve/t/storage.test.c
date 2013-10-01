@@ -72,12 +72,12 @@ int test_binary_bufsz(void)
     return SUCCESS;
 }
 
-int test_storage(int format, char *filename)
+int test_storage(int format, char *filename, int flags)
 {
     size_t i;
     struct ec_ecurve new_curve;
 
-    assert_int_eq(ec_storage_store(&ecurve, filename, format, 0),
+    assert_int_eq(ec_storage_store(&ecurve, filename, format, flags),
                   EC_SUCCESS, "storing ecurve succeeded");
     assert_int_eq(ec_storage_load(&new_curve, filename, format),
                   EC_SUCCESS, "loading ecurve succeeded");
@@ -102,13 +102,25 @@ int test_storage(int format, char *filename)
 int test_binary(void)
 {
     DESC("writing and reading in binary format");
-    return test_storage(EC_STORAGE_BINARY, TMPFILE ".bin");
+    return test_storage(EC_STORAGE_BINARY, TMPFILE ".bin", 0);
+}
+
+int test_binary_gz(void)
+{
+    DESC("writing and reading in binary format");
+    return test_storage(EC_STORAGE_BINARY, TMPFILE ".bin.gz", EC_STORAGE_GZIP);
 }
 
 int test_plain(void)
 {
     DESC("writing and reading in plain text");
-    return test_storage(EC_STORAGE_PLAIN, TMPFILE ".plain");
+    return test_storage(EC_STORAGE_PLAIN, TMPFILE ".plain", 0);
+}
+
+int test_plain_gz(void)
+{
+    DESC("writing and reading in plain text");
+    return test_storage(EC_STORAGE_PLAIN, TMPFILE ".plain.gz", EC_STORAGE_GZIP);
 }
 
 int test_mmap(void)
@@ -145,4 +157,9 @@ int test_mmap(void)
 #endif
 }
 
-TESTS_INIT(test_binary_bufsz, test_binary, test_plain, test_mmap);
+TESTS_INIT(test_binary_bufsz,
+        test_binary,
+        test_binary_gz,
+        test_plain,
+        test_plain_gz,
+        test_mmap);
