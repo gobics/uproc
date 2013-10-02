@@ -248,10 +248,10 @@ ec_io_getline(char **lineptr, size_t *n, ec_io_stream *stream)
             *n = total + len;
         }
         memcpy(*lineptr + total, buf, len);
-        total += len - 1;
+        total += len;
     } while (buf[len - 1] != '\n');
 
-    return total + 1;
+    return total;
 }
 
 int
