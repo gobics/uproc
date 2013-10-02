@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 #include <assert.h>
 
 #if HAVE_ZLIB
@@ -20,6 +22,7 @@ struct ec_io_stream
         gzFile gz;
 #endif
     } s;
+    bool stdstream;
 };
 
 ec_io_stream *
@@ -38,6 +41,7 @@ ec_io_stdstream(FILE *stream)
     }
     if (!s[i].s.fp) {
         s[i].type = EC_IO_STDIO;
+        s[i].stdstream = true;
         s[i].s.fp = stream;
     }
     return &s[i];
@@ -56,19 +60,26 @@ ec_io_stdstream_gz(FILE *stream)
     static ec_io_stream s[3];
     static char *mode[] = { "r", "w", "w" };
     size_t i;
-    if (!s[0].s.fp) {
+    if (!stream) {
+        for (i = 0; i < 3; i++) {
+            if (s[i].s.gz) {
+                gzclose(s[i].s.gz);
+                s[i].s.gz = NULL;
+            }
+        }
+        return NULL;
+    }
+
+    if (s[0].type != EC_IO_GZIP) {
         for (i = 0; i < 3; i++) {
             s[i].type = EC_IO_GZIP;
+            s[i].stdstream = true;
             s[i].s.gz = gzdopen(i, mode[i]);
         }
         atexit(close_stdstream_gz);
     }
-    if (!stream) {
-        for (i = 0; i < 3; i++) {
-            gzclose(s[i].s.gz);
-        }
-    }
-    else if (stream == stdin) {
+
+    if (stream == stdin) {
         i = 0;
     }
     else if (stream == stdout) {
@@ -116,20 +127,28 @@ error:
 int
 ec_io_close(ec_io_stream *stream)
 {
-    int res;
+    int res = 1;
     switch (stream->type) {
         case EC_IO_STDIO:
-            res = fclose(stream->s.fp) == 0;
+            if (stream->s.fp) {
+                res = fclose(stream->s.fp) == 0;
+                stream->s.fp = NULL;
+            }
             break;
 #if HAVE_ZLIB
         case EC_IO_GZIP:
-            res = gzclose(stream->s.gz) == Z_OK;
+            if (stream->s.gz) {
+                res = gzclose(stream->s.gz) == Z_OK;
+                stream->s.gz = NULL;
+            }
             break;
 #endif
         default:
             assert(!"stream type valid");
     }
-    free(stream);
+    if (!stream->stdstream) {
+        free(stream);
+    }
     return res ? EC_SUCCESS : EC_FAILURE;
 }
 
