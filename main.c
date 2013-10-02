@@ -48,7 +48,7 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
 }
 
 int
-input_read(FILE *stream, struct buffer *buf,
+input_read(ec_io_stream *stream, struct buffer *buf,
            size_t chunk_size)
 {
     int res = EC_SUCCESS;
@@ -109,7 +109,7 @@ threshold(struct ec_matrix *thresh, size_t seq_len)
 void
 output(struct buffer *buf,
         struct ec_matrix *thresholds, unsigned orf_mode,
-        FILE *pr_stream, size_t pr_seq_offset,
+        ec_io_stream *pr_stream, size_t pr_seq_offset,
         struct ec_bst *counts,
         size_t *unexplained,
         size_t *total)
@@ -147,14 +147,14 @@ output(struct buffer *buf,
                     }
                     if (pr_stream) {
 #ifdef MAIN_DNA
-                        fprintf(pr_stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
+                        ec_io_printf(pr_stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
                                 i + pr_seq_offset + 1,
                                 buf->id[i],
                                 frame + 1,
                                 cls[j],
                                 score[j]);
 #else
-                        fprintf(pr_stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
+                        ec_io_printf(pr_stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
                                 i + pr_seq_offset + 1,
                                 buf->id[i],
                                 cls[j],
@@ -189,8 +189,8 @@ get_chunk_size(void)
 
 int cb_walk_print(union ec_bst_key k, union ec_bst_data v, void *opaque)
 {
-    FILE *stream = opaque;
-    fprintf(stream, "%ju: %ju\n", k.uint, v.uint);
+    ec_io_stream *stream = opaque;
+    ec_io_printf(stream, "%ju: %ju\n", k.uint, v.uint);
     return EC_SUCCESS;
 }
 
@@ -236,7 +236,7 @@ main(int argc, char **argv)
     struct ec_matrix orf_thresholds;
 #endif
 
-    FILE *stream;
+    ec_io_stream *stream;
 
     struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
@@ -245,7 +245,7 @@ main(int argc, char **argv)
     int format = EC_STORAGE_MMAP;
     unsigned orf_mode = EC_ORF_PER_STRAND;
 
-    FILE *out_stream = NULL;
+    ec_io_stream *out_stream = NULL;
     size_t unexplained = 0, *out_unexplained = NULL;
     struct ec_bst count_tree, *out_counts = NULL;
 
@@ -296,7 +296,7 @@ main(int argc, char **argv)
                 orf_mode = EC_ORF_PER_FRAME;
                 break;
             case 'p':
-                out_stream = stdout;
+                out_stream = ec_stdout;
                 break;
             case 'c':
                 out_counts = &count_tree;
@@ -313,7 +313,7 @@ main(int argc, char **argv)
     }
 
     if (!out_stream && !out_counts && !out_unexplained) {
-        out_stream = stdout;
+        out_stream = ec_stdout;
     }
 
     ec_bst_init(&count_tree, EC_BST_UINT);
@@ -360,15 +360,15 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (argc == optind + ARGC) {
-        stream = fopen(argv[optind + INFILE], "r");
+    if (argc == optind + ARGC && strcmp(argv[optind + INFILE], "-")) {
+        stream = ec_io_open(argv[optind + INFILE], "r", EC_IO_GZIP);
         if (!stream) {
             perror("");
             return EXIT_FAILURE;
         }
     }
     else {
-        stream = stdin;
+        stream = ec_stdin;
     }
 
     do {
@@ -417,7 +417,7 @@ main(int argc, char **argv)
     ec_ecurve_destroy(&fwd);
     ec_ecurve_destroy(&rev);
     ec_matrix_destroy(&score_thresholds);
-    fclose(stream);
+    ec_io_close(stream);
 
 #ifdef MAIN_DNA
     ec_matrix_destroy(&orf_thresholds);

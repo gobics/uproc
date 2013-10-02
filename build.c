@@ -45,8 +45,9 @@ walk_cb_insert_nondups(union ec_bst_key key, union ec_bst_data data,
 }
 
 static int
-extract_uniques(FILE *stream, ec_amino first, const struct ec_alphabet *alpha,
-        struct ecurve_entry **entries, size_t *n_entries)
+extract_uniques(ec_io_stream *stream, ec_amino first,
+        const struct ec_alphabet *alpha, struct ecurve_entry **entries,
+        size_t *n_entries)
 {
     int res;
 
@@ -218,7 +219,7 @@ insert_entries(struct ec_ecurve *ecurve, struct ecurve_entry *entries, size_t n_
 
 
 static int
-build(FILE *stream, struct ec_ecurve *ecurve, const char *alphabet)
+build(ec_io_stream *stream, struct ec_ecurve *ecurve, const char *alphabet)
 {
     int res;
     struct ecurve_entry *entries = NULL;
@@ -230,7 +231,7 @@ build(FILE *stream, struct ec_ecurve *ecurve, const char *alphabet)
         fflush(stderr);
         n_entries = 0;
         free(entries);
-        rewind(stream);
+        ec_io_seek(stream, 0, SEEK_SET);
 
         res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
         if (EC_ISERROR(res)) {
@@ -272,7 +273,7 @@ int
 main(int argc, char **argv)
 {
     int res;
-    FILE *stream;
+    ec_io_stream *stream;
 
     struct ec_ecurve ecurve;
 
@@ -294,7 +295,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    stream = fopen(argv[INFILE], "r");
+    stream = ec_io_open(argv[INFILE], "r", EC_IO_GZIP);
     if (!stream) {
         perror("");
         return EXIT_FAILURE;
@@ -304,6 +305,7 @@ main(int argc, char **argv)
     if (EC_ISERROR(res)) {
         fprintf(stderr, "an error occured\n");
     }
+    ec_io_close(stream);
     fprintf(stderr, "storing..\n");
     ec_storage_store(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN, EC_STORAGE_GZIP);
     ec_ecurve_destroy(&ecurve);

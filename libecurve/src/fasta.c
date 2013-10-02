@@ -7,38 +7,8 @@
 #include <assert.h>
 
 #include "ecurve/common.h"
+#include "ecurve/io.h"
 #include "ecurve/fasta.h"
-
-#if !defined(_GNU_SOURCE) && _POSIX_C_SOURCE < 200809L && _XOPEN_SOURCE < 700
-static long
-getline(char **lineptr, size_t *n, FILE *stream)
-{
-    char buf[4097];
-    size_t len, total = 0;
-
-    do {
-        if (!fgets(buf, sizeof buf, stream)) {
-            if (!total) {
-                return -1;
-            }
-            break;
-        }
-        len = strlen(buf);
-        if (!*lineptr || *n < total + len) {
-            void *tmp = realloc(*lineptr, total + len);
-            if (!tmp) {
-                return -1;
-            }
-            *lineptr = tmp;
-            *n = total + len;
-        }
-        memcpy(*lineptr + total, buf, len);
-        total += len - 1;
-    } while (buf[len - 1] != '\n');
-
-    return total + 1;
-}
-#endif
 
 void
 ec_fasta_reader_init(struct ec_fasta_reader *rd, size_t seq_sz_hint)
@@ -57,14 +27,14 @@ ec_fasta_reader_free(struct ec_fasta_reader *rd)
 }
 
 static void
-reader_getline(FILE *stream, struct ec_fasta_reader *rd)
+reader_getline(ec_io_stream *stream, struct ec_fasta_reader *rd)
 {
-    rd->line_len = getline(&rd->line, &rd->line_sz, stream);
+    rd->line_len = ec_io_getline(&rd->line, &rd->line_sz, stream);
     rd->line_no++;
 }
 
 int
-ec_fasta_read(FILE *stream, struct ec_fasta_reader *rd)
+ec_fasta_read(ec_io_stream *stream, struct ec_fasta_reader *rd)
 {
     size_t len, total_len;
     if (!rd->header) {
@@ -163,10 +133,10 @@ ec_fasta_read(FILE *stream, struct ec_fasta_reader *rd)
 }
 
 void
-ec_fasta_write(FILE *stream, const char *id, const char *comment,
+ec_fasta_write(ec_io_stream *stream, const char *id, const char *comment,
                  const char *seq, unsigned width)
 {
-    fprintf(stream, ">%s\n", id);
+    ec_io_printf(stream, ">%s\n", id);
 
     if (comment && *comment) {
         const char *c = comment, *nl;
@@ -175,18 +145,17 @@ ec_fasta_write(FILE *stream, const char *id, const char *comment,
             if (!nl) {
                 nl = c + strlen(c);
             }
-            fprintf(stream, ";%.*s\n", (int)(nl - c), c);
+            ec_io_printf(stream, ";%.*s\n", (int)(nl - c), c);
             c = nl + !!*nl;
         }
     }
 
     if (!width) {
-        fprintf(stream, "%s\n", seq);
+        ec_io_printf(stream, "%s\n", seq);
         return;
     }
 
     while (*seq) {
-        seq += fprintf(stream, "%.*s", width, seq);
-        fputc('\n', stream);
+        seq += ec_io_printf(stream, "%.*s\n", width, seq) - 1;
     }
 }
