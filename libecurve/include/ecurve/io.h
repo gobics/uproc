@@ -35,8 +35,8 @@ ec_io_stream *ec_io_stdstream_gz(FILE *stream);
 #define ec_stdin_gz ec_io_stdstream_gz(stdin)
 #define ec_stdout_gz ec_io_stdstream_gz(stdout)
 #define ec_stderr_gz ec_io_stdstream_gz(stderr)
-#else
-#error fu
+#undef ec_stdin
+#define ec_stdin ec_stdin_gz
 #endif
 
 ec_io_stream *ec_io_open(const char *path, const char *mode,
@@ -51,6 +51,10 @@ size_t ec_io_read(void *ptr, size_t size, size_t nmemb, ec_io_stream *stream);
 size_t ec_io_write(const void *ptr, size_t size, size_t nmemb,
         ec_io_stream *stream);
 
-char * ec_io_gets(char *s, int size, ec_io_stream *stream);
+char *ec_io_gets(char *s, int size, ec_io_stream *stream);
+
+long ec_io_getline(char **lineptr, size_t *n, ec_io_stream *stream);
+
+int ec_io_seek(ec_io_stream *stream, long offset, int whence);
 
 #endif

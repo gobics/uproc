@@ -218,3 +218,53 @@ ec_io_gets(char *s, int size, ec_io_stream *stream)
     assert(!"stream type valid");
     return NULL;
 }
+
+long
+ec_io_getline(char **lineptr, size_t *n, ec_io_stream *stream)
+{
+    char buf[4097];
+    size_t len, total = 0;
+
+#if defined(_GNU_SOURCE) || _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700
+    if (stream->type == EC_IO_STDIO) {
+        return getline(lineptr, n, stream->s.fp);
+    }
+#endif
+
+    do {
+        if (!ec_io_gets(buf, sizeof buf, stream)) {
+            if (!total) {
+                return -1;
+            }
+            break;
+        }
+        len = strlen(buf);
+        if (!*lineptr || *n < total + len) {
+            void *tmp = realloc(*lineptr, total + len);
+            if (!tmp) {
+                return -1;
+            }
+            *lineptr = tmp;
+            *n = total + len;
+        }
+        memcpy(*lineptr + total, buf, len);
+        total += len - 1;
+    } while (buf[len - 1] != '\n');
+
+    return total + 1;
+}
+
+int
+ec_io_seek(ec_io_stream *stream, long offset, int whence)
+{
+    switch (stream->type) {
+        case EC_IO_STDIO:
+            return fseek(stream->s.fp, offset, whence);
+#if HAVE_ZLIB
+        case EC_IO_GZIP:
+            return gzseek(stream->s.gz, offset, whence) >= 0 ? 0 : -1;
+#endif
+    }
+    assert(!"stream type valid");
+    return -1;
+}
