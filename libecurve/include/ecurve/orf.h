@@ -16,7 +16,8 @@
 /** Character to separate the results of ec_orf_chained() */
 #define EC_ORF_SEPARATOR '*'
 
-struct ec_orf {
+struct ec_orf
+{
     /** Derived amino acid sequence */
     char *data;
 
@@ -28,12 +29,14 @@ struct ec_orf {
 };
 
 /** Codon score table */
-struct ec_orf_codonscores {
+struct ec_orf_codonscores
+{
     double values[EC_BINARY_CODON_COUNT];
 };
 
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
-struct ec_orfiter {
+struct ec_orfiter
+{
     /** current position in the DNA/RNA sequence */
     const char *pos;
 
@@ -60,7 +63,8 @@ struct ec_orfiter {
 };
 
 /** How to deal with ORFs from different frames */
-enum ec_orf_mode {
+enum ec_orf_mode
+{
     /** Treat all frames equally */
     EC_ORF_ALL = 1,
 
@@ -96,22 +100,27 @@ void ec_orf_codonscores_init(struct ec_orf_codonscores *scores,
  *
  */
 int ec_orfiter_init(struct ec_orfiter *iter, const char *seq,
-                    const struct ec_orf_codonscores *codon_scores);
+        const struct ec_orf_codonscores *codon_scores);
 
 /** Free memory of an ORF iterator */
 void ec_orfiter_destroy(struct ec_orfiter *iter);
 
 /** Obtain the next ORF from an iterator
  *
+ * A _shallow_ copy of the next ORF will be stored in `*orf`.
+ * Don't free() any members and don't use it after calling
+ * ec_orfiter_destroy().
+ *
  * \param iter  ORF iterator
- * \param orf   _OUT_: read ORF
+ * \param next  _OUT_: read ORF
  * \param frame _OUT_: from which frame the ORF was obtained
  *
  * \retval #EC_ITER_YIELD   an ORF was read successfully
  * \retval #EC_ITER_STOP    the end of the sequence was reached
  * \retval other            an error occured
  */
-int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *orf, unsigned *frame);
+int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next,
+        unsigned *frame);
 
 /** Extract ORFs from a DNA/RNA sequence
  *
@@ -140,10 +149,10 @@ int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *orf, unsigned *frame
  * \param sz            sizes of output buffers
  */
 int ec_orf_chained(const char *seq,
-                   enum ec_orf_mode mode,
-                   const struct ec_orf_codonscores *codon_scores,
-                   const struct ec_matrix *thresholds,
-                   char **buf,
-                   size_t *sz);
+        enum ec_orf_mode mode,
+        const struct ec_orf_codonscores *codon_scores,
+        const struct ec_matrix *thresholds,
+        char **buf,
+        size_t *sz);
 
 #endif
