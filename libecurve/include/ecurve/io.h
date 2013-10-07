@@ -35,8 +35,6 @@ ec_io_stream *ec_io_stdstream_gz(FILE *stream);
 #define ec_stdin_gz ec_io_stdstream_gz(stdin)
 #define ec_stdout_gz ec_io_stdstream_gz(stdout)
 #define ec_stderr_gz ec_io_stdstream_gz(stderr)
-#else
-#error fu
 #endif
 
 ec_io_stream *ec_io_open(const char *path, const char *mode,

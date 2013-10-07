@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <assert.h>
 
 #if HAVE_ZLIB
@@ -56,19 +57,25 @@ ec_io_stdstream_gz(FILE *stream)
     static ec_io_stream s[3];
     static char *mode[] = { "r", "w", "w" };
     size_t i;
-    if (!s[0].s.fp) {
+    if (s[0].type != EC_IO_GZIP) {
         for (i = 0; i < 3; i++) {
             s[i].type = EC_IO_GZIP;
-            s[i].s.gz = gzdopen(i, mode[i]);
+            s[i].s.gz = NULL;
         }
         atexit(close_stdstream_gz);
     }
+
+    /* called by close_stdstream_gz */
     if (!stream) {
         for (i = 0; i < 3; i++) {
-            gzclose(s[i].s.gz);
+            if (s[i].s.gz) {
+                gzclose(s[i].s.gz);
+            }
         }
+        return;
     }
-    else if (stream == stdin) {
+
+    if (stream == stdin) {
         i = 0;
     }
     else if (stream == stdout) {
@@ -77,10 +84,39 @@ ec_io_stdstream_gz(FILE *stream)
     else {
         i = 2;
     }
+    if (!s[i].s.gz) {
+        s[i].s.gz = gzdopen(i, mode[i]);
+    }
     return &s[i];
 }
 #endif
 
+#if ZLIB_VERNUM < 0x1235
+#define gzbuffer(file, size) 0
+#endif
+
+#if ZLIB_VERNUM < 0x1271
+static int
+gzvprintf(gzFile file, const char *format, va_list va)
+{
+    char *buf;
+    size_t n;
+    va_list copy;
+    va_copy(copy, va);
+
+    n = vsnprintf(NULL, 0, format, copy);
+    va_end(copy);
+
+    buf = malloc(n);
+    if (!buf) {
+        return -1;
+    }
+    vsnprintf(buf, n, format, va);
+    n = gzwrite(file, buf, n);
+    free(buf);
+    return n;
+}
+#endif
 
 ec_io_stream *
 ec_io_open(const char *path, const char *mode, enum ec_io_type type)
