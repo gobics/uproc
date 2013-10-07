@@ -96,11 +96,11 @@ ec_io_stdstream_gz(FILE *stream)
 }
 #endif
 
-#if ZLIB_VERNUM < 0x1235
+#if !HAVE_ZLIB || ZLIB_VERNUM < 0x1235
 #define gzbuffer(file, size) 0
 #endif
 
-#if ZLIB_VERNUM < 0x1271
+#if HAVE_ZLIB && ZLIB_VERNUM < 0x1271
 static int
 gzvprintf(gzFile file, const char *format, va_list va)
 {
