@@ -112,11 +112,11 @@ gzvprintf(gzFile file, const char *format, va_list va)
     n = vsnprintf(NULL, 0, format, copy);
     va_end(copy);
 
-    buf = malloc(n);
+    buf = malloc(n + 1);
     if (!buf) {
         return -1;
     }
-    vsnprintf(buf, n, format, va);
+    vsnprintf(buf, n + 1, format, va);
     n = gzwrite(file, buf, n);
     free(buf);
     return n;
