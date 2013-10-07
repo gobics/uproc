@@ -48,34 +48,31 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
 }
 
 int
-input_read(ec_io_stream *stream, struct buffer *buf,
+input_read(ec_io_stream *stream, struct ec_fasta_reader *rd, struct buffer *buf,
            size_t chunk_size)
 {
     int res = EC_SUCCESS;
     size_t i;
 
-    struct ec_fasta_reader rd;
-
-    ec_fasta_reader_init(&rd, 8192);
-
     for (i = 0; i < chunk_size; i++) {
         char *p;
-        res = ec_fasta_read(stream, &rd);
+        res = ec_fasta_read(stream, rd);
         if (res != EC_ITER_YIELD) {
             break;
         }
 
-        p = strpbrk(rd.header, ", \f\n\r\t\v");
+        p = strpbrk(rd->header, ", \f\n\r\t\v");
         if (p) {
+            rd->header_len = p - rd->header + 1;
             *p = '\0';
         }
 
-        res = dup_str(&buf->id[i], &buf->id_sz[i], rd.header, rd.header_len);
+        res = dup_str(&buf->id[i], &buf->id_sz[i], rd->header, rd->header_len);
         if (EC_ISERROR(res)) {
             break;
         }
 
-        res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd.seq, rd.seq_len);
+        res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd->seq, rd->seq_len);
         if (EC_ISERROR(res)) {
             break;
         }
@@ -237,6 +234,7 @@ main(int argc, char **argv)
 #endif
 
     ec_io_stream *stream;
+    struct ec_fasta_reader rd;
 
     struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
@@ -371,6 +369,8 @@ main(int argc, char **argv)
         stream = ec_stdin;
     }
 
+    ec_fasta_reader_init(&rd, 8192);
+
     do {
         in = &buf[!i_buf];
         out = &buf[i_buf];
@@ -391,14 +391,14 @@ main(int argc, char **argv)
             }
         }
 
-#pragma omp parallel
+#pragma omp parallel private(res) shared(more_input)
         {
 #pragma omp sections
             {
 #pragma omp section
                 {
-                    res = input_read(stream, in, chunk_size);
-                    more_input = res == EC_SUCCESS;
+                    res = input_read(stream, &rd, in, chunk_size);
+                    more_input = !EC_ISERROR(res) && res != EC_ITER_STOP;
                 }
 #pragma omp section
                 {
@@ -414,6 +414,7 @@ main(int argc, char **argv)
         i_buf ^= 1;
     } while (more_input);
 
+    ec_fasta_reader_free(&rd);
     ec_ecurve_destroy(&fwd);
     ec_ecurve_destroy(&rev);
     ec_matrix_destroy(&score_thresholds);
@@ -440,7 +441,9 @@ main(int argc, char **argv)
     }
 
     if (out_unexplained) {
-        fprintf(stdout, "%zu\n%zu\n", n_seqs - unexplained, unexplained);
+        fprintf(stdout, "explained:   %zu\n", n_seqs - unexplained);
+        fprintf(stdout, "unexplained: %zu\n", unexplained);
+        fprintf(stdout, "total:       %zu\n", n_seqs);
     }
     if (out_counts) {
         ec_bst_walk(&count_tree, cb_walk_print, stdout);

@@ -8,7 +8,7 @@ ARCHIVENAME := libecurve.a
 CC ?= cc
 CPPFLAGS ?= -D_GNU_SOURCE
 CFLAGS ?= -std=c99 -pedantic -Wall -Wextra -Os
-CFLAGS += -O0 -g
+#CFLAGS += -O0 -g
 #CFLAGS += -pg
 #CFLAGS += -fprofile-arcs -ftest-coverage
 
