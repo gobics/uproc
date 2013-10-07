@@ -23,6 +23,7 @@ struct ec_io_stream
         gzFile gz;
 #endif
     } s;
+    bool stdstream;
 };
 
 ec_io_stream *
@@ -42,6 +43,7 @@ ec_io_stdstream(FILE *stream)
     if (!s[i].s.fp) {
         s[i].type = EC_IO_STDIO;
         s[i].s.fp = stream;
+        s[i].stdstream = true;
     }
     return &s[i];
 }
@@ -63,8 +65,9 @@ ec_io_stdstream_gz(FILE *stream)
         for (i = 0; i < 3; i++) {
             s[i].type = EC_IO_GZIP;
             s[i].s.gz = NULL;
+            s[i].stdstream = true;
         }
-        return NULL;
+        atexit(close_stdstream_gz);
     }
 
     /* called by close_stdstream_gz */
@@ -74,7 +77,7 @@ ec_io_stdstream_gz(FILE *stream)
                 gzclose(s[i].s.gz);
             }
         }
-        return;
+        return NULL;
     }
 
     if (stream == stdin) {
