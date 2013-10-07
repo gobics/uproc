@@ -338,6 +338,12 @@ ec_orf_chained(const char *seq,
         return res;
     }
 
+    for (frame = 0; frame < mode; frame++) {
+        if (buf[frame]) {
+            *buf[frame] = '\0';
+        }
+    }
+
     while ((res = ec_orfiter_next(&iter, &orf, &frame)) == EC_ITER_YIELD) {
         char *p;
         size_t len_new;
