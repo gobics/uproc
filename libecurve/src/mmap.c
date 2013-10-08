@@ -35,6 +35,13 @@ struct mmap_header {
 #define OFFSET_SUFFIXES (OFFSET_PREFIXES + SIZE_PREFIXES)
 #define OFFSET_CLASSES(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
 
+#ifndef MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+#ifndef MAP_POPULATE
+#define MAP_NORESERVE 0
+#endif
+
 int
 ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
 {
@@ -54,13 +61,21 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
     }
     ecurve->mmap_size = st.st_size;
     ecurve->mmap_ptr =
-        region = mmap(NULL, ecurve->mmap_size, PROT_READ, MAP_PRIVATE,
-                      ecurve->mmap_fd, 0);
+        region = mmap(NULL, ecurve->mmap_size, PROT_READ,
+                MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
+                ecurve->mmap_fd, 0);
 
     if (ecurve->mmap_ptr == MAP_FAILED) {
         res = EC_ESYSCALL;
         goto error_close;
     }
+
+#if __linux__
+    readahead(ecurve->mmap_fd, 0, ecurve->mmap_size);
+#endif
+
+    posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_WILLNEED);
+    posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_RANDOM);
 
     header = ecurve->mmap_ptr;
     if (ecurve->mmap_size != SIZE_TOTAL(header->suffix_count)) {
