@@ -70,10 +70,6 @@ ec_mmap_map(struct ec_ecurve *ecurve, const char *path)
         goto error_close;
     }
 
-#if __linux__
-    readahead(ecurve->mmap_fd, 0, ecurve->mmap_size);
-#endif
-
     posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_WILLNEED);
     posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_RANDOM);
 
