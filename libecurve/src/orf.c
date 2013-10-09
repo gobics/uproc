@@ -379,3 +379,47 @@ error:
     ec_orfiter_destroy(&iter);
     return res;
 }
+
+int
+ec_orf_max(const char *seq,
+           const struct ec_orf_codonscores *codon_scores,
+           char **buf,
+           size_t *sz)
+{
+    int res;
+    unsigned frame;
+    double max_score = -INFINITY;
+    struct ec_orfiter iter;
+    struct ec_orf orf;
+
+    if (!codon_scores) {
+        return EC_EINVAL;
+    }
+
+    res = ec_orfiter_init(&iter, seq, codon_scores);
+    if (EC_ISERROR(res)) {
+        return res;
+    }
+    while ((res = ec_orfiter_next(&iter, &orf, &frame)) == EC_ITER_YIELD) {
+        (void) frame;
+        if (orf.score <= max_score) {
+            continue;
+        }
+        if (!*buf || orf.length > *sz) {
+            void *tmp = realloc(*buf, orf.length * sizeof **buf);
+            if (!tmp) {
+                res = EC_ENOMEM;
+                goto error;
+            }
+            *buf = tmp;
+            *sz = orf.length;
+        }
+        memcpy(*buf, orf.data, orf.length + 1);
+    }
+    if (!EC_ISERROR(res)) {
+        res = EC_SUCCESS;
+    }
+error:
+    ec_orfiter_destroy(&iter);
+    return res;
+}

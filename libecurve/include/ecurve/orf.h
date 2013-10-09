@@ -16,9 +16,10 @@
 /** Character to separate the results of ec_orf_chained() */
 #define EC_ORF_SEPARATOR '*'
 
+/** ORF */
 struct ec_orf
 {
-    /** Derived amino acid sequence */
+    /** Derived amino acid sequence as string */
     char *data;
 
     /** Length of the amino acid sequence */
@@ -152,6 +153,26 @@ int ec_orf_chained(const char *seq,
         enum ec_orf_mode mode,
         const struct ec_orf_codonscores *codon_scores,
         const struct ec_matrix *thresholds,
+        char **buf,
+        size_t *sz);
+
+
+/** Extract ORF with maximum score
+ *
+ * Similar to ec_orf_chained, but only yield the one ORF with the maximum score.
+ * `codon_scores` may not be a null pointer.
+ *
+ * \param seq           DNA/RNA sequence
+ * \param codon_scores  codon scores
+ * \param buf           buffer(s) for output strings
+ * \param sz            sizes of output buffers
+ *
+ * \retval EC_EINVAL    codon_scores is NULL
+ * \retval EC_ENOMEM    memory allocation failed
+ * \retval EC_SUCCESS   else
+ */
+int ec_orf_max(const char *seq,
+        const struct ec_orf_codonscores *codon_scores,
         char **buf,
         size_t *sz);
 
