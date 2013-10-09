@@ -415,6 +415,7 @@ ec_orf_max(const char *seq,
             *sz = orf.length;
         }
         memcpy(*buf, orf.data, orf.length + 1);
+        max_score = orf.score;
     }
     if (!EC_ISERROR(res)) {
         res = EC_SUCCESS;
