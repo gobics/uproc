@@ -358,67 +358,76 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (argc == optind + ARGC && strcmp(argv[optind + INFILE], "-")) {
-        stream = ec_io_open(argv[optind + INFILE], "r", EC_IO_GZIP);
-        if (!stream) {
-            perror("");
-            return EXIT_FAILURE;
+    /* use stdin if no input file specified */
+    if (argc < optind + ARGC) {
+        argv[argc++] = "-";
+    }
+
+    for (; optind + INFILE < argc; optind++)
+    {
+        if (!strcmp(argv[optind + INFILE], "-")) {
+            stream = ec_stdin;
         }
-    }
-    else {
-        stream = ec_stdin;
-    }
-
-    ec_fasta_reader_init(&rd, 8192);
-
-    do {
-        in = &buf[!i_buf];
-        out = &buf[i_buf];
-#pragma omp parallel private(i, res)
-        {
-#pragma omp for schedule(dynamic) nowait
-            for (i = 0; i < out->n; i++) {
-#ifdef MAIN_DNA
-                res = ec_classify_dna_all(out->seq[i], orf_mode,
-                        &codon_scores, &orf_thresholds, substmat, &fwd,
-                        &rev, out->count[i], out->cls[i], out->score[i],
-                        out->seq_len[i]);
-#else
-                res = ec_classify_protein_all(out->seq[i], substmat, &fwd,
-                        &rev, &out->count[i], &out->cls[i], &out->score[i]);
-                out->seq_len[i] = strlen(out->seq[i]);
-#endif
+        else {
+            stream = ec_io_open(argv[optind + INFILE], "r", EC_IO_GZIP);
+            if (!stream) {
+                fprintf(stderr, "error opening %s: ", argv[optind + INFILE]);
+                perror("");
+                return EXIT_FAILURE;
             }
         }
 
-#pragma omp parallel private(res) shared(more_input)
-        {
-#pragma omp sections
+        ec_fasta_reader_init(&rd, 8192);
+
+        do {
+            in = &buf[!i_buf];
+            out = &buf[i_buf];
+#pragma omp parallel private(i, res)
             {
-#pragma omp section
-                {
-                    res = input_read(stream, &rd, in, chunk_size);
-                    more_input = !EC_ISERROR(res) && res != EC_ITER_STOP;
+#pragma omp for schedule(dynamic) nowait
+                for (i = 0; i < out->n; i++) {
+#ifdef MAIN_DNA
+                    res = ec_classify_dna_all(out->seq[i], orf_mode,
+                            &codon_scores, &orf_thresholds, substmat, &fwd,
+                            &rev, out->count[i], out->cls[i], out->score[i],
+                            out->seq_len[i]);
+#else
+                    res = ec_classify_protein_all(out->seq[i], substmat, &fwd,
+                            &rev, &out->count[i], &out->cls[i], &out->score[i]);
+                    out->seq_len[i] = strlen(out->seq[i]);
+#endif
                 }
-#pragma omp section
+            }
+
+#pragma omp parallel private(res) shared(more_input)
+            {
+#pragma omp sections
                 {
-                    if (i_chunk) {
-                        output(out, &score_thresholds, orf_mode,
-                                out_stream, (i_chunk - 1) * chunk_size,
-                                out_counts, out_unexplained, &n_seqs);
+#pragma omp section
+                    {
+                        res = input_read(stream, &rd, in, chunk_size);
+                        more_input = !EC_ISERROR(res) && res != EC_ITER_STOP;
+                    }
+#pragma omp section
+                    {
+                        if (i_chunk) {
+                            output(out, &score_thresholds, orf_mode,
+                                    out_stream, (i_chunk - 1) * chunk_size,
+                                    out_counts, out_unexplained, &n_seqs);
+                        }
                     }
                 }
             }
-        }
-        i_chunk += 1;
-        i_buf ^= 1;
-    } while (more_input);
+            i_chunk += 1;
+            i_buf ^= 1;
+        } while (more_input);
+        ec_io_close(stream);
+        ec_fasta_reader_free(&rd);
+    }
 
-    ec_fasta_reader_free(&rd);
     ec_ecurve_destroy(&fwd);
     ec_ecurve_destroy(&rev);
     ec_matrix_destroy(&score_thresholds);
-    ec_io_close(stream);
 
 #ifdef MAIN_DNA
     ec_matrix_destroy(&orf_thresholds);
