@@ -249,7 +249,7 @@ main(int argc, char **argv)
 
 #define SHORT_OPTS_PROT "hBPMpcf"
 #ifdef MAIN_DNA
-#define SHORT_OPTS SHORT_OPTS_PROT "126"
+#define SHORT_OPTS SHORT_OPTS_PROT "0126"
 #else
 #define SHORT_OPTS SHORT_OPTS_PROT
 #endif
@@ -284,6 +284,9 @@ main(int argc, char **argv)
             case 'h':
                 print_usage(argv[0]);
                 return EXIT_SUCCESS;
+            case '0':
+                orf_mode = EC_ORF_MAX;
+                break;
             case '1':
                 orf_mode = EC_ORF_ALL;
                 break;

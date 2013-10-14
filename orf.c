@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     char *buf = NULL;
     size_t sz = 0;
 
-    enum { MAX, SCORE } mode;
+    enum ec_orf_mode mode = EC_ORF_ALL;
 
     if (argc < ARGC) {
         fprintf(stderr,
@@ -45,10 +45,9 @@ int main(int argc, char **argv)
     }
 
     if (!strcasecmp(argv[MIN_SCORE], "MAX")) {
-        mode = MAX;
+        mode = EC_ORF_MAX;
     }
     else {
-        mode = SCORE;
         min_score = strtod(argv[MIN_SCORE], &endptr);
         if (*argv[MIN_SCORE] && *endptr) {
             res = ec_matrix_load_file(&orf_thresholds, argv[MIN_SCORE], EC_IO_GZIP);
@@ -78,12 +77,7 @@ int main(int argc, char **argv)
 
     ec_fasta_reader_init(&rd, 4096);
     while ((res = ec_fasta_read(stream, &rd)) == EC_ITER_YIELD) {
-        if (mode == MAX) {
-            res = ec_orf_max(rd.seq, &codon_scores, &buf, &sz);
-        }
-        else {
-            res = ec_orf_chained(rd.seq, EC_ORF_ALL, &codon_scores, &orf_thresholds, &buf, &sz);
-        }
+        res = ec_orf_chained(rd.seq, mode, &codon_scores, &orf_thresholds, &buf, &sz);
         if (EC_ISERROR(res)) {
             break;
         }
