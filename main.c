@@ -450,6 +450,10 @@ main(int argc, char **argv)
         free(buf[1].score[i]);
         free(buf[1].cls[i]);
 #endif
+        free(buf[0].id[i]);
+        free(buf[0].seq[i]);
+        free(buf[1].id[i]);
+        free(buf[1].seq[i]);
     }
 
     if (out_unexplained) {
