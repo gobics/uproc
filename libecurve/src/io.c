@@ -131,6 +131,7 @@ ec_io_open(const char *path, const char *mode, enum ec_io_type type)
         return NULL;
     }
     stream->type = type;
+    stream->stdstream = false;
     switch (stream->type) {
         case EC_IO_STDIO:
             if (!(stream->s.fp = fopen(path, mode))) {
