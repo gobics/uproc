@@ -409,6 +409,7 @@ ec_orf_max(const char *seq,
         if (orf.score <= max_score) {
             continue;
         }
+        orf.length += 1;
         if (!*buf || orf.length > *sz) {
             void *tmp = realloc(*buf, orf.length * sizeof **buf);
             if (!tmp) {
@@ -418,7 +419,7 @@ ec_orf_max(const char *seq,
             *buf = tmp;
             *sz = orf.length;
         }
-        memcpy(*buf, orf.data, orf.length + 1);
+        memcpy(*buf, orf.data, orf.length);
         max_score = orf.score;
     }
     if (!EC_ISERROR(res)) {
