@@ -95,4 +95,5 @@ int main(int argc, char **argv)
         fprintf(stderr, "an error occured\n");
     }
     free(buf);
+    return EXIT_SUCCESS;
 }
