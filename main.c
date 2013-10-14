@@ -120,7 +120,7 @@ output(struct buffer *buf,
     for (i = 0; i < buf->n; i++) {
         bool explained = false;
 #ifdef MAIN_DNA
-        for (unsigned frame = 0; frame < orf_mode; frame++) {
+        for (unsigned frame = 0; frame < (orf_mode ? orf_mode : 1); frame++) {
             count = buf->count[i][frame];
             cls = buf->cls[i][frame];
             score = buf->score[i][frame];
@@ -438,7 +438,7 @@ main(int argc, char **argv)
 
     for (i = 0; i < chunk_size; i++) {
 #ifdef MAIN_DNA
-        for (unsigned f = 0; f < orf_mode; f++) {
+        for (unsigned f = 0; f < (orf_mode ? orf_mode : 1); f++) {
             free(buf[0].score[i][f]);
             free(buf[0].cls[i][f]);
             free(buf[1].score[i][f]);

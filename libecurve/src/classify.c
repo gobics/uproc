@@ -374,6 +374,11 @@ ec_classify_dna_all(
         goto error;
     }
 
+    /** make sure the following loops run at least once */
+    if (mode == EC_ORF_MAX) {
+        mode = 1;
+    }
+
     for (i = 0; i < mode; i++) {
         if (orf[i]) {
             res = ec_classify_protein_all(orf[i], substmat,
@@ -418,6 +423,11 @@ ec_classify_dna_max(
     res = ec_orf_chained(seq, mode, codon_scores, thresholds, orf, orf_sz);
     if (EC_ISERROR(res)) {
         goto error;
+    }
+
+    /** make sure the following loops run at least once */
+    if (mode == EC_ORF_MAX) {
+        mode = 1;
     }
 
     for (i = 0; i < mode; i++) {
