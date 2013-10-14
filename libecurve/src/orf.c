@@ -326,6 +326,10 @@ ec_orf_chained(const char *seq,
     struct ec_orfiter iter;
     double min_score = 0.0;
 
+    if (mode == EC_ORF_MAX) {
+        return ec_orf_max(seq, codon_scores, buf, sz);
+    }
+
     if (thresholds) {
         min_score = get_threshold(thresholds, seq);
     }

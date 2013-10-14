@@ -66,6 +66,9 @@ struct ec_orfiter
 /** How to deal with ORFs from different frames */
 enum ec_orf_mode
 {
+    /** Only return the one ORF with maximum score */
+    EC_ORF_MAX = 0,
+
     /** Treat all frames equally */
     EC_ORF_ALL = 1,
 
