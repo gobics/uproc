@@ -63,15 +63,6 @@ void teardown(void)
     free(ecurve.prefixes);
 }
 
-int test_binary_bufsz(void)
-{
-    DESC("buffer size for binary load/store");
-    assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_HEADER_FMT), "buffer can fit header");
-    assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_PREFIX_FMT), "buffer can fit prefix");
-    assert_uint_ge(BIN_BUFSZ, pack_bytes(BIN_SUFFIX_FMT), "buffer can fit suffix");
-    return SUCCESS;
-}
-
 int test_storage(int format, int iotype, char *filename)
 {
     size_t i;
@@ -157,8 +148,7 @@ int test_mmap(void)
 #endif
 }
 
-TESTS_INIT(test_binary_bufsz,
-        test_binary,
+TESTS_INIT(test_binary,
         test_binary_gz,
         test_plain,
         test_plain_gz,
