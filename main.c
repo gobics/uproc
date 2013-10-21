@@ -457,12 +457,12 @@ main(int argc, char **argv)
     }
 
     if (out_unexplained) {
-        fprintf(stdout, "explained:   %zu\n", n_seqs - unexplained);
-        fprintf(stdout, "unexplained: %zu\n", unexplained);
-        fprintf(stdout, "total:       %zu\n", n_seqs);
+        ec_io_printf(ec_stdout, "explained:   %zu\n", n_seqs - unexplained);
+        ec_io_printf(ec_stdout, "unexplained: %zu\n", unexplained);
+        ec_io_printf(ec_stdout, "total:       %zu\n", n_seqs);
     }
     if (out_counts) {
-        ec_bst_walk(&count_tree, cb_walk_print, stdout);
+        ec_bst_walk(&count_tree, cb_walk_print, ec_stdout);
         ec_bst_clear(&count_tree, NULL);
     }
 
