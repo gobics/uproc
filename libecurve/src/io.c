@@ -213,7 +213,16 @@ ec_io_read(void *ptr, size_t size, size_t nmemb, ec_io_stream *stream)
             return fread(ptr, size, nmemb, stream->s.fp);
 #if HAVE_ZLIB
         case EC_IO_GZIP:
-            return gzread(stream->s.gz, ptr, size * nmemb) / size;
+            {
+                size_t i, n;
+                for (i = 0; i < nmemb; i++) {
+                    n = gzread(stream->s.gz, (char*)ptr + i * size, size);
+                    if (n != size) {
+                        break;
+                    }
+                }
+                return i;
+            }
 #endif
     }
     assert(!"stream type valid");
@@ -228,7 +237,16 @@ ec_io_write(const void *ptr, size_t size, size_t nmemb, ec_io_stream *stream)
             return fwrite(ptr, size, nmemb, stream->s.fp);
 #if HAVE_ZLIB
         case EC_IO_GZIP:
-            return gzwrite(stream->s.gz, ptr, size * nmemb) / size;
+            {
+                size_t i, n;
+                for (i = 0; i < nmemb; i++) {
+                    n = gzwrite(stream->s.gz, (char*)ptr + i * size, size);
+                    if (n != size) {
+                        break;
+                    }
+                }
+                return i;
+            }
 #endif
     }
     assert(!"stream type valid");
