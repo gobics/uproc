@@ -23,6 +23,7 @@ ec_fasta_reader_free(struct ec_fasta_reader *rd)
 {
     free(rd->line);
     free(rd->header);
+    free(rd->comment);
     free(rd->seq);
 }
 
