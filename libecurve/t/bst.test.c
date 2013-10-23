@@ -28,17 +28,14 @@ int stuff(void)
     DESC("inserting/updating");
 
     ec_bst_init(&t, EC_BST_UINT, sizeof test_data);
-    data.uint = 0;
 
 #define INS(k, d) \
     key.uint = k;   \
-    data.ptr = &test_data; \
     test_data.x = d; \
     res = ec_bst_insert(&t, key, data)
 
 #define UPD(k, d) \
     key.uint = k;   \
-    data.ptr = &test_data; \
     test_data.x = d; \
     res = ec_bst_update(&t, key, data)
 
