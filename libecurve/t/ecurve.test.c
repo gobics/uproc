@@ -222,6 +222,10 @@ int test_append(void)
         assert_uint_eq(a1.classes[i], b.classes[i], "class equal");
     }
 
+    ec_ecurve_destroy(&a1);
+    ec_ecurve_destroy(&a2);
+    ec_ecurve_destroy(&b);
+
     return SUCCESS;
 }
 

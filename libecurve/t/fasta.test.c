@@ -49,6 +49,8 @@ int fasta_(int iotype)
     }
     ec_io_close(stream);
 
+    ec_fasta_reader_free(&rd);
+
     return SUCCESS;
 }
 

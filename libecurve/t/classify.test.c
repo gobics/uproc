@@ -83,7 +83,7 @@ int scores_add_finalize(void)
     ec_class predict_cls;
 
     DESC("scores_add and scores_finalize");
-    ec_bst_init(&scores, EC_BST_UINT);
+    ec_bst_init(&scores, EC_BST_UINT, 0);
 
     dist[4] = 1.0;
     scores_add(&scores, 10, 0, dist, false);
@@ -101,6 +101,7 @@ int scores_add_finalize(void)
     finalize_max(&scores, &predict_cls, &predict_score);
     assert_double_eq(predict_score, 3.0, "'predicted' score");
     assert_uint_eq(predict_cls, 42, "'predicted' class");
+    ec_bst_clear(&scores, ec_bst_free_ptr);
 
     return SUCCESS;
 }

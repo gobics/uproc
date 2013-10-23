@@ -41,6 +41,9 @@ int orf(void)
     ec_orf_chained("AA" DNA_R, EC_ORF_PER_FRAME, NULL, NULL, buf, sz);
     assert_str_eq(buf[5], PROT_R, "frame 5 correctly translated");
 
+    for (size_t i = 0; i < EC_ORF_FRAMES; i++) {
+        free(buf[i]);
+    }
     return SUCCESS;
 }
 
