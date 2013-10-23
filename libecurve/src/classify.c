@@ -316,7 +316,7 @@ ec_classify_protein_all(
 {
     int res;
     struct ec_bst scores;
-    ec_bst_init(&scores, EC_BST_UINT);
+    ec_bst_init(&scores, EC_BST_UINT, 0);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
     if (EC_ISERROR(res) || ec_bst_isempty(&scores)) {
         *predict_count = 0;
@@ -339,7 +339,7 @@ ec_classify_protein_max(
 {
     int res;
     struct ec_bst scores;
-    ec_bst_init(&scores, EC_BST_UINT);
+    ec_bst_init(&scores, EC_BST_UINT, 0);
     res = scores_compute(seq, substmat, fwd_ecurve, rev_ecurve, &scores);
     if (EC_ISERROR(res) || ec_bst_isempty(&scores)) {
         goto error;

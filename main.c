@@ -317,7 +317,7 @@ main(int argc, char **argv)
         out_stream = ec_stdout;
     }
 
-    ec_bst_init(&count_tree, EC_BST_UINT);
+    ec_bst_init(&count_tree, EC_BST_UINT, 0);
 
     if (argc < optind + ARGC - 1) {
         print_usage(argv[0]);

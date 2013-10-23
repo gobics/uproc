@@ -3,6 +3,11 @@
 
 struct ec_alphabet alpha;
 
+struct test_data {
+    int x;
+    char c;
+};
+
 void setup(void)
 {
     ec_alphabet_init(&alpha, ALPHABET);
@@ -16,22 +21,25 @@ int stuff(void)
 {
     int res;
     struct ec_bst t;
+    struct test_data test_data;
     union ec_bst_key key;
-    union ec_bst_data data;
+    union ec_bst_data data = { .ptr = &test_data };
 
     DESC("inserting/updating");
 
-    ec_bst_init(&t, EC_BST_UINT);
+    ec_bst_init(&t, EC_BST_UINT, sizeof test_data);
     data.uint = 0;
 
 #define INS(k, d) \
     key.uint = k;   \
-    data.uint = d;  \
+    data.ptr = &test_data; \
+    test_data.x = d; \
     res = ec_bst_insert(&t, key, data)
 
 #define UPD(k, d) \
     key.uint = k;   \
-    data.uint = d;  \
+    data.ptr = &test_data; \
+    test_data.x = d; \
     res = ec_bst_update(&t, key, data)
 
 #define GET(k) \
@@ -48,10 +56,13 @@ int stuff(void)
     INS(21, 0);
     assert_int_eq(res, EC_SUCCESS, "insertion succeeded");
 
+    INS(599, 0);
+    assert_int_eq(res, EC_SUCCESS, "insertion succeeded");
+
     INS((unsigned long long) -1337, 42);
     assert_int_eq(res, EC_SUCCESS, "insertion succeeded");
 
-    assert_int_eq(ec_bst_size(&t), 3, "ec_bst_size returns the right number of items\n");
+    assert_int_eq(ec_bst_size(&t), 4, "ec_bst_size returns the right number of items\n");
 
     INS((unsigned long long) -1337, 0);
     assert_int_eq(res, EC_EEXIST, "duplicate insertion failed");
@@ -62,11 +73,15 @@ int stuff(void)
     UPD(21, 42);
     assert_int_eq(res, EC_SUCCESS, "updating existent key succeeded");
 
-    assert_int_eq(ec_bst_size(&t), 4, "ec_bst_size returns the right number of items\n");
+    assert_int_eq(ec_bst_size(&t), 5, "ec_bst_size returns the right number of items\n");
 
     GET(21);
     assert_int_eq(res, EC_SUCCESS, "getting existent key succeeded");
-    assert_uint_eq(data.uint, 42, "correct value retrieved");
+    assert_uint_eq(((struct test_data*)data.ptr)->x, 42, "correct value retrieved");
+
+    GET(42);
+    assert_int_eq(res, EC_SUCCESS, "getting existent key succeeded");
+    assert_uint_eq(((struct test_data*)data.ptr)->x, 0, "correct value retrieved");
 
     RM(42);
     assert_int_eq(res, EC_SUCCESS, "removing existent key succeeded");
@@ -79,6 +94,8 @@ int stuff(void)
 
     RM(42);
     assert_int_eq(res, EC_ENOENT, "removing nonexistent key failed");
+
+    ec_bst_clear(&t, NULL);
 
     return SUCCESS;
 }

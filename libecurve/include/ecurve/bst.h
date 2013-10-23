@@ -36,13 +36,23 @@ struct ec_bst {
 
     /** Key type */
     enum ec_bst_keytype key_type;
+
+    /** Size of the objects pointed to by data.ptr (or 0) */
+    size_t data_size;
 };
 
 typedef int (*ec_bst_cb_walk)(union ec_bst_key, union ec_bst_data, void*);
 typedef int (*ec_bst_cb_remove)(union ec_bst_data);
 
-/** Initialize an empty binary search tree */
-void ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type);
+/** Initialize an empty binary search tree
+ *
+ * \param t         bst instance
+ * \param key_type  key type
+ * \param data_size number of bytes to copy from/to the ptr member of an
+ *                  ec_bst_data object or 0 if a different member is used
+ */
+void ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type,
+        size_t data_size);
 
 /** Remove all nodes from tree; leaves an empty tree
  *
