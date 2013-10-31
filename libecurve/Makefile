@@ -1,6 +1,6 @@
 include ../config.mk
 
-MODULES := ecurve alphabet substmat word storage bst orf codon matrix fasta mmap io protclass
+MODULES := ecurve alphabet substmat word storage bst orf codon matrix fasta mmap io protclass dnaclass
 
 DESTDIR ?= .
 
