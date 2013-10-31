@@ -27,6 +27,9 @@ struct ec_orf
 
     /** Sum of codon scores */
     double score;
+
+    /** On which frame the ORF was found */
+    unsigned frame;
 };
 
 /** Codon score table */
@@ -35,9 +38,35 @@ struct ec_orf_codonscores
     double values[EC_BINARY_CODON_COUNT];
 };
 
+
+/** ORF filter function
+ *
+ * The function should take an ORF, the DNA sequence, it's length and GC
+ * content and finally a user-supplied "opaque" pointer as arguments and return
+ * whether the ORF is accepted or not.
+ */
+typedef bool ec_orf_filter(const struct ec_orf*, const char *, size_t, double,
+        void*);
+
+
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
 struct ec_orfiter
 {
+    /** DNA/RNA sequence being iterated */
+    const char *seq;
+
+    /** Length of the sequence */
+    size_t seq_len;
+
+    /** GC content of the sequence */
+    double seq_gc;
+
+    /** User-supplied argument to `filter` */
+    void *filter_arg;
+
+    /** Pointer to filter function */
+    ec_orf_filter *filter;
+
     /** current position in the DNA/RNA sequence */
     const char *pos;
 
@@ -63,21 +92,6 @@ struct ec_orfiter
     bool yield[EC_ORF_FRAMES];
 };
 
-/** How to deal with ORFs from different frames */
-enum ec_orf_mode
-{
-    /** Only return the one ORF with maximum score */
-    EC_ORF_MAX = 0,
-
-    /** Treat all frames equally */
-    EC_ORF_ALL = 1,
-
-    /** Differentiate between forward and reverse strand */
-    EC_ORF_PER_STRAND = 2,
-
-    /** Treat eall frames uniquely */
-    EC_ORF_PER_FRAME = EC_ORF_FRAMES,
-};
 
 /** Load codon scores from file */
 int ec_orf_codonscores_load_file(struct ec_orf_codonscores *scores,
@@ -104,7 +118,8 @@ void ec_orf_codonscores_init(struct ec_orf_codonscores *scores,
  *
  */
 int ec_orfiter_init(struct ec_orfiter *iter, const char *seq,
-        const struct ec_orf_codonscores *codon_scores);
+        const struct ec_orf_codonscores *codon_scores,
+        ec_orf_filter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
 void ec_orfiter_destroy(struct ec_orfiter *iter);
@@ -117,66 +132,11 @@ void ec_orfiter_destroy(struct ec_orfiter *iter);
  *
  * \param iter  ORF iterator
  * \param next  _OUT_: read ORF
- * \param frame _OUT_: from which frame the ORF was obtained
  *
  * \retval #EC_ITER_YIELD   an ORF was read successfully
  * \retval #EC_ITER_STOP    the end of the sequence was reached
  * \retval other            an error occured
  */
-int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next,
-        unsigned *frame);
-
-/** Extract ORFs from a DNA/RNA sequence
- *
- * Concatenates all ORFs of length >= #EC_WORD_LEN and a minimum score obtained
- * from `thresholds`, depending on the GC content and sequence length.
- * The score of an ORF is obtained by summing up the entries of `codon_scores`
- * for each codon in the sequence.
- *
- * If `codon_scores` is a null pointer, each codon gets a zero score, if
- * `thresholds` is a null pointer, every ORF that is long enough will be
- * accepted.
- *
- * The result is a string with all those ORFs, separated by #EC_ORF_SEPARATOR.
- *
- * For each n between 0 and `mode - 1`, the buffer `buf[n]` must be a null
- * pointer or pointer to allocated storage of `sz[n]` bytes. If `buf[n]` is too
- * small, it will be resized using realloc() and `sz[n]` updated accordingly.
- * This mimics the behaviour of POSIX' `getline()`
- * (http://pubs.opengroup.org/onlinepubs/9699919799/functions/getline.html)
- *
- * \param seq           DNA/RNA sequence
- * \param mode          how different frames should be treated
- * \param codon_scores  codon scores
- * \param thresholds    score threshold matrix
- * \param buf           buffer(s) for output strings
- * \param sz            sizes of output buffers
- */
-int ec_orf_chained(const char *seq,
-        enum ec_orf_mode mode,
-        const struct ec_orf_codonscores *codon_scores,
-        const struct ec_matrix *thresholds,
-        char **buf,
-        size_t *sz);
-
-
-/** Extract ORF with maximum score
- *
- * Similar to ec_orf_chained, but only yield the one ORF with the maximum score.
- * `codon_scores` may not be a null pointer.
- *
- * \param seq           DNA/RNA sequence
- * \param codon_scores  codon scores
- * \param buf           buffer(s) for output strings
- * \param sz            sizes of output buffers
- *
- * \retval EC_EINVAL    codon_scores is NULL
- * \retval EC_ENOMEM    memory allocation failed
- * \retval EC_SUCCESS   else
- */
-int ec_orf_max(const char *seq,
-        const struct ec_orf_codonscores *codon_scores,
-        char **buf,
-        size_t *sz);
+int ec_orfiter_next(struct ec_orfiter *iter, struct ec_orf *next);
 
 #endif
