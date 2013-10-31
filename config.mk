@@ -3,7 +3,7 @@ HAVE_MMAP ?= yes
 HAVE_OPENMP ?= yes
 HAVE_ZLIB ?= yes
 
-ARCHIVENAME := libecurve.a
+ARCHIVENAME := libupro.a
 
 CC ?= cc
 CPPFLAGS ?= -D_GNU_SOURCE
