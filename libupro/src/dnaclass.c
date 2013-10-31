@@ -11,7 +11,7 @@ int
 upro_dc_init(struct upro_dnaclass *dc,
         enum upro_dc_mode mode,
         const struct upro_protclass *pc,
-        const struct upro_orf_codonscores *codon_scores,
+        const struct upro_matrix *codon_scores,
         upro_orf_filter *orf_filter, void *orf_filter_arg)
 {
     if (!pc) {
@@ -20,10 +20,10 @@ upro_dc_init(struct upro_dnaclass *dc,
     *dc = (struct upro_dnaclass) {
         .mode = mode,
         .pc = pc,
-        .codon_scores = codon_scores,
         .orf_filter = orf_filter,
         .orf_filter_arg = orf_filter_arg,
     };
+    upro_orf_codonscores(dc->codon_scores, codon_scores);
     return UPRO_SUCCESS;
 }
 

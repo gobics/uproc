@@ -85,41 +85,9 @@ gc_content(const char *seq, size_t *len, double *gc)
     *len = i;
 }
 
-int
-upro_orf_codonscores_load_file(struct upro_orf_codonscores *scores,
-        const char *path, enum upro_io_type iotype)
-{
-    int res;
-    struct upro_matrix m;
-
-    res = upro_matrix_load_file(&m, path, iotype);
-    if (UPRO_ISERROR(res)) {
-        return res;
-    }
-    upro_orf_codonscores_init(scores, &m);
-    upro_matrix_destroy(&m);
-    return UPRO_SUCCESS;
-}
-
-int
-upro_orf_codonscores_load_stream(struct upro_orf_codonscores *scores,
-        upro_io_stream *stream)
-{
-    int res;
-    struct upro_matrix m;
-
-    res = upro_matrix_load_stream(&m, stream);
-    if (UPRO_ISERROR(res)) {
-        return res;
-    }
-    upro_orf_codonscores_init(scores, &m);
-    upro_matrix_destroy(&m);
-    return UPRO_SUCCESS;
-}
-
 void
-upro_orf_codonscores_init(struct upro_orf_codonscores *scores,
-                        const struct upro_matrix *score_matrix)
+upro_orf_codonscores(double scores[static UPRO_BINARY_CODON_COUNT],
+        const struct upro_matrix *score_matrix)
 {
     upro_codon c1, c2;
     for (c1 = 0; c1 < UPRO_BINARY_CODON_COUNT; c1++) {
@@ -133,18 +101,17 @@ upro_orf_codonscores_init(struct upro_orf_codonscores *scores,
                     count++;
                 }
             }
-            scores->values[c1] = count ? sum / count : 0.0;
+            scores[c1] = count ? sum / count : 0.0;
         }
         else {
-            scores->values[c1] = 0.0;
+            scores[c1] = 0.0;
         }
     }
 }
 
 int
 upro_orfiter_init(struct upro_orfiter *iter, const char *seq,
-                const struct upro_orf_codonscores *codon_scores,
-                upro_orf_filter *filter, void *filter_arg)
+        const double *codon_scores, upro_orf_filter *filter, void *filter_arg)
 {
     unsigned i;
     *iter = (struct upro_orfiter) {
@@ -262,8 +229,8 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
 #define ADD_CODON(codon, frame) do {                                        \
     int res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)],   \
             codon,                                                          \
-            iter->codon_scores ?  iter->codon_scores->values[codon] : 0.0); \
-    if (UPRO_ISERROR(res)) {                                                  \
+            iter->codon_scores ?  iter->codon_scores[codon] : 0.0);         \
+    if (UPRO_ISERROR(res)) {                                                \
         return res;                                                         \
     }                                                                       \
 } while (0)

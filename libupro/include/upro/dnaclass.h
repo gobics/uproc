@@ -28,7 +28,7 @@ struct upro_dnaclass
 
     const struct upro_protclass *pc;
 
-    const struct upro_orf_codonscores *codon_scores;
+    double codon_scores[UPRO_BINARY_CODON_COUNT];
     upro_orf_filter *orf_filter;
     void *orf_filter_arg;
 };
@@ -36,7 +36,7 @@ struct upro_dnaclass
 int upro_dc_init(struct upro_dnaclass *dc,
         enum upro_dc_mode mode,
         const struct upro_protclass *pc,
-        const struct upro_orf_codonscores *codon_scores,
+        const struct upro_matrix *codon_scores,
         upro_orf_filter *orf_filter, void *orf_filter_arg);
 
 int upro_dc_classify(const struct upro_dnaclass *dc, const char *seq,

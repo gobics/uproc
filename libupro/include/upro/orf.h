@@ -32,13 +32,6 @@ struct upro_orf
     unsigned frame;
 };
 
-/** Codon score table */
-struct upro_orf_codonscores
-{
-    double values[UPRO_BINARY_CODON_COUNT];
-};
-
-
 /** ORF filter function
  *
  * The function should take an ORF, the DNA sequence, it's length and GC
@@ -47,7 +40,6 @@ struct upro_orf_codonscores
  */
 typedef bool upro_orf_filter(const struct upro_orf*, const char *, size_t, double,
         void*);
-
 
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
 struct upro_orfiter
@@ -71,7 +63,7 @@ struct upro_orfiter
     const char *pos;
 
     /** Codon score table */
-    const struct upro_orf_codonscores *codon_scores;
+    const double *codon_scores;
 
     /** Number of processed nucleotide symbols */
     size_t nt_count;
@@ -92,33 +84,19 @@ struct upro_orfiter
     bool yield[UPRO_ORF_FRAMES];
 };
 
-
-/** Load codon scores from file */
-int upro_orf_codonscores_load_file(struct upro_orf_codonscores *scores,
-        const char *path, enum upro_io_type iotype);
-
-/** Load codon scores from stream */
-int upro_orf_codonscores_load_stream(struct upro_orf_codonscores *scores,
-        upro_io_stream *stream);
-
-/** Initialize codon scores from a matrix
- *
- * \param scores        score table to initialize
- * \param score_matrix  a #UPRO_CODON_COUNT x 1 matrix containing the scores for
- *                      each "real" codon
- */
-void upro_orf_codonscores_init(struct upro_orf_codonscores *scores,
+/** Prepare codon score table */
+void upro_orf_codonscores(double scores[static UPRO_BINARY_CODON_COUNT],
         const struct upro_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *
  * \param iter          _OUT_: iterator object
  * \param seq           sequence to iterate over
- * \param codon_scores  codon scores, must be a #UPRO_CODON_COUNT x 1 matrix
- *
+ * \param codon_scores  codon scores, must be a pointer into an array of size
+ *                      #UPRO_BINARY_CODON_COUNT
  */
 int upro_orfiter_init(struct upro_orfiter *iter, const char *seq,
-        const struct upro_orf_codonscores *codon_scores,
+        const double codon_scores[static UPRO_BINARY_CODON_COUNT],
         upro_orf_filter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
