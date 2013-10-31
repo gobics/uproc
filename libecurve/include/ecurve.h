@@ -11,7 +11,6 @@
 
 #include <ecurve/alphabet.h>
 #include <ecurve/bst.h>
-#include <ecurve/classify.h>
 #include <ecurve/codon.h>
 #include <ecurve/common.h>
 #include <ecurve/ecurve.h>
@@ -22,4 +21,7 @@
 #include <ecurve/storage.h>
 #include <ecurve/substmat.h>
 #include <ecurve/word.h>
+
+#include <ecurve/protclass.h>
+#include <ecurve/dnaclass.h>
 #endif
