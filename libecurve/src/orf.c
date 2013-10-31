@@ -68,21 +68,20 @@ orf_add_codon(struct ec_orf *o, size_t *sz, ec_codon c, double score)
 }
 
 static void
-gc_content(const char *seq, double *gc, size_t *len)
+gc_content(const char *seq, size_t *len, double *gc)
 {
-    static unsigned gc_map[UCHAR_MAX + 1] = {
-        [(unsigned char)'G'] = 1,
-        [(unsigned char)'C'] = 1,
-        [(unsigned char)'g'] = 1,
-        [(unsigned char)'c'] = 1,
+    static double gc_map[UCHAR_MAX + 1] = {
+        ['G'] = 1,    ['C'] = 1,
+        ['R'] = .5,   ['Y'] = .5,   ['S'] = 1,    ['K'] = .5,   ['M'] = .5,
+        ['B'] = .667, ['D'] = .333, ['H'] = .333, ['V'] = .667,
+        ['N'] = .25,
     };
     size_t i;
-    unsigned count;
-
-    for (i = count = 0; seq[i]; i++) {
-        count += gc_map[(unsigned char)seq[i]];
+    double count = 0.0;
+    for (i = 0; seq[i]; i++) {
+        count += gc_map[toupper(seq[i])];
     }
-    *gc = (double) count / i;
+    *gc = count / i;
     *len = i;
 }
 
