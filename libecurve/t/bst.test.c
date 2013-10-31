@@ -21,27 +21,26 @@ int stuff(void)
 {
     int res;
     struct ec_bst t;
-    struct test_data test_data;
+    struct test_data value;
     union ec_bst_key key;
-    union ec_bst_data data = { .ptr = &test_data };
 
     DESC("inserting/updating");
 
-    ec_bst_init(&t, EC_BST_UINT, sizeof test_data);
+    ec_bst_init(&t, EC_BST_UINT, sizeof value);
 
 #define INS(k, d) \
     key.uint = k;   \
-    test_data.x = d; \
-    res = ec_bst_insert(&t, key, data)
+    value.x = d; \
+    res = ec_bst_insert(&t, key, &value)
 
 #define UPD(k, d) \
     key.uint = k;   \
-    test_data.x = d; \
-    res = ec_bst_update(&t, key, data)
+    value.x = d; \
+    res = ec_bst_update(&t, key, &value)
 
 #define GET(k) \
     key.uint = k;   \
-    res = ec_bst_get(&t, key, &data)
+    res = ec_bst_get(&t, key, &value)
 
 #define RM(k) \
     key.uint = k;   \
@@ -74,11 +73,11 @@ int stuff(void)
 
     GET(21);
     assert_int_eq(res, EC_SUCCESS, "getting existent key succeeded");
-    assert_uint_eq(((struct test_data*)data.ptr)->x, 42, "correct value retrieved");
+    assert_uint_eq(value.x, 42, "correct value retrieved");
 
     GET(42);
     assert_int_eq(res, EC_SUCCESS, "getting existent key succeeded");
-    assert_uint_eq(((struct test_data*)data.ptr)->x, 0, "correct value retrieved");
+    assert_uint_eq(value.x, 0, "correct value retrieved");
 
     RM(42);
     assert_int_eq(res, EC_SUCCESS, "removing existent key succeeded");

@@ -7,21 +7,22 @@
 
 struct ec_bst_node {
     union ec_bst_key key;
-    union ec_bst_data data;
+    void *value;
     struct ec_bst_node *parent;
     struct ec_bst_node *left;
     struct ec_bst_node *right;
 };
 
+/* compare keys */
 static int cmp_keys(struct ec_bst *t, union ec_bst_key x, union ec_bst_key y);
 
 /* create a new bst node */
 static struct ec_bst_node *bstnode_new(union ec_bst_key key,
-        union ec_bst_data data, size_t data_size,
+        const void *value, size_t value_size,
         struct ec_bst_node *parent);
 
 /* free a bst node and all it's descendants recursively */
-static void bstnode_free(struct ec_bst_node *n, size_t data_size,
+static void bstnode_free(struct ec_bst_node *n, size_t value_size,
         ec_bst_cb_remove callback);
 
 /* in-order iteration */
@@ -36,7 +37,6 @@ static struct ec_bst_node *bstnode_find(struct ec_bst *t,
 static struct ec_bst_node *bstnode_remove(struct ec_bst_node *n);
 
 
-/* compare unsigned integers */
 static int
 cmp_keys(struct ec_bst *t, union ec_bst_key x, union ec_bst_key y)
 {
@@ -60,7 +60,7 @@ cmp_keys(struct ec_bst *t, union ec_bst_key x, union ec_bst_key y)
 }
 
 static struct ec_bst_node *
-bstnode_new(union ec_bst_key key, union ec_bst_data data, size_t data_size,
+bstnode_new(union ec_bst_key key, const void *value, size_t value_size,
         struct ec_bst_node *parent)
 {
     struct ec_bst_node *n = malloc(sizeof *n);
@@ -72,34 +72,27 @@ bstnode_new(union ec_bst_key key, union ec_bst_data data, size_t data_size,
     n->parent = parent;
     n->left = NULL;
     n->right = NULL;
-    if (data_size) {
-        n->data.ptr = malloc(data_size);
-        if (!n->data.ptr) {
-            free(n);
-            return NULL;
-        }
-        memcpy(n->data.ptr, data.ptr, data_size);
+    n->value = malloc(value_size);
+    if (!n->value) {
+        free(n);
+        return NULL;
     }
-    else {
-        n->data = data;
-    }
+    memcpy(n->value, value, value_size);
     return n;
 }
 
 static void
-bstnode_free(struct ec_bst_node *n, size_t data_size, ec_bst_cb_remove callback)
+bstnode_free(struct ec_bst_node *n, size_t value_size, ec_bst_cb_remove callback)
 {
     if (!n) {
         return;
     }
-    bstnode_free(n->left, data_size, callback);
-    bstnode_free(n->right, data_size, callback);
+    bstnode_free(n->left, value_size, callback);
+    bstnode_free(n->right, value_size, callback);
     if (callback) {
-        callback(n->data);
+        callback(n->value);
     }
-    if (data_size) {
-        free(n->data.ptr);
-    }
+    free(n->value);
     free(n);
 }
 
@@ -114,7 +107,7 @@ bstnode_walk(struct ec_bst_node *n, ec_bst_cb_walk callback, void *opaque)
     if (res != EC_SUCCESS) {
         return res;
     }
-    res = callback(n->key, n->data, opaque);
+    res = callback(n->key, n->value, opaque);
     if (res != EC_SUCCESS) {
         return res;
     }
@@ -209,12 +202,12 @@ bstnode_remove(struct ec_bst_node *n)
 
 
 void
-ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type, size_t data_size)
+ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type, size_t value_size)
 {
     t->root = NULL;
     t->size = 0;
     t->key_type = key_type;
-    t->data_size = data_size;
+    t->value_size = value_size;
 }
 
 void
@@ -223,7 +216,7 @@ ec_bst_clear(struct ec_bst *t, ec_bst_cb_remove callback)
     if (!t || !t->root) {
         return;
     }
-    bstnode_free(t->root, t->data_size, callback);
+    bstnode_free(t->root, t->value_size, callback);
     t->root = NULL;
     t->size = 0;
 }
@@ -242,12 +235,12 @@ ec_bst_size(const struct ec_bst *t)
 
 static int
 insert_or_update(struct ec_bst *t, union ec_bst_key key,
-        union ec_bst_data data, bool update)
+        const void *value, bool update)
 {
     struct ec_bst_node *n, *ins;
     int cmp;
     if (!t->root) {
-        t->root = bstnode_new(key, data, t->data_size, NULL);
+        t->root = bstnode_new(key, value, t->value_size, NULL);
         if (t->root) {
             t->size = 1;
             return EC_SUCCESS;
@@ -260,22 +253,17 @@ insert_or_update(struct ec_bst *t, union ec_bst_key key,
     cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
         if (update) {
-            if (t->data_size) {
-                memcpy(n->data.ptr, data.ptr, t->data_size);
-            }
-            else {
-                n->data = data;
-            }
+            memcpy(n->value, value, t->value_size);
             return EC_SUCCESS;
         }
         return EC_EEXIST;
     }
     else if (cmp < 0) {
-        ins = bstnode_new(key, data, t->data_size, n);
+        ins = bstnode_new(key, value, t->value_size, n);
         n->left = ins;
     }
     else {
-        ins = bstnode_new(key, data, t->data_size, n);
+        ins = bstnode_new(key, value, t->value_size, n);
         n->right = ins;
     }
 
@@ -288,19 +276,19 @@ insert_or_update(struct ec_bst *t, union ec_bst_key key,
 }
 
 int
-ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
+ec_bst_insert(struct ec_bst *t, union ec_bst_key key, const void *value)
 {
-    return insert_or_update(t, key, data, false);
+    return insert_or_update(t, key, value, false);
 }
 
 int
-ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data)
+ec_bst_update(struct ec_bst *t, union ec_bst_key key, const void *value)
 {
-    return insert_or_update(t, key, data, true);
+    return insert_or_update(t, key, value, true);
 }
 
 int
-ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data)
+ec_bst_get(struct ec_bst *t, union ec_bst_key key, void *value)
 {
     struct ec_bst_node *n;
     if (!t->root) {
@@ -309,12 +297,7 @@ ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data)
 
     n = bstnode_find(t, t->root, key);
     if (cmp_keys(t, key, n->key) == 0) {
-        if (t->data_size) {
-            memcpy(data->ptr, n->data.ptr, t->data_size);
-        }
-        else {
-            *data = n->data;
-        }
+        memcpy(value, n->value, t->value_size);
         return EC_SUCCESS;
     }
     return EC_ENOENT;
@@ -348,11 +331,9 @@ ec_bst_remove(struct ec_bst *t, union ec_bst_key key, ec_bst_cb_remove callback)
     }
 
     if (callback) {
-        callback(del->data);
+        callback(del->value);
     }
-    if (t->data_size) {
-        free(del->data.ptr);
-    }
+    free(del->value);
     free(del);
     t->size--;
     return EC_SUCCESS;

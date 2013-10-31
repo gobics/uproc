@@ -16,11 +16,6 @@ union ec_bst_key {
     struct ec_word word;
 };
 
-union ec_bst_data {
-    uintmax_t uint;
-    void *ptr;
-};
-
 enum ec_bst_keytype {
     EC_BST_UINT,
     EC_BST_WORD,
@@ -37,19 +32,18 @@ struct ec_bst {
     /** Key type */
     enum ec_bst_keytype key_type;
 
-    /** Size of the objects pointed to by data.ptr (or 0) */
-    size_t data_size;
+    /** Size of value objects */
+    size_t value_size;
 };
 
-typedef int (*ec_bst_cb_walk)(union ec_bst_key, union ec_bst_data, void*);
-typedef int (*ec_bst_cb_remove)(union ec_bst_data);
+typedef int (*ec_bst_cb_walk)(union ec_bst_key, const void*, void*);
+typedef int (*ec_bst_cb_remove)(const void*);
 
 /** Initialize an empty binary search tree
  *
- * \param t         bst instance
- * \param key_type  key type
- * \param data_size number of bytes to copy from/to the ptr member of an
- *                  ec_bst_data object or 0 if a different member is used
+ * \param t             bst instance
+ * \param key_type      key type
+ * \param value_size    size of the stored values
  */
 void ec_bst_init(struct ec_bst *t, enum ec_bst_keytype key_type,
         size_t data_size);
@@ -73,13 +67,13 @@ size_t ec_bst_size(const struct ec_bst *t);
  *
  * \param t     bst instance
  * \param key   search key
- * \param data  pointer to be stored
+ * \param value pointer to data to be stored
  *
  * \retval #EC_SUCCESS  item was inserted
  * \retval #EC_EEXIST   `key` is already present
  * \retval #EC_ENOMEM   memory allocation failed
  */
-int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
+int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, const void *value);
 
 /** Update item
  *
@@ -88,23 +82,23 @@ int ec_bst_insert(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data
  *
  * \param t     bst instance
  * \param key   search key
- * \param data  pointer to be stored
+ * \param value pointer to data to be stored
  *
  * \retval #EC_SUCCESS  item was inserted/updated
  * \retval #EC_ENOMEM   memory allocation failed
  */
-int ec_bst_update(struct ec_bst *t, union ec_bst_key key, union ec_bst_data data);
+int ec_bst_update(struct ec_bst *t, union ec_bst_key key, const void *data);
 
 /** Get item
  *
  * \param t     bst instance
  * \param key   search key
- * \param data  _OUT_: data associated with `key`
+ * \param value _OUT_: data associated with `key`
  *
- * \retval #EC_SUCCESS  an item for `key` was found and stored in `*data`
- * \retval #EC_ENOENT   no item found, `*data` remains unchanged
+ * \retval #EC_SUCCESS  an item for `key` was found and stored in `*value`
+ * \retval #EC_ENOENT   no item found, `*value` remains unchanged
  */
-int ec_bst_get(struct ec_bst *t, union ec_bst_key key, union ec_bst_data *data);
+int ec_bst_get(struct ec_bst *t, union ec_bst_key key, void *value);
 
 /** Remove item
  *
@@ -123,7 +117,7 @@ int ec_bst_remove(struct ec_bst *t, union ec_bst_key key,
 
 /** In-order iteration
  *
- * Iterate over all nodes, passing key, data and a caller-provided `opaque`
+ * Iterate over all nodes, passing key, value and a caller-provided `opaque`
  * pointer to the function pointed to by `callback`. If the callback function
  * does _not_ return #EC_SUCCESS, iteration is aborted and that value is
  * returned.
