@@ -3,12 +3,6 @@
 #include <string.h>
 #include <time.h>
 
-/* MATLAB headers */
-#if 0
-#include <matrix.h>
-#include <mat.h>
-#endif
-
 #include "ecurve.h"
 
 #define SEQ_COUNT_MULTIPLIER 10000
@@ -73,18 +67,23 @@ randseq(char *buf, size_t len, const struct ec_alphabet *alpha,
 }
 
 void
-append(double **dest, size_t *dest_n, size_t *dest_sz, double *src, size_t n)
+append(double **dest, size_t *dest_n, size_t *dest_sz, struct ec_pc_pred *src,
+        size_t n)
 {
     double *d = *dest;
     if (!d) {
         *dest_sz = 1000000;
         d = xrealloc(d, *dest_sz * sizeof *d);
     }
-    while (*dest_n + n > *dest_sz) {
-        *dest_sz += 100000;
+    if (*dest_n + n > *dest_sz) {
+        while (*dest_n + n > *dest_sz) {
+            *dest_sz += 100000;
+        }
         d = xrealloc(d, *dest_sz * sizeof *d);
     }
-    memcpy(d + *dest_n, src, n * sizeof *d);
+    for (size_t i = 0; i < n; i++) {
+        d[*dest_n + i] = src[i].score;
+    }
     *dest = d;
     *dest_n += n;
 }
@@ -240,44 +239,41 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-#pragma omp parallel private(res)
+#pragma omp parallel private(res) shared(fwd, rev, substmat)
     {
-        char seq[LEN_MAX + 1];
-
-        double *pred_scores = NULL;
-        ec_class *pred_classes = NULL;
-        size_t pred_count;
-
-        size_t all_pred_n, all_pred_sz;
-        double *all_pred = NULL;
-
-        unsigned power;
-        unsigned long i, seq_count;
-        size_t seq_len;
 
 #pragma omp for
-        for (power = POW_MIN; power <= POW_MAX; power++) {
+        for (unsigned power = POW_MIN; power <= POW_MAX; power++) {
+        char seq[LEN_MAX + 1];
 
-            all_pred_n = 0;
+        size_t all_preds_n, all_preds_sz;
+        double *all_preds = NULL;
+
+        unsigned long i, seq_count;
+        size_t seq_len;
+            struct ec_protclass pc;
+            struct ec_pc_results results;
+            results.preds = NULL;
+            results.n = results.sz = 0;
+            ec_pc_init(&pc, EC_PC_ALL, &fwd, &rev, substmat, NULL, NULL);
+
+            all_preds_n = 0;
             seq_len = 1 << power;
             seq_count = (1 << (POW_MAX - power)) * SEQ_COUNT_MULTIPLIER;
             seq[seq_len] = '\0';
             for (i = 0; i < seq_count; i++) {
                 randseq(seq, seq_len, &alpha, &alpha_probs);
-                res = ec_classify_protein_all(seq, substmat, &fwd, &rev, &pred_count,
-                        &pred_classes, &pred_scores);
-                if (res != EC_SUCCESS) {
-                    fprintf(stderr, "error in ec_classify_protein\n");
-                }
-                append(&all_pred, &all_pred_n, &all_pred_sz, pred_scores, pred_count);
+                ec_pc_classify(&pc, seq, &results);
+                append(&all_preds, &all_preds_n, &all_preds_sz, results.preds, results.n);
             }
-            qsort(all_pred, all_pred_n, sizeof *all_pred, &double_cmp);
+            qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-            thresh2[power - POW_MIN] = all_pred[MIN(seq_count / 100, all_pred_n - 1)];
-            thresh3[power - POW_MIN] = all_pred[MIN(seq_count / 1000, all_pred_n - 1)];
+            thresh2[power - POW_MIN] = all_preds[MIN(seq_count / 100, all_preds_n - 1)];
+            thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000, all_preds_n - 1)];
+            free(all_preds);
+            free(results.preds);
         }
-        free(all_pred);
     }
 
     store_interpolated(thresh2, outfile_prefix, 2);
