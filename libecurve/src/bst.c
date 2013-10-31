@@ -345,9 +345,44 @@ ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk callback, void *opaque)
     return bstnode_walk(t->root, callback, opaque);
 }
 
-int
-ec_bst_free_ptr(union ec_bst_data val)
+void
+ec_bstiter_init(struct ec_bstiter *iter, const struct ec_bst *t)
 {
-    free(val.ptr);
-    return EC_SUCCESS;
+    struct ec_bst_node *n = t->root;
+    iter->t = t;
+    if (n) {
+        while (n->left) {
+            n = n->left;
+        }
+    }
+    iter->cur = n;
+}
+
+int
+ec_bstiter_next(struct ec_bstiter *iter, union ec_bst_key *key,
+        void *value)
+{
+    struct ec_bst_node *n = iter->cur;
+
+    if (!n) {
+        return EC_ITER_STOP;
+    }
+
+    *key = n->key;
+    memcpy(value, n->value, iter->t->value_size);
+
+    if (n->right) {
+        n = n->right;
+        while (n->left) {
+            n = n->left;
+        }
+        iter->cur = n;
+        return EC_ITER_YIELD;
+    }
+
+    while (n->parent && n == n->parent->right) {
+        n = n->parent;
+    }
+    iter->cur = n->parent;
+    return EC_ITER_YIELD;
 }

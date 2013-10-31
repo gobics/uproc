@@ -1,6 +1,9 @@
 #include "test.h"
 #include "ecurve.h"
 
+#include <stdlib.h>
+#include <time.h>
+
 struct ec_alphabet alpha;
 
 struct test_data {
@@ -96,4 +99,34 @@ int stuff(void)
     return SUCCESS;
 }
 
-TESTS_INIT(stuff);
+int iter(void)
+{
+    unsigned i;
+    struct ec_bst t;
+    struct ec_bstiter iter;
+    union ec_bst_key key;
+    uintmax_t value = 42;
+    uintmax_t last;
+
+    DESC("iterator");
+
+    ec_bst_init(&t, EC_BST_UINT, sizeof value);
+
+    for (i = 0; i < 10000; i++) {
+        key.uint = rand();
+        ec_bst_insert(&t, key, &value);
+    }
+
+    ec_bstiter_init(&iter, &t);
+    ec_bstiter_next(&iter, &key, &value);
+    last = key.uint;
+
+    while (ec_bstiter_next(&iter, &key, &value) == EC_ITER_YIELD) {
+        assert_uint_gt(key.uint, last, "iteration in correct order");
+        last = key.uint;
+    }
+    ec_bst_clear(&t, NULL);
+    return SUCCESS;
+}
+
+TESTS_INIT(stuff, iter);

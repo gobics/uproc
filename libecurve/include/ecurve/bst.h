@@ -36,6 +36,12 @@ struct ec_bst {
     size_t value_size;
 };
 
+struct ec_bstiter
+{
+    const struct ec_bst *t;
+    struct ec_bst_node *cur;
+};
+
 typedef int (*ec_bst_cb_walk)(union ec_bst_key, const void*, void*);
 typedef int (*ec_bst_cb_remove)(const void*);
 
@@ -132,11 +138,10 @@ int ec_bst_remove(struct ec_bst *t, union ec_bst_key key,
  */
 int ec_bst_walk(struct ec_bst *t, ec_bst_cb_walk callback, void *opaque);
 
+/** Initialize iterator */
+void ec_bstiter_init(struct ec_bstiter *iter, const struct ec_bst *t);
 
-/** Free the `ptr` member of a union ec_bst_data
- *
- * Can be used as a callback for ec_bst_clear() or ec_bst_remove().
- */
-int ec_bst_free_ptr(union ec_bst_data val);
+/** Obtain next key/value pair */
+int ec_bstiter_next(struct ec_bstiter *iter, union ec_bst_key *key, void *value);
 
 #endif
