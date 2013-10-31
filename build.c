@@ -20,31 +20,6 @@ parse_class(const char *id, ec_class *cls)
 }
 
 static int
-walk_cb_count_nondups(union ec_bst_key key, union ec_bst_data data,
-        void *opaque)
-{
-    size_t *n = opaque;
-    (void) key;
-    if (data.uint != (uintmax_t) -1) {
-        (*n)++;
-    }
-    return EC_SUCCESS;
-}
-
-static int
-walk_cb_insert_nondups(union ec_bst_key key, union ec_bst_data data,
-        void *opaque)
-{
-    struct ecurve_entry **arr = opaque;
-    if (data.uint != (uintmax_t) -1) {
-        (*arr)->word = key.word;
-        (*arr)->cls = data.uint;
-        (*arr)++;
-    }
-    return EC_SUCCESS;
-}
-
-static int
 extract_uniques(ec_io_stream *stream, ec_amino first,
         const struct ec_alphabet *alpha, struct ecurve_entry **entries,
         size_t *n_entries)
@@ -57,18 +32,17 @@ extract_uniques(ec_io_stream *stream, ec_amino first,
 
     struct ec_bst tree;
     union ec_bst_key tree_key;
-    union ec_bst_data tree_data;
 
     ec_class cls;
-    struct ecurve_entry *entries_insert;
-
-    struct ec_worditer iter;
-    struct ec_word fwd_word, rev_word;
 
     ec_fasta_reader_init(&rd, 8192);
-    ec_bst_init(&tree, EC_BST_WORD);
+    ec_bst_init(&tree, EC_BST_WORD, sizeof cls);
 
     while ((res = ec_fasta_read(stream, &rd)) == EC_ITER_YIELD) {
+        struct ec_worditer iter;
+        struct ec_word fwd_word = EC_WORD_INITIALIZER, rev_word = EC_WORD_INITIALIZER;
+        ec_class tmp_cls;
+
         res = parse_class(rd.header, &cls);
         ec_worditer_init(&iter, rd.seq, alpha);
 
@@ -77,19 +51,18 @@ extract_uniques(ec_io_stream *stream, ec_amino first,
                 continue;
             }
             tree_key.word = fwd_word;
-            res = ec_bst_get(&tree, tree_key, &tree_data);
+            res = ec_bst_get(&tree, tree_key, &tmp_cls);
 
             /* word was already present -> mark as duplicate if stored class
              * differs */
             if (res == EC_SUCCESS) {
-                if (tree_data.uint != cls) {
-                    tree_data.uint = -1;
-                    res = ec_bst_update(&tree, tree_key, tree_data);
+                if (tmp_cls != cls) {
+                    tmp_cls = -1;
+                    res = ec_bst_update(&tree, tree_key, &tmp_cls);
                 }
             }
             else if (res == EC_ENOENT) {
-                tree_data.uint = cls;
-                res = ec_bst_insert(&tree, tree_key, tree_data);
+                res = ec_bst_insert(&tree, tree_key, &cls);
             }
 
             if (EC_ISERROR(res)) {
@@ -104,15 +77,29 @@ extract_uniques(ec_io_stream *stream, ec_amino first,
         goto error;
     }
 
+    struct ec_bstiter iter;
+    ec_bstiter_init(&iter, &tree);
     *n_entries = 0;
-    (void) ec_bst_walk(&tree, walk_cb_count_nondups, n_entries);
+    while (ec_bstiter_next(&iter, &tree_key, &cls) == EC_ITER_YIELD) {
+        if (cls != (ec_class) -1) {
+            *n_entries += 1;
+        }
+    }
     *entries = malloc(*n_entries * sizeof **entries);
-    if (!entries) {
+    if (!*entries) {
         res = EC_ENOMEM;
         goto error;
     }
-    entries_insert = *entries;
-    (void) ec_bst_walk(&tree, walk_cb_insert_nondups, &entries_insert);
+
+    ec_bstiter_init(&iter, &tree);
+    struct ecurve_entry *entries_insert = *entries;
+    while (ec_bstiter_next(&iter, &tree_key, &cls) == EC_ITER_YIELD) {
+        if (cls != (ec_class) -1) {
+            entries_insert->word = tree_key.word;
+            entries_insert->cls = cls;
+            entries_insert++;
+        }
+    }
 
 error:
     ec_bst_clear(&tree, NULL);
@@ -285,7 +272,7 @@ main(int argc, char **argv)
     };
 
     if (argc != ARGC) {
-        fprintf(stderr, "usage: %s f|r ALPHABET INFILE OUTFILE\n", argv[0]);
+        fprintf(stderr, "usage: %s ALPHABET INFILE OUTFILE\n", argv[0]);
         return EXIT_FAILURE;
     }
 
