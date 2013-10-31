@@ -123,8 +123,11 @@ ec_fasta_read(ec_io_stream *stream, struct ec_fasta_reader *rd)
             rd->seq = tmp;
             rd->seq_sz = total_len + len;
         }
-        memcpy(rd->seq + total_len, rd->line, len - 1);
-        total_len += len - 1;
+        if (rd->line[len - 1] == '\n') {
+            len--;
+        }
+        memcpy(rd->seq + total_len, rd->line, len);
+        total_len += len;
         rd->seq[total_len] = '\0';
     }
     rd->seq_len = total_len;
