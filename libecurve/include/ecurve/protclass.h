@@ -50,6 +50,7 @@ int ec_pc_init(struct ec_protclass *pc,
         ec_pc_filter *filter, void *filter_arg);
 
 void ec_pc_destroy(struct ec_protclass *pc);
+
 int ec_pc_classify(const struct ec_protclass *pc, const char *seq,
         struct ec_pc_results *results);
 #endif
