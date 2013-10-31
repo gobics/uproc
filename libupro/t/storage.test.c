@@ -19,7 +19,7 @@
 
 struct upro_ecurve ecurve;
 upro_suffix suffixes[] = { 1, 3, 5, 10, 44, 131, 133, 1202, 4551ULL << (3 * UPRO_AMINO_BITS) };
-upro_class classes[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
+upro_family families[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
 struct upro_alphabet alpha;
 
 void setup(void)
@@ -28,7 +28,7 @@ void setup(void)
     upro_ecurve_init(&ecurve, ALPHABET, 0);
     ecurve.suffix_count = elements_of(suffixes);
     ecurve.suffixes = suffixes;
-    ecurve.classes = classes;
+    ecurve.families = families;
     for (i = 0; i < 3; i++) {
         ecurve.prefixes[i].first = 0;
         ecurve.prefixes[i].count = -1;
@@ -84,7 +84,7 @@ int test_storage(int format, int iotype, char *filename)
     {
         INFO("i = %zu", i);
         assert_uint_eq(ecurve.suffixes[i], new_curve.suffixes[i], "suffixes equal");
-        assert_uint_eq(ecurve.classes[i], new_curve.classes[i], "classes equal");
+        assert_uint_eq(ecurve.families[i], new_curve.families[i], "families equal");
     }
     upro_ecurve_destroy(&new_curve);
     return SUCCESS;
@@ -138,7 +138,7 @@ int test_mmap(void)
     {
         INFO("i = %zu", i);
         assert_uint_eq(ecurve.suffixes[i], new_curve.suffixes[i], "suffixes equal");
-        assert_uint_eq(ecurve.classes[i], new_curve.classes[i], "classes equal");
+        assert_uint_eq(ecurve.families[i], new_curve.families[i], "families equal");
     }
     upro_mmap_unmap(&new_curve);
     return SUCCESS;

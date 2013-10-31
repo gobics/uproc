@@ -10,7 +10,7 @@
 #include "upro/ecurve.h"
 #include "upro/substmat.h"
 
-typedef bool upro_pc_filter(const char*, size_t, upro_class, double, void*);
+typedef bool upro_pc_filter(const char*, size_t, upro_family, double, void*);
 
 enum upro_pc_mode
 {
@@ -23,7 +23,7 @@ struct upro_pc_results
 {
     struct upro_pc_pred
     {
-        upro_class cls;
+        upro_family family;
         double score;
     } *preds;
     size_t n, sz;

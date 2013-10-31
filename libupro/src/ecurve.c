@@ -68,15 +68,15 @@ upro_ecurve_init(struct upro_ecurve *ecurve, const char *alphabet,
 
     if (suffix_count) {
         ecurve->suffixes = malloc(sizeof *ecurve->suffixes * suffix_count);
-        ecurve->classes = malloc(sizeof *ecurve->classes * suffix_count);
-        if (!ecurve->suffixes || !ecurve->classes) {
+        ecurve->families = malloc(sizeof *ecurve->families * suffix_count);
+        if (!ecurve->suffixes || !ecurve->families) {
             upro_ecurve_destroy(ecurve);
             return UPRO_ENOMEM;
         }
     }
     else {
         ecurve->suffixes = NULL;
-        ecurve->classes = NULL;
+        ecurve->families = NULL;
     }
     ecurve->suffix_count = suffix_count;
 
@@ -97,7 +97,7 @@ upro_ecurve_destroy(struct upro_ecurve *ecurve)
 #endif
     free(ecurve->prefixes);
     free(ecurve->suffixes);
-    free(ecurve->classes);
+    free(ecurve->families);
 }
 
 int
@@ -133,18 +133,18 @@ upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src)
     }
     dest->suffixes = tmp;
 
-    tmp = realloc(dest->classes, new_suffix_count * sizeof *dest->classes);
+    tmp = realloc(dest->families, new_suffix_count * sizeof *dest->families);
     if (!tmp) {
         return UPRO_ENOMEM;
     }
-    dest->classes = tmp;
+    dest->families = tmp;
 
     memcpy(dest->suffixes + dest->suffix_count,
             src->suffixes,
             src->suffix_count * sizeof *src->suffixes);
-    memcpy(dest->classes + dest->suffix_count,
-            src->classes,
-            src->suffix_count * sizeof *src->classes);
+    memcpy(dest->families + dest->suffix_count,
+            src->families,
+            src->suffix_count * sizeof *src->families);
 
     for (p = dest_last + 1; p < src_first; p++) {
         dest->prefixes[p].count = 0;
@@ -167,8 +167,8 @@ void upro_ecurve_get_alphabet(const struct upro_ecurve *ecurve,
 
 int
 upro_ecurve_lookup(const struct upro_ecurve *ecurve, const struct upro_word *word,
-                 struct upro_word *lower_neighbour, upro_class *lower_class,
-                 struct upro_word *upper_neighbour, upro_class *upper_class)
+                 struct upro_word *lower_neighbour, upro_family *lower_class,
+                 struct upro_word *upper_neighbour, upro_family *upper_class)
 {
     int res;
     upro_prefix p_lower, p_upper;
@@ -195,10 +195,10 @@ upro_ecurve_lookup(const struct upro_ecurve *ecurve, const struct upro_word *wor
     /* populate output variables */
     lower_neighbour->prefix = p_lower;
     lower_neighbour->suffix = ecurve->suffixes[lower];
-    *lower_class = ecurve->classes[lower];
+    *lower_class = ecurve->families[lower];
     upper_neighbour->prefix = p_upper;
     upper_neighbour->suffix = ecurve->suffixes[upper];
-    *upper_class = ecurve->classes[upper];
+    *upper_class = ecurve->families[upper];
 
     return res;
 }

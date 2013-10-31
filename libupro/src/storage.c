@@ -21,8 +21,8 @@
 #define PREFIX_PRI ">%." STR(UPRO_PREFIX_LEN) "s %zu\n"
 #define PREFIX_SCN ">%"  STR(UPRO_PREFIX_LEN) "c %zu"
 
-#define SUFFIX_PRI "%." STR(UPRO_SUFFIX_LEN) "s %" UPRO_CLASS_PRI "\n"
-#define SUFFIX_SCN "%"  STR(UPRO_SUFFIX_LEN) "c %" UPRO_CLASS_SCN
+#define SUFFIX_PRI "%." STR(UPRO_SUFFIX_LEN) "s %" UPRO_FAMILY_PRI "\n"
+#define SUFFIX_SCN "%"  STR(UPRO_SUFFIX_LEN) "c %" UPRO_FAMILY_SCN
 
 static int
 read_line(upro_io_stream *stream, char *line, size_t n)
@@ -78,7 +78,7 @@ load_prefix(upro_io_stream *stream, const struct upro_alphabet *alpha,
 
 static int
 load_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
-                  upro_suffix *suffix, upro_class *cls)
+                  upro_suffix *suffix, upro_family *family)
 {
     int res;
     char line[BUFSZ], word_str[UPRO_WORD_LEN + 1];
@@ -92,7 +92,7 @@ load_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     if (res != UPRO_SUCCESS) {
         return res;
     }
-    res = sscanf(line, SUFFIX_SCN, &word_str[UPRO_PREFIX_LEN], cls);
+    res = sscanf(line, SUFFIX_SCN, &word_str[UPRO_PREFIX_LEN], family);
     if (res != 2) {
         return UPRO_FAILURE;
     }
@@ -146,7 +146,7 @@ upro_storage_plain_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
             res = load_suffix(stream, &ecurve->alphabet,
-                    &ecurve->suffixes[s], &ecurve->classes[s]);
+                    &ecurve->suffixes[s], &ecurve->families[s]);
             if (res != UPRO_SUCCESS) {
                 return res;
             }
@@ -187,7 +187,7 @@ store_prefix(upro_io_stream *stream, const struct upro_alphabet *alpha,
 
 static int
 store_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
-        upro_suffix suffix, upro_class cls)
+        upro_suffix suffix, upro_family family)
 {
     int res;
     char str[UPRO_WORD_LEN + 1];
@@ -197,7 +197,7 @@ store_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     if (res != UPRO_SUCCESS) {
         return res;
     }
-    res = upro_io_printf(stream, SUFFIX_PRI, &str[UPRO_PREFIX_LEN], cls);
+    res = upro_io_printf(stream, SUFFIX_PRI, &str[UPRO_PREFIX_LEN], family);
     return (res > 0) ? UPRO_SUCCESS : UPRO_FAILURE;
 }
 
@@ -229,7 +229,7 @@ upro_storage_plain_store(const struct upro_ecurve *ecurve, upro_io_stream *strea
 
         for (i = 0; i < suffix_count; i++) {
             res = store_suffix(stream, &ecurve->alphabet,
-                    ecurve->suffixes[offset + i], ecurve->classes[offset + i]);
+                    ecurve->suffixes[offset + i], ecurve->families[offset + i]);
             if (res != UPRO_SUCCESS) {
                 return res;
             }
@@ -269,7 +269,7 @@ upro_storage_binary_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
         res = UPRO_ESYSCALL;
         goto error;
     }
-    sz = upro_io_read(ecurve->classes, sizeof *ecurve->classes, suffix_count,
+    sz = upro_io_read(ecurve->families, sizeof *ecurve->families, suffix_count,
             stream);
     if (sz != suffix_count) {
         res = UPRO_ESYSCALL;
@@ -322,7 +322,7 @@ upro_storage_binary_store(const struct upro_ecurve *ecurve, upro_io_stream *stre
         res = UPRO_ESYSCALL;
         goto error;
     }
-    sz = upro_io_write(ecurve->classes, sizeof *ecurve->classes,
+    sz = upro_io_write(ecurve->families, sizeof *ecurve->families,
             ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         res = UPRO_ESYSCALL;

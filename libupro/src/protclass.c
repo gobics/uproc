@@ -97,12 +97,12 @@ sc_finalize(struct sc *score)
 }
 
 static int
-scores_add(struct upro_bst *scores, upro_class cls, size_t index,
+scores_add(struct upro_bst *scores, upro_family family, size_t index,
            double dist[static UPRO_SUFFIX_LEN], bool reverse)
 {
     int res;
     struct sc sc;
-    union upro_bst_key key = { .uint = cls };
+    union upro_bst_key key = { .uint = family };
     res = upro_bst_get(scores, key, &sc);
     if (res == UPRO_ENOENT) {
         sc_init(&sc);
@@ -136,20 +136,20 @@ scores_add_word(struct upro_bst *scores, const struct upro_word *word, size_t in
     struct upro_word
         lower_nb = UPRO_WORD_INITIALIZER,
         upper_nb = UPRO_WORD_INITIALIZER;
-    upro_class lower_cls, upper_cls;
+    upro_family lower_family, upper_family;
     double dist[UPRO_SUFFIX_LEN];
 
     if (!ecurve) {
         return UPRO_SUCCESS;
     }
-    upro_ecurve_lookup(ecurve, word, &lower_nb, &lower_cls, &upper_nb, &upper_cls);
+    upro_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb, &upper_family);
     align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
-    res = scores_add(scores, lower_cls, index, dist, reverse);
+    res = scores_add(scores, lower_family, index, dist, reverse);
     if (UPRO_ISERROR(res) || upro_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
     align_suffixes(dist, word->suffix, upper_nb.suffix, substmat);
-    res = scores_add(scores, upper_cls, index, dist, reverse);
+    res = scores_add(scores, upper_family, index, dist, reverse);
     return res;
 }
 
@@ -214,14 +214,14 @@ scores_finalize(const struct upro_protclass *pc, const char *seq,
     results->n = 0;
     upro_bstiter_init(&iter, score_tree);
     while (upro_bstiter_next(&iter, &key, &value) == UPRO_ITER_YIELD) {
-        upro_class cls = key.uint;
+        upro_family family = key.uint;
         double score = sc_finalize(&value);
         if (pc->filter &&
-                !pc->filter(seq, seq_len, cls, score, pc->filter_arg)) {
+                !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
             continue;
         }
         results->preds[results->n].score = score;
-        results->preds[results->n].cls = cls;
+        results->preds[results->n].family = family;
         results->n++;
     }
 

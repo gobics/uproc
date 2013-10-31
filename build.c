@@ -1,23 +1,23 @@
 #include "upro.h"
 #include <ctype.h>
 
-unsigned long filtered_counts[UPRO_CLASS_MAX] = { 0 };
+unsigned long filtered_counts[UPRO_FAMILY_MAX] = { 0 };
 
 struct ecurve_entry
 {
     struct upro_word word;
-    upro_class cls;
+    upro_family family;
 };
 
 static int
-parse_class(const char *id, upro_class *cls)
+parse_class(const char *id, upro_family *family)
 {
     int res;
     while (*id && !isdigit(*id)) {
         id++;
     }
 
-    res = sscanf(id, "%" UPRO_CLASS_SCN, cls);
+    res = sscanf(id, "%" UPRO_FAMILY_SCN, family);
     return res == 1 ? UPRO_SUCCESS : UPRO_FAILURE;
 }
 
@@ -35,17 +35,17 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
     struct upro_bst tree;
     union upro_bst_key tree_key;
 
-    upro_class cls;
+    upro_family family;
 
     upro_fasta_reader_init(&rd, 8192);
-    upro_bst_init(&tree, UPRO_BST_WORD, sizeof cls);
+    upro_bst_init(&tree, UPRO_BST_WORD, sizeof family);
 
     while ((res = upro_fasta_read(stream, &rd)) == UPRO_ITER_YIELD) {
         struct upro_worditer iter;
         struct upro_word fwd_word = UPRO_WORD_INITIALIZER, rev_word = UPRO_WORD_INITIALIZER;
-        upro_class tmp_cls;
+        upro_family tmp_family;
 
-        res = parse_class(rd.header, &cls);
+        res = parse_class(rd.header, &family);
         upro_worditer_init(&iter, rd.seq, alpha);
 
         while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) == UPRO_ITER_YIELD) {
@@ -53,22 +53,22 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
                 continue;
             }
             tree_key.word = fwd_word;
-            res = upro_bst_get(&tree, tree_key, &tmp_cls);
+            res = upro_bst_get(&tree, tree_key, &tmp_family);
 
             /* word was already present -> mark as duplicate if stored class
              * differs */
             if (res == UPRO_SUCCESS) {
-                if (tmp_cls != cls) {
-                    filtered_counts[cls] += 1;
-                    if (tmp_cls != (upro_class)-1) {
-                        filtered_counts[tmp_cls] += 1;
+                if (tmp_family != family) {
+                    filtered_counts[family] += 1;
+                    if (tmp_family != (upro_family)-1) {
+                        filtered_counts[tmp_family] += 1;
                     }
-                    tmp_cls = -1;
-                    res = upro_bst_update(&tree, tree_key, &tmp_cls);
+                    tmp_family = -1;
+                    res = upro_bst_update(&tree, tree_key, &tmp_family);
                 }
             }
             else if (res == UPRO_ENOENT) {
-                res = upro_bst_insert(&tree, tree_key, &cls);
+                res = upro_bst_insert(&tree, tree_key, &family);
             }
 
             if (UPRO_ISERROR(res)) {
@@ -86,8 +86,8 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
     struct upro_bstiter iter;
     upro_bstiter_init(&iter, &tree);
     *n_entries = 0;
-    while (upro_bstiter_next(&iter, &tree_key, &cls) == UPRO_ITER_YIELD) {
-        if (cls != (upro_class) -1) {
+    while (upro_bstiter_next(&iter, &tree_key, &family) == UPRO_ITER_YIELD) {
+        if (family != (upro_family) -1) {
             *n_entries += 1;
         }
     }
@@ -99,10 +99,10 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
 
     upro_bstiter_init(&iter, &tree);
     struct ecurve_entry *entries_insert = *entries;
-    while (upro_bstiter_next(&iter, &tree_key, &cls) == UPRO_ITER_YIELD) {
-        if (cls != (upro_class) -1) {
+    while (upro_bstiter_next(&iter, &tree_key, &family) == UPRO_ITER_YIELD) {
+        if (family != (upro_family) -1) {
             entries_insert->word = tree_key.word;
-            entries_insert->cls = cls;
+            entries_insert->family = family;
             entries_insert++;
         }
     }
@@ -131,17 +131,17 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
         unsigned char *t = &types[i];
 
         /* |AA..| */
-        if (i < n - 1 && e[0].cls == e[1].cls) {
+        if (i < n - 1 && e[0].family == e[1].family) {
             t[0] = t[1] = CLUSTER;
         }
         /* |ABA.| */
-        else if (i < n - 2 && e[0].cls == e[2].cls) {
+        else if (i < n - 2 && e[0].family == e[2].family) {
             /* B|ABA.| */
             if (t[1] == BRIDGED || t[1] == CROSSOVER) {
                 t[0] = t[1] = t[2] = CROSSOVER;
             }
             /* |ABAB| */
-            else if (i < n - 3 && t[0] != CLUSTER && e[1].cls == e[3].cls) {
+            else if (i < n - 3 && t[0] != CLUSTER && e[1].family == e[3].family) {
                 t[0] = t[1] = t[2] = t[3] = CROSSOVER;
             }
             /* A|ABA.| or .|ABA.| */
@@ -160,7 +160,7 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
             k++;
         }
         else {
-            filtered_counts[entries[i].cls] += 1;
+            filtered_counts[entries[i].family] += 1;
         }
     }
     free(types);
@@ -185,7 +185,7 @@ insert_entries(struct upro_ecurve *ecurve, struct ecurve_entry *entries, size_t 
         ecurve->prefixes[current_prefix].first = i;
         for (k = i; k < n_entries && entries[k].word.prefix == current_prefix; k++) {
             ecurve->suffixes[k] = entries[k].word.suffix;
-            ecurve->classes[k] = entries[k].cls;
+            ecurve->families[k] = entries[k].family;
             ;
         }
         ecurve->prefixes[current_prefix].first = i;
@@ -306,7 +306,7 @@ main(int argc, char **argv)
     upro_storage_store(&ecurve, argv[OUTFILE], UPRO_STORAGE_PLAIN, UPRO_STORAGE_GZIP);
     upro_ecurve_destroy(&ecurve);
     fprintf(stderr, "filtered:\n");
-    for (size_t i = 0; i < UPRO_CLASS_MAX; i++) {
+    for (size_t i = 0; i < UPRO_FAMILY_MAX; i++) {
         if (filtered_counts[i]) {
             fprintf(stderr, "%5zu: %lu\n", i, filtered_counts[i]);
         }

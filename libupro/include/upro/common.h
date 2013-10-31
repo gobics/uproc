@@ -159,15 +159,15 @@ typedef uint_least64_t upro_suffix;
 
 
 /** Identifier of a protein class (or "protein family"). */
-typedef uint_least16_t upro_class;
+typedef uint_least16_t upro_family;
 
-/** Maximum value for #upro_class */
-#define UPRO_CLASS_MAX UINT_LEAST16_MAX
+/** Maximum value for #upro_family */
+#define UPRO_FAMILY_MAX UINT_LEAST16_MAX
 
-/** printf() format for #upro_class */
-#define UPRO_CLASS_PRI PRIu16
+/** printf() format for #upro_family */
+#define UPRO_FAMILY_PRI PRIu16
 
-/** scanf() format for #upro_class */
-#define UPRO_CLASS_SCN SCNu16
+/** scanf() format for #upro_family */
+#define UPRO_FAMILY_SCN SCNu16
 
 #endif

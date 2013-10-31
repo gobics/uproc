@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     mxArray *mInd, *mSuffixes, *mClasses;
     uint32_t *ind;
     uint64_t *suffixes;
-    uint16_t *classes;
+    uint16_t *families;
     size_t suffix_count;
 
     struct upro_ecurve ec;
@@ -40,13 +40,13 @@ int main(int argc, char **argv)
     fprintf(stderr, "type of EcurvePfams: %s\n", mxGetClassName(mClasses));
 
     suffixes = mxGetData(mSuffixes);
-    classes = mxGetData(mClasses);
+    families = mxGetData(mClasses);
 
     suffix_count = mxGetM(mSuffixes);
     upro_ecurve_init(&ec, ALPHABET, suffix_count);
     for (s = 0; s < suffix_count; s++) {
         ec.suffixes[s] = suffixes[s];
-        ec.classes[s] = classes[s];
+        ec.families[s] = families[s];
     }
     mxDestroyArray(mSuffixes);
     mxDestroyArray(mClasses);

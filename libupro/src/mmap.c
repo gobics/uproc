@@ -24,7 +24,7 @@ struct mmap_header {
 #define SIZE_HEADER (sizeof (struct mmap_header))
 #define SIZE_PREFIXES ((UPRO_PREFIX_MAX + 1) * sizeof (struct upro_ecurve_pfxtable))
 #define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (upro_suffix))
-#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (upro_class))
+#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (upro_family))
 #define SIZE_TOTAL(suffix_count) \
     (SIZE_HEADER + \
      SIZE_PREFIXES + \
@@ -89,7 +89,7 @@ upro_mmap_map(struct upro_ecurve *ecurve, const char *path)
     ecurve->suffix_count = header->suffix_count;
     ecurve->prefixes = (void *)(region + OFFSET_PREFIXES);
     ecurve->suffixes = (void *)(region + OFFSET_SUFFIXES);
-    ecurve->classes =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
+    ecurve->families =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
 
     return UPRO_SUCCESS;
 
@@ -151,7 +151,7 @@ upro_mmap_store(const struct upro_ecurve *ecurve, const char *path)
            ecurve->suffixes, SIZE_SUFFIXES(ecurve->suffix_count));
 
     memcpy(region + OFFSET_CLASSES(ecurve->suffix_count),
-           ecurve->classes, SIZE_CLASSES(ecurve->suffix_count));
+           ecurve->families, SIZE_CLASSES(ecurve->suffix_count));
 
     munmap(region, size);
     close(fd);

@@ -15,7 +15,7 @@ struct upro_dc_results
 {
     struct upro_dc_pred
     {
-        upro_class cls;
+        upro_family family;
         double score;
         unsigned frame;
     } *preds;

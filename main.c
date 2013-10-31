@@ -107,12 +107,12 @@ input_read(upro_io_stream *stream, struct upro_fasta_reader *rd, struct buffer *
 }
 
 bool
-prot_filter(const char *seq, size_t len, upro_class cls, double score,
+prot_filter(const char *seq, size_t len, upro_family family, double score,
         void *opaque)
 {
     static size_t rows, cols;
     struct upro_matrix *thresh = opaque;
-    (void) seq, (void) cls;
+    (void) seq, (void) family;
     if (!thresh) {
         return score > 0.0;
     }
@@ -170,25 +170,25 @@ output(struct buffer *buf,
 #ifdef MAIN_DNA
             struct upro_dc_pred *pred = &buf->results[i].preds[j];
             if (pr_stream) {
-                upro_io_printf(pr_stream, "%zu,%s,%u,%" UPRO_CLASS_PRI ",%1.3f\n",
+                upro_io_printf(pr_stream, "%zu,%s,%u,%" UPRO_FAMILY_PRI ",%1.3f\n",
                         i + pr_seq_offset + 1,
                         buf->header[i],
                         pred->frame + 1,
-                        pred->cls,
+                        pred->family,
                         pred->score);
             }
 #else
             struct upro_pc_pred *pred = &buf->results[i].preds[j];
             if (pr_stream) {
-                upro_io_printf(pr_stream, "%zu,%s,%" UPRO_CLASS_PRI ",%1.3f\n",
+                upro_io_printf(pr_stream, "%zu,%s,%" UPRO_FAMILY_PRI ",%1.3f\n",
                         i + pr_seq_offset + 1,
                         buf->header[i],
-                        pred->cls,
+                        pred->family,
                         pred->score);
             }
 #endif
             if (counts) {
-                counts[pred->cls] += 1;
+                counts[pred->family] += 1;
             }
         }
     }
@@ -261,7 +261,7 @@ main(int argc, char **argv)
 
     upro_io_stream *out_stream = NULL;
     size_t unexplained = 0, *out_unexplained = NULL;
-    uintmax_t counts[UPRO_CLASS_MAX] = { 0 }, *out_counts = NULL;
+    uintmax_t counts[UPRO_FAMILY_MAX] = { 0 }, *out_counts = NULL;
 
 #define SHORT_OPTS_PROT "hvBMpcfP:S:"
 #ifdef MAIN_DNA
@@ -494,9 +494,9 @@ main(int argc, char **argv)
         upro_io_printf(upro_stdout, "%zu\n", n_seqs);
     }
     if (out_counts) {
-        for (upro_class i = 0; i < UPRO_CLASS_MAX; i++) {
+        for (upro_family i = 0; i < UPRO_FAMILY_MAX; i++) {
             if (out_counts[i]) {
-                upro_io_printf(upro_stdout, "%" UPRO_CLASS_PRI ": %ju\n",
+                upro_io_printf(upro_stdout, "%" UPRO_FAMILY_PRI ": %ju\n",
                         i, out_counts[i]);
             }
 

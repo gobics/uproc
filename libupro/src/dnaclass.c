@@ -55,7 +55,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
         }
         for (i = 0; i < pc_res.n; i++) {
             double score = pc_res.preds[i].score;
-            key.uint = pc_res.preds[i].cls;
+            key.uint = pc_res.preds[i].family;
             value.score = -INFINITY;
             (void) upro_bst_get(&max_scores, key, &value);
             if (score > value.score) {
@@ -82,7 +82,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
     }
     upro_bstiter_init(&max_scores_iter, &max_scores);
     for (i = 0; upro_bstiter_next(&max_scores_iter, &key, &value) == UPRO_ITER_YIELD; i++) {
-        results->preds[i].cls = key.uint;
+        results->preds[i].family = key.uint;
         results->preds[i].score = value.score;
         results->preds[i].frame = value.frame;
     }

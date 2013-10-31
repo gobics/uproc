@@ -38,11 +38,11 @@ struct upro_ecurve {
      */
     upro_suffix *suffixes;
 
-    /** Table of classes associated with the suffixes
+    /** Table of families associated with the suffixes
      *
      * Will be allocated to hold `#suffix_count` objects
      */
-    upro_class *classes;
+    upro_family *families;
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct upro_ecurve_pfxtable {
@@ -149,7 +149,7 @@ int upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src);
  * described above.
  */
 int upro_ecurve_lookup(const struct upro_ecurve *ecurve, const struct upro_word *word,
-                     struct upro_word *lower_neighbour, upro_class *lower_class,
-                     struct upro_word *upper_neighbour, upro_class *upper_class);
+                     struct upro_word *lower_neighbour, upro_family *lower_class,
+                     struct upro_word *upper_neighbour, upro_family *upper_class);
 
 #endif

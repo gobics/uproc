@@ -11,7 +11,7 @@
 
 struct upro_ecurve ecurve;
 upro_suffix suffixes[] = { 1, 3, 5, 10, 44, 131, 133, 1202, 4551ULL << (3 * UPRO_AMINO_BITS) };
-upro_class classes[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
+upro_family families[] =   { 1, 0, 5,  0,  4,   1,   3,    2,    1 };
 
 
 void teardown(void)
@@ -25,7 +25,7 @@ void setup(void)
     upro_ecurve_init(&ecurve, ALPHABET, 0);
     ecurve.suffix_count = elements_of(suffixes);
     ecurve.suffixes = suffixes;
-    ecurve.classes = classes;
+    ecurve.families = families;
     for (i = 0; i < 3; i++) {
         ecurve.prefixes[i].first = 0;
         ecurve.prefixes[i].count = -1;
@@ -141,7 +141,7 @@ int test_ecurve_lookup_val(struct upro_word w,
                            int res)
 {
     struct upro_word lw, uw;
-    upro_class lc, uc;
+    upro_family lc, uc;
 
     INFO("w: %" UPRO_PREFIX_PRI " %" UPRO_SUFFIX_PRI, w.prefix, w.suffix);
 
@@ -219,7 +219,7 @@ int test_append(void)
     for (i = 0; i < a1.suffix_count; i++) {
         INFO("i = %zu", i);
         assert_uint_eq(a1.suffixes[i], b.suffixes[i], "suffix equal");
-        assert_uint_eq(a1.classes[i], b.classes[i], "class equal");
+        assert_uint_eq(a1.families[i], b.families[i], "class equal");
     }
 
     upro_ecurve_destroy(&a1);
