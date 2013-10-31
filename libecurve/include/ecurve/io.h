@@ -7,6 +7,7 @@
  *
  */
 
+#include <stdio.h>
 
 /** Underlying stream type */
 enum ec_io_type
