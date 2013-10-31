@@ -48,7 +48,8 @@ ec_io_stdstream(FILE *stream)
     return &s[i];
 }
 
-#if HAVE_FILENO && HAVE_ZLIB
+#if HAVE_ZLIB
+#if HAVE_FILENO
 static void
 close_stdstream_gz(void)
 {
@@ -96,11 +97,11 @@ ec_io_stdstream_gz(FILE *stream)
 }
 #endif
 
-#if !HAVE_ZLIB || ZLIB_VERNUM < 0x1235
+#if ZLIB_VERNUM < 0x1235
 #define gzbuffer(file, size) 0
 #endif
 
-#if HAVE_ZLIB && ZLIB_VERNUM < 0x1271
+#if ZLIB_VERNUM < 0x1271
 static int
 gzvprintf(gzFile file, const char *format, va_list va)
 {
@@ -121,6 +122,7 @@ gzvprintf(gzFile file, const char *format, va_list va)
     free(buf);
     return n;
 }
+#endif
 #endif
 
 ec_io_stream *
