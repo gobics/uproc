@@ -161,6 +161,9 @@ typedef uint_least64_t ec_suffix;
 /** Identifier of a protein class (or "protein family"). */
 typedef uint_least16_t ec_class;
 
+/** Maximum value for #ec_class */
+#define EC_CLASS_MAX UINT_LEAST16_MAX
+
 /** printf() format for #ec_class */
 #define EC_CLASS_PRI PRIu16
 
