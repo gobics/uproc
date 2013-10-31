@@ -20,7 +20,7 @@ orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
     size_t r, c, rows, cols;
     struct upro_matrix *thresh = opaque;
     (void) seq;
-    if (orf->length < 60) {
+    if (orf->length < 20) {
         return false;
     }
     if (!thresh) {
@@ -41,7 +41,8 @@ orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
 int main(int argc, char **argv)
 {
     int res;
-    struct upro_orf_codonscores codon_scores;
+    struct upro_matrix codon_scores_mat;
+    double codon_scores[UPRO_BINARY_CODON_COUNT];
 
     struct upro_matrix orf_thresholds;
     char *endptr;
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_orf_codonscores_load_file(&codon_scores, argv[CODON_SCORES], UPRO_IO_GZIP);
+    res = upro_matrix_load_file(&codon_scores_mat, argv[CODON_SCORES], UPRO_IO_GZIP);
     if (UPRO_ISERROR(res)) {
         fprintf(stderr, "can't open file \"%s\"\n", argv[CODON_SCORES]);
         if (res == UPRO_ESYSCALL) {
@@ -68,6 +69,7 @@ int main(int argc, char **argv)
         }
         return EXIT_FAILURE;
     }
+    upro_orf_codonscores(codon_scores, &codon_scores_mat);
 
     if (!strcasecmp(argv[MIN_SCORE], "MAX")) {
         mode = MAX;
@@ -110,8 +112,8 @@ int main(int argc, char **argv)
 
         char *max_orf = NULL;
         double max_score = -INFINITY;
-        upro_orfiter_init(&oi, rd.seq, &codon_scores, orf_filter, filter_arg);
-        while (upro_orfiter_next(&oi, &orf)) {
+        upro_orfiter_init(&oi, rd.seq, codon_scores, orf_filter, filter_arg);
+        while (upro_orfiter_next(&oi, &orf) == UPRO_ITER_YIELD) {
             if (mode == MAX && orf.score > max_score) {
                 free(max_orf);
                 max_orf = strdup(orf.data);
