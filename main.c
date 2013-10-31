@@ -9,7 +9,7 @@
 #include <getopt.h>
 #endif
 
-#include "ecurve.h"
+#include "upro.h"
 
 
 #define MAX_CHUNK_SIZE (1 << 10)
@@ -22,9 +22,9 @@ struct buffer
     size_t seq_sz[MAX_CHUNK_SIZE];
 
 #ifdef MAIN_DNA
-    struct ec_dc_results results[MAX_CHUNK_SIZE];
+    struct upro_dc_results results[MAX_CHUNK_SIZE];
 #else
-    struct ec_pc_results results[MAX_CHUNK_SIZE];
+    struct upro_pc_results results[MAX_CHUNK_SIZE];
 #endif
 
     size_t n;
@@ -46,28 +46,28 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
     if (len > *dest_sz) {
         char *tmp = realloc(*dest, len);
         if (!tmp) {
-            return EC_FAILURE;
+            return UPRO_FAILURE;
         }
         *dest = tmp;
         *dest_sz = len;
     }
     memcpy(*dest, src, len);
-    return EC_SUCCESS;
+    return UPRO_SUCCESS;
 }
 
 int
-input_read(ec_io_stream *stream, struct ec_fasta_reader *rd, struct buffer *buf,
+input_read(upro_io_stream *stream, struct upro_fasta_reader *rd, struct buffer *buf,
            size_t chunk_size)
 {
-    int res = EC_SUCCESS;
+    int res = UPRO_SUCCESS;
     size_t i;
 
     for (i = 0; i < chunk_size; i++) {
         char *p1, *p2;
         size_t header_len;
 
-        res = ec_fasta_read(stream, rd);
-        if (res != EC_ITER_YIELD) {
+        res = upro_fasta_read(stream, rd);
+        if (res != UPRO_ITER_YIELD) {
             break;
         }
 
@@ -85,18 +85,18 @@ input_read(ec_io_stream *stream, struct ec_fasta_reader *rd, struct buffer *buf,
         }
 
         res = dup_str(&buf->header[i], &buf->header_sz[i], p1, header_len);
-        if (EC_ISERROR(res)) {
+        if (UPRO_ISERROR(res)) {
             break;
         }
 
         res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd->seq, rd->seq_len);
-        if (EC_ISERROR(res)) {
+        if (UPRO_ISERROR(res)) {
             break;
         }
     }
     buf->n = i;
-    if (i && res == EC_ITER_STOP) {
-        res = EC_SUCCESS;
+    if (i && res == UPRO_ITER_STOP) {
+        res = UPRO_SUCCESS;
     }
 
     for (; i < chunk_size; i++) {
@@ -107,30 +107,30 @@ input_read(ec_io_stream *stream, struct ec_fasta_reader *rd, struct buffer *buf,
 }
 
 bool
-prot_filter(const char *seq, size_t len, ec_class cls, double score,
+prot_filter(const char *seq, size_t len, upro_class cls, double score,
         void *opaque)
 {
     static size_t rows, cols;
-    struct ec_matrix *thresh = opaque;
+    struct upro_matrix *thresh = opaque;
     (void) seq, (void) cls;
     if (!thresh) {
         return score > 0.0;
     }
     if (!rows) {
-        ec_matrix_dimensions(thresh, &rows, &cols);
+        upro_matrix_dimensions(thresh, &rows, &cols);
     }
     if (len >= rows) {
         len = rows - 1;
     }
-    return score >= ec_matrix_get(thresh, len, 0);
+    return score >= upro_matrix_get(thresh, len, 0);
 }
 
 bool
-orf_filter(const struct ec_orf *orf, const char *seq, size_t seq_len,
+orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
         double seq_gc, void *opaque)
 {
     size_t r, c, rows, cols;
-    struct ec_matrix *thresh = opaque;
+    struct upro_matrix *thresh = opaque;
     (void) seq;
     if (orf->length < 60) {
         return false;
@@ -138,7 +138,7 @@ orf_filter(const struct ec_orf *orf, const char *seq, size_t seq_len,
     if (!thresh) {
         return true;
     }
-    ec_matrix_dimensions(thresh, &rows, &cols);
+    upro_matrix_dimensions(thresh, &rows, &cols);
     r = seq_gc * 100;
     c = seq_len;
     if (r >= rows) {
@@ -147,12 +147,12 @@ orf_filter(const struct ec_orf *orf, const char *seq, size_t seq_len,
     if (c >= cols) {
         c = cols - 1;
     }
-    return orf->score >= ec_matrix_get(thresh, r, c);
+    return orf->score >= upro_matrix_get(thresh, r, c);
 }
 
 void
 output(struct buffer *buf,
-        ec_io_stream *pr_stream, size_t pr_seq_offset,
+        upro_io_stream *pr_stream, size_t pr_seq_offset,
         uintmax_t *counts,
         size_t *unexplained,
         size_t *total)
@@ -168,9 +168,9 @@ output(struct buffer *buf,
         }
         for (j = 0; j < buf->results[i].n; j++) {
 #ifdef MAIN_DNA
-            struct ec_dc_pred *pred = &buf->results[i].preds[j];
+            struct upro_dc_pred *pred = &buf->results[i].preds[j];
             if (pr_stream) {
-                ec_io_printf(pr_stream, "%zu,%s,%u,%" EC_CLASS_PRI ",%1.3f\n",
+                upro_io_printf(pr_stream, "%zu,%s,%u,%" UPRO_CLASS_PRI ",%1.3f\n",
                         i + pr_seq_offset + 1,
                         buf->header[i],
                         pred->frame + 1,
@@ -178,9 +178,9 @@ output(struct buffer *buf,
                         pred->score);
             }
 #else
-            struct ec_pc_pred *pred = &buf->results[i].preds[j];
+            struct upro_pc_pred *pred = &buf->results[i].preds[j];
             if (pr_stream) {
-                ec_io_printf(pr_stream, "%zu,%s,%" EC_CLASS_PRI ",%1.3f\n",
+                upro_io_printf(pr_stream, "%zu,%s,%" UPRO_CLASS_PRI ",%1.3f\n",
                         i + pr_seq_offset + 1,
                         buf->header[i],
                         pred->cls,
@@ -198,7 +198,7 @@ size_t
 get_chunk_size(void)
 {
     size_t sz;
-    char *end, *value = getenv("EC_CHUNK_SIZE");
+    char *end, *value = getenv("UPRO_CHUNK_SIZE");
     if (value) {
         sz = strtoull(value, &end, 10);
         if (!*end && sz && sz < MAX_CHUNK_SIZE) {
@@ -234,30 +234,30 @@ main(int argc, char **argv)
     size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool more_input;
 
-    struct ec_ecurve fwd, rev;
-    struct ec_substmat substmat[EC_SUFFIX_LEN];
-    struct ec_matrix prot_thresholds;
+    struct upro_ecurve fwd, rev;
+    struct upro_substmat substmat[UPRO_SUFFIX_LEN];
+    struct upro_matrix prot_thresholds;
 
 #if MAIN_DNA
-    struct ec_dnaclass dnaclass;
-    struct ec_orf_codonscores codon_scores;
-    struct ec_matrix orf_thresholds;
+    struct upro_dnaclass dnaclass;
+    struct upro_orf_codonscores codon_scores;
+    struct upro_matrix orf_thresholds;
     bool short_read_mode = false;
 #endif
-    struct ec_protclass protclass;
+    struct upro_protclass protclass;
 
-    ec_io_stream *stream;
-    struct ec_fasta_reader rd;
+    upro_io_stream *stream;
+    struct upro_fasta_reader rd;
 
     struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
 
     int opt;
-    int format = EC_STORAGE_MMAP;
+    int format = UPRO_STORAGE_MMAP;
 
-    ec_io_stream *out_stream = NULL;
+    upro_io_stream *out_stream = NULL;
     size_t unexplained = 0, *out_unexplained = NULL;
-    uintmax_t counts[EC_CLASS_MAX] = { 0 }, *out_counts = NULL;
+    uintmax_t counts[UPRO_CLASS_MAX] = { 0 }, *out_counts = NULL;
 
 #define SHORT_OPTS_PROT "hvBMpcfP:S:"
 #ifdef MAIN_DNA
@@ -266,9 +266,9 @@ main(int argc, char **argv)
 #define SHORT_OPTS SHORT_OPTS_PROT
 #endif
 
-    ec_pc_init(&protclass, EC_PC_ALL, &fwd, &rev, NULL, prot_filter, NULL);
+    upro_pc_init(&protclass, UPRO_PC_ALL, &fwd, &rev, NULL, prot_filter, NULL);
 #ifdef MAIN_DNA
-    ec_dc_init(&dnaclass, EC_DC_ALL, &protclass, NULL, orf_filter, NULL);
+    upro_dc_init(&dnaclass, UPRO_DC_ALL, &protclass, NULL, orf_filter, NULL);
 #endif
 
 #ifdef _GNU_SOURCE
@@ -304,13 +304,13 @@ main(int argc, char **argv)
                 print_version(argv[0]);
                 return EXIT_SUCCESS;
             case 'B':
-                format = EC_STORAGE_BINARY;
+                format = UPRO_STORAGE_BINARY;
                 break;
             case 'M':
-                format = EC_STORAGE_MMAP;
+                format = UPRO_STORAGE_MMAP;
                 break;
             case 'p':
-                out_stream = ec_stdout;
+                out_stream = upro_stdout;
                 break;
             case 'c':
                 out_counts = counts;
@@ -319,16 +319,16 @@ main(int argc, char **argv)
                 out_unexplained = &unexplained;
                 break;
             case 'S':
-                res = ec_substmat_load_many(substmat, EC_SUFFIX_LEN, optarg, EC_IO_GZIP);
-                if (res != EC_SUCCESS) {
+                res = upro_substmat_load_many(substmat, UPRO_SUFFIX_LEN, optarg, UPRO_IO_GZIP);
+                if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
                 }
                 protclass.substmat = substmat;
                 break;
             case 'P':
-                res = ec_matrix_load_file(&prot_thresholds, optarg, EC_IO_GZIP);
-                if (res != EC_SUCCESS) {
+                res = upro_matrix_load_file(&prot_thresholds, optarg, UPRO_IO_GZIP);
+                if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
                 }
@@ -342,16 +342,16 @@ main(int argc, char **argv)
                 short_read_mode = false;
                 break;
             case 'C':
-                res = ec_orf_codonscores_load_file(&codon_scores, optarg, EC_IO_GZIP);
-                if (res != EC_SUCCESS) {
+                res = upro_orf_codonscores_load_file(&codon_scores, optarg, UPRO_IO_GZIP);
+                if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
                 }
                 dnaclass.codon_scores = &codon_scores;
                 break;
             case 'O':
-                res = ec_matrix_load_file(&orf_thresholds, optarg, EC_IO_GZIP);
-                if (res != EC_SUCCESS) {
+                res = upro_matrix_load_file(&orf_thresholds, optarg, UPRO_IO_GZIP);
+                if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
                 }
@@ -365,7 +365,7 @@ main(int argc, char **argv)
     }
 
     if (!out_stream && !out_counts && !out_unexplained) {
-        out_stream = ec_stdout;
+        out_stream = upro_stdout;
     }
 
     if (argc < optind + ARGC - 1) {
@@ -373,14 +373,14 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = ec_storage_load(&fwd, argv[optind + FWD], format, EC_IO_GZIP);
-    if (res != EC_SUCCESS) {
+    res = upro_storage_load(&fwd, argv[optind + FWD], format, UPRO_IO_GZIP);
+    if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    res = ec_storage_load(&rev, argv[optind + REV], format, EC_IO_GZIP);
-    if (res != EC_SUCCESS) {
+    res = upro_storage_load(&rev, argv[optind + REV], format, UPRO_IO_GZIP);
+    if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;
     }
@@ -397,8 +397,8 @@ main(int argc, char **argv)
             fprintf(stderr, "WARNING: short read mode ignores \"-O\"\n");
             dnaclass.orf_filter_arg = NULL;
         }
-        protclass.mode = EC_PC_MAX;
-        dnaclass.mode = EC_DC_MAX;
+        protclass.mode = UPRO_PC_MAX;
+        dnaclass.mode = UPRO_DC_MAX;
     }
     else {
         if (dnaclass.orf_filter_arg && !dnaclass.codon_scores) {
@@ -409,18 +409,18 @@ main(int argc, char **argv)
             fprintf(stderr, "WARNING: \"-C\" ignored if \"-O\" not specified\n");
             dnaclass.codon_scores = NULL;
         }
-        protclass.mode = EC_PC_ALL;
-        dnaclass.mode = EC_DC_ALL;
+        protclass.mode = UPRO_PC_ALL;
+        dnaclass.mode = UPRO_DC_ALL;
     }
 #endif
 
     for (; optind + INFILE < argc; optind++)
     {
         if (!strcmp(argv[optind + INFILE], "-")) {
-            stream = ec_stdin;
+            stream = upro_stdin;
         }
         else {
-            stream = ec_io_open(argv[optind + INFILE], "r", EC_IO_GZIP);
+            stream = upro_io_open(argv[optind + INFILE], "r", UPRO_IO_GZIP);
             if (!stream) {
                 fprintf(stderr, "error opening %s: ", argv[optind + INFILE]);
                 perror("");
@@ -428,7 +428,7 @@ main(int argc, char **argv)
             }
         }
 
-        ec_fasta_reader_init(&rd, 8192);
+        upro_fasta_reader_init(&rd, 8192);
 
         do {
             in = &buf[!i_buf];
@@ -438,9 +438,9 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < out->n; i++) {
 #ifdef MAIN_DNA
-                    res = ec_dc_classify(&dnaclass, out->seq[i], &out->results[i]);
+                    res = upro_dc_classify(&dnaclass, out->seq[i], &out->results[i]);
 #else
-                    res = ec_pc_classify(&protclass, out->seq[i], &out->results[i]);
+                    res = upro_pc_classify(&protclass, out->seq[i], &out->results[i]);
 #endif
                 }
             }
@@ -452,7 +452,7 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         res = input_read(stream, &rd, in, chunk_size);
-                        more_input = !EC_ISERROR(res) && res != EC_ITER_STOP;
+                        more_input = !UPRO_ISERROR(res) && res != UPRO_ITER_STOP;
                     }
 #pragma omp section
                     {
@@ -466,19 +466,19 @@ main(int argc, char **argv)
             i_chunk += 1;
             i_buf ^= 1;
         } while (more_input);
-        ec_io_close(stream);
-        ec_fasta_reader_free(&rd);
+        upro_io_close(stream);
+        upro_fasta_reader_free(&rd);
     }
 
-    ec_ecurve_destroy(&fwd);
-    ec_ecurve_destroy(&rev);
+    upro_ecurve_destroy(&fwd);
+    upro_ecurve_destroy(&rev);
     if (protclass.filter_arg) {
-        ec_matrix_destroy(&prot_thresholds);
+        upro_matrix_destroy(&prot_thresholds);
     }
 
 #ifdef MAIN_DNA
     if (dnaclass.orf_filter_arg) {
-        ec_matrix_destroy(dnaclass.orf_filter_arg);
+        upro_matrix_destroy(dnaclass.orf_filter_arg);
     }
 #endif
 
@@ -486,19 +486,19 @@ main(int argc, char **argv)
     buf_free(&buf[1]);
 
     if (out_unexplained) {
-        ec_io_printf(ec_stdout, "%zu,", n_seqs - unexplained);
-        ec_io_printf(ec_stdout, "%zu,", unexplained);
-        ec_io_printf(ec_stdout, "%zu\n", n_seqs);
+        upro_io_printf(upro_stdout, "%zu,", n_seqs - unexplained);
+        upro_io_printf(upro_stdout, "%zu,", unexplained);
+        upro_io_printf(upro_stdout, "%zu\n", n_seqs);
     }
     if (out_counts) {
-        for (ec_class i = 0; i < EC_CLASS_MAX; i++) {
+        for (upro_class i = 0; i < UPRO_CLASS_MAX; i++) {
             if (out_counts[i]) {
-                ec_io_printf(ec_stdout, "%" EC_CLASS_PRI ": %ju\n",
+                upro_io_printf(upro_stdout, "%" UPRO_CLASS_PRI ": %ju\n",
                         i, out_counts[i]);
             }
 
         }
     }
 
-    return res == EC_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
+    return res == UPRO_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -5,21 +5,21 @@
 
 #define ALPHABET "ATSPGNDEQKRHYWFMLIVC"
 
-#include "ecurve.h"
+#include "upro.h"
 
 int main(int argc, char **argv)
 {
     MATFile *f;
-    ec_prefix p;
+    upro_prefix p;
     size_t last_p;
-    ec_suffix s;
+    upro_suffix s;
     mxArray *mInd, *mSuffixes, *mClasses;
     uint32_t *ind;
     uint64_t *suffixes;
     uint16_t *classes;
     size_t suffix_count;
 
-    struct ec_ecurve ec;
+    struct upro_ecurve ec;
 
     if (argc != 3) {
         fprintf(stderr, "usage: %s INFILE OUTFILE\n", argv[0]);
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     classes = mxGetData(mClasses);
 
     suffix_count = mxGetM(mSuffixes);
-    ec_ecurve_init(&ec, ALPHABET, suffix_count);
+    upro_ecurve_init(&ec, ALPHABET, suffix_count);
     for (s = 0; s < suffix_count; s++) {
         ec.suffixes[s] = suffixes[s];
         ec.classes[s] = classes[s];
@@ -54,9 +54,9 @@ int main(int argc, char **argv)
     mInd = matGetVariable(f, "HexIndsLo");
     ind = mxGetData(mInd);
     fprintf(stderr, "type of HexIndsLo: %s\n", mxGetClassName(mInd));
-    for (last_p = p = 0; p <= EC_PREFIX_MAX; p++) {
+    for (last_p = p = 0; p <= UPRO_PREFIX_MAX; p++) {
         size_t count;
-        if (p == EC_PREFIX_MAX) {
+        if (p == UPRO_PREFIX_MAX) {
             count = suffix_count - ind[p];
         }
         else {
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     }
     mxDestroyArray(mInd);
 
-    ec_storage_store_file(&ec, argv[2], EC_STORAGE_PLAIN);
+    upro_storage_store(&ec, argv[2], UPRO_STORAGE_PLAIN, UPRO_IO_GZIP);
 
     matClose(f);
     return EXIT_SUCCESS;

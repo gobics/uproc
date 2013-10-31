@@ -1,106 +1,106 @@
-#include "ecurve.h"
+#include "upro.h"
 #include <ctype.h>
 
-unsigned long filtered_counts[EC_CLASS_MAX] = { 0 };
+unsigned long filtered_counts[UPRO_CLASS_MAX] = { 0 };
 
 struct ecurve_entry
 {
-    struct ec_word word;
-    ec_class cls;
+    struct upro_word word;
+    upro_class cls;
 };
 
 static int
-parse_class(const char *id, ec_class *cls)
+parse_class(const char *id, upro_class *cls)
 {
     int res;
     while (*id && !isdigit(*id)) {
         id++;
     }
 
-    res = sscanf(id, "%" EC_CLASS_SCN, cls);
-    return res == 1 ? EC_SUCCESS : EC_FAILURE;
+    res = sscanf(id, "%" UPRO_CLASS_SCN, cls);
+    return res == 1 ? UPRO_SUCCESS : UPRO_FAILURE;
 }
 
 static int
-extract_uniques(ec_io_stream *stream, ec_amino first,
-        const struct ec_alphabet *alpha, struct ecurve_entry **entries,
+extract_uniques(upro_io_stream *stream, upro_amino first,
+        const struct upro_alphabet *alpha, struct ecurve_entry **entries,
         size_t *n_entries)
 {
     int res;
 
-    struct ec_fasta_reader rd;
+    struct upro_fasta_reader rd;
 
     size_t index;
 
-    struct ec_bst tree;
-    union ec_bst_key tree_key;
+    struct upro_bst tree;
+    union upro_bst_key tree_key;
 
-    ec_class cls;
+    upro_class cls;
 
-    ec_fasta_reader_init(&rd, 8192);
-    ec_bst_init(&tree, EC_BST_WORD, sizeof cls);
+    upro_fasta_reader_init(&rd, 8192);
+    upro_bst_init(&tree, UPRO_BST_WORD, sizeof cls);
 
-    while ((res = ec_fasta_read(stream, &rd)) == EC_ITER_YIELD) {
-        struct ec_worditer iter;
-        struct ec_word fwd_word = EC_WORD_INITIALIZER, rev_word = EC_WORD_INITIALIZER;
-        ec_class tmp_cls;
+    while ((res = upro_fasta_read(stream, &rd)) == UPRO_ITER_YIELD) {
+        struct upro_worditer iter;
+        struct upro_word fwd_word = UPRO_WORD_INITIALIZER, rev_word = UPRO_WORD_INITIALIZER;
+        upro_class tmp_cls;
 
         res = parse_class(rd.header, &cls);
-        ec_worditer_init(&iter, rd.seq, alpha);
+        upro_worditer_init(&iter, rd.seq, alpha);
 
-        while ((res = ec_worditer_next(&iter, &index, &fwd_word, &rev_word)) == EC_ITER_YIELD) {
-            if (!ec_word_startswith(&fwd_word, first)) {
+        while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) == UPRO_ITER_YIELD) {
+            if (!upro_word_startswith(&fwd_word, first)) {
                 continue;
             }
             tree_key.word = fwd_word;
-            res = ec_bst_get(&tree, tree_key, &tmp_cls);
+            res = upro_bst_get(&tree, tree_key, &tmp_cls);
 
             /* word was already present -> mark as duplicate if stored class
              * differs */
-            if (res == EC_SUCCESS) {
+            if (res == UPRO_SUCCESS) {
                 if (tmp_cls != cls) {
                     filtered_counts[cls] += 1;
-                    if (tmp_cls != (ec_class)-1) {
+                    if (tmp_cls != (upro_class)-1) {
                         filtered_counts[tmp_cls] += 1;
                     }
                     tmp_cls = -1;
-                    res = ec_bst_update(&tree, tree_key, &tmp_cls);
+                    res = upro_bst_update(&tree, tree_key, &tmp_cls);
                 }
             }
-            else if (res == EC_ENOENT) {
-                res = ec_bst_insert(&tree, tree_key, &cls);
+            else if (res == UPRO_ENOENT) {
+                res = upro_bst_insert(&tree, tree_key, &cls);
             }
 
-            if (EC_ISERROR(res)) {
+            if (UPRO_ISERROR(res)) {
                 break;
             }
         }
-        if (EC_ISERROR(res)) {
+        if (UPRO_ISERROR(res)) {
             break;
         }
     }
-    if (EC_ISERROR(res)) {
+    if (UPRO_ISERROR(res)) {
         goto error;
     }
 
-    struct ec_bstiter iter;
-    ec_bstiter_init(&iter, &tree);
+    struct upro_bstiter iter;
+    upro_bstiter_init(&iter, &tree);
     *n_entries = 0;
-    while (ec_bstiter_next(&iter, &tree_key, &cls) == EC_ITER_YIELD) {
-        if (cls != (ec_class) -1) {
+    while (upro_bstiter_next(&iter, &tree_key, &cls) == UPRO_ITER_YIELD) {
+        if (cls != (upro_class) -1) {
             *n_entries += 1;
         }
     }
     *entries = malloc(*n_entries * sizeof **entries);
     if (!*entries) {
-        res = EC_ENOMEM;
+        res = UPRO_ENOMEM;
         goto error;
     }
 
-    ec_bstiter_init(&iter, &tree);
+    upro_bstiter_init(&iter, &tree);
     struct ecurve_entry *entries_insert = *entries;
-    while (ec_bstiter_next(&iter, &tree_key, &cls) == EC_ITER_YIELD) {
-        if (cls != (ec_class) -1) {
+    while (upro_bstiter_next(&iter, &tree_key, &cls) == UPRO_ITER_YIELD) {
+        if (cls != (upro_class) -1) {
             entries_insert->word = tree_key.word;
             entries_insert->cls = cls;
             entries_insert++;
@@ -108,7 +108,7 @@ extract_uniques(ec_io_stream *stream, ec_amino first,
     }
 
 error:
-    ec_bst_clear(&tree, NULL);
+    upro_bst_clear(&tree, NULL);
     return res;
 }
 
@@ -169,16 +169,16 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
 
 
 static int
-insert_entries(struct ec_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
+insert_entries(struct upro_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
 {
     size_t i, k;
-    ec_prefix p, current_prefix, next_prefix;
+    upro_prefix p, current_prefix, next_prefix;
 
     current_prefix = entries[0].word.prefix;
 
     for (p = 0; p < current_prefix; p++) {
         ecurve->prefixes[p].first = 0;
-        ecurve->prefixes[p].count = EC_ECURVE_EDGE;
+        ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
     }
 
     for (i = 0; i < n_entries;) {
@@ -199,59 +199,59 @@ insert_entries(struct ec_ecurve *ecurve, struct ecurve_entry *entries, size_t n_
 
         for (p = current_prefix + 1; p < next_prefix; p++) {
             ecurve->prefixes[p].first = k - 1;
-            ecurve->prefixes[p].count = EC_ECURVE_EDGE;
+            ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
         }
         current_prefix = next_prefix;
         i = k;
     }
 
-    for (p = current_prefix + 1; p <= EC_PREFIX_MAX; p++) {
+    for (p = current_prefix + 1; p <= UPRO_PREFIX_MAX; p++) {
         ecurve->prefixes[p].first = n_entries - 1;
-        ecurve->prefixes[p].count = EC_ECURVE_EDGE;
+        ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
     }
 
-    return EC_SUCCESS;
+    return UPRO_SUCCESS;
 }
 
 
 static int
-build(ec_io_stream *stream, struct ec_ecurve *ecurve, const char *alphabet)
+build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
 {
     int res;
     struct ecurve_entry *entries = NULL;
     size_t n_entries;
-    ec_amino first;
-    struct ec_ecurve new;
+    upro_amino first;
+    struct upro_ecurve new;
 
-    for (first = 0; first < EC_ALPHABET_SIZE; first++) {
+    for (first = 0; first < UPRO_ALPHABET_SIZE; first++) {
         fflush(stderr);
         n_entries = 0;
         free(entries);
-        ec_io_seek(stream, 0, SEEK_SET);
+        upro_io_seek(stream, 0, SEEK_SET);
 
         res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
-        if (EC_ISERROR(res)) {
+        if (UPRO_ISERROR(res)) {
             goto error;
         }
 
         n_entries = filter_singletons(entries, n_entries);
 
         if (!first) {
-            res = ec_ecurve_init(ecurve, alphabet, n_entries);
-            if (EC_ISERROR(res)) {
+            res = upro_ecurve_init(ecurve, alphabet, n_entries);
+            if (UPRO_ISERROR(res)) {
                 goto error;
             }
             insert_entries(ecurve, entries, n_entries);
         }
         else {
-            res = ec_ecurve_init(&new, alphabet, n_entries);
-            if (EC_ISERROR(res)) {
+            res = upro_ecurve_init(&new, alphabet, n_entries);
+            if (UPRO_ISERROR(res)) {
                 goto error;
             }
 
             insert_entries(&new, entries, n_entries);
-            res = ec_ecurve_append(ecurve, &new);
-            if (EC_ISERROR(res)) {
+            res = upro_ecurve_append(ecurve, &new);
+            if (UPRO_ISERROR(res)) {
                 goto error;
             }
         }
@@ -259,7 +259,7 @@ build(ec_io_stream *stream, struct ec_ecurve *ecurve, const char *alphabet)
 
     if (0) {
 error:
-        ec_ecurve_destroy(ecurve);
+        upro_ecurve_destroy(ecurve);
     }
     free(entries);
     return res;
@@ -269,9 +269,9 @@ int
 main(int argc, char **argv)
 {
     int res;
-    ec_io_stream *stream;
+    upro_io_stream *stream;
 
-    struct ec_ecurve ecurve;
+    struct upro_ecurve ecurve;
 
     enum args {
         ALPHABET = 1,
@@ -285,28 +285,28 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = ec_ecurve_init(&ecurve, argv[ALPHABET], 0);
-    if (EC_ISERROR(res)) {
+    res = upro_ecurve_init(&ecurve, argv[ALPHABET], 0);
+    if (UPRO_ISERROR(res)) {
         fprintf(stderr, "invalid alphabet string \"%s\"\n", argv[ALPHABET]);
         return EXIT_FAILURE;
     }
 
-    stream = ec_io_open(argv[INFILE], "r", EC_IO_GZIP);
+    stream = upro_io_open(argv[INFILE], "r", UPRO_IO_GZIP);
     if (!stream) {
         perror("");
         return EXIT_FAILURE;
     }
 
     res = build(stream, &ecurve, argv[ALPHABET]);
-    if (EC_ISERROR(res)) {
+    if (UPRO_ISERROR(res)) {
         fprintf(stderr, "an error occured\n");
     }
-    ec_io_close(stream);
+    upro_io_close(stream);
     fprintf(stderr, "storing..\n");
-    ec_storage_store(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN, EC_STORAGE_GZIP);
-    ec_ecurve_destroy(&ecurve);
+    upro_storage_store(&ecurve, argv[OUTFILE], UPRO_STORAGE_PLAIN, UPRO_STORAGE_GZIP);
+    upro_ecurve_destroy(&ecurve);
     fprintf(stderr, "filtered:\n");
-    for (size_t i = 0; i < EC_CLASS_MAX; i++) {
+    for (size_t i = 0; i < UPRO_CLASS_MAX; i++) {
         if (filtered_counts[i]) {
             fprintf(stderr, "%5zu: %lu\n", i, filtered_counts[i]);
         }

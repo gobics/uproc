@@ -1,8 +1,8 @@
 include config.mk
 
-CPPFLAGS += -Ilibecurve/$(INCDIR)
+CPPFLAGS += -Ilibupro/$(INCDIR)
 
-ARCHIVE := libecurve/$(ARCHIVENAME)
+ARCHIVE := libupro/$(ARCHIVENAME)
 TARGETS = upro-dna upro-prot upro-orf ecurve-convert ecurve-build ecurve-calib
 
 MATLAB_ROOT := /opt/matlab
@@ -39,10 +39,10 @@ ecurve-% : %.c $(ARCHIVE)
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
 
 $(ARCHIVE) :
-	@$(MAKE) -C libecurve $(ARCHIVENAME)
+	@$(MAKE) -C libupro $(ARCHIVENAME)
 
 clean :
 	rm -f $(TARGETS)
-	$(MAKE) -C libecurve clean
+	$(MAKE) -C libupro clean
 
 .PHONY : clean $(ARCHIVE)
