@@ -98,7 +98,7 @@ int test_binary(void)
 
 int test_binary_gz(void)
 {
-    DESC("writing and reading in binary format");
+    DESC("writing and reading in binary format (gzip)");
     return test_storage(EC_STORAGE_BINARY, EC_IO_GZIP, TMPFILE ".bin.gz");
 }
 
@@ -110,7 +110,7 @@ int test_plain(void)
 
 int test_plain_gz(void)
 {
-    DESC("writing and reading in plain text");
+    DESC("writing and reading in plain text (gzip)");
     return test_storage(EC_STORAGE_PLAIN, EC_IO_GZIP, TMPFILE ".plain.gz");
 }
 
