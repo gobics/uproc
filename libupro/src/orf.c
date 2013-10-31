@@ -167,12 +167,6 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
             iter->orf[i].score = 0;
             iter->yield[i] = false;
 
-            if (iter->filter &&
-                    !iter->filter(next, iter->seq, iter->seq_len, iter->seq_gc,
-                        iter->filter_arg)) {
-                continue;
-            }
-
             /* chop trailing wildcard aminoacids */
             while (next->length && next->data[next->length - 1] == 'X') {
                 next->length--;
@@ -180,6 +174,11 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
             if (!next->length) {
                 continue;
             }
+            if (iter->filter && !iter->filter(next, iter->seq, iter->seq_len,
+                        iter->seq_gc, iter->filter_arg)) {
+                continue;
+            }
+
             next->data[next->length] = '\0';
 
             /* revert ORF on complementery strand */
