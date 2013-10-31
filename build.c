@@ -1,6 +1,8 @@
 #include "ecurve.h"
 #include <ctype.h>
 
+unsigned long filtered_counts[EC_CLASS_MAX] = { 0 };
+
 struct ecurve_entry
 {
     struct ec_word word;
@@ -57,6 +59,10 @@ extract_uniques(ec_io_stream *stream, ec_amino first,
              * differs */
             if (res == EC_SUCCESS) {
                 if (tmp_cls != cls) {
+                    filtered_counts[cls] += 1;
+                    if (tmp_cls != (ec_class)-1) {
+                        filtered_counts[tmp_cls] += 1;
+                    }
                     tmp_cls = -1;
                     res = ec_bst_update(&tree, tree_key, &tmp_cls);
                 }
@@ -152,6 +158,9 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
         if (types[i] == CLUSTER || types[i] == BRIDGED) {
             entries[k] = entries[i];
             k++;
+        }
+        else {
+            filtered_counts[entries[i].cls] += 1;
         }
     }
     free(types);
@@ -296,5 +305,11 @@ main(int argc, char **argv)
     fprintf(stderr, "storing..\n");
     ec_storage_store(&ecurve, argv[OUTFILE], EC_STORAGE_PLAIN, EC_STORAGE_GZIP);
     ec_ecurve_destroy(&ecurve);
+    fprintf(stderr, "filtered:\n");
+    for (size_t i = 0; i < EC_CLASS_MAX; i++) {
+        if (filtered_counts[i]) {
+            fprintf(stderr, "%5zu: %lu\n", i, filtered_counts[i]);
+        }
+    }
     return EXIT_SUCCESS;
 }
