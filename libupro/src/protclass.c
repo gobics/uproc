@@ -114,7 +114,7 @@ scores_add(struct upro_bst *scores, upro_family family, size_t index,
 
 static void
 align_suffixes(double dist[static UPRO_SUFFIX_LEN], upro_suffix s1, upro_suffix s2,
-               const struct upro_substmat substmat[static UPRO_SUFFIX_LEN])
+               const struct upro_substmat *substmat)
 {
     size_t i;
     upro_amino a1, a2;
@@ -123,7 +123,12 @@ align_suffixes(double dist[static UPRO_SUFFIX_LEN], upro_suffix s1, upro_suffix 
         a2 = s2 & UPRO_BITMASK(UPRO_AMINO_BITS);
         s1 >>= UPRO_AMINO_BITS;
         s2 >>= UPRO_AMINO_BITS;
-        dist[i] = upro_substmat_get(&substmat[i], a1, a2);
+        if (substmat) {
+            dist[i] = upro_substmat_get(&substmat[i], a1, a2);
+        }
+        else {
+            dist[i] = a1 == a2 ? 1.0 : 0.0;
+        }
     }
 }
 
