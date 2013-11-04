@@ -392,9 +392,8 @@ main(int argc, char **argv)
 
 #ifdef MAIN_DNA
     if (short_read_mode) {
-        if (!codon_scores) {
-            fprintf(stderr, "ERROR: short read mode requires \"-C\"\n");
-            return EXIT_FAILURE;
+        if (codon_scores) {
+            fprintf(stderr, "WARNING: short read mode ignores \"-C\"\n");
         }
         if (orf_filter_arg) {
             fprintf(stderr, "WARNING: short read mode ignores \"-O\"\n");
