@@ -303,7 +303,7 @@ main(int argc, char **argv)
     }
     upro_io_close(stream);
     fprintf(stderr, "storing..\n");
-    upro_storage_store(&ecurve, argv[OUTFILE], UPRO_STORAGE_PLAIN, UPRO_STORAGE_GZIP);
+    upro_storage_store(&ecurve, argv[OUTFILE], UPRO_STORAGE_PLAIN, UPRO_IO_GZIP);
     upro_ecurve_destroy(&ecurve);
     fprintf(stderr, "filtered:\n");
     for (size_t i = 0; i < UPRO_FAMILY_MAX; i++) {

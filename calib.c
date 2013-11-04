@@ -181,7 +181,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
     sprintf(filename, "%.100s%zu", prefix, number);
-    return upro_matrix_store_file(&thresh_interp, filename, UPRO_STORAGE_GZIP);
+    return upro_matrix_store_file(&thresh_interp, filename, UPRO_IO_STDIO);
 }
 
 

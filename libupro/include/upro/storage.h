@@ -18,12 +18,6 @@ enum upro_storage_format {
     UPRO_STORAGE_MMAP,
 };
 
-/** Flags */
-enum upro_storage_flags {
-    /** Use gzip compression for writing (if compiled with zlib) */
-    UPRO_STORAGE_GZIP = (1 << 0),
-};
-
 /** Load ecurve from a file
  *
  * Opens a file for reading, allocates a new #upro_ecurve object and parses the
