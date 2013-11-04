@@ -278,7 +278,7 @@ main(int argc, char **argv)
         { "mmap",       no_argument,        NULL, 'M' },
         { "preds",      no_argument,        NULL, 'p' },
         { "counts",     no_argument,        NULL, 'c' },
-        { "fsu",        no_argument,        NULL, 'f' },
+        { "stats",      no_argument,        NULL, 'f' },
         { "pthresh",    required_argument,  NULL, 'P' },
         { "substmat",   required_argument,  NULL, 'S' },
 #ifdef MAIN_DNA
@@ -364,7 +364,7 @@ main(int argc, char **argv)
     }
 
     if (!out_stream && !out_counts && !out_unexplained) {
-        out_stream = upro_stdout;
+        out_counts = counts;
     }
 
     if (argc < optind + ARGC - 1) {
@@ -392,6 +392,10 @@ main(int argc, char **argv)
 
 #ifdef MAIN_DNA
     if (short_read_mode) {
+        if (!codon_scores) {
+            fprintf(stderr, "ERROR: short read mode requires \"-C\"\n");
+            return EXIT_FAILURE;
+        }
         if (orf_filter_arg) {
             fprintf(stderr, "WARNING: short read mode ignores \"-O\"\n");
             orf_filter_arg = NULL;
