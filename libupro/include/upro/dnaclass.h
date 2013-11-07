@@ -2,6 +2,8 @@
 #define UPRO_DNACLASS_H
 
 #include "upro/orf.h"
+#include "upro/protclass.h"
+#include "upro/matrix.h"
 
 enum upro_dc_mode
 {
