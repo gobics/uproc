@@ -27,6 +27,8 @@ struct upro_dc_results
     size_t n, sz;
 };
 
+#define UPRO_DC_RESULTS_INITIALIZER { NULL, 0, 0 }
+
 struct upro_dnaclass
 {
     enum upro_dc_mode mode;
