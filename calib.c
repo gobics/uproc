@@ -223,18 +223,27 @@ int main(int argc, char **argv)
     res = upro_substmat_load_many(substmat, UPRO_SUFFIX_LEN, argv[SUBSTMAT],
             UPRO_IO_GZIP);
     if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "error opening %s: ", argv[SUBSTMAT]);
+        perror("");
         return EXIT_FAILURE;
     }
 
     res = upro_matrix_load_file(&alpha_probs, argv[AA_PROBS], UPRO_IO_GZIP);
+    if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "error opening %s: ", argv[AA_PROBS]);
+        perror("");
+        return EXIT_FAILURE;
+    }
     upro_alphabet_init(&alpha, ALPHABET);
 
     res = upro_mmap_map(&fwd, argv[FWD]);
     if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "error opening %s: ", argv[FWD]);
         return EXIT_FAILURE;
     }
     res = upro_mmap_map(&rev, argv[REV]);
     if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "error opening %s: ", argv[REV]);
         upro_ecurve_destroy(&fwd);
         return EXIT_FAILURE;
     }
