@@ -13,9 +13,10 @@
 void
 upro_fasta_reader_init(struct upro_fasta_reader *rd, size_t seq_sz_hint)
 {
-    static struct upro_fasta_reader zero;
-    *rd = zero;
-    rd->seq_sz_hint = seq_sz_hint;
+    *rd = (struct upro_fasta_reader) {
+        .seq_sz_hint = seq_sz_hint,
+        .line_no = 1
+    };
 }
 
 void
