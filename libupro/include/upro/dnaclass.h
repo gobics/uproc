@@ -5,13 +5,16 @@
 #include "upro/protclass.h"
 #include "upro/matrix.h"
 
+/** \file upro/dnaclass.h
+ *
+ * Classify DNA/RNA sequences
+ */
 enum upro_dc_mode
 {
     UPRO_DC_ALL,
 
     UPRO_DC_MAX,
 };
-
 
 struct upro_dc_results
 {
