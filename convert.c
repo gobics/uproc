@@ -49,8 +49,9 @@ main(int argc, char **argv)
                 "   P[Z]   plain text\n"
                 "   B[Z]   binary\n"
 #if HAVE_MMAP
-                "   M   mmap()-able\n",
+                "   M   mmap()-able\n"
 #endif
+                ,
                 argv[0]);
         return EXIT_FAILURE;
     }

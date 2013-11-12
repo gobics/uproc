@@ -97,11 +97,12 @@ error_munmap:
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
 error_close:
     close(ecurve->mmap_fd);
+    return res;
 #else
     (void) ecurve;
     (void) path;
+    return UPRO_FAILURE;
 #endif
-    return res;
 }
 
 void
@@ -159,9 +160,10 @@ upro_mmap_store(const struct upro_ecurve *ecurve, const char *path)
 
 error_close:
     close(fd);
+    return res;
 #else
     (void) ecurve;
     (void) path;
+    return UPRO_FAILURE;
 #endif
-    return res;
 }
