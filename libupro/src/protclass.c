@@ -124,7 +124,7 @@ align_suffixes(double dist[static UPRO_SUFFIX_LEN], upro_suffix s1, upro_suffix 
         s1 >>= UPRO_AMINO_BITS;
         s2 >>= UPRO_AMINO_BITS;
         if (substmat) {
-            dist[i] = upro_substmat_get(&substmat[i], a1, a2);
+            dist[i] = upro_substmat_get(substmat, i, a1, a2);
         }
         else {
             dist[i] = a1 == a2 ? 1.0 : 0.0;
@@ -135,7 +135,7 @@ align_suffixes(double dist[static UPRO_SUFFIX_LEN], upro_suffix s1, upro_suffix 
 static int
 scores_add_word(struct upro_bst *scores, const struct upro_word *word, size_t index,
                 bool reverse, const struct upro_ecurve *ecurve,
-                const struct upro_substmat substmat[static UPRO_SUFFIX_LEN])
+                const struct upro_substmat *substmat)
 {
     int res;
     struct upro_word

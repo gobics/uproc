@@ -49,7 +49,6 @@ upro_io_stdstream(FILE *stream)
 }
 
 #if HAVE_ZLIB
-#if HAVE_FILENO
 static void
 close_stdstream_gz(void)
 {
@@ -123,10 +122,9 @@ gzvprintf(gzFile file, const char *format, va_list va)
     return n;
 }
 #endif
-#endif
 
-upro_io_stream *
-upro_io_open(const char *path, const char *mode, enum upro_io_type type)
+static upro_io_stream *
+io_open(const char *path, const char *mode, enum upro_io_type type)
 {
     upro_io_stream *stream = malloc(sizeof *stream);
     if (!stream) {
@@ -155,6 +153,42 @@ upro_io_open(const char *path, const char *mode, enum upro_io_type type)
 error:
     free(stream);
     return NULL;
+}
+
+upro_io_stream *
+upro_io_open(const char *mode, enum upro_io_type type,
+        const char *pathfmt, ...)
+{
+    upro_io_stream *stream;
+    va_list ap;
+    va_start(ap, pathfmt);
+    stream = upro_io_openv(mode, type, pathfmt, ap);
+    va_end(ap);
+    return stream;
+}
+
+upro_io_stream *
+upro_io_openv(const char *mode, enum upro_io_type type,
+        const char *pathfmt, va_list ap)
+{
+    upro_io_stream *stream;
+    char *buf;
+    size_t n;
+    va_list aq;
+
+    va_copy(aq, ap);
+    n = vsnprintf(NULL, 0, pathfmt, aq);
+    va_end(aq);
+
+    buf = malloc(n + 1);
+    if (!buf) {
+        return NULL;
+    }
+    vsprintf(buf, pathfmt, ap);
+
+    stream = io_open(buf, mode, type);
+    free(buf);
+    return stream;
 }
 
 int

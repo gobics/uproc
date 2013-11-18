@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 
 /** Underlying stream type */
 enum upro_io_type
@@ -40,8 +41,11 @@ upro_io_stream *upro_io_stdstream_gz(FILE *stream);
 #define upro_stdin upro_stdin_gz
 #endif
 
-upro_io_stream *upro_io_open(const char *path, const char *mode,
-        enum upro_io_type type);
+upro_io_stream *upro_io_open(const char *mode, enum upro_io_type type,
+        const char *format, ...);
+
+upro_io_stream *upro_io_openv(const char *mode, enum upro_io_type type,
+        const char *format, va_list ap);
 
 int upro_io_close(upro_io_stream *stream);
 

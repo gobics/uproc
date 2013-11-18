@@ -195,11 +195,16 @@ int test_append(void)
 
     DESC("appending ecurve");
 
-    res = upro_storage_load(&a1, "t/ecurve_append.a1.plain", UPRO_STORAGE_PLAIN, UPRO_IO_STDIO);
+    res = upro_storage_load(&a1, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
+            "t/ecurve_append.a1.plain");
     assert_int_eq(res, UPRO_SUCCESS, "loading a1 succeeded");
-    res = upro_storage_load(&a2, "t/ecurve_append.a2.plain", UPRO_STORAGE_PLAIN, UPRO_IO_STDIO);
+
+    res = upro_storage_load(&a2, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
+            "t/ecurve_append.a2.plain");
     assert_int_eq(res, UPRO_SUCCESS, "loading a2 succeeded");
-    res = upro_storage_load(&b, "t/ecurve_append.b.plain", UPRO_STORAGE_PLAIN, UPRO_IO_STDIO);
+
+    res = upro_storage_load(&b, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
+            "t/ecurve_append.b.plain");
     assert_int_eq(res, UPRO_SUCCESS, "loading b succeeded");
 
     res = upro_ecurve_append(&a1, &a2);

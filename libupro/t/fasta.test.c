@@ -4,7 +4,7 @@
 #include "test.h"
 #include "upro.h"
 
-#define TMPFILE "t/tmpfile"
+#define TMPFILE "t/tmpfile.fasta.%s"
 
 void setup(void)
 {
@@ -14,7 +14,7 @@ void teardown(void)
 {
 }
 
-int fasta_(int iotype)
+int fasta_(int iotype, const char *ext)
 {
     char
         *orig_id = "test",
@@ -25,7 +25,7 @@ int fasta_(int iotype)
     upro_io_stream *stream;
 
 
-    stream = upro_io_open(TMPFILE, "w", iotype);
+    stream = upro_io_open("w", iotype, TMPFILE, ext);
     if (!stream) {
         FAIL("can't open temporary file: %s", strerror(errno));
     }
@@ -35,7 +35,7 @@ int fasta_(int iotype)
     }
     upro_io_close(stream);
 
-    stream = upro_io_open(TMPFILE, "r", iotype);
+    stream = upro_io_open("r", iotype, TMPFILE, ext);
     if (!stream) {
         FAIL("can't open temporary file: %s", strerror(errno));
     }
@@ -58,14 +58,14 @@ int fasta_(int iotype)
 int fasta(void)
 {
     DESC("store and load FASTA sequence");
-    return fasta_(UPRO_IO_STDIO);
+    return fasta_(UPRO_IO_STDIO, "fa");
 }
 
 int fasta_gz(void)
 {
     DESC("store and load FASTA sequence with gzip compression");
 #if HAVE_ZLIB
-    return fasta_(UPRO_IO_GZIP);
+    return fasta_(UPRO_IO_GZIP, "fa.gz");
 #else
     SKIP("HAVE_ZLIB not defined");
 #endif

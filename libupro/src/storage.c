@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "upro/common.h"
 #include "upro/ecurve.h"
@@ -104,7 +105,7 @@ load_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     return UPRO_SUCCESS;
 }
 
-int
+static int
 upro_storage_plain_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
 {
     int res;
@@ -201,7 +202,7 @@ store_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     return (res > 0) ? UPRO_SUCCESS : UPRO_FAILURE;
 }
 
-int
+static int
 upro_storage_plain_store(const struct upro_ecurve *ecurve, upro_io_stream *stream)
 {
     int res;
@@ -239,7 +240,7 @@ upro_storage_plain_store(const struct upro_ecurve *ecurve, upro_io_stream *strea
 }
 
 
-int
+static int
 upro_storage_binary_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
 {
     int res;
@@ -297,7 +298,7 @@ error:
     return res;
 }
 
-int
+static int
 upro_storage_binary_store(const struct upro_ecurve *ecurve, upro_io_stream *stream)
 {
     int res;
@@ -349,23 +350,29 @@ error:
     return res;
 }
 
-
 int
-upro_storage_load(struct upro_ecurve *ecurve, const char *path,
-        enum upro_storage_format format, enum upro_io_type iotype)
+upro_storage_loadv(struct upro_ecurve *ecurve,
+        enum upro_storage_format format, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap)
 {
     int res;
+    va_list aq;
     upro_io_stream *stream;
     const char *mode[] = {
         [UPRO_STORAGE_BINARY] = "rb",
         [UPRO_STORAGE_PLAIN] = "r",
     };
 
+    va_copy(aq, ap);
+
     if (format == UPRO_STORAGE_MMAP) {
-        return upro_mmap_map(ecurve, path);
+        res = upro_mmap_mapv(ecurve, pathfmt, aq);
+        va_end(aq);
+        return res;
     }
 
-    stream = upro_io_open(path, mode[format], iotype);
+    stream = upro_io_openv(mode[format], iotype, pathfmt, aq);
+    va_end(aq);
     if (!stream) {
         return UPRO_FAILURE;
     }
@@ -378,23 +385,41 @@ upro_storage_load(struct upro_ecurve *ecurve, const char *path,
     upro_io_close(stream);
     return res;
 }
-
 int
-upro_storage_store(const struct upro_ecurve *ecurve, const char *path,
-        enum upro_storage_format format, enum upro_io_type iotype)
+upro_storage_load(struct upro_ecurve *ecurve,
+        enum upro_storage_format format, enum upro_io_type iotype,
+        const char *pathfmt, ...)
 {
     int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_storage_loadv(ecurve, format, iotype, pathfmt, ap);
+    va_end(ap);
+    return res;
+}
+
+int
+upro_storage_storev(const struct upro_ecurve *ecurve,
+        enum upro_storage_format format, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap)
+{
+    int res;
+    va_list aq;
     upro_io_stream *stream;
     static const char *mode[] = {
         [UPRO_STORAGE_BINARY] = "wb",
         [UPRO_STORAGE_PLAIN] = "w",
     };
 
+    va_copy(aq, ap);
+
     if (format == UPRO_STORAGE_MMAP) {
-        return upro_mmap_store(ecurve, path);
+        res = upro_mmap_storev(ecurve, pathfmt, aq);
+        va_end(aq);
+        return res;
     }
 
-    stream = upro_io_open(path, mode[format], iotype);
+    stream = upro_io_openv(mode[format], iotype, pathfmt, aq);
     if (!stream) {
         return UPRO_FAILURE;
     }
@@ -405,5 +430,18 @@ upro_storage_store(const struct upro_ecurve *ecurve, const char *path,
         res = upro_storage_plain_store(ecurve, stream);
     }
     upro_io_close(stream);
+    return res;
+}
+
+int
+upro_storage_store(const struct upro_ecurve *ecurve,
+        enum upro_storage_format format, enum upro_io_type iotype,
+        const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_storage_storev(ecurve, format, iotype, pathfmt, ap);
+    va_end(ap);
     return res;
 }

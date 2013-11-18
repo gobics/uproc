@@ -14,7 +14,7 @@
 #include "../src/storage.c"
 #include "../src/word.c"
 
-#define TMPFILE "t/ecurve.tmp"
+#define TMPFILE "t/ecurve.tmp.%s"
 #define elements_of(a) (sizeof (a) / sizeof (a)[0])
 
 struct upro_ecurve ecurve;
@@ -63,15 +63,17 @@ void teardown(void)
     free(ecurve.prefixes);
 }
 
-int test_storage(int format, int iotype, char *filename)
+int test_storage(int format, int iotype, const char *ext)
 {
+    int res;
     size_t i;
     struct upro_ecurve new_curve;
 
-    assert_int_eq(upro_storage_store(&ecurve, filename, format, iotype),
-                  UPRO_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(upro_storage_load(&new_curve, filename, format, iotype),
-                  UPRO_SUCCESS, "loading ecurve succeeded");
+    res = upro_storage_store(&ecurve, format, iotype, TMPFILE, ext);
+    assert_int_eq(res, UPRO_SUCCESS, "storing ecurve succeeded");
+
+    res = upro_storage_load(&new_curve, format, iotype, TMPFILE, ext);
+    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
 
     for (i = 0; i < UPRO_PREFIX_MAX + 1; i++) {
         INFO("i = %zu", i);
@@ -93,39 +95,41 @@ int test_storage(int format, int iotype, char *filename)
 int test_binary(void)
 {
     DESC("writing and reading in binary format");
-    return test_storage(UPRO_STORAGE_BINARY, UPRO_IO_STDIO, TMPFILE ".bin");
+    return test_storage(UPRO_STORAGE_BINARY, UPRO_IO_STDIO, "bin");
 }
 
 int test_binary_gz(void)
 {
     DESC("writing and reading in binary format (gzip)");
-    return test_storage(UPRO_STORAGE_BINARY, UPRO_IO_GZIP, TMPFILE ".bin.gz");
+    return test_storage(UPRO_STORAGE_BINARY, UPRO_IO_GZIP, "bin.gz");
 }
 
 int test_plain(void)
 {
     DESC("writing and reading in plain text");
-    return test_storage(UPRO_STORAGE_PLAIN, UPRO_IO_STDIO, TMPFILE ".plain");
+    return test_storage(UPRO_STORAGE_PLAIN, UPRO_IO_STDIO, "plain");
 }
 
 int test_plain_gz(void)
 {
     DESC("writing and reading in plain text (gzip)");
-    return test_storage(UPRO_STORAGE_PLAIN, UPRO_IO_GZIP, TMPFILE ".plain.gz");
+    return test_storage(UPRO_STORAGE_PLAIN, UPRO_IO_GZIP, "plain.gz");
 }
 
 int test_mmap(void)
 {
 #if HAVE_MMAP
     size_t i;
+    int res;
     struct upro_ecurve new_curve;
 
     DESC("mmapp()ing ecurve");
 
-    assert_int_eq(upro_mmap_store(&ecurve, TMPFILE ".mmap"),
-                  UPRO_SUCCESS, "storing ecurve succeeded");
-    assert_int_eq(upro_mmap_map(&new_curve, TMPFILE ".mmap"),
-                  UPRO_SUCCESS, "mmap()ing file succeeded");
+    res = upro_storage_store(&ecurve, UPRO_STORAGE_MMAP, 0, TMPFILE, "mmap");
+    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
+
+    res = upro_storage_load(&new_curve, UPRO_STORAGE_MMAP, 0, TMPFILE, "mmap");
+    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
 
     for (i = 0; i < UPRO_PREFIX_MAX + 1; i++) {
         INFO("i = %zu", i);

@@ -54,22 +54,8 @@ upro_matrix_dimensions(const struct upro_matrix *matrix, size_t *rows, size_t *c
     *cols = matrix->cols;
 }
 
-int
-upro_matrix_load_file(struct upro_matrix *matrix, const char *path,
-        enum upro_io_type iotype)
-{
-    int res;
-    upro_io_stream *stream = upro_io_open(path, "r", iotype);
-    if (!stream) {
-        return UPRO_FAILURE;
-    }
-    res = upro_matrix_load_stream(matrix, stream);
-    (void) upro_io_close(stream);
-    return res;
-}
-
-int
-upro_matrix_load_stream(struct upro_matrix *matrix, upro_io_stream *stream)
+static int
+matrix_load(struct upro_matrix *matrix, upro_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
@@ -101,22 +87,33 @@ upro_matrix_load_stream(struct upro_matrix *matrix, upro_io_stream *stream)
 }
 
 int
-upro_matrix_store_file(const struct upro_matrix *matrix, const char *path,
-        enum upro_io_type iotype)
+upro_matrix_loadv(struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap)
 {
     int res;
-    char *mode = "w";
-    upro_io_stream *stream = upro_io_open(path, mode, iotype);
+    upro_io_stream *stream = upro_io_openv("r", iotype, pathfmt, ap);
     if (!stream) {
         return UPRO_FAILURE;
     }
-    res = upro_matrix_store_stream(matrix, stream);
-    upro_io_close(stream);
+    res = matrix_load(matrix, stream);
+    (void) upro_io_close(stream);
     return res;
 }
 
 int
-upro_matrix_store_stream(const struct upro_matrix *matrix, upro_io_stream *stream)
+upro_matrix_load(struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_matrix_loadv(matrix, iotype, pathfmt, ap);
+    va_end(ap);
+    return res;
+}
+
+static int
+matrix_store(const struct upro_matrix *matrix, upro_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
@@ -134,4 +131,30 @@ upro_matrix_store_stream(const struct upro_matrix *matrix, upro_io_stream *strea
         }
     }
     return UPRO_SUCCESS;
+}
+
+int
+upro_matrix_storev(const struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap)
+{
+    int res;
+    upro_io_stream *stream = upro_io_openv("w", iotype, pathfmt, ap);
+    if (!stream) {
+        return UPRO_FAILURE;
+    }
+    res = matrix_store(matrix, stream);
+    upro_io_close(stream);
+    return res;
+}
+
+int
+upro_matrix_store(const struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_matrix_storev(matrix, iotype, pathfmt, ap);
+    va_end(ap);
+    return res;
 }

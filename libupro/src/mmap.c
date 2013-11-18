@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -42,8 +43,8 @@ struct mmap_header {
 #define MAP_NORESERVE 0
 #endif
 
-int
-upro_mmap_map(struct upro_ecurve *ecurve, const char *path)
+static int
+mmap_map(struct upro_ecurve *ecurve, const char *path)
 {
 #if HAVE_MMAP
     int res;
@@ -105,6 +106,40 @@ error_close:
 #endif
 }
 
+int
+upro_mmap_map(struct upro_ecurve *ecurve, const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_mmap_mapv(ecurve, pathfmt, ap);
+    va_end(ap);
+    return res;
+}
+
+int
+upro_mmap_mapv(struct upro_ecurve *ecurve, const char *pathfmt, va_list ap)
+{
+    int res;
+    char *buf;
+    size_t n;
+    va_list aq;
+
+    va_copy(aq, ap);
+    n = vsnprintf(NULL, 0, pathfmt, aq);
+    va_end(aq);
+
+    buf = malloc(n + 1);
+    if (!buf) {
+        return UPRO_ENOMEM;
+    }
+    vsprintf(buf, pathfmt, ap);
+
+    res = mmap_map(ecurve, buf);
+    free(buf);
+    return res;
+}
+
 void
 upro_mmap_unmap(struct upro_ecurve *ecurve)
 {
@@ -116,8 +151,8 @@ upro_mmap_unmap(struct upro_ecurve *ecurve)
 #endif
 }
 
-int
-upro_mmap_store(const struct upro_ecurve *ecurve, const char *path)
+static int
+mmap_store(const struct upro_ecurve *ecurve, const char *path)
 {
 #if HAVE_MMAP
     int fd, res = UPRO_SUCCESS;
@@ -166,4 +201,38 @@ error_close:
     (void) path;
     return UPRO_FAILURE;
 #endif
+}
+int
+upro_mmap_store(const struct upro_ecurve *ecurve, const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_mmap_storev(ecurve, pathfmt, ap);
+    va_end(ap);
+    return res;
+}
+
+int
+upro_mmap_storev(const struct upro_ecurve *ecurve, const char *pathfmt,
+        va_list ap)
+{
+    int res;
+    char *buf;
+    size_t n;
+    va_list aq;
+
+    va_copy(aq, ap);
+    n = vsnprintf(NULL, 0, pathfmt, aq);
+    va_end(aq);
+
+    buf = malloc(n + 1);
+    if (!buf) {
+        return UPRO_ENOMEM;
+    }
+    vsprintf(buf, pathfmt, ap);
+
+    res = mmap_store(ecurve, buf);
+    free(buf);
+    return res;
 }

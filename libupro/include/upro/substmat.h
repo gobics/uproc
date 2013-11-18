@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <math.h>
+#include <stdarg.h>
 #include "upro/common.h"
 #include "upro/io.h"
 #include "upro/alphabet.h"
@@ -16,7 +16,7 @@
 /** Matrix of amino acid distances */
 struct upro_substmat {
     /** Matrix containing distances */
-    double dists[UPRO_ALPHABET_SIZE << UPRO_AMINO_BITS];
+    double dists[UPRO_SUFFIX_LEN][UPRO_ALPHABET_SIZE << UPRO_AMINO_BITS];
 };
 
 /** Calculate index for given amino acids x, y
@@ -46,7 +46,8 @@ int upro_substmat_init(struct upro_substmat *mat);
  *
  * \return  distance between x and y
  */
-double upro_substmat_get(const struct upro_substmat *mat, upro_amino x, upro_amino y);
+double upro_substmat_get(const struct upro_substmat *mat, unsigned pos,
+        upro_amino x, upro_amino y);
 
 /** Set distance of two amino acids
  *
@@ -60,30 +61,22 @@ double upro_substmat_get(const struct upro_substmat *mat, upro_amino x, upro_ami
  * \retval #UPRO_FAILURE  an error occured
  * \retval #UPRO_SUCCESS  else
  */
-void upro_substmat_set(struct upro_substmat *mat, upro_amino x, upro_amino y,
-                    double dist);
+void upro_substmat_set(struct upro_substmat *mat, unsigned pos, upro_amino x,
+        upro_amino y, double dist);
 
-/** Load `n` distance matrices from a file, using the given loader function
+/** Load substition matrix from a file.
  *
  * \param mat   pointer to the first of `n` distance matrices
- * \param n     number of matrices to load
- * \param path  file to load
+ * \param iotype    IO type, see #upro_io_type
+ * \param pathfmt   printf format string for file path
+ * \param ...       format string arguments
  *
  * \retval #UPRO_FAILURE  an error occured
  * \retval #UPRO_SUCCESS  else
  */
-int upro_substmat_load_many(struct upro_substmat *mat, size_t n, const char *path,
-        enum upro_io_type iotype);
+int upro_substmat_load(struct upro_substmat *mat, enum upro_io_type iotype,
+        const char *pathfmt, ...);
 
-/** Load one distance matrices from a file, using the given loader function
- *
- * \param mat   target distance matrix
- * \param path  file to load
- *
- * \retval #UPRO_FAILURE  an error occured
- * \retval #UPRO_SUCCESS  else
- */
-int upro_substmat_load(struct upro_substmat *mat, const char *path,
-        enum upro_io_type iotype);
-
+int upro_substmat_loadv(struct upro_substmat *mat, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap);
 #endif

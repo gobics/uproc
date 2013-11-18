@@ -60,21 +60,20 @@ double upro_matrix_get(const struct upro_matrix *matrix, size_t row, size_t col)
  * \param rows      _OUT_: number of rows
  * \param cols      _OUT_: number of columns
  */
-void upro_matrix_dimensions(const struct upro_matrix *matrix, size_t *rows, size_t *cols);
+void upro_matrix_dimensions(const struct upro_matrix *matrix, size_t *rows,
+        size_t *cols);
 
 /** Load matrix from file */
-int upro_matrix_load_file(struct upro_matrix *matrix, const char *path,
-        enum upro_io_type iotype);
+int upro_matrix_load(struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, ...);
 
-/** Load matrix from stream */
-int upro_matrix_load_stream(struct upro_matrix *matrix, upro_io_stream *stream);
+int upro_matrix_loadv(struct upro_matrix *matrix, enum upro_io_type iotype,
+        const char *pathfmt, va_list ap);
 
 /** Store matrix to file */
-int upro_matrix_store_file(const struct upro_matrix *matrix, const char *path,
-        enum upro_io_type iotype);
+int upro_matrix_store(const struct upro_matrix *matrix,
+        enum upro_io_type iotype, const char *pathfmt, ...);
 
-/** Store matrix to stream */
-int upro_matrix_store_stream(const struct upro_matrix *matrix,
-        upro_io_stream *stream);
-
+int upro_matrix_storev(const struct upro_matrix *matrix,
+        enum upro_io_type iotype, const char *pathfmt, va_list ap);
 #endif
