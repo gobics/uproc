@@ -2,6 +2,7 @@
 #include <ctype.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/bst.h"
 #include "upro/dnaclass.h"
 #include "upro/protclass.h"
@@ -15,7 +16,8 @@ upro_dc_init(struct upro_dnaclass *dc,
         upro_orf_filter *orf_filter, void *orf_filter_arg)
 {
     if (!pc) {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL,
+                              "DNA classifier requires a protein classifier");
     }
     *dc = (struct upro_dnaclass) {
         .mode = mode,
@@ -44,13 +46,13 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
 
     res = upro_orfiter_init(&orf_iter, seq, dc->codon_scores,
             dc->orf_filter, dc->orf_filter_arg);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         return res;
     }
 
     while ((res = upro_orfiter_next(&orf_iter, &orf)) == UPRO_ITER_YIELD) {
         res = upro_pc_classify(dc->pc, orf.data, &pc_res);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             goto error;
         }
         for (i = 0; i < pc_res.n; i++) {
@@ -62,7 +64,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
                 value.score = score;
                 value.frame = orf.frame;
                 res = upro_bst_update(&max_scores, key, &value);
-                if (UPRO_ISERROR(res)) {
+                if (res) {
                     goto error;
                 }
             }
@@ -74,7 +76,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
         void *tmp;
         tmp = realloc(results->preds, results->n * sizeof *results->preds);
         if (!tmp) {
-            res = UPRO_ENOMEM;
+            res = upro_error(UPRO_ENOMEM);
             goto error;
         }
         results->preds = tmp;

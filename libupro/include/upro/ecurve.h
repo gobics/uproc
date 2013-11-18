@@ -12,13 +12,13 @@
 /** Lookup return codes */
 enum {
     /** Exact match */
-    UPRO_LOOKUP_EXACT,
+    UPRO_ECURVE_EXACT,
 
     /** No exact match */
-    UPRO_LOOKUP_INEXACT,
+    UPRO_ECURVE_INEXACT,
 
     /** Out of bounds */
-    UPRO_LOOKUP_OOB,
+    UPRO_ECURVE_OOB,
 };
 
 #define UPRO_ECURVE_EDGE ((size_t) -1)
@@ -130,12 +130,12 @@ int upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src);
  *
  * NOTE: `ecurve` may not be empty.
  *
- * If `word` was found exactly as it it in the ecurve, `#UPRO_LOOKUP_EXACT` will
- * be returned; if `word` is "outside" of the ecurve, `#UPRO_LOOKUP_OOB` will
+ * If `word` was found exactly as it it in the ecurve, `#UPRO_ECURVE_EXACT` will
+ * be returned; if `word` is "outside" of the ecurve, `#UPRO_ECURVE_OOB` will
  * be returned.  In both cases, the objects pointed to by `upper_neighbour` and
  * `upper_class` will be set equal to their `lower_*` counterparts.
  *
- * In case of an inexact match, `#UPRO_LOOKUP_INEXACT` will be returned, `lower_*`
+ * In case of an inexact match, `#UPRO_ECURVE_INEXACT` will be returned, `lower_*`
  * and their `upper_*` counterparts might or might not differ.
  *
  * \param ecurve            ecurve object
@@ -145,7 +145,7 @@ int upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src);
  * \param upper_neighbour   _OUT_: upper neighbour word
  * \param upper_class       _OUT_: class of the upper neighbour
  *
- * \return `#UPRO_LOOKUP_EXACT`, `#UPRO_LOOKUP_OOB` or `#UPRO_LOOKUP_INEXACT` as
+ * \return `#UPRO_ECURVE_EXACT`, `#UPRO_ECURVE_OOB` or `#UPRO_ECURVE_INEXACT` as
  * described above.
  */
 int upro_ecurve_lookup(const struct upro_ecurve *ecurve, const struct upro_word *word,

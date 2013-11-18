@@ -5,6 +5,7 @@
 #include <stdarg.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/ecurve.h"
 #include "upro/io.h"
 #include "upro/mmap.h"
@@ -41,12 +42,15 @@ load_header(upro_io_stream *stream, char *alpha, size_t *suffix_count)
 {
     char line[BUFSZ];
     int res = read_line(stream, line, sizeof line);
-    if (res != UPRO_SUCCESS) {
+    if (res) {
         return res;
     }
     res = sscanf(line, HEADER_SCN, alpha, suffix_count);
     alpha[UPRO_ALPHABET_SIZE] = '\0';
-    return res == 2 ? UPRO_SUCCESS : UPRO_FAILURE;
+    if (res != 2) {
+        return upro_error_msg(UPRO_EINVAL, "invalid header: \"%s\"", line);
+    }
+    return UPRO_SUCCESS;
 }
 
 static int
@@ -67,7 +71,8 @@ load_prefix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     }
     res = sscanf(line, PREFIX_SCN, word_str, suffix_count);
     if (res != 2) {
-        return UPRO_FAILURE;
+        return upro_error_msg(UPRO_EINVAL, "invalid prefix string: \"%s\"",
+                              line);
     }
     res = upro_word_from_string(&word, word_str, alpha);
     if (res != UPRO_SUCCESS) {
@@ -95,7 +100,8 @@ load_suffix(upro_io_stream *stream, const struct upro_alphabet *alpha,
     }
     res = sscanf(line, SUFFIX_SCN, &word_str[UPRO_PREFIX_LEN], family);
     if (res != 2) {
-        return UPRO_FAILURE;
+        return upro_error_msg(UPRO_EINVAL, "invalid suffix string: \"%s\"",
+                              line);
     }
     res = upro_word_from_string(&word, word_str, alpha);
     if (res != UPRO_SUCCESS) {
@@ -125,7 +131,7 @@ upro_storage_plain_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
     }
 
     for (prev_last = 0, s = p = 0; s < suffix_count;) {
-        upro_prefix prefix;
+        upro_prefix prefix = -1;
         size_t ps, p_suffixes;
 
         res = load_prefix(stream, &ecurve->alphabet, &prefix, &p_suffixes);
@@ -134,7 +140,9 @@ upro_storage_plain_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
         }
 
         if (prefix > UPRO_PREFIX_MAX) {
-            return UPRO_EINVAL;
+            return upro_error_msg(UPRO_EINVAL,
+                                  "invalid prefix value: %" UPRO_PREFIX_PRI,
+                                  prefix);
         }
 
         for (; p < prefix; p++) {
@@ -250,17 +258,17 @@ upro_storage_binary_load(struct upro_ecurve *ecurve, upro_io_stream *stream)
 
     sz = upro_io_read(alpha, sizeof *alpha, UPRO_ALPHABET_SIZE, stream);
     if (sz != UPRO_ALPHABET_SIZE) {
-        return UPRO_ESYSCALL;
+        return upro_error(UPRO_ESYSCALL);
     }
     alpha[UPRO_ALPHABET_SIZE] = '\0';
 
     sz = upro_io_read(&suffix_count, sizeof suffix_count, 1, stream);
     if (sz != 1) {
-        return UPRO_ESYSCALL;
+        return upro_error(UPRO_ESYSCALL);
     }
 
     res = upro_ecurve_init(ecurve, alpha, suffix_count);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         return res;
     }
 
@@ -308,13 +316,13 @@ upro_storage_binary_store(const struct upro_ecurve *ecurve, upro_io_stream *stre
     upro_ecurve_get_alphabet(ecurve, &alpha);
     sz = upro_io_write(alpha.str, 1, UPRO_ALPHABET_SIZE, stream);
     if (sz != UPRO_ALPHABET_SIZE) {
-        return UPRO_ESYSCALL;
+        return upro_error(UPRO_ESYSCALL);
     }
 
     sz = upro_io_write(&ecurve->suffix_count, sizeof ecurve->suffix_count, 1,
             stream);
     if (sz != 1) {
-        return UPRO_ESYSCALL;
+        return upro_error(UPRO_ESYSCALL);
     }
 
     sz = upro_io_write(ecurve->suffixes, sizeof *ecurve->suffixes,

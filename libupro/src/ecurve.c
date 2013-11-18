@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/ecurve.h"
 #include "upro/word.h"
 
@@ -19,9 +20,9 @@
  * \param upper_suffix  OUT: pointer to the lower neighbouring suffix table entry
  *
  * \return
- * #UPRO_LOOKUP_OOB if `key` was less than the first (or greater than the last)
- * prefix that has at least one suffix associated, #UPRO_LOOKUP_EXACT in case of
- * an exact match, else #UPRO_LOOKUP_INEXACT.
+ * #UPRO_ECURVE_OOB if `key` was less than the first (or greater than the last)
+ * prefix that has at least one suffix associated, #UPRO_ECURVE_EXACT in case of
+ * an exact match, else #UPRO_ECURVE_INEXACT.
  */
 static int prefix_lookup(const struct upro_ecurve_pfxtable *table,
                          upro_prefix key, size_t *index, size_t *count,
@@ -30,11 +31,11 @@ static int prefix_lookup(const struct upro_ecurve_pfxtable *table,
 /** Find exact match or nearest neighbours in suffix array.
  *
  * If `key` is less than the first item in `search` (resp. greater than the
- * last one), #UPRO_LOOKUP_OOB is returned and both `*lower` and `*upper` are set to
+ * last one), #UPRO_ECURVE_OOB is returned and both `*lower` and `*upper` are set to
  * `0` (resp. `n - 1`).
- * If an exact match is found, returns #UPRO_LOOKUP_EXACT and sets `*lower` and
+ * If an exact match is found, returns #UPRO_ECURVE_EXACT and sets `*lower` and
  * `*upper` to the index of `key`.
- * Else, #UPRO_LOOKUP_INEXACT is returned and `*lower` and `*upper` are set to
+ * Else, #UPRO_ECURVE_INEXACT is returned and `*lower` and `*upper` are set to
  * the indices of the values that are closest to `key`, i.e. such that
  * `search[*lower] < key < search[*upper]`.
  *
@@ -44,7 +45,7 @@ static int prefix_lookup(const struct upro_ecurve_pfxtable *table,
  * \param lower     OUT: index of the lower neighbour
  * \param upper     OUT: index of the upper neighbour
  *
- * \return `#UPRO_LOOKUP_EXACT`, `#UPRO_LOOKUP_OOB` or `#UPRO_LOOKUP_INEXACT` as
+ * \return `#UPRO_ECURVE_EXACT`, `#UPRO_ECURVE_OOB` or `#UPRO_ECURVE_INEXACT` as
  * described above.
  */
 static int suffix_lookup(const upro_suffix *search, size_t n, upro_suffix key,
@@ -57,13 +58,13 @@ upro_ecurve_init(struct upro_ecurve *ecurve, const char *alphabet,
     int res;
 
     res = upro_alphabet_init(&ecurve->alphabet, alphabet);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         return res;
     }
 
     ecurve->prefixes = malloc(sizeof *ecurve->prefixes * (UPRO_PREFIX_MAX + 1));
     if (!ecurve->prefixes) {
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
 
     if (suffix_count) {
@@ -71,7 +72,7 @@ upro_ecurve_init(struct upro_ecurve *ecurve, const char *alphabet,
         ecurve->families = malloc(sizeof *ecurve->families * suffix_count);
         if (!ecurve->suffixes || !ecurve->families) {
             upro_ecurve_destroy(ecurve);
-            return UPRO_ENOMEM;
+            return upro_error(UPRO_ENOMEM);
         }
     }
     else {
@@ -108,7 +109,7 @@ upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src)
     upro_prefix dest_last, src_first, p;
 
     if (dest->mmap_ptr) {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL, "can't append to mmap()ed ecurve");
     }
 
     for (dest_last = UPRO_PREFIX_MAX; dest_last > 0; dest_last--) {
@@ -123,19 +124,19 @@ upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src)
     }
     /* must not overlap! */
     if (src_first <= dest_last) {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL, "overlapping ecurves");
     }
 
     new_suffix_count = dest->suffix_count + src->suffix_count;
     tmp = realloc(dest->suffixes, new_suffix_count * sizeof *dest->suffixes);
     if (!tmp) {
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
     dest->suffixes = tmp;
 
     tmp = realloc(dest->families, new_suffix_count * sizeof *dest->families);
     if (!tmp) {
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
     dest->families = tmp;
 
@@ -178,14 +179,14 @@ upro_ecurve_lookup(const struct upro_ecurve *ecurve, const struct upro_word *wor
     res = prefix_lookup(ecurve->prefixes, word->prefix, &index, &count,
                         &p_lower, &p_upper);
 
-    if (res == UPRO_LOOKUP_EXACT) {
+    if (res == UPRO_ECURVE_EXACT) {
         res = suffix_lookup(&ecurve->suffixes[index], count, word->suffix,
                             &lower, &upper);
-        res = (res == UPRO_LOOKUP_EXACT) ? UPRO_LOOKUP_EXACT : UPRO_LOOKUP_INEXACT;
+        res = (res == UPRO_ECURVE_EXACT) ? UPRO_ECURVE_EXACT : UPRO_ECURVE_INEXACT;
     }
     else {
         lower = 0;
-        upper = (res == UPRO_LOOKUP_OOB) ? 0 : 1;
+        upper = (res == UPRO_ECURVE_OOB) ? 0 : 1;
     }
 
     /* `lower` and `upper` are relative to `index` */
@@ -229,7 +230,7 @@ prefix_lookup(const struct upro_ecurve_pfxtable *table,
 
         *count = 1;
         *lower_prefix = *upper_prefix = tmp;
-        return UPRO_LOOKUP_OOB;
+        return UPRO_ECURVE_OOB;
     }
 
     *index = table[key].first;
@@ -246,12 +247,12 @@ prefix_lookup(const struct upro_ecurve_pfxtable *table,
             ;
         }
         *upper_prefix = tmp;
-        return UPRO_LOOKUP_INEXACT;
+        return UPRO_ECURVE_INEXACT;
     }
 
     *count = table[key].count;
     *lower_prefix = *upper_prefix = key;
-    return UPRO_LOOKUP_EXACT;
+    return UPRO_ECURVE_EXACT;
 }
 
 static int
@@ -262,12 +263,12 @@ suffix_lookup(const upro_suffix *search, size_t n, upro_suffix key,
 
     if (!n || key < search[0]) {
         *lower = *upper = 0;
-        return UPRO_LOOKUP_OOB;
+        return UPRO_ECURVE_OOB;
     }
 
     if (key > search[n - 1]) {
         *lower = *upper = n - 1;
-        return UPRO_LOOKUP_OOB;
+        return UPRO_ECURVE_OOB;
     }
 
     while (hi > lo + 1) {
@@ -292,5 +293,5 @@ suffix_lookup(const upro_suffix *search, size_t n, upro_suffix key,
     }
     *lower = lo;
     *upper = hi;
-    return (lo == hi) ? UPRO_LOOKUP_EXACT : UPRO_LOOKUP_INEXACT;
+    return (lo == hi) ? UPRO_ECURVE_EXACT : UPRO_ECURVE_INEXACT;
 }

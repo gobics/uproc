@@ -1,9 +1,11 @@
-#include "upro/common.h"
-#include "upro/bst.h"
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
+#include "upro/common.h"
+#include "upro/error.h"
+#include "upro/bst.h"
+
 
 struct upro_bst_node {
     union upro_bst_key key;
@@ -55,8 +57,7 @@ cmp_keys(struct upro_bst *t, union upro_bst_key x, union upro_bst_key y)
         case UPRO_BST_WORD:
             return upro_word_cmp(&x.word, &y.word);
     }
-    abort();
-    return 42;
+    return upro_error_msg(UPRO_EINVAL, "uninitialized bst");
 }
 
 static struct upro_bst_node *
@@ -245,7 +246,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
             t->size = 1;
             return UPRO_SUCCESS;
         }
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
 
     n = bstnode_find(t, t->root, key);
@@ -256,7 +257,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
             memcpy(n->value, value, t->value_size);
             return UPRO_SUCCESS;
         }
-        return UPRO_EEXIST;
+        return upro_error(UPRO_EEXIST);
     }
     else if (cmp < 0) {
         ins = bstnode_new(key, value, t->value_size, n);
@@ -268,7 +269,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
     }
 
     if (!ins) {
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
 
     t->size++;
@@ -292,7 +293,7 @@ upro_bst_get(struct upro_bst *t, union upro_bst_key key, void *value)
 {
     struct upro_bst_node *n;
     if (!t->root) {
-        return UPRO_ENOENT;
+        return upro_error(UPRO_ENOENT);
     }
 
     n = bstnode_find(t, t->root, key);
@@ -300,7 +301,7 @@ upro_bst_get(struct upro_bst *t, union upro_bst_key key, void *value)
         memcpy(value, n->value, t->value_size);
         return UPRO_SUCCESS;
     }
-    return UPRO_ENOENT;
+    return upro_error(UPRO_ENOENT);
 }
 
 int
@@ -309,12 +310,12 @@ upro_bst_remove(struct upro_bst *t, union upro_bst_key key, upro_bst_cb_remove c
     /* node to remove and its parent */
     struct upro_bst_node *del, *par;
     if (!t->root) {
-        return UPRO_ENOENT;
+        return upro_error(UPRO_ENOENT);
     }
 
     del = bstnode_find(t, t->root, key);
     if (cmp_keys(t, key, del->key) != 0) {
-        return UPRO_ENOENT;
+        return upro_error(UPRO_ENOENT);
     }
     par = del->parent;
 

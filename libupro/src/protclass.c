@@ -1,7 +1,9 @@
 #include <string.h>
 
-#include "upro/protclass.h"
+#include "upro/common.h"
+#include "upro/error.h"
 #include "upro/bst.h"
+#include "upro/protclass.h"
 
 
 
@@ -104,8 +106,13 @@ scores_add(struct upro_bst *scores, upro_family family, size_t index,
     struct sc sc;
     union upro_bst_key key = { .uint = family };
     res = upro_bst_get(scores, key, &sc);
-    if (res == UPRO_ENOENT) {
-        sc_init(&sc);
+    if (res) {
+        if (upro_error_num == UPRO_ENOENT) {
+            sc_init(&sc);
+        }
+        else {
+            return res;
+        }
     }
     sc_add(&sc, index, dist, reverse);
     res = upro_bst_update(scores, key, &sc);
@@ -150,7 +157,7 @@ scores_add_word(struct upro_bst *scores, const struct upro_word *word, size_t in
     upro_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb, &upper_family);
     align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
     res = scores_add(scores, lower_family, index, dist, reverse);
-    if (UPRO_ISERROR(res) || upro_word_equal(&lower_nb, &upper_nb)) {
+    if (res || upro_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
     align_suffixes(dist, word->suffix, upper_nb.suffix, substmat);
@@ -174,16 +181,16 @@ scores_compute(const struct upro_protclass *pc, const char *seq, struct upro_bst
     while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) == UPRO_ITER_YIELD) {
         res = scores_add_word(scores, &fwd_word, index, false, pc->fwd,
                 pc->substmat);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             break;
         }
         res = scores_add_word(scores, &rev_word, index, true, pc->rev,
                 pc->substmat);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             break;
         }
     }
-    if (!UPRO_ISERROR(res)) {
+    if (res == UPRO_ITER_STOP) {
         res = UPRO_SUCCESS;
     }
     return res;
@@ -209,7 +216,7 @@ scores_finalize(const struct upro_protclass *pc, const char *seq,
         void *tmp;
         tmp = realloc(results->preds, results->n * sizeof *results->preds);
         if (!tmp) {
-            res = UPRO_ENOMEM;
+            res = upro_error(UPRO_ENOMEM);
             goto error;
         }
         results->preds = tmp;
@@ -259,7 +266,8 @@ upro_pc_init(struct upro_protclass *pc,
         upro_pc_filter *filter, void *filter_arg)
 {
     if (!(fwd || rev)) {
-        return UPRO_EINVAL;
+        return upro_error_msg(
+            UPRO_EINVAL, "protein classifier requires at least one ecurve");
     }
     *pc = (struct upro_protclass) {
         .mode = mode,
@@ -281,7 +289,7 @@ classify(const struct upro_protclass *pc, const char *seq,
 
     upro_bst_init(&scores, UPRO_BST_UINT, sizeof (struct sc));
     res = scores_compute(pc, seq, &scores);
-    if (UPRO_ISERROR(res) || upro_bst_isempty(&scores)) {
+    if (res || upro_bst_isempty(&scores)) {
         results->n = 0;
         goto error;
     }
@@ -298,7 +306,7 @@ upro_pc_classify(const struct upro_protclass *pc, const char *seq,
     int res;
     size_t i, imax = 0;
     res = classify(pc, seq, results);
-    if (UPRO_ISERROR(res) || !results->n) {
+    if (res || !results->n) {
         return res;
     }
     if (pc->mode == UPRO_PC_MAX) {

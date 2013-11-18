@@ -4,6 +4,7 @@
 #include <limits.h>
 
 #include "upro/matrix.h"
+#include "upro/error.h"
 #include "upro/common.h"
 #include "upro/storage.h"
 #include "upro/io.h"
@@ -21,7 +22,7 @@ upro_matrix_init(struct upro_matrix *matrix, size_t rows, size_t cols,
 
     matrix->values = malloc(rows * cols * sizeof *matrix->values);
     if (!matrix->values) {
-        return UPRO_ENOMEM;
+        return upro_error(UPRO_ENOMEM);
     }
     if (values) {
         memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
@@ -65,11 +66,11 @@ matrix_load(struct upro_matrix *matrix, upro_io_stream *stream)
     if (!upro_io_gets(buf, sizeof buf, stream) ||
         sscanf(buf, UPRO_MATRIX_HEADER_SCN, &rows, &cols) != 2)
     {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL, "invalid matrix header");
     }
 
     res = upro_matrix_init(matrix, rows, cols, NULL);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         return res;
     }
 
@@ -78,7 +79,7 @@ matrix_load(struct upro_matrix *matrix, upro_io_stream *stream)
             if (!upro_io_gets(buf, sizeof buf, stream) ||
                 sscanf(buf, "%lf", &val) != 1) {
                 upro_matrix_destroy(matrix);
-                return UPRO_EINVAL;
+                return upro_error_msg(UPRO_EINVAL, "invalid value or EOF");
             }
             upro_matrix_set(matrix, i, k, val);
         }

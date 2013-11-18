@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/alphabet.h"
 
 int
@@ -13,7 +14,9 @@ upro_alphabet_init(struct upro_alphabet *alpha, const char *s)
     const char *p;
 
     if (strlen(s) != UPRO_ALPHABET_SIZE) {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL,
+                              "input string too short: %d chars instead of %d",
+                              strlen(s), UPRO_ALPHABET_SIZE);
     }
     strcpy(alpha->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
@@ -22,8 +25,12 @@ upro_alphabet_init(struct upro_alphabet *alpha, const char *s)
     for (p = s; *p; p++) {
         i = *p;
         /* invalid or duplicate character */
-        if (!isupper(i) || alpha->aminos[i] != -1) {
-            return UPRO_EINVAL;
+        if (!isupper(i)) {
+            return upro_error_msg(
+                UPRO_EINVAL, "input string contains non-uppercase character");
+        }
+        if (alpha->aminos[i] != -1) {
+            return upro_error_msg(UPRO_EINVAL, "duplicate '%c' in input string", i);
         }
         alpha->aminos[i] = p - s;
     }

@@ -3,13 +3,14 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <assert.h>
+#include <errno.h>
 
 #if HAVE_ZLIB
 #include <zlib.h>
 #endif
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/io.h"
 
 #define GZIP_BUFSZ (512 * (1 << 10))
@@ -135,12 +136,15 @@ io_open(const char *path, const char *mode, enum upro_io_type type)
     switch (stream->type) {
         case UPRO_IO_STDIO:
             if (!(stream->s.fp = fopen(path, mode))) {
+                upro_error(UPRO_ESYSCALL);
                 goto error;
             }
             break;
 #if HAVE_ZLIB
         case UPRO_IO_GZIP:
             if (!(stream->s.gz = gzopen(path, mode))) {
+                /* gzopen sets errno to 0 if memory allocation failed */
+                upro_error(errno ? UPRO_ESYSCALL : UPRO_ENOMEM);
                 goto error;
             }
             (void) gzbuffer(stream->s.gz, GZIP_BUFSZ);
@@ -211,7 +215,7 @@ upro_io_close(upro_io_stream *stream)
             break;
 #endif
         default:
-            assert(!"stream type valid");
+            return upro_error_msg(UPRO_EINVAL, "invalid stream");
     }
     if (!stream->stdstream) {
         free(stream);
@@ -235,7 +239,7 @@ upro_io_printf(upro_io_stream *stream, const char *fmt, ...)
             break;
 #endif
         default:
-            assert(!"stream type valid");
+            res = upro_error_msg(UPRO_EINVAL, "invalid stream");
     }
     va_end(ap);
     return res;
@@ -261,7 +265,7 @@ upro_io_read(void *ptr, size_t size, size_t nmemb, upro_io_stream *stream)
             }
 #endif
     }
-    assert(!"stream type valid");
+    upro_error_msg(UPRO_EINVAL, "invalid stream");
     return 0;
 }
 
@@ -285,23 +289,34 @@ upro_io_write(const void *ptr, size_t size, size_t nmemb, upro_io_stream *stream
             }
 #endif
     }
-    assert(!"stream type valid");
+    upro_error_msg(UPRO_EINVAL, "invalid stream");
     return 0;
 }
 
 char *
 upro_io_gets(char *s, int size, upro_io_stream *stream)
 {
+    char *res;
     switch (stream->type) {
         case UPRO_IO_STDIO:
-            return fgets(s, size, stream->s.fp);
+            res = fgets(s, size, stream->s.fp);
+            if (!res) {
+                upro_error_msg(UPRO_EIO, "failed to read from stream");
+            }
+            break;
 #if HAVE_ZLIB
         case UPRO_IO_GZIP:
-            return gzgets(stream->s.gz, s, size);
+            res = gzgets(stream->s.gz, s, size);
+            if (!res) {
+                upro_error_msg(UPRO_EIO, "failed to read from gz stream");
+            }
+            break;
 #endif
+        default:
+            upro_error_msg(UPRO_EINVAL, "invalid stream");
+            return NULL;
     }
-    assert(!"stream type valid");
-    return NULL;
+    return res;
 }
 
 long
@@ -319,6 +334,7 @@ upro_io_getline(char **lineptr, size_t *n, upro_io_stream *stream)
     do {
         if (!upro_io_gets(buf, sizeof buf, stream)) {
             if (!total) {
+                upro_error(UPRO_SUCCESS);
                 return -1;
             }
             break;
@@ -327,6 +343,7 @@ upro_io_getline(char **lineptr, size_t *n, upro_io_stream *stream)
         if (!*lineptr || *n < total + len) {
             void *tmp = realloc(*lineptr, total + len);
             if (!tmp) {
+                upro_error(UPRO_ENOMEM);
                 return -1;
             }
             *lineptr = tmp;
@@ -350,6 +367,6 @@ upro_io_seek(upro_io_stream *stream, long offset, int whence)
             return gzseek(stream->s.gz, offset, whence) >= 0 ? 0 : -1;
 #endif
     }
-    assert(!"stream type valid");
+    upro_error_msg(UPRO_EINVAL, "invalid stream");
     return -1;
 }

@@ -23,25 +23,7 @@ enum {
 
     /** Iterator exhausted */
     UPRO_ITER_STOP,
-
-    /** Memory allocation failed */
-    UPRO_ENOMEM,
-
-    /** Invalid argument */
-    UPRO_EINVAL,
-
-    /** Object doesn't exist  */
-    UPRO_ENOENT,
-
-    /** Object already exists */
-    UPRO_EEXIST,
-
-    /** A system call (that sets `errno`) returned an error */
-    UPRO_ESYSCALL,
 };
-
-/** Test return code for error */
-#define UPRO_ISERROR(e) ((e) != UPRO_SUCCESS && (e) != UPRO_ITER_YIELD && (e) != UPRO_ITER_STOP)
 
 /** Epsilon value for comparing floating point numbers */
 #define UPRO_EPSILON 1e-5

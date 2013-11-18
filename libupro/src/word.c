@@ -3,6 +3,7 @@
 
 #include "upro/common.h"
 #include "upro/word.h"
+#include "upro/error.h"
 
 #define AMINO_AT(x, n) (((x) >> (UPRO_AMINO_BITS * (n))) & UPRO_BITMASK(UPRO_AMINO_BITS))
 
@@ -15,11 +16,17 @@ upro_word_from_string(struct upro_word *word, const char *str,
     for (i = 0; str[i] && i < UPRO_WORD_LEN; i++) {
         a = upro_alphabet_char_to_amino(alpha, str[i]);
         if (a < 0) {
-            return UPRO_EINVAL;
+            return upro_error_msg(UPRO_EINVAL, "invalid amino acid '%c'",
+                                  str[i]);
         }
         upro_word_append(word, a);
     }
-    return (i < UPRO_WORD_LEN) ? UPRO_EINVAL : UPRO_SUCCESS;
+    if (i < UPRO_WORD_LEN) {
+        return upro_error_msg(UPRO_EINVAL,
+                              "input string too short: %d chars instead of %d",
+                              i, UPRO_WORD_LEN);
+    }
+    return UPRO_SUCCESS;
 }
 
 int
@@ -34,7 +41,7 @@ upro_word_to_string(char *str, const struct upro_word *word,
     while (i--) {
         c = upro_alphabet_amino_to_char(alpha, p % UPRO_ALPHABET_SIZE);
         if (c < 0) {
-            return UPRO_EINVAL;
+            return upro_error_msg(UPRO_EINVAL, "invalid word");
         }
         str[i] = c;
         p /= UPRO_ALPHABET_SIZE;
@@ -44,7 +51,7 @@ upro_word_to_string(char *str, const struct upro_word *word,
     while (i--) {
         c = upro_alphabet_amino_to_char(alpha, AMINO_AT(s, 0));
         if (c < 0) {
-            return UPRO_EINVAL;
+            return upro_error_msg(UPRO_EINVAL, "invalid word");
         }
         str[i + UPRO_PREFIX_LEN] = c;
         s >>= UPRO_AMINO_BITS;

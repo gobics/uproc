@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/alphabet.h"
 #include "upro/io.h"
 #include "upro/matrix.h"
@@ -36,18 +37,22 @@ upro_substmat_loadv(struct upro_substmat *mat, enum upro_io_type iotype,
         const char *pathfmt, va_list ap)
 {
     int res;
-    size_t i, j, k, rows, cols;
+    size_t i, j, k, rows, cols, sz;
     struct upro_matrix matrix;
 
     res = upro_matrix_loadv(&matrix, iotype, pathfmt, ap);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         return res;
     }
 
     upro_matrix_dimensions(&matrix, &rows, &cols);
-    if (rows * cols != UPRO_SUFFIX_LEN * UPRO_ALPHABET_SIZE *
-            UPRO_ALPHABET_SIZE) {
-        res = UPRO_EINVAL;
+    sz = rows * cols;
+#define SUBSTMAT_TOTAL (UPRO_SUFFIX_LEN * UPRO_ALPHABET_SIZE * UPRO_ALPHABET_SIZE)
+    if (sz != SUBSTMAT_TOTAL) {
+        res = upro_error_msg(
+            UPRO_EINVAL,
+            "invalid substitution matrix (%zu elements; expected %zu)", sz,
+            SUBSTMAT_TOTAL);
         goto error;
     }
 

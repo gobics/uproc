@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/codon.h"
 #include "upro/matrix.h"
 #include "upro/orf.h"
@@ -56,7 +57,7 @@ orf_add_codon(struct upro_orf *o, size_t *sz, upro_codon c, double score)
     if (o->length + 1 == *sz) {
         char *tmp = realloc(o->data, *sz + BUFSZ_STEP);
         if (!tmp) {
-            return UPRO_ENOMEM;
+            return upro_error(UPRO_ENOMEM);
         }
         o->data = tmp;
         *sz += BUFSZ_STEP;
@@ -129,7 +130,7 @@ upro_orfiter_init(struct upro_orfiter *iter, const char *seq,
             while (i--) {
                 free(iter->orf[i].data);
             }
-            return UPRO_ENOMEM;
+            return upro_error(UPRO_ENOMEM);
         }
         iter->orf[i].frame = i;
     }
@@ -229,7 +230,7 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
     int res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)],   \
             codon,                                                          \
             iter->codon_scores ?  iter->codon_scores[codon] : 0.0);         \
-    if (UPRO_ISERROR(res)) {                                                \
+    if (res) {                                                              \
         return res;                                                         \
     }                                                                       \
 } while (0)

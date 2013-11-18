@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include "upro/common.h"
+#include "upro/error.h"
 #include "upro/io.h"
 #include "upro/fasta.h"
 
@@ -32,7 +33,9 @@ static void
 reader_getline(upro_io_stream *stream, struct upro_fasta_reader *rd)
 {
     rd->line_len = upro_io_getline(&rd->line, &rd->line_sz, stream);
-    rd->line_no++;
+    if (rd->line_len >= 0) {
+        rd->line_no++;
+    }
 }
 
 int
@@ -49,7 +52,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
         if (rd->seq_sz_hint) {
             rd->seq = malloc(rd->seq_sz_hint);
             if (!rd->seq) {
-                return UPRO_ENOMEM;
+                return upro_error(UPRO_ENOMEM);
             }
         }
         rd->seq_sz = rd->seq_sz_hint;
@@ -65,14 +68,15 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
 
     /* header needs at least '>', one character, '\n' */
     if (rd->line_len < 3 || rd->line[0] != '>') {
-        return UPRO_EINVAL;
+        return upro_error_msg(UPRO_EINVAL,
+                              "invalid fasta header in line %zu", rd->line_no);
     }
 
     len = rd->line_len - 1;
     if (rd->header_sz < len) {
         void *tmp = realloc(rd->header, len);
         if (!tmp) {
-            return UPRO_ENOMEM;
+            return upro_error(UPRO_ENOMEM);
         }
         rd->header = tmp;
         rd->header_sz = len;
@@ -84,7 +88,12 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
 
     reader_getline(stream, rd);
     if (rd->line_len == -1) {
-        return UPRO_EINVAL;
+        if (upro_error_num) {
+            return UPRO_FAILURE;
+        }
+        return upro_error_msg(UPRO_EINVAL,
+                              "expected line after header (line %zu)",
+                              rd->line_no);
     }
 
     for (total_len = 0;
@@ -95,7 +104,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
         if (rd->comment_sz < total_len + len) {
             void *tmp = realloc(rd->comment, total_len + len);
             if (!tmp) {
-                return UPRO_ENOMEM;
+                return upro_error(UPRO_ENOMEM);
             }
             rd->comment = tmp;
             rd->comment_sz = total_len + len;
@@ -119,7 +128,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
         if (rd->seq_sz < total_len + len) {
             void *tmp = realloc(rd->seq, total_len + len);
             if (!tmp) {
-                return UPRO_ENOMEM;
+                return upro_error(UPRO_ENOMEM);
             }
             rd->seq = tmp;
             rd->seq_sz = total_len + len;
