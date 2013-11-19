@@ -67,3 +67,15 @@ error:
     upro_matrix_destroy(&matrix);
     return res;
 }
+
+int
+upro_substmat_load(struct upro_substmat *mat, enum upro_io_type iotype,
+        const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = upro_substmat_loadv(mat, iotype, pathfmt, ap);
+    va_end(ap);
+    return res;
+}
