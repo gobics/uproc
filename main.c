@@ -235,7 +235,7 @@ main(int argc, char **argv)
     bool more_input;
 
     struct upro_ecurve fwd, rev;
-    struct upro_substmat substmat_obj[UPRO_SUFFIX_LEN], *substmat = NULL;
+    struct upro_substmat substmat_obj, *substmat = NULL;
     struct upro_matrix prot_thresholds;
 
 #if MAIN_DNA
@@ -318,15 +318,15 @@ main(int argc, char **argv)
                 out_unexplained = &unexplained;
                 break;
             case 'S':
-                res = upro_substmat_load_many(substmat_obj, UPRO_SUFFIX_LEN, optarg, UPRO_IO_GZIP);
+                res = upro_substmat_load(&substmat_obj, UPRO_IO_GZIP, optarg);
                 if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
                 }
-                substmat = substmat_obj;
+                substmat = &substmat_obj;
                 break;
             case 'P':
-                res = upro_matrix_load_file(&prot_thresholds, optarg, UPRO_IO_GZIP);
+                res = upro_matrix_load(&prot_thresholds, UPRO_IO_GZIP, optarg);
                 if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
@@ -341,7 +341,7 @@ main(int argc, char **argv)
                 short_read_mode = false;
                 break;
             case 'C':
-                res = upro_matrix_load_file(&codon_scores_obj, optarg, UPRO_IO_GZIP);
+                res = upro_matrix_load(&codon_scores_obj, UPRO_IO_GZIP, optarg);
                 if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
@@ -349,7 +349,7 @@ main(int argc, char **argv)
                 codon_scores = &codon_scores_obj;
                 break;
             case 'O':
-                res = upro_matrix_load_file(&orf_thresholds, optarg, UPRO_IO_GZIP);
+                res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, optarg);
                 if (res != UPRO_SUCCESS) {
                     fprintf(stderr, "failed to load %s\n", optarg);
                     return EXIT_FAILURE;
@@ -372,13 +372,13 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_storage_load(&fwd, argv[optind + FWD], format, UPRO_IO_GZIP);
+    res = upro_storage_load(&fwd, format, UPRO_IO_GZIP, argv[optind + FWD]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    res = upro_storage_load(&rev, argv[optind + REV], format, UPRO_IO_GZIP);
+    res = upro_storage_load(&rev, format, UPRO_IO_GZIP, argv[optind + REV]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;
@@ -424,7 +424,7 @@ main(int argc, char **argv)
             stream = upro_stdin;
         }
         else {
-            stream = upro_io_open(argv[optind + INFILE], "r", UPRO_IO_GZIP);
+            stream = upro_io_open("r", UPRO_IO_GZIP, argv[optind + INFILE]);
             if (!stream) {
                 fprintf(stderr, "error opening %s: ", argv[optind + INFILE]);
                 perror("");

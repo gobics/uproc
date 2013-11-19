@@ -74,12 +74,12 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (in_fmt) {
         case 'P':
-            res = upro_storage_load(&ecurve, argv[IN_PATH],
-                    UPRO_STORAGE_PLAIN, UPRO_IO_GZIP);
+            res = upro_storage_load(&ecurve, UPRO_STORAGE_PLAIN, UPRO_IO_GZIP,
+                                    argv[IN_PATH]);
             break;
         case 'B':
-            res = upro_storage_load(&ecurve, argv[IN_PATH],
-                    UPRO_STORAGE_BINARY, UPRO_IO_GZIP);
+            res = upro_storage_load(&ecurve, UPRO_STORAGE_BINARY, UPRO_IO_GZIP,
+                                    argv[IN_PATH]);
             break;
         case 'M':
             res = upro_mmap_map(&ecurve, argv[IN_PATH]);
@@ -97,12 +97,12 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (out_fmt) {
         case 'P':
-            res = upro_storage_store(&ecurve, argv[OUT_PATH],
-                    UPRO_STORAGE_PLAIN, iotype);
+            res = upro_storage_store(&ecurve, UPRO_STORAGE_PLAIN, iotype,
+                                     argv[OUT_PATH]);
             break;
         case 'B':
-            res = upro_storage_store(&ecurve, argv[OUT_PATH],
-                    UPRO_STORAGE_BINARY, iotype);
+            res = upro_storage_store(&ecurve, UPRO_STORAGE_BINARY, iotype,
+                                     argv[OUT_PATH]);
             break;
         case 'M':
             res = upro_mmap_store(&ecurve, argv[OUT_PATH]);

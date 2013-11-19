@@ -163,7 +163,6 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     size_t i;
     double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
-    char filename[1024];
 
     struct upro_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
 
@@ -180,8 +179,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     }
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
-    sprintf(filename, "%.100s%zu", prefix, number);
-    return upro_matrix_store_file(&thresh_interp, filename, UPRO_IO_STDIO);
+    return upro_matrix_store(&thresh_interp, UPRO_IO_STDIO, "%.100s%zu", prefix, number);
 }
 
 
@@ -200,7 +198,7 @@ int main(int argc, char **argv)
     int res;
     struct upro_alphabet alpha;
     struct upro_matrix alpha_probs;
-    struct upro_substmat substmat[UPRO_SUFFIX_LEN];
+    struct upro_substmat substmat;
     struct upro_ecurve fwd, rev;
     double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
@@ -220,15 +218,14 @@ int main(int argc, char **argv)
         outfile_prefix = argv[OUT_PREFIX];
     }
 
-    res = upro_substmat_load_many(substmat, UPRO_SUFFIX_LEN, argv[SUBSTMAT],
-            UPRO_IO_GZIP);
+    res = upro_substmat_load(&substmat, UPRO_IO_GZIP, argv[SUBSTMAT]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[SUBSTMAT]);
         perror("");
         return EXIT_FAILURE;
     }
 
-    res = upro_matrix_load_file(&alpha_probs, argv[AA_PROBS], UPRO_IO_GZIP);
+    res = upro_matrix_load(&alpha_probs, UPRO_IO_GZIP, argv[AA_PROBS]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[AA_PROBS]);
         perror("");
@@ -264,7 +261,7 @@ int main(int argc, char **argv)
             struct upro_pc_results results;
             results.preds = NULL;
             results.n = results.sz = 0;
-            upro_pc_init(&pc, UPRO_PC_ALL, &fwd, &rev, substmat, NULL, NULL);
+            upro_pc_init(&pc, UPRO_PC_ALL, &fwd, &rev, &substmat, NULL, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;

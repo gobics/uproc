@@ -61,7 +61,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_matrix_load_file(&codon_scores_mat, argv[CODON_SCORES], UPRO_IO_GZIP);
+    res = upro_matrix_load(&codon_scores_mat, UPRO_IO_GZIP, argv[CODON_SCORES]);
     if (UPRO_ISERROR(res)) {
         fprintf(stderr, "can't open file \"%s\"\n", argv[CODON_SCORES]);
         if (res == UPRO_ESYSCALL) {
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
         mode = ALL;
         min_score = strtod(argv[MIN_SCORE], &endptr);
         if (*argv[MIN_SCORE] && *endptr) {
-            res = upro_matrix_load_file(&orf_thresholds, argv[MIN_SCORE], UPRO_IO_GZIP);
+            res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, argv[MIN_SCORE]);
             if (UPRO_ISERROR(res)) {
                 fprintf(stderr, "can't open file \"%s\"\n", argv[MIN_SCORE]);
                 if (res == UPRO_ESYSCALL) {
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     }
 
     if (argc == ARGC && strcmp(argv[INFILE], "-")) {
-        stream = upro_io_open(argv[INFILE], "r", UPRO_IO_GZIP);
+        stream = upro_io_open("r", UPRO_IO_GZIP, argv[INFILE]);
         if (!stream) {
             perror("");
             return EXIT_FAILURE;

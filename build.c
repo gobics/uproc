@@ -291,7 +291,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    stream = upro_io_open(argv[INFILE], "r", UPRO_IO_GZIP);
+    stream = upro_io_open("r", UPRO_IO_GZIP, argv[INFILE]);
     if (!stream) {
         perror("");
         return EXIT_FAILURE;
@@ -303,7 +303,7 @@ main(int argc, char **argv)
     }
     upro_io_close(stream);
     fprintf(stderr, "storing..\n");
-    upro_storage_store(&ecurve, argv[OUTFILE], UPRO_STORAGE_PLAIN, UPRO_IO_GZIP);
+    upro_storage_store(&ecurve, UPRO_STORAGE_PLAIN, UPRO_IO_GZIP, argv[OUTFILE]);
     upro_ecurve_destroy(&ecurve);
     fprintf(stderr, "filtered:\n");
     for (size_t i = 0; i < UPRO_FAMILY_MAX; i++) {
