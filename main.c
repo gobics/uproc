@@ -9,6 +9,10 @@
 #include <getopt.h>
 #endif
 
+#if HAVE_OPENMP
+#include <omp.h>
+#endif
+
 #include "upro.h"
 
 
@@ -212,20 +216,95 @@ get_chunk_size(void)
 void
 print_usage(const char *progname)
 {
-    fprintf(stderr, "%s ?\n", progname);
+    const char *s = "\
+USAGE: %s db_dir model_dir [options] [input_file(s)]\n\
+\n\
+GENERAL OPTIONS:\n\
+-h | --help             Print this message and exit.\n\
+-v | --version          Print version and exit.\n"
+#if HAVE_OPENMP
+"\
+-t | --threads <n>      Maximum number of threads to use. This overrides the\n\
+                        environment variable OMP_NUM_THREADS. If neither is\n\
+                        set, the number of available CPU cores is used."
+#endif
+"\n\n\
+OUTPUT OPTIONS:\n\
+-p | --preds    Print all classifications as CSV with the fields:\n\
+                    sequence number (starting with 1)\n\
+                    FASTA header up to the first whitespace\n"
+#ifdef MAIN_DNA
+"\
+                    frame number (1-6)\n"
+#endif
+"\
+                    protein family\n\
+                    classificaton score\n\
+\n\
+-c | --counts   Print number of classifications for each protein family (if\n\
+                this number is greater than 0) in the format:\n\
+                    \"family: count\"\n\
+\n\
+-f | --stats    Print classified,unclassified,total numbers of sequences.\n\
+\n\
+If none of these is specified, -c is used.\n\
+If multiple of these are specified, they are printed in the order as above.\n\
+\n\n\
+PROTEIN CLASSIFICATION OPTIONS:\n\
+-P | --pthresh <n>      Protein threshold level. Allowed values:\n\
+                            0   fixed threshold of 0.0\n\
+                            2   less restrictive\n\
+                            3   more restrictive\n\
+                        Default is 2.\n\
+"
+
+#ifdef MAIN_DNA
+"\n\n\
+DNA CLASSIFICATION OPTIONS:\n\
+-l | --long             Use long read mode (default):\n\
+                        Only accept certain ORFs (see -O below) and report all\n\
+                        protein scores above the threshold (see -P above).\n\
+\n\
+-s | --short            Use short read mode:\n\
+                        Accept all ORFS, report only maximum protein score (if\n\
+                        above threshold).\n\
+\n\
+-O | --othresh <n>      ORF translation threshold level (only relevant in long\n\
+                        read mode. Allowed values:\n\
+                            0   accept all ORFs\n\
+                            1   less restrictive\n\
+                            2   more restrictive\n\
+                        Default is 1.\n\
+"
+#endif
+;
+    fprintf(stderr, s, progname);
 }
 
 void
 print_version(const char *progname)
 {
-    fprintf(stderr, "%s version 0.0\n", progname);
+    (void) progname;
+    fprintf(stderr, "%s version 0.0\n", "upro-beta");
 }
 
 enum args
 {
-    FWD, REV, INFILE,
+    DBDIR, MODELDIR, INFILE,
     ARGC
 };
+
+int
+parse_int(const char *arg, int *x)
+{
+    char *end;
+    int tmp = strtol(arg, &end, 10);
+    if (!*arg || *end) {
+        return UPRO_FAILURE;
+    }
+    *x = tmp;
+    return UPRO_SUCCESS;
+}
 
 int
 main(int argc, char **argv)
@@ -233,22 +312,25 @@ main(int argc, char **argv)
     int res;
     size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool more_input;
+    int n_threads = 0;
 
     struct upro_ecurve fwd, rev;
-    struct upro_substmat substmat_obj, *substmat = NULL;
+    struct upro_substmat substmat;
+
+    struct upro_protclass protclass;
+    enum upro_pc_mode pc_mode = UPRO_PC_ALL;
     struct upro_matrix prot_thresholds;
+    void *prot_filter_arg = &prot_thresholds;
+    int prot_thresh_num = 2;
+
 
 #if MAIN_DNA
     struct upro_dnaclass dnaclass;
-    enum upro_dc_mode dc_mode;
-    void *orf_filter_arg = NULL;
-    struct upro_matrix orf_thresholds,
-        codon_scores_obj, *codon_scores = NULL;
+    enum upro_dc_mode dc_mode = UPRO_DC_ALL;
+    struct upro_matrix codon_scores, orf_thresholds;
+    int orf_thresh_num = 1;
     bool short_read_mode = false;
 #endif
-    struct upro_protclass protclass;
-    enum upro_pc_mode pc_mode = UPRO_PC_ALL;
-    void *prot_filter_arg = NULL;
 
     upro_io_stream *stream;
     struct upro_fasta_reader rd;
@@ -263,9 +345,9 @@ main(int argc, char **argv)
     size_t unexplained = 0, *out_unexplained = NULL;
     uintmax_t counts[UPRO_FAMILY_MAX] = { 0 }, *out_counts = NULL;
 
-#define SHORT_OPTS_PROT "hvBMpcfP:S:"
+#define SHORT_OPTS_PROT "hvpcfP:t:"
 #ifdef MAIN_DNA
-#define SHORT_OPTS SHORT_OPTS_PROT "slC:O:"
+#define SHORT_OPTS SHORT_OPTS_PROT "slO:"
 #else
 #define SHORT_OPTS SHORT_OPTS_PROT
 #endif
@@ -274,17 +356,14 @@ main(int argc, char **argv)
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
-        { "binary",     no_argument,        NULL, 'B' },
-        { "mmap",       no_argument,        NULL, 'M' },
         { "preds",      no_argument,        NULL, 'p' },
         { "counts",     no_argument,        NULL, 'c' },
         { "stats",      no_argument,        NULL, 'f' },
         { "pthresh",    required_argument,  NULL, 'P' },
-        { "substmat",   required_argument,  NULL, 'S' },
+        { "threads",    required_argument,  NULL, 't' },
 #ifdef MAIN_DNA
         { "short",      no_argument,        NULL, 's' },
         { "long",       no_argument,        NULL, 'l' },
-        { "cscores",    required_argument,  NULL, 'C' },
         { "othresh",    required_argument,  NULL, 'O' },
 #endif
         { 0, 0, 0, 0 }
@@ -302,12 +381,6 @@ main(int argc, char **argv)
             case 'v':
                 print_version(argv[0]);
                 return EXIT_SUCCESS;
-            case 'B':
-                format = UPRO_STORAGE_BINARY;
-                break;
-            case 'M':
-                format = UPRO_STORAGE_MMAP;
-                break;
             case 'p':
                 out_stream = upro_stdout;
                 break;
@@ -317,21 +390,35 @@ main(int argc, char **argv)
             case 'f':
                 out_unexplained = &unexplained;
                 break;
-            case 'S':
-                res = upro_substmat_load(&substmat_obj, UPRO_IO_GZIP, optarg);
-                if (res != UPRO_SUCCESS) {
-                    fprintf(stderr, "failed to load %s\n", optarg);
-                    return EXIT_FAILURE;
-                }
-                substmat = &substmat_obj;
-                break;
             case 'P':
-                res = upro_matrix_load(&prot_thresholds, UPRO_IO_GZIP, optarg);
-                if (res != UPRO_SUCCESS) {
-                    fprintf(stderr, "failed to load %s\n", optarg);
-                    return EXIT_FAILURE;
+                {
+                    int tmp = 42;
+                    (void) parse_int(optarg, &tmp);
+                    if (tmp != 0 && tmp != 2 && tmp != 3) {
+                        fprintf(stderr, "protein threshold must be either 0, 2 or 3\n");
+                        return EXIT_FAILURE;
+                    }
+                    if (tmp == 0) {
+                        prot_filter_arg = NULL;
+                    }
+                    else {
+                        prot_thresh_num = tmp;
+                    }
                 }
-                prot_filter_arg = &prot_thresholds;
+                break;
+            case 't':
+#if HAVE_OPENMP
+                {
+                    int res, tmp;
+                    res = parse_int(optarg, &tmp);
+                    if (res != UPRO_SUCCESS || tmp <= 0) {
+                        fprintf(stderr, "-t argument must be a positive integer\n");
+                        return EXIT_FAILURE;
+                    }
+                    n_threads = tmp;
+                    omp_set_num_threads(tmp);
+                }
+#endif
                 break;
 #ifdef MAIN_DNA
             case 's':
@@ -340,21 +427,16 @@ main(int argc, char **argv)
             case 'l':
                 short_read_mode = false;
                 break;
-            case 'C':
-                res = upro_matrix_load(&codon_scores_obj, UPRO_IO_GZIP, optarg);
-                if (res != UPRO_SUCCESS) {
-                    fprintf(stderr, "failed to load %s\n", optarg);
-                    return EXIT_FAILURE;
-                }
-                codon_scores = &codon_scores_obj;
-                break;
             case 'O':
-                res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, optarg);
-                if (res != UPRO_SUCCESS) {
-                    fprintf(stderr, "failed to load %s\n", optarg);
-                    return EXIT_FAILURE;
+                {
+                    int tmp = 42;
+                    (void) parse_int(optarg, &tmp);
+                    if (tmp != 0 && tmp != 1 && tmp != 2) {
+                        fprintf(stderr, "-O argument must be either 0, 1 or 2\n");
+                        return EXIT_FAILURE;
+                    }
+                    orf_thresh_num = tmp;
                 }
-                orf_filter_arg = &orf_thresholds;
                 break;
 
 #endif
@@ -372,51 +454,73 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_storage_load(&fwd, format, UPRO_IO_GZIP, argv[optind + FWD]);
+#if HAVE_MMAP
+#define ECURVE_EXT "mmap"
+#else
+#define ECURVE_EXT "bin"
+#endif
+
+    res = upro_storage_load(&fwd, format, UPRO_IO_GZIP, "%s/fwd." ECURVE_EXT,
+                            argv[optind + DBDIR]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    res = upro_storage_load(&rev, format, UPRO_IO_GZIP, argv[optind + REV]);
+    res = upro_storage_load(&rev, format, UPRO_IO_GZIP, "%s/rev." ECURVE_EXT,
+                            argv[optind + DBDIR]);
     if (res != UPRO_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;
     }
+
+    res = upro_matrix_load(&prot_thresholds, UPRO_IO_GZIP,
+                           "%s/prot_thresh_e%d", argv[optind + DBDIR], prot_thresh_num);
+    if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "failed to load protein thresholds\n");
+        return EXIT_FAILURE;
+    }
+
+    const char *model_dir = argv[optind + MODELDIR];
+    res = upro_substmat_load(&substmat, UPRO_IO_GZIP, "%s/substmat", model_dir);
+    if (res != UPRO_SUCCESS) {
+        fprintf(stderr, "failed to load protein thresholds\n");
+        return EXIT_FAILURE;
+    }
+
+#ifdef MAIN_DNA
+    if (short_read_mode) {
+        pc_mode = UPRO_PC_MAX;
+        dc_mode = UPRO_DC_MAX;
+    }
+    else {
+        pc_mode = UPRO_PC_ALL;
+        dc_mode = UPRO_DC_ALL;
+    }
+    if (!short_read_mode && orf_thresh_num != 0) {
+        res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, "%s/orf_thresh_e%d", model_dir, orf_thresh_num);
+        if (res != UPRO_SUCCESS) {
+            fprintf(stderr, "failed to load ORF thresholds\n");
+            return EXIT_FAILURE;
+        }
+        res = upro_matrix_load(&codon_scores, UPRO_IO_GZIP, "%s/codon_scores", model_dir);
+        if (res != UPRO_SUCCESS) {
+            fprintf(stderr, "failed to load ORF thresholds\n");
+            return EXIT_FAILURE;
+        }
+        upro_dc_init(&dnaclass, dc_mode, &protclass, &codon_scores, orf_filter, &orf_thresholds);
+    }
+    else {
+        upro_dc_init(&dnaclass, dc_mode, &protclass, NULL, orf_filter, NULL);
+    }
+#endif
+    upro_pc_init(&protclass, pc_mode, &fwd, &rev, &substmat, prot_filter, prot_filter_arg);
 
 
     /* use stdin if no input file specified */
     if (argc < optind + ARGC) {
         argv[argc++] = "-";
     }
-
-#ifdef MAIN_DNA
-    if (short_read_mode) {
-        if (codon_scores) {
-            fprintf(stderr, "WARNING: short read mode ignores \"-C\"\n");
-        }
-        if (orf_filter_arg) {
-            fprintf(stderr, "WARNING: short read mode ignores \"-O\"\n");
-            orf_filter_arg = NULL;
-        }
-        pc_mode = UPRO_PC_MAX;
-        dc_mode = UPRO_DC_MAX;
-    }
-    else {
-        if (orf_filter_arg && !codon_scores) {
-            fprintf(stderr, "ERROR: \"-O\" requires \"-C\"\n");
-            return EXIT_FAILURE;
-        }
-        if (codon_scores && !orf_filter_arg) {
-            fprintf(stderr, "WARNING: \"-C\" ignored if \"-O\" not specified\n");
-            upro_matrix_destroy(codon_scores);
-            codon_scores = NULL;
-        }
-        dc_mode = UPRO_DC_ALL;
-    }
-    upro_dc_init(&dnaclass, dc_mode, &protclass, codon_scores, orf_filter, orf_filter_arg);
-#endif
-    upro_pc_init(&protclass, pc_mode, &fwd, &rev, substmat, prot_filter, prot_filter_arg);
 
     for (; optind + INFILE < argc; optind++)
     {
@@ -448,7 +552,6 @@ main(int argc, char **argv)
 #endif
                 }
             }
-
 #pragma omp parallel private(res) shared(more_input)
             {
 #pragma omp sections
@@ -476,14 +579,10 @@ main(int argc, char **argv)
 
     upro_ecurve_destroy(&fwd);
     upro_ecurve_destroy(&rev);
-    if (prot_filter_arg) {
-        upro_matrix_destroy(&prot_thresholds);
-    }
+    upro_matrix_destroy(&prot_thresholds);
 #ifdef MAIN_DNA
-    if (codon_scores) {
-        upro_matrix_destroy(&codon_scores_obj);
-    }
-    if (orf_filter_arg) {
+    if (!short_read_mode) {
+        upro_matrix_destroy(&codon_scores);
         upro_matrix_destroy(&orf_thresholds);
     }
 #endif

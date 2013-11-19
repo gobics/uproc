@@ -27,6 +27,7 @@ CPPFLAGS += -DHAVE_MMAP=1
 endif
 ifeq ($(HAVE_OPENMP), yes)
 CFLAGS += -fopenmp
+CPPFLAGS += -DHAVE_OPENMP=1
 endif
 ifeq ($(HAVE_ZLIB), yes)
 CPPFLAGS += -DHAVE_ZLIB=1 -DHAVE_FILENO=1
