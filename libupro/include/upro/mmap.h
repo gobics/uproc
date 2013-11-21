@@ -10,6 +10,7 @@
  * different architectures (or even machines).
  */
 
+#include <stdarg.h>
 #include "upro/ecurve.h"
 
 /** Map a file to an ecurve

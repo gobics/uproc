@@ -7,6 +7,7 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include "upro/io.h"
 
 /** printf() format for matrix file header */
