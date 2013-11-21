@@ -102,14 +102,14 @@ bstnode_walk(struct upro_bst_node *n, upro_bst_cb_walk callback, void *opaque)
 {
     int res;
     if (!n) {
-        return UPRO_SUCCESS;
+        return 0;
     }
     res = bstnode_walk(n->left, callback, opaque);
-    if (res != UPRO_SUCCESS) {
+    if (res) {
         return res;
     }
     res = callback(n->key, n->value, opaque);
-    if (res != UPRO_SUCCESS) {
+    if (res) {
         return res;
     }
     res = bstnode_walk(n->right, callback, opaque);
@@ -244,7 +244,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
         t->root = bstnode_new(key, value, t->value_size, NULL);
         if (t->root) {
             t->size = 1;
-            return UPRO_SUCCESS;
+            return 0;
         }
         return upro_error(UPRO_ENOMEM);
     }
@@ -255,7 +255,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
     if (cmp == 0) {
         if (update) {
             memcpy(n->value, value, t->value_size);
-            return UPRO_SUCCESS;
+            return 0;
         }
         return UPRO_BST_KEY_EXISTS;
     }
@@ -273,7 +273,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
     }
 
     t->size++;
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -299,7 +299,7 @@ upro_bst_get(struct upro_bst *t, union upro_bst_key key, void *value)
     n = bstnode_find(t, t->root, key);
     if (cmp_keys(t, key, n->key) == 0) {
         memcpy(value, n->value, t->value_size);
-        return UPRO_SUCCESS;
+        return 0;
     }
     return UPRO_BST_KEY_NOT_FOUND;
 }
@@ -337,7 +337,7 @@ upro_bst_remove(struct upro_bst *t, union upro_bst_key key, upro_bst_cb_remove c
     free(del->value);
     free(del);
     t->size--;
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -366,7 +366,7 @@ upro_bstiter_next(struct upro_bstiter *iter, union upro_bst_key *key,
     struct upro_bst_node *n = iter->cur;
 
     if (!n) {
-        return UPRO_SUCCESS;
+        return 0;
     }
 
     *key = n->key;
@@ -378,12 +378,12 @@ upro_bstiter_next(struct upro_bstiter *iter, union upro_bst_key *key,
             n = n->left;
         }
         iter->cur = n;
-        return UPRO_ITER_YIELD;
+        return 1;
     }
 
     while (n->parent && n == n->parent->right) {
         n = n->parent;
     }
     iter->cur = n->parent;
-    return UPRO_ITER_YIELD;
+    return 1;
 }

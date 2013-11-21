@@ -15,7 +15,7 @@ int
 upro_substmat_init(struct upro_substmat *mat)
 {
     *mat = (struct upro_substmat) { { { 0.0 } } };
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 double

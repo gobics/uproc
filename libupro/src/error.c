@@ -19,7 +19,7 @@ static const char *error_strs[] = {
     [UPRO_ENOENT]   = "no such object",
     [UPRO_EIO]      = "I/O error",
     [UPRO_EEXIST]   = "object already exists",
-    [UPRO_ESYSCALL] = "call to OS function failed"
+    [UPRO_ERRNO] = "call to OS function failed"
 };
 
 int
@@ -37,7 +37,7 @@ upro_error_(int num, const char *func, const char *file, int line,
         error_msg[0] = '\0';
     }
     va_end(ap);
-    return num == UPRO_SUCCESS ? UPRO_SUCCESS : UPRO_FAILURE;
+    return num == UPRO_SUCCESS ? 0 : -1;
 }
 
 int *
@@ -59,7 +59,7 @@ upro_perror(const char *fmt, ...)
     if (error_msg[0]) {
         fprintf(stderr, ": %s", error_msg);
     }
-    if (error_num == UPRO_ESYSCALL) {
+    if (error_num == UPRO_ERRNO) {
         fputs(": ", stderr);
         perror("");
     }

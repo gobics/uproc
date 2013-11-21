@@ -26,7 +26,7 @@ upro_word_from_string(struct upro_word *word, const char *str,
                               "input string too short: %d chars instead of %d",
                               i, UPRO_WORD_LEN);
     }
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -57,7 +57,7 @@ upro_word_to_string(char *str, const struct upro_word *word,
         s >>= UPRO_AMINO_BITS;
     }
     str[UPRO_WORD_LEN] = '\0';
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 void
@@ -143,7 +143,7 @@ upro_worditer_next(struct upro_worditer *iter, size_t *index,
     while (n < UPRO_WORD_LEN) {
         if (!(c = iter->sequence[iter->index++])) {
             /* end of sequence reached -> stop iteration */
-            return UPRO_SUCCESS;
+            return 0;
         }
         if ((a = upro_alphabet_char_to_amino(iter->alphabet, c)) == -1) {
             /* invalid character -> begin new word */
@@ -155,5 +155,5 @@ upro_worditer_next(struct upro_worditer *iter, size_t *index,
         upro_word_prepend(rev_word, a);
     }
     *index = iter->index - UPRO_WORD_LEN;
-    return UPRO_ITER_YIELD;
+    return 1;
 }

@@ -26,7 +26,7 @@ upro_dc_init(struct upro_dnaclass *dc,
         .orf_filter_arg = orf_filter_arg,
     };
     upro_orf_codonscores(dc->codon_scores, codon_scores);
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -50,7 +50,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
         return res;
     }
 
-    while ((res = upro_orfiter_next(&orf_iter, &orf)) == UPRO_ITER_YIELD) {
+    while ((res = upro_orfiter_next(&orf_iter, &orf)) > 0) {
         res = upro_pc_classify(dc->pc, orf.data, &pc_res);
         if (res) {
             goto error;
@@ -83,7 +83,7 @@ upro_dc_classify(const struct upro_dnaclass *dc, const char *seq, struct upro_dc
         results->sz = results->n;
     }
     upro_bstiter_init(&max_scores_iter, &max_scores);
-    for (i = 0; upro_bstiter_next(&max_scores_iter, &key, &value) == UPRO_ITER_YIELD; i++) {
+    for (i = 0; upro_bstiter_next(&max_scores_iter, &key, &value) > 0; i++) {
         results->preds[i].family = key.uint;
         results->preds[i].score = value.score;
         results->preds[i].frame = value.frame;

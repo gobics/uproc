@@ -52,7 +52,7 @@ static int
 orf_add_codon(struct upro_orf *o, size_t *sz, upro_codon c, double score)
 {
     if (!o->length && CODON_TO_CHAR(c) == 'X') {
-        return UPRO_SUCCESS;
+        return 0;
     }
     if (o->length + 1 == *sz) {
         char *tmp = realloc(o->data, *sz + BUFSZ_STEP);
@@ -65,7 +65,7 @@ orf_add_codon(struct upro_orf *o, size_t *sz, upro_codon c, double score)
     o->data[o->length] = CODON_TO_CHAR(c);
     o->length++;
     o->score += score;
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 static void
@@ -135,7 +135,7 @@ upro_orfiter_init(struct upro_orfiter *iter, const char *seq,
         iter->orf[i].frame = i;
     }
     iter->codon_scores = codon_scores;
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 void
@@ -186,12 +186,12 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
             if (i >= FRAMES) {
                 reverse_str(next->data);
             }
-            return UPRO_ITER_YIELD;
+            return 1;
         }
 
         /* iterator exhausted */
         if (iter->frame >= FRAMES) {
-            return UPRO_SUCCESS;
+            return 0;
         }
 
         /* sequence completely processed, yield all ORFs */
@@ -269,5 +269,5 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
             iter->pos = NULL;
         }
     }
-    return UPRO_FAILURE;
+    return -1;
 }

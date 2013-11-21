@@ -3,9 +3,23 @@
 
 #include "upro/common.h"
 
+/** \file upro/error.h
+ *
+ * Error handling
+ */
+
 enum {
+    /** Success */
+    UPRO_SUCCESS = 0,
+
+    /** General failure */
+    UPRO_FAILURE,
+
+    /** A system call (that sets `errno`) returned an error */
+    UPRO_ERRNO,
+
     /** Memory allocation failed */
-    UPRO_ENOMEM = UPRO_FAILURE + 1,
+    UPRO_ENOMEM,
 
     /** Invalid argument */
     UPRO_EINVAL,
@@ -19,8 +33,8 @@ enum {
     /** Input/output error */
     UPRO_EIO,
 
-    /** A system call (that sets `errno`) returned an error */
-    UPRO_ESYSCALL,
+    /** Operation not supported */
+    UPRO_ENOTSUP,
 };
 
 int upro_error_(int num, const char *func, const char *file, int line,

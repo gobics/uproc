@@ -136,7 +136,7 @@ io_open(const char *path, const char *mode, enum upro_io_type type)
     switch (stream->type) {
         case UPRO_IO_STDIO:
             if (!(stream->s.fp = fopen(path, mode))) {
-                upro_error(UPRO_ESYSCALL);
+                upro_error(UPRO_ERRNO);
                 goto error;
             }
             break;
@@ -144,7 +144,7 @@ io_open(const char *path, const char *mode, enum upro_io_type type)
         case UPRO_IO_GZIP:
             if (!(stream->s.gz = gzopen(path, mode))) {
                 /* gzopen sets errno to 0 if memory allocation failed */
-                upro_error(errno ? UPRO_ESYSCALL : UPRO_ENOMEM);
+                upro_error(errno ? UPRO_ERRNO : UPRO_ENOMEM);
                 goto error;
             }
             (void) gzbuffer(stream->s.gz, GZIP_BUFSZ);
@@ -202,15 +202,26 @@ upro_io_close(upro_io_stream *stream)
     switch (stream->type) {
         case UPRO_IO_STDIO:
             if (stream->s.fp) {
-                res = fclose(stream->s.fp) == 0;
+                res = fclose(stream->s.fp);
+                if (res) {
+                    res = -1;
+                }
                 stream->s.fp = NULL;
             }
             break;
 #if HAVE_ZLIB
         case UPRO_IO_GZIP:
             if (stream->s.gz) {
-                res = gzclose(stream->s.gz) == Z_OK;
+                res = gzclose(stream->s.gz);
                 stream->s.gz = NULL;
+                res = res == Z_OK ? 0 : -1;
+                if (res == Z_OK) {
+                    res = 0;
+                }
+                else {
+                    res = upro_error_msg(UPRO_ERRNO,
+                                         "error closing gz stream");
+                }
             }
             break;
 #endif
@@ -220,7 +231,7 @@ upro_io_close(upro_io_stream *stream)
     if (!stream->stdstream) {
         free(stream);
     }
-    return res ? UPRO_SUCCESS : UPRO_FAILURE;
+    return res;
 }
 
 int
@@ -330,7 +341,7 @@ upro_io_getline(char **lineptr, size_t *n, upro_io_stream *stream)
                 upro_error(UPRO_SUCCESS);
             }
             else {
-                upro_error(UPRO_ESYSCALL);
+                upro_error(UPRO_ERRNO);
             }
         }
         return res;

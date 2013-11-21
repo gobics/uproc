@@ -26,15 +26,16 @@ upro_alphabet_init(struct upro_alphabet *alpha, const char *s)
         i = *p;
         /* invalid or duplicate character */
         if (!isupper(i)) {
-            return upro_error_msg(
-                UPRO_EINVAL, "input string contains non-uppercase character");
+            return upro_error_msg(UPRO_EINVAL,
+                                  "string contains non-uppercase character");
         }
         if (alpha->aminos[i] != -1) {
-            return upro_error_msg(UPRO_EINVAL, "duplicate '%c' in input string", i);
+            return upro_error_msg(UPRO_EINVAL,
+                                  "duplicate '%c' in input string", i);
         }
         alpha->aminos[i] = p - s;
     }
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 upro_amino

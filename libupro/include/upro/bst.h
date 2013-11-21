@@ -22,8 +22,8 @@ enum upro_bst_keytype {
 };
 
 enum upro_bst_return {
-    UPRO_BST_KEY_EXISTS = UPRO_FAILURE + 1,
     UPRO_BST_KEY_NOT_FOUND = 404,
+    UPRO_BST_KEY_EXISTS,
 };
 
 /** Binary search tree */

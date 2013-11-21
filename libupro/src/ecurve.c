@@ -84,7 +84,7 @@ upro_ecurve_init(struct upro_ecurve *ecurve, const char *alphabet,
     ecurve->mmap_fd = -1;
     ecurve->mmap_ptr = NULL;
     ecurve->mmap_size = 0;
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 void
@@ -157,7 +157,7 @@ upro_ecurve_append(struct upro_ecurve *dest, const struct upro_ecurve *src)
     }
     dest->suffix_count = new_suffix_count;
 
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 void upro_ecurve_get_alphabet(const struct upro_ecurve *ecurve,

@@ -143,7 +143,7 @@ scores_add_word(struct upro_bst *scores, const struct upro_word *word, size_t in
     double dist[UPRO_SUFFIX_LEN];
 
     if (!ecurve) {
-        return UPRO_SUCCESS;
+        return 0;
     }
     upro_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb, &upper_family);
     align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
@@ -169,7 +169,7 @@ scores_compute(const struct upro_protclass *pc, const char *seq, struct upro_bst
     upro_worditer_init(&iter, seq,
         pc->fwd ? &pc->fwd->alphabet : &pc->rev->alphabet);
 
-    while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) == UPRO_ITER_YIELD) {
+    while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
         res = scores_add_word(scores, &fwd_word, index, false, pc->fwd,
                 pc->substmat);
         if (res) {
@@ -193,7 +193,7 @@ static int
 scores_finalize(const struct upro_protclass *pc, const char *seq,
         struct upro_bst *score_tree, struct upro_pc_results *results)
 {
-    int res = UPRO_SUCCESS;
+    int res = 0;
     struct upro_bstiter iter;
     union upro_bst_key key;
     struct sc value;
@@ -213,7 +213,7 @@ scores_finalize(const struct upro_protclass *pc, const char *seq,
 
     results->n = 0;
     upro_bstiter_init(&iter, score_tree);
-    while (upro_bstiter_next(&iter, &key, &value) == UPRO_ITER_YIELD) {
+    while (upro_bstiter_next(&iter, &key, &value) > 0) {
         upro_family family = key.uint;
         double score = sc_finalize(&value);
         if (pc->filter &&
@@ -235,7 +235,7 @@ scores_finalize(const struct upro_protclass *pc, const char *seq,
         results->preds[0] = results->preds[imax];
         results->n = 1;
     }
-    res = UPRO_SUCCESS;
+    res = 0;
 error:
     return res;
 }
@@ -265,7 +265,7 @@ upro_pc_init(struct upro_protclass *pc,
         .filter = filter,
         .filter_arg = filter_arg,
     };
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 static int
@@ -306,5 +306,5 @@ upro_pc_classify(const struct upro_protclass *pc, const char *seq,
         results->preds[0] = results->preds[imax];
         results->n = 1;
     }
-    return UPRO_SUCCESS;
+    return 0;
 }

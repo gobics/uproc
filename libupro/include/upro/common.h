@@ -10,18 +10,6 @@
 #include <inttypes.h>
 #include <math.h>
 
-/** Return codes */
-enum {
-    /** Success! */
-    UPRO_SUCCESS = 0,
-
-    /** General failure */
-    UPRO_FAILURE,
-
-    /** Iterator produced an item */
-    UPRO_ITER_YIELD,
-};
-
 /** Epsilon value for comparing floating point numbers */
 #define UPRO_EPSILON 1e-5
 

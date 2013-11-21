@@ -63,7 +63,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
     }
 
     if (rd->line_len == -1) {
-        return UPRO_SUCCESS;
+        return 0;
     }
 
     /* header needs at least '>', one character, '\n' */
@@ -88,8 +88,8 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
 
     reader_getline(stream, rd);
     if (rd->line_len == -1) {
-        if (upro_errno == UPRO_ESYSCALL) {
-            return UPRO_FAILURE;
+        if (upro_errno == UPRO_ERRNO) {
+            return -1;
         }
         return upro_error_msg(UPRO_EINVAL,
                               "expected line after header (line %zu)",
@@ -143,7 +143,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
     rd->seq_len = total_len;
     assert(rd->seq_len == strlen(rd->seq));
 
-    return UPRO_ITER_YIELD;
+    return 1;
 }
 
 void

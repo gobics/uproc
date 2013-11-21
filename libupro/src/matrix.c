@@ -27,7 +27,7 @@ upro_matrix_init(struct upro_matrix *matrix, size_t rows, size_t cols,
     if (values) {
         memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
     }
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 void
@@ -84,7 +84,7 @@ matrix_load(struct upro_matrix *matrix, upro_io_stream *stream)
             upro_matrix_set(matrix, i, k, val);
         }
     }
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -94,7 +94,7 @@ upro_matrix_loadv(struct upro_matrix *matrix, enum upro_io_type iotype,
     int res;
     upro_io_stream *stream = upro_io_openv("r", iotype, pathfmt, ap);
     if (!stream) {
-        return UPRO_FAILURE;
+        return -1;
     }
     res = matrix_load(matrix, stream);
     (void) upro_io_close(stream);
@@ -121,17 +121,17 @@ matrix_store(const struct upro_matrix *matrix, upro_io_stream *stream)
     upro_matrix_dimensions(matrix, &rows, &cols);
     res = upro_io_printf(stream, UPRO_MATRIX_HEADER_PRI, rows, cols);
     if (res < 0) {
-        return UPRO_FAILURE;
+        return -1;
     }
     for (i = 0; i < rows; i++) {
         for (k = 0; k < cols; k++) {
             res = upro_io_printf(stream, "%lf\n", upro_matrix_get(matrix, i, k));
             if (res < 0) {
-                return UPRO_FAILURE;
+                return -1;
             }
         }
     }
-    return UPRO_SUCCESS;
+    return 0;
 }
 
 int
@@ -141,7 +141,7 @@ upro_matrix_storev(const struct upro_matrix *matrix, enum upro_io_type iotype,
     int res;
     upro_io_stream *stream = upro_io_openv("w", iotype, pathfmt, ap);
     if (!stream) {
-        return UPRO_FAILURE;
+        return -1;
     }
     res = matrix_store(matrix, stream);
     upro_io_close(stream);

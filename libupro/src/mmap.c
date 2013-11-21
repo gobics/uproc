@@ -55,11 +55,11 @@ mmap_map(struct upro_ecurve *ecurve, const char *path)
 
     ecurve->mmap_fd = open(path, O_RDONLY);
     if (ecurve->mmap_fd == -1) {
-        return upro_error(UPRO_ESYSCALL);
+        return upro_error(UPRO_ERRNO);
     }
 
     if (fstat(ecurve->mmap_fd, &st) == -1) {
-        return upro_error(UPRO_ESYSCALL);
+        return upro_error(UPRO_ERRNO);
     }
     ecurve->mmap_size = st.st_size;
     ecurve->mmap_ptr =
@@ -68,7 +68,7 @@ mmap_map(struct upro_ecurve *ecurve, const char *path)
                 ecurve->mmap_fd, 0);
 
     if (ecurve->mmap_ptr == MAP_FAILED) {
-        res = upro_error(UPRO_ESYSCALL);
+        res = upro_error(UPRO_ERRNO);
         goto error_close;
     }
 
@@ -77,7 +77,7 @@ mmap_map(struct upro_ecurve *ecurve, const char *path)
 
     header = ecurve->mmap_ptr;
     if (ecurve->mmap_size != SIZE_TOTAL(header->suffix_count)) {
-        res = upro_error(UPRO_ESYSCALL);
+        res = upro_error(UPRO_ERRNO);
         goto error_munmap;
     }
 
@@ -93,7 +93,7 @@ mmap_map(struct upro_ecurve *ecurve, const char *path)
     ecurve->suffixes = (void *)(region + OFFSET_SUFFIXES);
     ecurve->families =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
 
-    return UPRO_SUCCESS;
+    return 0;
 
 error_munmap:
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
@@ -103,7 +103,7 @@ error_close:
 #else
     (void) ecurve;
     (void) path;
-    return UPRO_FAILURE;
+    return upro_error(UPRO_ENOTSUP);;
 #endif
 }
 
@@ -156,7 +156,7 @@ static int
 mmap_store(const struct upro_ecurve *ecurve, const char *path)
 {
 #if HAVE_MMAP
-    int fd, res = UPRO_SUCCESS;
+    int fd, res = 0;
     size_t size;
     char *region;
     struct mmap_header header;
@@ -165,17 +165,17 @@ mmap_store(const struct upro_ecurve *ecurve, const char *path)
 
     fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
-        return upro_error(UPRO_ESYSCALL);
+        return upro_error(UPRO_ERRNO);
     }
 
     if (posix_fallocate(fd, 0, size)) {
-        res = upro_error(UPRO_ESYSCALL);
+        res = upro_error(UPRO_ERRNO);
         goto error_close;
     }
 
     region = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
     if (region == MAP_FAILED) {
-        res = upro_error(UPRO_ESYSCALL);
+        res = upro_error(UPRO_ERRNO);
         goto error_close;
     }
 
@@ -192,7 +192,7 @@ mmap_store(const struct upro_ecurve *ecurve, const char *path)
 
     munmap(region, size);
     close(fd);
-    return UPRO_SUCCESS;
+    return 0;
 
 error_close:
     close(fd);
@@ -200,7 +200,7 @@ error_close:
 #else
     (void) ecurve;
     (void) path;
-    return UPRO_FAILURE;
+    return upro_error(UPRO_ENOTSUP);
 #endif
 }
 int
