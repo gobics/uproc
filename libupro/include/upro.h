@@ -14,6 +14,7 @@
 #include <upro/codon.h>
 #include <upro/common.h>
 #include <upro/ecurve.h>
+#include <upro/error.h>
 #include <upro/fasta.h>
 #include <upro/io.h>
 #include <upro/mmap.h>
