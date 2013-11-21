@@ -3,10 +3,6 @@
 
 #include "upro/common.h"
 
-extern int upro_error_num;
-extern char upro_error_loc[256], upro_error_msgstr[256];
-#pragma omp threadprivate(upro_error_num, upro_error_loc, upro_error_msgstr)
-
 enum {
     /** Memory allocation failed */
     UPRO_ENOMEM = UPRO_FAILURE + 1,
@@ -27,10 +23,18 @@ enum {
     UPRO_ESYSCALL,
 };
 
+int upro_error_(int num, const char *func, const char *file, int line,
+                const char *fmt, ...);
+
 #define upro_error_msg(num, ...) upro_error_(num, __func__, __FILE__, \
                                                   __LINE__, __VA_ARGS__)
 #define upro_error(num) upro_error_msg(num, NULL)
 
-int upro_error_(int num, const char *func, const char *file, int line,
-                const char *fmt, ...);
+int *upro_error_errno_(void);
+#define upro_errno (*(upro_error_errno_()))
+
+void upro_perror(const char *s);
+
+const char *upro_error_errmsg_(void);
+#define upro_errmsg (upro_error_errmsg_())
 #endif

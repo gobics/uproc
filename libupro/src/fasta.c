@@ -88,7 +88,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
 
     reader_getline(stream, rd);
     if (rd->line_len == -1) {
-        if (upro_error_num) {
+        if (upro_errno == UPRO_ESYSCALL) {
             return UPRO_FAILURE;
         }
         return upro_error_msg(UPRO_EINVAL,
