@@ -20,9 +20,6 @@ enum {
 
     /** Iterator produced an item */
     UPRO_ITER_YIELD,
-
-    /** Iterator exhausted */
-    UPRO_ITER_STOP,
 };
 
 /** Epsilon value for comparing floating point numbers */

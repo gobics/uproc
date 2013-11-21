@@ -63,7 +63,7 @@ upro_fasta_read(upro_io_stream *stream, struct upro_fasta_reader *rd)
     }
 
     if (rd->line_len == -1) {
-        return UPRO_ITER_STOP;
+        return UPRO_SUCCESS;
     }
 
     /* header needs at least '>', one character, '\n' */

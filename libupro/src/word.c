@@ -143,7 +143,7 @@ upro_worditer_next(struct upro_worditer *iter, size_t *index,
     while (n < UPRO_WORD_LEN) {
         if (!(c = iter->sequence[iter->index++])) {
             /* end of sequence reached -> stop iteration */
-            return UPRO_ITER_STOP;
+            return UPRO_SUCCESS;
         }
         if ((a = upro_alphabet_char_to_amino(iter->alphabet, c)) == -1) {
             /* invalid character -> begin new word */

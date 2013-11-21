@@ -137,7 +137,7 @@ int iter(void)
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
 
     res = upro_worditer_next(&iter, &index, &fwd, &rev);
-    assert_int_eq(res, UPRO_ITER_STOP, "iterator exhausted");
+    assert_int_eq(res, UPRO_SUCCESS, "iterator exhausted");
 
     return SUCCESS;
 #undef TEST

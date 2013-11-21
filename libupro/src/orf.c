@@ -191,7 +191,7 @@ upro_orfiter_next(struct upro_orfiter *iter, struct upro_orf *next)
 
         /* iterator exhausted */
         if (iter->frame >= FRAMES) {
-            return UPRO_ITER_STOP;
+            return UPRO_SUCCESS;
         }
 
         /* sequence completely processed, yield all ORFs */

@@ -366,7 +366,7 @@ upro_bstiter_next(struct upro_bstiter *iter, union upro_bst_key *key,
     struct upro_bst_node *n = iter->cur;
 
     if (!n) {
-        return UPRO_ITER_STOP;
+        return UPRO_SUCCESS;
     }
 
     *key = n->key;

@@ -102,13 +102,10 @@ static int
 scores_add(struct upro_bst *scores, upro_family family, size_t index,
            double dist[static UPRO_SUFFIX_LEN], bool reverse)
 {
-    int res;
     struct sc sc;
     union upro_bst_key key = { .uint = family };
-    res = upro_bst_get(scores, key, &sc);
-    if (res == UPRO_BST_KEY_NOT_FOUND) {
-        sc_init(&sc);
-    }
+    sc_init(&sc);
+    (void) upro_bst_get(scores, key, &sc);
     sc_add(&sc, index, dist, reverse);
     return upro_bst_update(scores, key, &sc);
 }
@@ -183,9 +180,6 @@ scores_compute(const struct upro_protclass *pc, const char *seq, struct upro_bst
         if (res) {
             break;
         }
-    }
-    if (res == UPRO_ITER_STOP) {
-        res = UPRO_SUCCESS;
     }
     return res;
 }
