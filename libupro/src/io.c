@@ -322,15 +322,23 @@ upro_io_gets(char *s, int size, upro_io_stream *stream)
 long
 upro_io_getline(char **lineptr, size_t *n, upro_io_stream *stream)
 {
-    char buf[4097];
-    size_t len, total = 0;
-
 #if defined(_GNU_SOURCE) || _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700
     if (stream->type == UPRO_IO_STDIO) {
-        return getline(lineptr, n, stream->s.fp);
+        ssize_t res = getline(lineptr, n, stream->s.fp);
+        if (res == -1) {
+            if (feof(stream->s.fp)) {
+                upro_error(UPRO_SUCCESS);
+            }
+            else {
+                upro_error(UPRO_ESYSCALL);
+            }
+        }
+        return res;
     }
 #endif
 
+    char buf[4097];
+    size_t len, total = 0;
     do {
         if (!upro_io_gets(buf, sizeof buf, stream)) {
             if (!total) {
@@ -352,7 +360,6 @@ upro_io_getline(char **lineptr, size_t *n, upro_io_stream *stream)
         memcpy(*lineptr + total, buf, len);
         total += len;
     } while (buf[len - 1] != '\n');
-
     return total;
 }
 
