@@ -67,19 +67,18 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
                     res = upro_bst_update(&tree, tree_key, &tmp_family);
                 }
             }
-            else if (res == UPRO_ENOENT) {
-                res = upro_bst_insert(&tree, tree_key, &family);
+            else if (res == UPRO_BST_KEY_NOT_FOUND) {
+                res = upro_bst_update(&tree, tree_key, &family);
             }
-
-            if (UPRO_ISERROR(res)) {
+            if (res == UPRO_FAILURE) {
                 break;
             }
         }
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             break;
         }
     }
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         goto error;
     }
 
@@ -230,7 +229,7 @@ build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
         upro_io_seek(stream, 0, SEEK_SET);
 
         res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             goto error;
         }
 
@@ -238,20 +237,20 @@ build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
 
         if (!first) {
             res = upro_ecurve_init(ecurve, alphabet, n_entries);
-            if (UPRO_ISERROR(res)) {
+            if (res) {
                 goto error;
             }
             insert_entries(ecurve, entries, n_entries);
         }
         else {
             res = upro_ecurve_init(&new, alphabet, n_entries);
-            if (UPRO_ISERROR(res)) {
+            if (res) {
                 goto error;
             }
 
             insert_entries(&new, entries, n_entries);
             res = upro_ecurve_append(ecurve, &new);
-            if (UPRO_ISERROR(res)) {
+            if (res) {
                 goto error;
             }
         }
@@ -286,7 +285,7 @@ main(int argc, char **argv)
     }
 
     res = upro_ecurve_init(&ecurve, argv[ALPHABET], 0);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         fprintf(stderr, "invalid alphabet string \"%s\"\n", argv[ALPHABET]);
         return EXIT_FAILURE;
     }
@@ -298,7 +297,7 @@ main(int argc, char **argv)
     }
 
     res = build(stream, &ecurve, argv[ALPHABET]);
-    if (UPRO_ISERROR(res)) {
+    if (res) {
         fprintf(stderr, "an error occured\n");
     }
     upro_io_close(stream);

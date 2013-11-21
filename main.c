@@ -89,19 +89,16 @@ input_read(upro_io_stream *stream, struct upro_fasta_reader *rd, struct buffer *
         }
 
         res = dup_str(&buf->header[i], &buf->header_sz[i], p1, header_len);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             break;
         }
 
         res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd->seq, rd->seq_len);
-        if (UPRO_ISERROR(res)) {
+        if (res) {
             break;
         }
     }
     buf->n = i;
-    if (i && res == UPRO_ITER_STOP) {
-        res = UPRO_SUCCESS;
-    }
 
     for (; i < chunk_size; i++) {
         free(buf->seq[i]);
@@ -311,7 +308,7 @@ main(int argc, char **argv)
 {
     int res;
     size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
-    bool more_input;
+    bool error = false, more_input;
     int n_threads = 0;
 
     struct upro_ecurve fwd, rev;
@@ -559,7 +556,11 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         res = input_read(stream, &rd, in, chunk_size);
-                        more_input = !UPRO_ISERROR(res) && res != UPRO_ITER_STOP;
+                        more_input = res == UPRO_ITER_YIELD;
+                        if (res == UPRO_FAILURE) {
+                            upro_perror("error reading input");
+                            error = true;
+                        }
                     }
 #pragma omp section
                     {
@@ -572,7 +573,7 @@ main(int argc, char **argv)
             }
             i_chunk += 1;
             i_buf ^= 1;
-        } while (more_input);
+        } while (!error && more_input);
         upro_io_close(stream);
         upro_fasta_reader_free(&rd);
     }
@@ -605,5 +606,5 @@ main(int argc, char **argv)
         }
     }
 
-    return res == UPRO_ITER_STOP ? EXIT_SUCCESS : EXIT_FAILURE;
+    return res == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

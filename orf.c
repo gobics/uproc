@@ -62,8 +62,8 @@ int main(int argc, char **argv)
     }
 
     res = upro_matrix_load(&codon_scores_mat, UPRO_IO_GZIP, argv[CODON_SCORES]);
-    if (UPRO_ISERROR(res)) {
-        fprintf(stderr, "can't open file \"%s\"\n", argv[CODON_SCORES]);
+    if (res) {
+        upro_perror("error loading \"%s\"", argv[CODON_SCORES]);
         if (res == UPRO_ESYSCALL) {
             perror("");
         }
@@ -79,8 +79,8 @@ int main(int argc, char **argv)
         min_score = strtod(argv[MIN_SCORE], &endptr);
         if (*argv[MIN_SCORE] && *endptr) {
             res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, argv[MIN_SCORE]);
-            if (UPRO_ISERROR(res)) {
-                fprintf(stderr, "can't open file \"%s\"\n", argv[MIN_SCORE]);
+            if (res) {
+                upro_perror("error loading \"%s\"", argv[MIN_SCORE]);
                 if (res == UPRO_ESYSCALL) {
                     perror("");
                 }
@@ -128,8 +128,8 @@ int main(int argc, char **argv)
         }
         upro_orfiter_destroy(&oi);
     }
-    if (res != UPRO_ITER_STOP) {
-        fprintf(stderr, "an error occured\n");
+    if (res) {
+        upro_perror("error reading input");
     }
     return EXIT_SUCCESS;
 }
