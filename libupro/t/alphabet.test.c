@@ -11,55 +11,66 @@ void teardown(void)
 int init_tooshort(void)
 {
     DESC("init with too short alphabet string");
-    assert_int_ne(upro_alphabet_init(&a, "ABC"), UPRO_SUCCESS,
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABC"), 0,
                   "failure if string too short");
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
     return SUCCESS;
 }
 
 int init_toolong(void)
 {
     DESC("init with too long alphabet string");
-    assert_int_ne(upro_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRSTUVW"), UPRO_SUCCESS,
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRSTUVW"), 0,
                   "failure if string too long");
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
     return SUCCESS;
 }
 
 int init_dup(void)
 {
     DESC("init with duplicates");
-    assert_int_ne(upro_alphabet_init(&a, "AACDEFGHIJKLMNOPQRST"), UPRO_SUCCESS,
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "AACDEFGHIJKLMNOPQRST"), 0,
                   "failure if string contains duplicates");
-    assert_int_ne(upro_alphabet_init(&a, "ABCDEFGHIJKKMNOPQRST"), UPRO_SUCCESS,
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
+
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABCDEFGHIJKKMNOPQRST"), 0,
                   "failure if string contains duplicates");
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
     return SUCCESS;
 }
 
 int init_nonalpha(void)
 {
     DESC("init with non-alphabetic characters");
-    assert_int_ne(upro_alphabet_init(&a, "ABCDE GHIJKLMNOPQRST"), UPRO_SUCCESS,
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABCDE GHIJKLMNOPQRST"), 0,
                   "failure if string contains space");
-    assert_int_ne(upro_alphabet_init(&a, "ABCDE1GHIJKLMNOPQRST"), UPRO_SUCCESS,
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
+
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABCDE1GHIJKLMNOPQRST"), 0,
                   "failure if string contains number");
-    assert_int_ne(upro_alphabet_init(&a, "ABCDE*GHIJKLMNOPQRST"), UPRO_SUCCESS,
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
+
+    upro_errno = UPRO_SUCCESS;
+    assert_int_lt(upro_alphabet_init(&a, "ABCDE*GHIJKLMNOPQRST"), 0,
                   "failure if string contains asterisk");
+    assert_int_eq(upro_errno, UPRO_EINVAL, "upro_errno set");
     return SUCCESS;
 }
 
 int init_correct(void)
 {
     DESC("init with correct length alphabet string");
-    assert_int_eq(upro_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRST"), UPRO_SUCCESS,
+    upro_errno = UPRO_SUCCESS;
+    assert_int_eq(upro_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRST"), 0,
                   "success if string has correct length");
+    assert_int_eq(upro_errno, UPRO_SUCCESS, "upro_errno not set");
     return SUCCESS;
 }
 
-int init_default(void)
-{
-    DESC("init with default alphabet");
-    assert_int_eq(upro_alphabet_init(&a, ALPHABET), UPRO_SUCCESS,
-                  "success with default alphabet");
-    return SUCCESS;
-}
-
-TESTS_INIT(init_tooshort, init_toolong, init_dup, init_nonalpha, init_correct, init_default);
+TESTS_INIT(init_tooshort, init_toolong, init_dup, init_nonalpha, init_correct);

@@ -22,9 +22,9 @@ int to_string(void)
     DESC("upro_word <-> string");
 
     res = upro_word_from_string(&word, old, &alpha);
-    assert_int_eq(res, UPRO_SUCCESS, "string is a valid sequence");
+    assert_int_eq(res, 0, "string is a valid sequence");
 
-    assert_int_eq(upro_word_to_string(new, &word, &alpha), UPRO_SUCCESS, "success");
+    assert_int_eq(upro_word_to_string(new, &word, &alpha), 0, "success");
     assert_str_eq(old, new, "conversion to word and back yields same string");
 
     return SUCCESS;
@@ -41,7 +41,7 @@ int append(void)
     DESC("appending amino acids to word");
 
     res = upro_word_from_string(&word, old, &alpha);
-    assert_int_eq(res, UPRO_SUCCESS, "string is a valid sequence");
+    assert_int_eq(res, 0, "string is a valid sequence");
 
     while (i--) {
         upro_word_append(&word, upro_alphabet_char_to_amino(&alpha, 'N'));
@@ -121,7 +121,7 @@ int iter(void)
 
 #define TEST(IDX, FWD, REV) do {                                            \
     res = upro_worditer_next(&iter, &index, &fwd, &rev);                      \
-    assert_int_eq(res, UPRO_ITER_YIELD, "iterator yielded something");        \
+    assert_int_gt(res, 0, "iterator yielded something");        \
     assert_uint_eq(index, IDX, "index correct");                            \
     upro_word_to_string(new, &fwd, &alpha);                                   \
     assert_str_eq(new, FWD, "fwd word correct");                            \
@@ -137,7 +137,7 @@ int iter(void)
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
 
     res = upro_worditer_next(&iter, &index, &fwd, &rev);
-    assert_int_eq(res, UPRO_SUCCESS, "iterator exhausted");
+    assert_int_eq(res, 0, "iterator exhausted");
 
     return SUCCESS;
 #undef TEST

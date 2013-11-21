@@ -50,16 +50,16 @@ int stuff(void)
     res = upro_bst_remove(&t, key, NULL)
 
     INS(42, 0);
-    assert_int_eq(res, UPRO_SUCCESS, "insertion succeeded");
+    assert_int_eq(res, 0, "insertion succeeded");
 
     INS(21, 0);
-    assert_int_eq(res, UPRO_SUCCESS, "insertion succeeded");
+    assert_int_eq(res, 0, "insertion succeeded");
 
     INS(599, 0);
-    assert_int_eq(res, UPRO_SUCCESS, "insertion succeeded");
+    assert_int_eq(res, 0, "insertion succeeded");
 
     INS((unsigned long long) -1337, 42);
-    assert_int_eq(res, UPRO_SUCCESS, "insertion succeeded");
+    assert_int_eq(res, 0, "insertion succeeded");
 
     assert_int_eq(upro_bst_size(&t), 4, "upro_bst_size returns the right number of items\n");
 
@@ -67,23 +67,23 @@ int stuff(void)
     assert_int_eq(res, UPRO_BST_KEY_EXISTS, "duplicate insertion failed");
 
     UPD(22, 32);
-    assert_int_eq(res, UPRO_SUCCESS, "updating nonexistent key succeeded");
+    assert_int_eq(res, 0, "updating nonexistent key succeeded");
 
     UPD(21, 42);
-    assert_int_eq(res, UPRO_SUCCESS, "updating existent key succeeded");
+    assert_int_eq(res, 0, "updating existent key succeeded");
 
     assert_int_eq(upro_bst_size(&t), 5, "upro_bst_size returns the right number of items\n");
 
     GET(21);
-    assert_int_eq(res, UPRO_SUCCESS, "getting existent key succeeded");
+    assert_int_eq(res, 0, "getting existent key succeeded");
     assert_uint_eq(value.x, 42, "correct value retrieved");
 
     GET(42);
-    assert_int_eq(res, UPRO_SUCCESS, "getting existent key succeeded");
+    assert_int_eq(res, 0, "getting existent key succeeded");
     assert_uint_eq(value.x, 0, "correct value retrieved");
 
     RM(42);
-    assert_int_eq(res, UPRO_SUCCESS, "removing existent key succeeded");
+    assert_int_eq(res, 0, "removing existent key succeeded");
 
     GET(42);
     assert_int_eq(res, UPRO_BST_KEY_NOT_FOUND, "getting nonexistent key failed");
@@ -121,7 +121,7 @@ int iter(void)
     upro_bstiter_next(&iter, &key, &value);
     last = key.uint;
 
-    while (upro_bstiter_next(&iter, &key, &value) == UPRO_ITER_YIELD) {
+    while (upro_bstiter_next(&iter, &key, &value) > 0) {
         assert_uint_gt(key.uint, last, "iteration in correct order");
         last = key.uint;
     }

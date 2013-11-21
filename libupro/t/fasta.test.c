@@ -40,13 +40,14 @@ int fasta_(int iotype, const char *ext)
         FAIL("can't open temporary file: %s", strerror(errno));
     }
     upro_fasta_reader_init(&rd, 8192);
-    i = 300000;
-    while (i--) {
-        upro_fasta_read(stream, &rd);
+    i = 0;
+    while (upro_fasta_read(stream, &rd) > 0) {
         assert_str_eq(rd.header, orig_id, "id read correctly");
         assert_str_eq(rd.comment, orig_c, "comment read correctly");
         assert_str_eq(rd.seq, orig_seq, "sequence read correctly");
+        i++;
     }
+    assert_uint_eq(i, 300000, "correct number of sequences read");
     upro_io_close(stream);
 
     upro_fasta_reader_free(&rd);

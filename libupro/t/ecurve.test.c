@@ -197,21 +197,21 @@ int test_append(void)
 
     res = upro_storage_load(&a1, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
             "t/ecurve_append.a1.plain");
-    assert_int_eq(res, UPRO_SUCCESS, "loading a1 succeeded");
+    assert_int_eq(res, 0, "loading a1 succeeded");
 
     res = upro_storage_load(&a2, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
             "t/ecurve_append.a2.plain");
-    assert_int_eq(res, UPRO_SUCCESS, "loading a2 succeeded");
+    assert_int_eq(res, 0, "loading a2 succeeded");
 
     res = upro_storage_load(&b, UPRO_STORAGE_PLAIN, UPRO_IO_STDIO,
             "t/ecurve_append.b.plain");
-    assert_int_eq(res, UPRO_SUCCESS, "loading b succeeded");
+    assert_int_eq(res, 0, "loading b succeeded");
 
     res = upro_ecurve_append(&a1, &a2);
-    assert_int_eq(res, UPRO_SUCCESS, "appending succeeded");
+    assert_int_eq(res, 0, "appending succeeded");
 
     res = upro_ecurve_append(&a1, &a2);
-    assert_int_eq(res, UPRO_FAILURE, "appending again failed");
+    assert_int_eq(res, -1, "appending again failed");
     assert_int_eq(upro_errno, UPRO_EINVAL, "appending again failed with UPRO_EINVAL");
 
     assert_uint_eq(a1.suffix_count, b.suffix_count, "suffix counts equal");

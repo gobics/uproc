@@ -70,11 +70,11 @@ int storage(void)
 
     upro_matrix_init(&m, 10, 10, v);
 
-    assert_int_eq(upro_matrix_store(&m, UPRO_IO_GZIP, TMPFILE),
-                  UPRO_SUCCESS, "storing matrix succeeded");
+    assert_int_eq(upro_matrix_store(&m, UPRO_IO_GZIP, TMPFILE), 0,
+                  "storing matrix succeeded");
     upro_matrix_destroy(&m);
-    assert_int_eq(upro_matrix_load(&m, UPRO_IO_GZIP, TMPFILE),
-                  UPRO_SUCCESS, "loading matrix succeeded");
+    assert_int_eq(upro_matrix_load(&m, UPRO_IO_GZIP, TMPFILE), 0,
+                  "loading matrix succeeded");
 #define T(i, r, c) assert_double_eq(v[i], upro_matrix_get(&m, r, c), "correct value");
     T(1, 0, 1);
     T(2, 0, 2);
@@ -84,7 +84,7 @@ int storage(void)
     T(26, 2, 6);
 #undef T
     upro_matrix_destroy(&m);
-    return UPRO_SUCCESS;
+    return SUCCESS;
 }
 
 

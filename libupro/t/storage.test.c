@@ -70,10 +70,10 @@ int test_storage(int format, int iotype, const char *ext)
     struct upro_ecurve new_curve;
 
     res = upro_storage_store(&ecurve, format, iotype, TMPFILE, ext);
-    assert_int_eq(res, UPRO_SUCCESS, "storing ecurve succeeded");
+    assert_int_eq(res, 0, "storing ecurve succeeded");
 
     res = upro_storage_load(&new_curve, format, iotype, TMPFILE, ext);
-    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
+    assert_int_eq(res, 0, "loading ecurve succeeded");
 
     for (i = 0; i < UPRO_PREFIX_MAX + 1; i++) {
         INFO("i = %zu", i);
@@ -126,10 +126,10 @@ int test_mmap(void)
     DESC("mmapp()ing ecurve");
 
     res = upro_storage_store(&ecurve, UPRO_STORAGE_MMAP, 0, TMPFILE, "mmap");
-    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
+    assert_int_eq(res, 0, "loading ecurve succeeded");
 
     res = upro_storage_load(&new_curve, UPRO_STORAGE_MMAP, 0, TMPFILE, "mmap");
-    assert_int_eq(res, UPRO_SUCCESS, "loading ecurve succeeded");
+    assert_int_eq(res, 0, "loading ecurve succeeded");
 
     for (i = 0; i < UPRO_PREFIX_MAX + 1; i++) {
         INFO("i = %zu", i);
