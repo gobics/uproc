@@ -64,7 +64,7 @@ int stuff(void)
     assert_int_eq(upro_bst_size(&t), 4, "upro_bst_size returns the right number of items\n");
 
     INS((unsigned long long) -1337, 0);
-    assert_int_eq(res, UPRO_EEXIST, "duplicate insertion failed");
+    assert_int_eq(res, UPRO_BST_KEY_EXISTS, "duplicate insertion failed");
 
     UPD(22, 32);
     assert_int_eq(res, UPRO_SUCCESS, "updating nonexistent key succeeded");
@@ -86,13 +86,13 @@ int stuff(void)
     assert_int_eq(res, UPRO_SUCCESS, "removing existent key succeeded");
 
     GET(42);
-    assert_int_eq(res, UPRO_ENOENT, "getting nonexistent key failed");
+    assert_int_eq(res, UPRO_BST_KEY_NOT_FOUND, "getting nonexistent key failed");
 
     GET(43);
-    assert_int_eq(res, UPRO_ENOENT, "getting nonexistent key failed");
+    assert_int_eq(res, UPRO_BST_KEY_NOT_FOUND, "getting nonexistent key failed");
 
     RM(42);
-    assert_int_eq(res, UPRO_ENOENT, "removing nonexistent key failed");
+    assert_int_eq(res, UPRO_BST_KEY_NOT_FOUND, "removing nonexistent key failed");
 
     upro_bst_clear(&t, NULL);
 

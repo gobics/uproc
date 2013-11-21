@@ -76,7 +76,7 @@ extern test tests[];
 } while (0)
 
 #define assert_strcmp(X, OP, Y, DESC) do {                              \
-    char *_test_x = (X), *_test_y = (Y);                                \
+    const char *_test_x = (X), *_test_y = (Y);                          \
     int _test_res = strcmp(_test_x, _test_y);                           \
     if (!(_test_res OP 0)) {                                            \
         FAIL("Assertion '" DESC                                         \
