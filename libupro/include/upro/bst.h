@@ -21,6 +21,11 @@ enum upro_bst_keytype {
     UPRO_BST_WORD,
 };
 
+enum upro_bst_return {
+    UPRO_BST_KEY_EXISTS = UPRO_FAILURE + 1,
+    UPRO_BST_KEY_NOT_FOUND = 404,
+};
+
 /** Binary search tree */
 struct upro_bst {
     /** The root node (struct upro_bst_node is defined in the implementation) */

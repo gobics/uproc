@@ -106,17 +106,11 @@ scores_add(struct upro_bst *scores, upro_family family, size_t index,
     struct sc sc;
     union upro_bst_key key = { .uint = family };
     res = upro_bst_get(scores, key, &sc);
-    if (res) {
-        if (upro_error_num == UPRO_ENOENT) {
-            sc_init(&sc);
-        }
-        else {
-            return res;
-        }
+    if (res == UPRO_BST_KEY_NOT_FOUND) {
+        sc_init(&sc);
     }
     sc_add(&sc, index, dist, reverse);
-    res = upro_bst_update(scores, key, &sc);
-    return UPRO_SUCCESS;
+    return upro_bst_update(scores, key, &sc);
 }
 
 static void

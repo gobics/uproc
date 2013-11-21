@@ -257,7 +257,7 @@ insert_or_update(struct upro_bst *t, union upro_bst_key key,
             memcpy(n->value, value, t->value_size);
             return UPRO_SUCCESS;
         }
-        return upro_error(UPRO_EEXIST);
+        return UPRO_BST_KEY_EXISTS;
     }
     else if (cmp < 0) {
         ins = bstnode_new(key, value, t->value_size, n);
@@ -293,7 +293,7 @@ upro_bst_get(struct upro_bst *t, union upro_bst_key key, void *value)
 {
     struct upro_bst_node *n;
     if (!t->root) {
-        return upro_error(UPRO_ENOENT);
+        return UPRO_BST_KEY_NOT_FOUND;
     }
 
     n = bstnode_find(t, t->root, key);
@@ -301,7 +301,7 @@ upro_bst_get(struct upro_bst *t, union upro_bst_key key, void *value)
         memcpy(value, n->value, t->value_size);
         return UPRO_SUCCESS;
     }
-    return upro_error(UPRO_ENOENT);
+    return UPRO_BST_KEY_NOT_FOUND;
 }
 
 int
@@ -310,12 +310,12 @@ upro_bst_remove(struct upro_bst *t, union upro_bst_key key, upro_bst_cb_remove c
     /* node to remove and its parent */
     struct upro_bst_node *del, *par;
     if (!t->root) {
-        return upro_error(UPRO_ENOENT);
+        return UPRO_BST_KEY_NOT_FOUND;
     }
 
     del = bstnode_find(t, t->root, key);
     if (cmp_keys(t, key, del->key) != 0) {
-        return upro_error(UPRO_ENOENT);
+        return UPRO_BST_KEY_NOT_FOUND;
     }
     par = del->parent;
 
