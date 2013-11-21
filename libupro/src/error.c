@@ -47,21 +47,26 @@ upro_error_errno_(void)
 }
 
 void
-upro_perror(const char *s)
+upro_perror(const char *fmt, ...)
 {
-    if (error_num == UPRO_ESYSCALL) {
-        perror(s);
-        return;
-    }
-    if (s && *s) {
-        fputs(s, stderr);
+    va_list ap;
+    va_start(ap, fmt);
+    if (fmt && *fmt) {
+        vfprintf(stderr, fmt, ap);
         fputs(": ", stderr);
     }
     fputs(error_strs[error_num], stderr);
     if (error_msg[0]) {
         fprintf(stderr, ": %s", error_msg);
     }
-    fputc('\n', stderr);
+    if (error_num == UPRO_ESYSCALL) {
+        fputs(": ", stderr);
+        perror("");
+    }
+    else {
+        fputc('\n', stderr);
+    }
+    va_end(ap);
 }
 
 const char *

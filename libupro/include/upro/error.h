@@ -33,7 +33,7 @@ int upro_error_(int num, const char *func, const char *file, int line,
 int *upro_error_errno_(void);
 #define upro_errno (*(upro_error_errno_()))
 
-void upro_perror(const char *s);
+void upro_perror(const char *fmt, ...);
 
 const char *upro_error_errmsg_(void);
 #define upro_errmsg (upro_error_errmsg_())
