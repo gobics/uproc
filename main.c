@@ -71,7 +71,7 @@ input_read(upro_io_stream *stream, struct upro_fasta_reader *rd, struct buffer *
         size_t header_len;
 
         res = upro_fasta_read(stream, rd);
-        if (res != UPRO_ITER_YIELD) {
+        if (res <= 0) {
             break;
         }
 
@@ -309,7 +309,6 @@ main(int argc, char **argv)
     int res;
     size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool error = false, more_input;
-    int n_threads = 0;
 
     struct upro_ecurve fwd, rev;
     struct upro_substmat substmat;
@@ -412,7 +411,6 @@ main(int argc, char **argv)
                         fprintf(stderr, "-t argument must be a positive integer\n");
                         return EXIT_FAILURE;
                     }
-                    n_threads = tmp;
                     omp_set_num_threads(tmp);
                 }
 #endif
@@ -556,8 +554,8 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         res = input_read(stream, &rd, in, chunk_size);
-                        more_input = res == UPRO_ITER_YIELD;
-                        if (res == UPRO_FAILURE) {
+                        more_input = res > 0;
+                        if (res < 0) {
                             upro_perror("error reading input");
                             error = true;
                         }

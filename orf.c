@@ -64,9 +64,6 @@ int main(int argc, char **argv)
     res = upro_matrix_load(&codon_scores_mat, UPRO_IO_GZIP, argv[CODON_SCORES]);
     if (res) {
         upro_perror("error loading \"%s\"", argv[CODON_SCORES]);
-        if (res == UPRO_ESYSCALL) {
-            perror("");
-        }
         return EXIT_FAILURE;
     }
     upro_orf_codonscores(codon_scores, &codon_scores_mat);
@@ -81,9 +78,6 @@ int main(int argc, char **argv)
             res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, argv[MIN_SCORE]);
             if (res) {
                 upro_perror("error loading \"%s\"", argv[MIN_SCORE]);
-                if (res == UPRO_ESYSCALL) {
-                    perror("");
-                }
                 return EXIT_FAILURE;
             }
         }
@@ -106,14 +100,14 @@ int main(int argc, char **argv)
     }
 
     upro_fasta_reader_init(&rd, 4096);
-    while ((res = upro_fasta_read(stream, &rd)) == UPRO_ITER_YIELD) {
+    while ((res = upro_fasta_read(stream, &rd)) > 0) {
         struct upro_orfiter oi;
         struct upro_orf orf;
 
         char *max_orf = NULL;
         double max_score = -INFINITY;
         upro_orfiter_init(&oi, rd.seq, codon_scores, orf_filter, filter_arg);
-        while (upro_orfiter_next(&oi, &orf) == UPRO_ITER_YIELD) {
+        while (upro_orfiter_next(&oi, &orf) > 0) {
             if (mode == MAX && orf.score > max_score) {
                 free(max_orf);
                 max_orf = strdup(orf.data);
@@ -128,7 +122,7 @@ int main(int argc, char **argv)
         }
         upro_orfiter_destroy(&oi);
     }
-    if (res) {
+    if (res < 0) {
         upro_perror("error reading input");
     }
     return EXIT_SUCCESS;

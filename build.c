@@ -10,7 +10,7 @@ struct ecurve_entry
 };
 
 static int
-parse_class(const char *id, upro_family *family)
+parse_family(const char *id, upro_family *family)
 {
     int res;
     while (*id && !isdigit(*id)) {
@@ -18,7 +18,7 @@ parse_class(const char *id, upro_family *family)
     }
 
     res = sscanf(id, "%" UPRO_FAMILY_SCN, family);
-    return res == 1 ? UPRO_SUCCESS : UPRO_FAILURE;
+    return res == 1 ? 0 : -1;
 }
 
 static int
@@ -40,15 +40,17 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
     upro_fasta_reader_init(&rd, 8192);
     upro_bst_init(&tree, UPRO_BST_WORD, sizeof family);
 
-    while ((res = upro_fasta_read(stream, &rd)) == UPRO_ITER_YIELD) {
+    while ((res = upro_fasta_read(stream, &rd)) > 0) {
         struct upro_worditer iter;
         struct upro_word fwd_word = UPRO_WORD_INITIALIZER, rev_word = UPRO_WORD_INITIALIZER;
         upro_family tmp_family;
 
-        res = parse_class(rd.header, &family);
+        if (parse_family(rd.header, &family)) {
+            break;
+        }
         upro_worditer_init(&iter, rd.seq, alpha);
 
-        while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) == UPRO_ITER_YIELD) {
+        while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
             if (!upro_word_startswith(&fwd_word, first)) {
                 continue;
             }
@@ -70,7 +72,7 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
             else if (res == UPRO_BST_KEY_NOT_FOUND) {
                 res = upro_bst_update(&tree, tree_key, &family);
             }
-            if (res == UPRO_FAILURE) {
+            if (res < 0) {
                 break;
             }
         }
@@ -85,20 +87,20 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
     struct upro_bstiter iter;
     upro_bstiter_init(&iter, &tree);
     *n_entries = 0;
-    while (upro_bstiter_next(&iter, &tree_key, &family) == UPRO_ITER_YIELD) {
+    while (upro_bstiter_next(&iter, &tree_key, &family) > 0) {
         if (family != (upro_family) -1) {
             *n_entries += 1;
         }
     }
     *entries = malloc(*n_entries * sizeof **entries);
     if (!*entries) {
-        res = UPRO_ENOMEM;
+        res = upro_error(UPRO_ENOMEM);
         goto error;
     }
 
     upro_bstiter_init(&iter, &tree);
     struct ecurve_entry *entries_insert = *entries;
-    while (upro_bstiter_next(&iter, &tree_key, &family) == UPRO_ITER_YIELD) {
+    while (upro_bstiter_next(&iter, &tree_key, &family) > 0) {
         if (family != (upro_family) -1) {
             entries_insert->word = tree_key.word;
             entries_insert->family = family;
