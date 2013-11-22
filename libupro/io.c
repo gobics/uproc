@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +9,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
 #include <zlib.h>
 #endif
 
@@ -20,7 +24,7 @@ struct upro_io_stream
     enum upro_io_type type;
     union {
         FILE *fp;
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         gzFile gz;
 #endif
     } s;
@@ -49,7 +53,7 @@ upro_io_stdstream(FILE *stream)
     return &s[i];
 }
 
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
 static void
 close_stdstream_gz(void)
 {
@@ -95,7 +99,6 @@ upro_io_stdstream_gz(FILE *stream)
     }
     return &s[i];
 }
-#endif
 
 #if ZLIB_VERNUM < 0x1235
 #define gzbuffer(file, size) 0
@@ -123,6 +126,7 @@ gzvprintf(gzFile file, const char *format, va_list va)
     return n;
 }
 #endif
+#endif
 
 static upro_io_stream *
 io_open(const char *path, const char *mode, enum upro_io_type type)
@@ -140,7 +144,7 @@ io_open(const char *path, const char *mode, enum upro_io_type type)
                 goto error;
             }
             break;
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             if (!(stream->s.gz = gzopen(path, mode))) {
                 /* gzopen sets errno to 0 if memory allocation failed */
@@ -209,7 +213,7 @@ upro_io_close(upro_io_stream *stream)
                 stream->s.fp = NULL;
             }
             break;
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             if (stream->s.gz) {
                 res = gzclose(stream->s.gz);
@@ -244,7 +248,7 @@ upro_io_printf(upro_io_stream *stream, const char *fmt, ...)
         case UPRO_IO_STDIO:
             res = vfprintf(stream->s.fp, fmt, ap);
             break;
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             res = gzvprintf(stream->s.gz, fmt, ap);
             break;
@@ -262,7 +266,7 @@ upro_io_read(void *ptr, size_t size, size_t nmemb, upro_io_stream *stream)
     switch (stream->type) {
         case UPRO_IO_STDIO:
             return fread(ptr, size, nmemb, stream->s.fp);
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             {
                 size_t i, n;
@@ -286,7 +290,7 @@ upro_io_write(const void *ptr, size_t size, size_t nmemb, upro_io_stream *stream
     switch (stream->type) {
         case UPRO_IO_STDIO:
             return fwrite(ptr, size, nmemb, stream->s.fp);
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             {
                 size_t i, n;
@@ -315,7 +319,7 @@ upro_io_gets(char *s, int size, upro_io_stream *stream)
                 upro_error_msg(UPRO_EIO, "failed to read from stream");
             }
             break;
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             res = gzgets(stream->s.gz, s, size);
             if (!res) {
@@ -380,7 +384,7 @@ upro_io_seek(upro_io_stream *stream, long offset, int whence)
     switch (stream->type) {
         case UPRO_IO_STDIO:
             return fseek(stream->s.fp, offset, whence);
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
         case UPRO_IO_GZIP:
             return gzseek(stream->s.gz, offset, whence) >= 0 ? 0 : -1;
 #endif

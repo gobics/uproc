@@ -5,10 +5,7 @@
 #include "upro/error.h"
 #include "upro/ecurve.h"
 #include "upro/word.h"
-
-#if HAVE_MMAP
 #include "upro/mmap.h"
-#endif
 
 /** Perform a lookup in the prefix table.
  *
@@ -90,12 +87,10 @@ upro_ecurve_init(struct upro_ecurve *ecurve, const char *alphabet,
 void
 upro_ecurve_destroy(struct upro_ecurve *ecurve)
 {
-#if HAVE_MMAP
     if (ecurve->mmap_fd > -1) {
         upro_mmap_unmap(ecurve);
         return;
     }
-#endif
     free(ecurve->prefixes);
     free(ecurve->suffixes);
     free(ecurve->families);

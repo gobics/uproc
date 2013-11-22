@@ -1,3 +1,9 @@
+#include <stdlib.h>
+
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #if HAVE_MMAP
 /* for posix_fallocate */
 #define _XOPEN_SOURCE 600
@@ -11,6 +17,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#else
+#warn foo
 #endif
 
 #include "upro/common.h"
@@ -41,7 +49,7 @@ struct mmap_header {
 #define MAP_NORESERVE 0
 #endif
 #ifndef MAP_POPULATE
-#define MAP_NORESERVE 0
+#define MAP_POPULATE 0
 #endif
 
 static int

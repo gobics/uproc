@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +13,7 @@
 #include <getopt.h>
 #endif
 
-#if HAVE_OPENMP
+#if HAVE_OMP_H
 #include <omp.h>
 #endif
 
@@ -25,7 +29,7 @@ struct buffer
     char *seq[MAX_CHUNK_SIZE];
     size_t seq_sz[MAX_CHUNK_SIZE];
 
-#ifdef MAIN_DNA
+#if MAIN_DNA
     struct upro_dc_results results[MAX_CHUNK_SIZE];
 #else
     struct upro_pc_results results[MAX_CHUNK_SIZE];
@@ -168,7 +172,7 @@ output(struct buffer *buf,
             continue;
         }
         for (j = 0; j < buf->results[i].n; j++) {
-#ifdef MAIN_DNA
+#if MAIN_DNA
             struct upro_dc_pred *pred = &buf->results[i].preds[j];
             if (pr_stream) {
                 upro_io_printf(pr_stream, "%zu,%s,%u,%" UPRO_FAMILY_PRI ",%1.3f\n",
@@ -219,7 +223,7 @@ USAGE: %s db_dir model_dir [options] [input_file(s)]\n\
 GENERAL OPTIONS:\n\
 -h | --help             Print this message and exit.\n\
 -v | --version          Print version and exit.\n"
-#if HAVE_OPENMP
+#if HAVE_OMP_H
 "\
 -t | --threads <n>      Maximum number of threads to use. This overrides the\n\
                         environment variable OMP_NUM_THREADS. If neither is\n\
@@ -230,7 +234,7 @@ OUTPUT OPTIONS:\n\
 -p | --preds    Print all classifications as CSV with the fields:\n\
                     sequence number (starting with 1)\n\
                     FASTA header up to the first whitespace\n"
-#ifdef MAIN_DNA
+#if MAIN_DNA
 "\
                     frame number (1-6)\n"
 #endif
@@ -255,7 +259,7 @@ PROTEIN CLASSIFICATION OPTIONS:\n\
                         Default is 2.\n\
 "
 
-#ifdef MAIN_DNA
+#if MAIN_DNA
 "\n\n\
 DNA CLASSIFICATION OPTIONS:\n\
 -l | --long             Use long read mode (default):\n\
@@ -342,7 +346,7 @@ main(int argc, char **argv)
     uintmax_t counts[UPRO_FAMILY_MAX] = { 0 }, *out_counts = NULL;
 
 #define SHORT_OPTS_PROT "hvpcfP:t:"
-#ifdef MAIN_DNA
+#if MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "slO:"
 #else
 #define SHORT_OPTS SHORT_OPTS_PROT
@@ -357,7 +361,7 @@ main(int argc, char **argv)
         { "stats",      no_argument,        NULL, 'f' },
         { "pthresh",    required_argument,  NULL, 'P' },
         { "threads",    required_argument,  NULL, 't' },
-#ifdef MAIN_DNA
+#if MAIN_DNA
         { "short",      no_argument,        NULL, 's' },
         { "long",       no_argument,        NULL, 'l' },
         { "othresh",    required_argument,  NULL, 'O' },
@@ -403,7 +407,7 @@ main(int argc, char **argv)
                 }
                 break;
             case 't':
-#if HAVE_OPENMP
+#if HAVE_OMP_H
                 {
                     int res, tmp;
                     res = parse_int(optarg, &tmp);
@@ -415,7 +419,7 @@ main(int argc, char **argv)
                 }
 #endif
                 break;
-#ifdef MAIN_DNA
+#if MAIN_DNA
             case 's':
                 short_read_mode = true;
                 break;
@@ -483,7 +487,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-#ifdef MAIN_DNA
+#if MAIN_DNA
     if (short_read_mode) {
         pc_mode = UPRO_PC_MAX;
         dc_mode = UPRO_DC_MAX;
@@ -540,7 +544,7 @@ main(int argc, char **argv)
             {
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < out->n; i++) {
-#ifdef MAIN_DNA
+#if MAIN_DNA
                     res = upro_dc_classify(&dnaclass, out->seq[i], &out->results[i]);
 #else
                     res = upro_pc_classify(&protclass, out->seq[i], &out->results[i]);
@@ -579,7 +583,7 @@ main(int argc, char **argv)
     upro_ecurve_destroy(&fwd);
     upro_ecurve_destroy(&rev);
     upro_matrix_destroy(&prot_thresholds);
-#ifdef MAIN_DNA
+#if MAIN_DNA
     if (!short_read_mode) {
         upro_matrix_destroy(&codon_scores);
         upro_matrix_destroy(&orf_thresholds);

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 
 #include "upro/common.h"
 #include "upro/error.h"

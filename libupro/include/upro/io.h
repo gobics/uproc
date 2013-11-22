@@ -15,7 +15,7 @@ enum upro_io_type
 {
     /** standard C's FILE pointer */
     UPRO_IO_STDIO,
-#if HAVE_ZLIB
+#if HAVE_ZLIB_H
     /** transparent gzip stream using zlib */
     UPRO_IO_GZIP,
 #else
@@ -32,7 +32,7 @@ upro_io_stream *upro_io_stdstream(FILE *stream);
 #define upro_stdout upro_io_stdstream(stdout)
 #define upro_stderr upro_io_stdstream(stderr)
 
-#if HAVE_FILENO && HAVE_ZLIB
+#if HAVE_ZLIB_H
 upro_io_stream *upro_io_stdstream_gz(FILE *stream);
 #define upro_stdin_gz upro_io_stdstream_gz(stdin)
 #define upro_stdout_gz upro_io_stdstream_gz(stdout)
