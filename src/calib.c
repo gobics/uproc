@@ -7,7 +7,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "upro.h"
+#include "uproc.h"
 
 #define SEQ_COUNT_MULTIPLIER 10000
 #define POW_MIN 5
@@ -37,14 +37,14 @@ xrealloc(void *ptr, size_t sz)
 
 
 int
-choice(const struct upro_matrix *p, size_t n)
+choice(const struct uproc_matrix *p, size_t n)
 {
     double sum, c;
     unsigned i;
     c = (double)rand() / RAND_MAX;
     for (sum = 0, i = 0; sum < c && i < n; ++i) {
         if (p) {
-            sum += upro_matrix_get(p, 0, i);
+            sum += uproc_matrix_get(p, 0, i);
         }
         else {
             sum += 1.0 / n;
@@ -54,8 +54,8 @@ choice(const struct upro_matrix *p, size_t n)
 }
 
 void
-randseq(char *buf, size_t len, const struct upro_alphabet *alpha,
-        const struct upro_matrix *probs)
+randseq(char *buf, size_t len, const struct uproc_alphabet *alpha,
+        const struct uproc_matrix *probs)
 {
     size_t i;
     static bool rand_seeded = false;
@@ -64,14 +64,14 @@ randseq(char *buf, size_t len, const struct upro_alphabet *alpha,
         rand_seeded = true;
     }
     for (i = 0; i < len; i++) {
-        upro_amino a = choice(probs, UPRO_ALPHABET_SIZE);
-        buf[i] = upro_alphabet_amino_to_char(alpha, a);
+        uproc_amino a = choice(probs, UPROC_ALPHABET_SIZE);
+        buf[i] = uproc_alphabet_amino_to_char(alpha, a);
     }
     buf[i] = '\0';
 }
 
 void
-append(double **dest, size_t *dest_n, size_t *dest_sz, struct upro_pc_pred *src,
+append(double **dest, size_t *dest_n, size_t *dest_sz, struct uproc_pc_pred *src,
         size_t n)
 {
     double *d = *dest;
@@ -96,7 +96,7 @@ int
 double_cmp(const void *p1, const void *p2)
 {
     double delta = *(const double *)p1 - *(const double*)p2;
-    if (fabs(delta) < UPRO_EPSILON) {
+    if (fabs(delta) < UPROC_EPSILON) {
         return 0;
     }
     /* we want to sort in descending order */
@@ -146,7 +146,7 @@ csinterp(const double *xa, const double *ya, int m, const double *x, double *y, 
 
         h = xa[high] - xa[low];
         if (h == 0.0) {
-            return UPRO_EINVAL;
+            return UPROC_EINVAL;
         }
 
         a = (xa[high] - x[i]) / h;
@@ -168,7 +168,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
 
-    struct upro_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
+    struct uproc_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
 
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
@@ -183,7 +183,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     }
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
-    return upro_matrix_store(&thresh_interp, UPRO_IO_STDIO, "%.100s%zu", prefix, number);
+    return uproc_matrix_store(&thresh_interp, UPROC_IO_STDIO, "%.100s%zu", prefix, number);
 }
 
 
@@ -200,10 +200,10 @@ enum args
 int main(int argc, char **argv)
 {
     int res;
-    struct upro_alphabet alpha;
-    struct upro_matrix alpha_probs;
-    struct upro_substmat substmat;
-    struct upro_ecurve fwd, rev;
+    struct uproc_alphabet alpha;
+    struct uproc_matrix alpha_probs;
+    struct uproc_substmat substmat;
+    struct uproc_ecurve fwd, rev;
     double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
     char *outfile_prefix = OUT_PREFIX_DEFAULT;
@@ -222,30 +222,30 @@ int main(int argc, char **argv)
         outfile_prefix = argv[OUT_PREFIX];
     }
 
-    res = upro_substmat_load(&substmat, UPRO_IO_GZIP, argv[SUBSTMAT]);
-    if (res != UPRO_SUCCESS) {
+    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, argv[SUBSTMAT]);
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[SUBSTMAT]);
         perror("");
         return EXIT_FAILURE;
     }
 
-    res = upro_matrix_load(&alpha_probs, UPRO_IO_GZIP, argv[AA_PROBS]);
-    if (res != UPRO_SUCCESS) {
+    res = uproc_matrix_load(&alpha_probs, UPROC_IO_GZIP, argv[AA_PROBS]);
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[AA_PROBS]);
         perror("");
         return EXIT_FAILURE;
     }
-    upro_alphabet_init(&alpha, ALPHABET);
+    uproc_alphabet_init(&alpha, ALPHABET);
 
-    res = upro_mmap_map(&fwd, argv[FWD]);
-    if (res != UPRO_SUCCESS) {
+    res = uproc_mmap_map(&fwd, argv[FWD]);
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[FWD]);
         return EXIT_FAILURE;
     }
-    res = upro_mmap_map(&rev, argv[REV]);
-    if (res != UPRO_SUCCESS) {
+    res = uproc_mmap_map(&rev, argv[REV]);
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "error opening %s: ", argv[REV]);
-        upro_ecurve_destroy(&fwd);
+        uproc_ecurve_destroy(&fwd);
         return EXIT_FAILURE;
     }
 
@@ -261,11 +261,11 @@ int main(int argc, char **argv)
 
         unsigned long i, seq_count;
         size_t seq_len;
-            struct upro_protclass pc;
-            struct upro_pc_results results;
+            struct uproc_protclass pc;
+            struct uproc_pc_results results;
             results.preds = NULL;
             results.n = results.sz = 0;
-            upro_pc_init(&pc, UPRO_PC_ALL, &fwd, &rev, &substmat, NULL, NULL);
+            uproc_pc_init(&pc, UPROC_PC_ALL, &fwd, &rev, &substmat, NULL, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
             seq[seq_len] = '\0';
             for (i = 0; i < seq_count; i++) {
                 randseq(seq, seq_len, &alpha, &alpha_probs);
-                upro_pc_classify(&pc, seq, &results);
+                uproc_pc_classify(&pc, seq, &results);
                 append(&all_preds, &all_preds_n, &all_preds_sz, results.preds, results.n);
             }
             qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);

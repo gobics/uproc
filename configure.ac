@@ -1,8 +1,8 @@
 AC_PREREQ(2.59)
-AC_INIT([upro], [0.1], [upro@gobics.de])
+AC_INIT([uproc], [0.1], [uproc@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
-AC_CONFIG_SRCDIR([libupro/ecurve.c])
+AC_CONFIG_SRCDIR([libuproc/ecurve.c])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -36,5 +36,5 @@ AC_OPENMP
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
-AC_CONFIG_FILES([Makefile src/Makefile libupro/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile libuproc/Makefile tests/Makefile])
 AC_OUTPUT

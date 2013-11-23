@@ -2,79 +2,79 @@
 #include <config.h>
 #endif
 
-#include "upro.h"
+#include "uproc.h"
 #include <ctype.h>
 
-unsigned long filtered_counts[UPRO_FAMILY_MAX] = { 0 };
+unsigned long filtered_counts[UPROC_FAMILY_MAX] = { 0 };
 
 struct ecurve_entry
 {
-    struct upro_word word;
-    upro_family family;
+    struct uproc_word word;
+    uproc_family family;
 };
 
 static int
-parse_family(const char *id, upro_family *family)
+parse_family(const char *id, uproc_family *family)
 {
     int res;
     while (*id && !isdigit(*id)) {
         id++;
     }
 
-    res = sscanf(id, "%" UPRO_FAMILY_SCN, family);
+    res = sscanf(id, "%" UPROC_FAMILY_SCN, family);
     return res == 1 ? 0 : -1;
 }
 
 static int
-extract_uniques(upro_io_stream *stream, upro_amino first,
-        const struct upro_alphabet *alpha, struct ecurve_entry **entries,
+extract_uniques(uproc_io_stream *stream, uproc_amino first,
+        const struct uproc_alphabet *alpha, struct ecurve_entry **entries,
         size_t *n_entries)
 {
     int res;
 
-    struct upro_fasta_reader rd;
+    struct uproc_fasta_reader rd;
 
     size_t index;
 
-    struct upro_bst tree;
-    union upro_bst_key tree_key;
+    struct uproc_bst tree;
+    union uproc_bst_key tree_key;
 
-    upro_family family;
+    uproc_family family;
 
-    upro_fasta_reader_init(&rd, 8192);
-    upro_bst_init(&tree, UPRO_BST_WORD, sizeof family);
+    uproc_fasta_reader_init(&rd, 8192);
+    uproc_bst_init(&tree, UPROC_BST_WORD, sizeof family);
 
-    while ((res = upro_fasta_read(stream, &rd)) > 0) {
-        struct upro_worditer iter;
-        struct upro_word fwd_word = UPRO_WORD_INITIALIZER, rev_word = UPRO_WORD_INITIALIZER;
-        upro_family tmp_family;
+    while ((res = uproc_fasta_read(stream, &rd)) > 0) {
+        struct uproc_worditer iter;
+        struct uproc_word fwd_word = UPROC_WORD_INITIALIZER, rev_word = UPROC_WORD_INITIALIZER;
+        uproc_family tmp_family;
 
         if (parse_family(rd.header, &family)) {
             break;
         }
-        upro_worditer_init(&iter, rd.seq, alpha);
+        uproc_worditer_init(&iter, rd.seq, alpha);
 
-        while ((res = upro_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
-            if (!upro_word_startswith(&fwd_word, first)) {
+        while ((res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
+            if (!uproc_word_startswith(&fwd_word, first)) {
                 continue;
             }
             tree_key.word = fwd_word;
-            res = upro_bst_get(&tree, tree_key, &tmp_family);
+            res = uproc_bst_get(&tree, tree_key, &tmp_family);
 
             /* word was already present -> mark as duplicate if stored class
              * differs */
-            if (res == UPRO_SUCCESS) {
+            if (res == UPROC_SUCCESS) {
                 if (tmp_family != family) {
                     filtered_counts[family] += 1;
-                    if (tmp_family != (upro_family)-1) {
+                    if (tmp_family != (uproc_family)-1) {
                         filtered_counts[tmp_family] += 1;
                     }
                     tmp_family = -1;
-                    res = upro_bst_update(&tree, tree_key, &tmp_family);
+                    res = uproc_bst_update(&tree, tree_key, &tmp_family);
                 }
             }
-            else if (res == UPRO_BST_KEY_NOT_FOUND) {
-                res = upro_bst_update(&tree, tree_key, &family);
+            else if (res == UPROC_BST_KEY_NOT_FOUND) {
+                res = uproc_bst_update(&tree, tree_key, &family);
             }
             if (res < 0) {
                 break;
@@ -88,24 +88,24 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
         goto error;
     }
 
-    struct upro_bstiter iter;
-    upro_bstiter_init(&iter, &tree);
+    struct uproc_bstiter iter;
+    uproc_bstiter_init(&iter, &tree);
     *n_entries = 0;
-    while (upro_bstiter_next(&iter, &tree_key, &family) > 0) {
-        if (family != (upro_family) -1) {
+    while (uproc_bstiter_next(&iter, &tree_key, &family) > 0) {
+        if (family != (uproc_family) -1) {
             *n_entries += 1;
         }
     }
     *entries = malloc(*n_entries * sizeof **entries);
     if (!*entries) {
-        res = upro_error(UPRO_ENOMEM);
+        res = uproc_error(UPROC_ENOMEM);
         goto error;
     }
 
-    upro_bstiter_init(&iter, &tree);
+    uproc_bstiter_init(&iter, &tree);
     struct ecurve_entry *entries_insert = *entries;
-    while (upro_bstiter_next(&iter, &tree_key, &family) > 0) {
-        if (family != (upro_family) -1) {
+    while (uproc_bstiter_next(&iter, &tree_key, &family) > 0) {
+        if (family != (uproc_family) -1) {
             entries_insert->word = tree_key.word;
             entries_insert->family = family;
             entries_insert++;
@@ -113,7 +113,7 @@ extract_uniques(upro_io_stream *stream, upro_amino first,
     }
 
 error:
-    upro_bst_clear(&tree, NULL);
+    uproc_bst_clear(&tree, NULL);
     return res;
 }
 
@@ -174,16 +174,16 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
 
 
 static int
-insert_entries(struct upro_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
+insert_entries(struct uproc_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
 {
     size_t i, k;
-    upro_prefix p, current_prefix, next_prefix;
+    uproc_prefix p, current_prefix, next_prefix;
 
     current_prefix = entries[0].word.prefix;
 
     for (p = 0; p < current_prefix; p++) {
         ecurve->prefixes[p].first = 0;
-        ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
+        ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
     }
 
     for (i = 0; i < n_entries;) {
@@ -204,35 +204,35 @@ insert_entries(struct upro_ecurve *ecurve, struct ecurve_entry *entries, size_t 
 
         for (p = current_prefix + 1; p < next_prefix; p++) {
             ecurve->prefixes[p].first = k - 1;
-            ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
+            ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
         }
         current_prefix = next_prefix;
         i = k;
     }
 
-    for (p = current_prefix + 1; p <= UPRO_PREFIX_MAX; p++) {
+    for (p = current_prefix + 1; p <= UPROC_PREFIX_MAX; p++) {
         ecurve->prefixes[p].first = n_entries - 1;
-        ecurve->prefixes[p].count = UPRO_ECURVE_EDGE;
+        ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
     }
 
-    return UPRO_SUCCESS;
+    return UPROC_SUCCESS;
 }
 
 
 static int
-build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
+build(uproc_io_stream *stream, struct uproc_ecurve *ecurve, const char *alphabet)
 {
     int res;
     struct ecurve_entry *entries = NULL;
     size_t n_entries;
-    upro_amino first;
-    struct upro_ecurve new;
+    uproc_amino first;
+    struct uproc_ecurve new;
 
-    for (first = 0; first < UPRO_ALPHABET_SIZE; first++) {
+    for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
         fflush(stderr);
         n_entries = 0;
         free(entries);
-        upro_io_seek(stream, 0, SEEK_SET);
+        uproc_io_seek(stream, 0, SEEK_SET);
 
         res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
         if (res) {
@@ -242,20 +242,20 @@ build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
         n_entries = filter_singletons(entries, n_entries);
 
         if (!first) {
-            res = upro_ecurve_init(ecurve, alphabet, n_entries);
+            res = uproc_ecurve_init(ecurve, alphabet, n_entries);
             if (res) {
                 goto error;
             }
             insert_entries(ecurve, entries, n_entries);
         }
         else {
-            res = upro_ecurve_init(&new, alphabet, n_entries);
+            res = uproc_ecurve_init(&new, alphabet, n_entries);
             if (res) {
                 goto error;
             }
 
             insert_entries(&new, entries, n_entries);
-            res = upro_ecurve_append(ecurve, &new);
+            res = uproc_ecurve_append(ecurve, &new);
             if (res) {
                 goto error;
             }
@@ -264,7 +264,7 @@ build(upro_io_stream *stream, struct upro_ecurve *ecurve, const char *alphabet)
 
     if (0) {
 error:
-        upro_ecurve_destroy(ecurve);
+        uproc_ecurve_destroy(ecurve);
     }
     free(entries);
     return res;
@@ -274,9 +274,9 @@ int
 main(int argc, char **argv)
 {
     int res;
-    upro_io_stream *stream;
+    uproc_io_stream *stream;
 
-    struct upro_ecurve ecurve;
+    struct uproc_ecurve ecurve;
 
     enum args {
         ALPHABET = 1,
@@ -290,13 +290,13 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_ecurve_init(&ecurve, argv[ALPHABET], 0);
+    res = uproc_ecurve_init(&ecurve, argv[ALPHABET], 0);
     if (res) {
         fprintf(stderr, "invalid alphabet string \"%s\"\n", argv[ALPHABET]);
         return EXIT_FAILURE;
     }
 
-    stream = upro_io_open("r", UPRO_IO_GZIP, argv[INFILE]);
+    stream = uproc_io_open("r", UPROC_IO_GZIP, argv[INFILE]);
     if (!stream) {
         perror("");
         return EXIT_FAILURE;
@@ -306,12 +306,12 @@ main(int argc, char **argv)
     if (res) {
         fprintf(stderr, "an error occured\n");
     }
-    upro_io_close(stream);
+    uproc_io_close(stream);
     fprintf(stderr, "storing..\n");
-    upro_storage_store(&ecurve, UPRO_STORAGE_PLAIN, UPRO_IO_GZIP, argv[OUTFILE]);
-    upro_ecurve_destroy(&ecurve);
+    uproc_storage_store(&ecurve, UPROC_STORAGE_PLAIN, UPROC_IO_GZIP, argv[OUTFILE]);
+    uproc_ecurve_destroy(&ecurve);
     fprintf(stderr, "filtered:\n");
-    for (size_t i = 0; i < UPRO_FAMILY_MAX; i++) {
+    for (size_t i = 0; i < UPROC_FAMILY_MAX; i++) {
         if (filtered_counts[i]) {
             fprintf(stderr, "%5zu: %lu\n", i, filtered_counts[i]);
         }

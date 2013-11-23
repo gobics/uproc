@@ -1,1 +1,1 @@
-SUBDIRS = libupro src tests
+SUBDIRS = libuproc src tests

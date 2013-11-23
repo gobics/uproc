@@ -8,7 +8,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include "upro.h"
+#include "uproc.h"
 
 #if HAVE_MMAP
 #define FORMATS "PBM"
@@ -39,11 +39,11 @@ enum args
 int
 main(int argc, char **argv)
 {
-    int res = UPRO_FAILURE;
-    struct upro_ecurve ecurve;
+    int res = UPROC_FAILURE;
+    struct uproc_ecurve ecurve;
     time_t start, end;
     char in_fmt, out_fmt;
-    enum upro_io_type iotype = UPRO_IO_STDIO;
+    enum uproc_io_type iotype = UPROC_IO_STDIO;
 
     if (argc != ARGC) {
         fprintf(stderr, "%d %d\n", argc, ARGC);
@@ -62,7 +62,7 @@ main(int argc, char **argv)
     in_fmt = argv[IN_FMT][0];
     out_fmt = argv[OUT_FMT][0];
     if (argv[OUT_FMT][1] == 'Z') {
-        iotype = UPRO_IO_GZIP;
+        iotype = UPROC_IO_GZIP;
     }
 
     if (!strchr(FORMATS, in_fmt)) {
@@ -78,19 +78,19 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (in_fmt) {
         case 'P':
-            res = upro_storage_load(&ecurve, UPRO_STORAGE_PLAIN, UPRO_IO_GZIP,
+            res = uproc_storage_load(&ecurve, UPROC_STORAGE_PLAIN, UPROC_IO_GZIP,
                                     argv[IN_PATH]);
             break;
         case 'B':
-            res = upro_storage_load(&ecurve, UPRO_STORAGE_BINARY, UPRO_IO_GZIP,
+            res = uproc_storage_load(&ecurve, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                                     argv[IN_PATH]);
             break;
         case 'M':
-            res = upro_mmap_map(&ecurve, argv[IN_PATH]);
+            res = uproc_mmap_map(&ecurve, argv[IN_PATH]);
             break;
     }
     end = time(NULL);
-    if (res != UPRO_SUCCESS) {
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "cannot load ecurve!\n");
         perror("");
         return EXIT_FAILURE;
@@ -101,19 +101,19 @@ main(int argc, char **argv)
     start = time(NULL);
     switch (out_fmt) {
         case 'P':
-            res = upro_storage_store(&ecurve, UPRO_STORAGE_PLAIN, iotype,
+            res = uproc_storage_store(&ecurve, UPROC_STORAGE_PLAIN, iotype,
                                      argv[OUT_PATH]);
             break;
         case 'B':
-            res = upro_storage_store(&ecurve, UPRO_STORAGE_BINARY, iotype,
+            res = uproc_storage_store(&ecurve, UPROC_STORAGE_BINARY, iotype,
                                      argv[OUT_PATH]);
             break;
         case 'M':
-            res = upro_mmap_store(&ecurve, argv[OUT_PATH]);
+            res = uproc_mmap_store(&ecurve, argv[OUT_PATH]);
             break;
     }
     end = time(NULL);
-    if (res != UPRO_SUCCESS) {
+    if (res != UPROC_SUCCESS) {
         fprintf(stderr, "error storing ecurve\n");
         perror("");
         return EXIT_FAILURE;
@@ -121,6 +121,6 @@ main(int argc, char **argv)
     fprintf(stderr, "elapsed time: ");
     print_time(stderr, end - start);
 
-    upro_ecurve_destroy(&ecurve);
+    uproc_ecurve_destroy(&ecurve);
     return EXIT_SUCCESS;
 }

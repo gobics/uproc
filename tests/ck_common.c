@@ -1,17 +1,17 @@
 #include <check.h>
-#include "upro.h"
+#include "uproc.h"
 
 START_TEST(test_defs)
 {
     ck_assert_msg(
-        UPRO_PREFIX_MAX == pow(UPRO_ALPHABET_SIZE, UPRO_PREFIX_LEN) - 1,
-        "UPRO_PREFIX_MAX is alphabet size raised to prefix length");
+        UPROC_PREFIX_MAX == pow(UPROC_ALPHABET_SIZE, UPROC_PREFIX_LEN) - 1,
+        "UPROC_PREFIX_MAX is alphabet size raised to prefix length");
     ck_assert_msg(
-        ~(upro_prefix)0 > UPRO_PREFIX_MAX,
-        "upro_prefix large enough (can store UPRO_PREFIX_MAX + 1)");
+        ~(uproc_prefix)0 > UPROC_PREFIX_MAX,
+        "uproc_prefix large enough (can store UPROC_PREFIX_MAX + 1)");
     ck_assert_msg(
-        sizeof (upro_suffix) * CHAR_BIT >= (UPRO_AMINO_BITS * UPRO_SUFFIX_LEN),
-        "upro_suffix large enough");
+        sizeof (uproc_suffix) * CHAR_BIT >= (UPROC_AMINO_BITS * UPROC_SUFFIX_LEN),
+        "uproc_suffix large enough");
 }
 END_TEST
 

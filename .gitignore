@@ -17,16 +17,16 @@ Makefile.in
 .deps
 
 /src/Makefile
-/src/upro-dna
-/src/upro-orf
-/src/upro-prot
+/src/uproc-dna
+/src/uproc-orf
+/src/uproc-prot
 
-/libupro/codon_tables.h
-/libupro/libupro.a
+/libuproc/codon_tables.h
+/libuproc/libuproc.a
 
-/tests/ck_upro
-/tests/ck_upro.log
-/tests/ck_upro.trs
+/tests/ck_uproc
+/tests/ck_uproc.log
+/tests/ck_uproc.trs
 /tests/test-suite.log
 /tests/Makefile
 /test-driver

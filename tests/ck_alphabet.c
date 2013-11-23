@@ -1,46 +1,46 @@
 #include <check.h>
-#include "upro.h"
+#include "uproc.h"
 
 START_TEST(test_init)
 {
-    struct upro_alphabet a;
-    upro_errno = UPRO_SUCCESS;
-    fprintf(stderr, "%d\n", upro_alphabet_init(&a, "ABC"));
-    ck_assert_msg(upro_alphabet_init(&a, "ABC") < 0,
+    struct uproc_alphabet a;
+    uproc_errno = UPROC_SUCCESS;
+    fprintf(stderr, "%d\n", uproc_alphabet_init(&a, "ABC"));
+    ck_assert_msg(uproc_alphabet_init(&a, "ABC") < 0,
                   "failure if string too short");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRSTUVW") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "ABCDEFGHIJKLMNOPQRSTUVW") < 0,
                   "failure if string too long");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "AACDEFGHIJKLMNOPQRST") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "AACDEFGHIJKLMNOPQRST") < 0,
                   "failure if string contains duplicates");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "ABCDEFGHIJKKMNOPQRST") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "ABCDEFGHIJKKMNOPQRST") < 0,
                   "failure if string contains duplicates");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "ABCDE GHIJKLMNOPQRST") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "ABCDE GHIJKLMNOPQRST") < 0,
                   "failure if string contains space");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "ABCDE1GHIJKLMNOPQRST") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "ABCDE1GHIJKLMNOPQRST") < 0,
                   "failure if string contains number");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
-    upro_errno = UPRO_SUCCESS;
-    ck_assert_msg(upro_alphabet_init(&a, "ABCDE*GHIJKLMNOPQRST") < 0,
+    uproc_errno = UPROC_SUCCESS;
+    ck_assert_msg(uproc_alphabet_init(&a, "ABCDE*GHIJKLMNOPQRST") < 0,
                   "failure if string contains asterisk");
-    ck_assert_int_eq(upro_errno, UPRO_EINVAL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 }
 END_TEST
 

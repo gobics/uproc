@@ -1,0 +1,152 @@
+#ifndef UPROC_BST_H
+#define UPROC_BST_H
+
+/** \file uproc/bst.h
+ *
+ * Simple binary search tree implementation
+ */
+
+#include <stdlib.h>
+#include <stdint.h>
+#include "uproc/common.h"
+#include "uproc/word.h"
+
+union uproc_bst_key {
+    uintmax_t uint;
+    struct uproc_word word;
+};
+
+enum uproc_bst_keytype {
+    UPROC_BST_UINT,
+    UPROC_BST_WORD,
+};
+
+enum uproc_bst_return {
+    UPROC_BST_KEY_NOT_FOUND = -404,
+    UPROC_BST_KEY_EXISTS = -403,
+};
+
+/** Binary search tree */
+struct uproc_bst {
+    /** The root node (struct uproc_bst_node is defined in the implementation) */
+    struct uproc_bst_node *root;
+
+    /** Number of nodes */
+    size_t size;
+
+    /** Key type */
+    enum uproc_bst_keytype key_type;
+
+    /** Size of value objects */
+    size_t value_size;
+};
+
+struct uproc_bstiter
+{
+    const struct uproc_bst *t;
+    struct uproc_bst_node *cur;
+};
+
+typedef int (*uproc_bst_cb_walk)(union uproc_bst_key, const void*, void*);
+typedef int (*uproc_bst_cb_remove)(const void*);
+
+/** Initialize an empty binary search tree
+ *
+ * \param t             bst instance
+ * \param key_type      key type
+ * \param value_size    size of the stored values
+ */
+void uproc_bst_init(struct uproc_bst *t, enum uproc_bst_keytype key_type,
+        size_t data_size);
+
+/** Remove all nodes from tree; leaves an empty tree
+ *
+ * Takes a callback function pointer similar to uproc_bst_remove()
+ *
+ * \param t         bst instance
+ * \param callback  callback function or null pointer
+ */
+void uproc_bst_clear(struct uproc_bst *t, uproc_bst_cb_remove callback);
+
+/** Return non-zero if the tree is empty */
+int uproc_bst_isempty(struct uproc_bst *t);
+
+/** Obtain the number of nodes */
+size_t uproc_bst_size(const struct uproc_bst *t);
+
+/** Insert item
+ *
+ * \param t     bst instance
+ * \param key   search key
+ * \param value pointer to data to be stored
+ *
+ * \retval #UPROC_SUCCESS  item was inserted
+ * \retval #UPROC_EEXIST   `key` is already present
+ * \retval #UPROC_ENOMEM   memory allocation failed
+ */
+int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key, const void *value);
+
+/** Update item
+ *
+ * Like uproc_bst_insert(), but doesn't fail if an item with the same key was
+ * already present.
+ *
+ * \param t     bst instance
+ * \param key   search key
+ * \param value pointer to data to be stored
+ *
+ * \retval #UPROC_SUCCESS  item was inserted/updated
+ * \retval #UPROC_ENOMEM   memory allocation failed
+ */
+int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key, const void *data);
+
+/** Get item
+ *
+ * \param t     bst instance
+ * \param key   search key
+ * \param value _OUT_: data associated with `key`
+ *
+ * \retval #UPROC_SUCCESS  an item for `key` was found and stored in `*value`
+ * \retval #UPROC_ENOENT   no item found, `*value` remains unchanged
+ */
+int uproc_bst_get(struct uproc_bst *t, union uproc_bst_key key, void *value);
+
+/** Remove item
+ *
+ * Takes a callback function pointer to which the stored pointer will be
+ * passed (e.g. `&free`)
+ *
+ * \param t         bst instance
+ * \param key       key of the item to remove
+ * \param callback  callback function or null pointer
+ *
+ * \retval #UPROC_SUCCESS  item was removed
+ * \retval #UPROC_ENOENT  `key` not found in the tree
+ */
+int uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key,
+        uproc_bst_cb_remove callback);
+
+/** In-order iteration
+ *
+ * Iterate over all nodes, passing key, value and a caller-provided `opaque`
+ * pointer to the function pointed to by `callback`. If the callback function
+ * does _not_ return #UPROC_SUCCESS, iteration is aborted and that value is
+ * returned.
+ *
+ * \param t         bst instance
+ * \param callback  callback function pointer
+ * \param opaque    third argument to `callback`
+ *
+ * \return
+ * #UPROC_SUCCESS if the iteration completed successfully, else whatever the
+ * callback function returned.
+ */
+int uproc_bst_walk(struct uproc_bst *t, uproc_bst_cb_walk callback, void *opaque);
+
+/** Initialize iterator */
+void uproc_bstiter_init(struct uproc_bstiter *iter, const struct uproc_bst *t);
+
+/** Obtain next key/value pair */
+int uproc_bstiter_next(struct uproc_bstiter *iter, union uproc_bst_key *key, void *value);
+
+#endif

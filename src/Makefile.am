@@ -1,15 +1,15 @@
-bin_PROGRAMS = upro-dna \
-			   upro-prot \
-			   upro-orf
+bin_PROGRAMS = uproc-dna \
+			   uproc-prot \
+			   uproc-orf
 
-AM_CPPFLAGS = -I$(top_srcdir)/libupro/include
-LDADD = $(top_builddir)/libupro/libupro.a
+AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
+LDADD = $(top_builddir)/libuproc/libuproc.a
 
-upro_dna_SOURCES = main.c
-upro_dna_CPPFLAGS = $(AM_CPPFLAGS) -DMAIN_DNA=1
-upro_dna_CFLAGS = $(OPENMP_CFLAGS)
+uproc_dna_SOURCES = main.c
+uproc_dna_CPPFLAGS = $(AM_CPPFLAGS) -DMAIN_DNA=1
+uproc_dna_CFLAGS = $(OPENMP_CFLAGS)
 
-upro_prot_SOURCES = main.c
-upro_prot_CFLAGS = $(OPENMP_CFLAGS)
+uproc_prot_SOURCES = main.c
+uproc_prot_CFLAGS = $(OPENMP_CFLAGS)
 
-upro_orf_SOURCES = orf.c
+uproc_orf_SOURCES = orf.c

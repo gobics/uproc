@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "upro.h"
+#include "uproc.h"
 
 
 enum opts {
@@ -18,11 +18,11 @@ enum opts {
 };
 
 bool
-orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
+orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
         double seq_gc, void *opaque)
 {
     size_t r, c, rows, cols;
-    struct upro_matrix *thresh = opaque;
+    struct uproc_matrix *thresh = opaque;
     (void) seq;
     if (orf->length < 20) {
         return false;
@@ -30,7 +30,7 @@ orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
     if (!thresh) {
         return true;
     }
-    upro_matrix_dimensions(thresh, &rows, &cols);
+    uproc_matrix_dimensions(thresh, &rows, &cols);
     r = seq_gc * 100;
     c = seq_len;
     if (r >= rows) {
@@ -39,21 +39,21 @@ orf_filter(const struct upro_orf *orf, const char *seq, size_t seq_len,
     if (c >= cols) {
         c = cols - 1;
     }
-    return orf->score >= upro_matrix_get(thresh, r, c);
+    return orf->score >= uproc_matrix_get(thresh, r, c);
 }
 
 int main(int argc, char **argv)
 {
     int res;
-    struct upro_matrix codon_scores_mat;
-    double codon_scores[UPRO_BINARY_CODON_COUNT];
+    struct uproc_matrix codon_scores_mat;
+    double codon_scores[UPROC_BINARY_CODON_COUNT];
 
-    struct upro_matrix orf_thresholds;
+    struct uproc_matrix orf_thresholds;
     char *endptr;
     double min_score;
 
-    struct upro_fasta_reader rd;
-    upro_io_stream *stream;
+    struct uproc_fasta_reader rd;
+    uproc_io_stream *stream;
 
     enum { MAX, ALL } mode;
     void *filter_arg = NULL;
@@ -65,12 +65,12 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = upro_matrix_load(&codon_scores_mat, UPRO_IO_GZIP, argv[CODON_SCORES]);
+    res = uproc_matrix_load(&codon_scores_mat, UPROC_IO_GZIP, argv[CODON_SCORES]);
     if (res) {
-        upro_perror("error loading \"%s\"", argv[CODON_SCORES]);
+        uproc_perror("error loading \"%s\"", argv[CODON_SCORES]);
         return EXIT_FAILURE;
     }
-    upro_orf_codonscores(codon_scores, &codon_scores_mat);
+    uproc_orf_codonscores(codon_scores, &codon_scores_mat);
 
     if (!strcasecmp(argv[MIN_SCORE], "MAX")) {
         mode = MAX;
@@ -79,55 +79,55 @@ int main(int argc, char **argv)
         mode = ALL;
         min_score = strtod(argv[MIN_SCORE], &endptr);
         if (*argv[MIN_SCORE] && *endptr) {
-            res = upro_matrix_load(&orf_thresholds, UPRO_IO_GZIP, argv[MIN_SCORE]);
+            res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP, argv[MIN_SCORE]);
             if (res) {
-                upro_perror("error loading \"%s\"", argv[MIN_SCORE]);
+                uproc_perror("error loading \"%s\"", argv[MIN_SCORE]);
                 return EXIT_FAILURE;
             }
         }
         else {
-            upro_matrix_init(&orf_thresholds, 1, 1, &min_score);
+            uproc_matrix_init(&orf_thresholds, 1, 1, &min_score);
         }
 
         filter_arg = &orf_thresholds;
     }
 
     if (argc == ARGC && strcmp(argv[INFILE], "-")) {
-        stream = upro_io_open("r", UPRO_IO_GZIP, argv[INFILE]);
+        stream = uproc_io_open("r", UPROC_IO_GZIP, argv[INFILE]);
         if (!stream) {
             perror("");
             return EXIT_FAILURE;
         }
     }
     else {
-        stream = upro_stdin;
+        stream = uproc_stdin;
     }
 
-    upro_fasta_reader_init(&rd, 4096);
-    while ((res = upro_fasta_read(stream, &rd)) > 0) {
-        struct upro_orfiter oi;
-        struct upro_orf orf;
+    uproc_fasta_reader_init(&rd, 4096);
+    while ((res = uproc_fasta_read(stream, &rd)) > 0) {
+        struct uproc_orfiter oi;
+        struct uproc_orf orf;
 
         char *max_orf = NULL;
         double max_score = -INFINITY;
-        upro_orfiter_init(&oi, rd.seq, codon_scores, orf_filter, filter_arg);
-        while (upro_orfiter_next(&oi, &orf) > 0) {
+        uproc_orfiter_init(&oi, rd.seq, codon_scores, orf_filter, filter_arg);
+        while (uproc_orfiter_next(&oi, &orf) > 0) {
             if (mode == MAX && orf.score > max_score) {
                 free(max_orf);
                 max_orf = strdup(orf.data);
             }
             else {
-                upro_fasta_write(upro_stdout, rd.header, rd.comment, orf.data, 0);
+                uproc_fasta_write(uproc_stdout, rd.header, rd.comment, orf.data, 0);
             }
         }
         if (mode == MAX && max_orf) {
-            upro_fasta_write(upro_stdout, rd.header, rd.comment, max_orf, 0);
+            uproc_fasta_write(uproc_stdout, rd.header, rd.comment, max_orf, 0);
             free(max_orf);
         }
-        upro_orfiter_destroy(&oi);
+        uproc_orfiter_destroy(&oi);
     }
     if (res < 0) {
-        upro_perror("error reading input");
+        uproc_perror("error reading input");
     }
     return EXIT_SUCCESS;
 }
