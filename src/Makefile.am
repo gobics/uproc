@@ -3,7 +3,7 @@ bin_PROGRAMS = upro-dna \
 			   upro-orf
 
 AM_CPPFLAGS = -I$(top_srcdir)/libupro/include
-LDADD = ../libupro/libupro.a
+LDADD = $(top_builddir)/libupro/libupro.a
 
 upro_dna_SOURCES = main.c
 upro_dna_CPPFLAGS = $(AM_CPPFLAGS) -DMAIN_DNA=1

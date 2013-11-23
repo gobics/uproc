@@ -29,14 +29,12 @@ AC_FUNC_VPRINTF
 
 AC_CHECK_FUNCS([atexit munmap pow strchr strerror])
 
-
 # Checks for libraries
 AC_SEARCH_LIBS([gzopen], [z])
 
 AC_OPENMP
 
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
-AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 libupro/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile libupro/Makefile tests/Makefile])
 AC_OUTPUT
