@@ -1,4 +1,4 @@
-SUBDIRS = libuproc tests
+SUBDIRS = libuproc
 
 bin_PROGRAMS = uproc-dna uproc-prot uproc-orf
 
