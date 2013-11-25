@@ -5,8 +5,6 @@
 #endif
 
 #if HAVE_MMAP
-/* for posix_fallocate */
-#define _XOPEN_SOURCE 600
 #include <fcntl.h>
 
 #include <stdlib.h>
@@ -17,8 +15,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#else
-#warn foo
 #endif
 
 #include "uproc/common.h"
@@ -80,8 +76,10 @@ mmap_map(struct uproc_ecurve *ecurve, const char *path)
         goto error_close;
     }
 
+#if HAVE_POSIX_MADVISE
     posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_WILLNEED);
     posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_RANDOM);
+#endif
 
     header = ecurve->mmap_ptr;
     if (ecurve->mmap_size != SIZE_TOTAL(header->suffix_count)) {

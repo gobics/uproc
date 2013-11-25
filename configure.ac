@@ -29,7 +29,7 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS([atexit munmap pow strchr strerror])
+AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise])
 
 # Checks for libraries
 AC_SEARCH_LIBS([gzopen], [z])
