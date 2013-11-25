@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -7,7 +11,7 @@
 
 static int error_num;
 static char error_loc[256], error_msg[256];
-#if HAVE_OPENMP
+#if _OPENMP
 #pragma omp threadprivate(error_num, error_loc, error_msg)
 #endif
 

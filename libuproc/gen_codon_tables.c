@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +11,7 @@
 #include "uproc/common.h"
 #include "uproc/orf.h"
 #include "uproc/codon.h"
+#include "codon.c"
 
 #define IUPAC_NT "ACGTU"
 #define IUPAC_DNA_WC "RYSWKMBDHVN"
