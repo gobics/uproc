@@ -13,6 +13,9 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 AM_PROG_CC_C_O
 
+# Needed for %zu in printf/sscanf when compiling for Windows
+AC_DEFINE([__USE_MINGW_ANSI_STDIO], [1], [Use mingw stdio])
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h])
