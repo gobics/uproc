@@ -13,7 +13,7 @@
 #include <getopt.h>
 #endif
 
-#if HAVE_OMP_H
+#if _OPENMP
 #include <omp.h>
 #endif
 
@@ -223,7 +223,7 @@ USAGE: %s db_dir model_dir [options] [input_file(s)]\n\
 GENERAL OPTIONS:\n\
 -h | --help             Print this message and exit.\n\
 -v | --version          Print version and exit.\n"
-#if HAVE_OMP_H
+#if _OPENMP
 "\
 -t | --threads <n>      Maximum number of threads to use. This overrides the\n\
                         environment variable OMP_NUM_THREADS. If neither is\n\
@@ -407,7 +407,7 @@ main(int argc, char **argv)
                 }
                 break;
             case 't':
-#if HAVE_OMP_H
+#if _OPENMP
                 {
                     int res, tmp;
                     res = parse_int(optarg, &tmp);
