@@ -39,7 +39,9 @@ AC_SEARCH_LIBS([gzopen], [z])
 
 AC_OPENMP
 
-PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+# Check for the "check" unit testing library.
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=yes], [have_check=no])
+AM_CONDITIONAL([HAVE_CHECK], [test x$have_check = xyes])
 
 AC_CONFIG_FILES([Makefile
                  libuproc/Makefile
