@@ -16,7 +16,6 @@
 enum uproc_storage_format {
     UPROC_STORAGE_PLAIN,
     UPROC_STORAGE_BINARY,
-    UPROC_STORAGE_MMAP,
 };
 
 /** Load ecurve from a file

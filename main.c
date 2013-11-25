@@ -339,7 +339,7 @@ main(int argc, char **argv)
     size_t chunk_size = get_chunk_size();
 
     int opt;
-    int format = UPROC_STORAGE_MMAP;
+    int format = UPROC_STORAGE_BINARY;
 
     uproc_io_stream *out_stream = NULL;
     size_t unexplained = 0, *out_unexplained = NULL;
@@ -459,15 +459,15 @@ main(int argc, char **argv)
 #define ECURVE_EXT "bin"
 #endif
 
-    res = uproc_storage_load(&fwd, format, UPROC_IO_GZIP, "%s/fwd." ECURVE_EXT,
-                            argv[optind + DBDIR]);
+    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                             "%s/fwd." ECURVE_EXT, argv[optind + DBDIR]);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    res = uproc_storage_load(&rev, format, UPROC_IO_GZIP, "%s/rev." ECURVE_EXT,
-                            argv[optind + DBDIR]);
+    res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                             "%s/rev." ECURVE_EXT, argv[optind + DBDIR]);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;

@@ -373,11 +373,13 @@ uproc_storage_loadv(struct uproc_ecurve *ecurve,
 
     va_copy(aq, ap);
 
-    if (format == UPROC_STORAGE_MMAP) {
+#if HAVE_MMAP
+    if (format == UPROC_STORAGE_BINARY) {
         res = uproc_mmap_mapv(ecurve, pathfmt, aq);
         va_end(aq);
         return res;
     }
+#endif
 
     stream = uproc_io_openv(mode[format], iotype, pathfmt, aq);
     va_end(aq);
@@ -421,11 +423,13 @@ uproc_storage_storev(const struct uproc_ecurve *ecurve,
 
     va_copy(aq, ap);
 
-    if (format == UPROC_STORAGE_MMAP) {
+#if HAVE_MMAP
+    if (format == UPROC_STORAGE_BINARY) {
         res = uproc_mmap_storev(ecurve, pathfmt, aq);
         va_end(aq);
         return res;
     }
+#endif
 
     stream = uproc_io_openv(mode[format], iotype, pathfmt, aq);
     if (!stream) {
