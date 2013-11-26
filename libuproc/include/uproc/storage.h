@@ -37,8 +37,8 @@ enum uproc_storage_format {
 
 /** Load ecurve from a file
  *
- * Opens a file for reading, allocates a new #uproc_ecurve object and parses the
- * data in the file using the given format.
+ * Opens a file for reading, allocates a new #uproc_ecurve object and parses
+ * the data in the file using the given format.
  *
  * \param ecurve    pointer to ecurve to which the data will be loaded into
  * \param format    format to use, see #uproc_storage_format
@@ -50,12 +50,13 @@ enum uproc_storage_format {
  * \retval #UPROC_SUCCESS  else
  */
 int uproc_storage_load(struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, ...);
+                       enum uproc_storage_format format,
+                       enum uproc_io_type iotype, const char *pathfmt, ...);
 
 int uproc_storage_loadv(struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap);
+                        enum uproc_storage_format format,
+                        enum uproc_io_type iotype, const char *pathfmt,
+                        va_list ap);
 
 /** Store ecurve to a file
  *
@@ -71,10 +72,11 @@ int uproc_storage_loadv(struct uproc_ecurve *ecurve,
  * \retval #UPROC_SUCCESS  else
  */
 int uproc_storage_store(const struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, ...);
+                        enum uproc_storage_format format,
+                        enum uproc_io_type iotype, const char *pathfmt, ...);
 
 int uproc_storage_storev(const struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap);
+                         enum uproc_storage_format format,
+                         enum uproc_io_type iotype, const char *pathfmt,
+                         va_list ap);
 #endif

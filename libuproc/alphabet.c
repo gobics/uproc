@@ -38,24 +38,21 @@ uproc_alphabet_init(struct uproc_alphabet *alpha, const char *s)
     const char *p;
 
     if (strlen(s) != UPROC_ALPHABET_SIZE) {
-        return uproc_error_msg(UPROC_EINVAL,
-                              "input string too short: %d chars instead of %d",
-                              strlen(s), UPROC_ALPHABET_SIZE);
+        return uproc_error_msg(
+            UPROC_EINVAL, "string too short: %d characters instead of %d",
+            strlen(s), UPROC_ALPHABET_SIZE);
     }
     strcpy(alpha->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
         alpha->aminos[i] = -1;
     }
     for (p = s; *p; p++) {
-        i = *p;
-        /* invalid or duplicate character */
+        i = toupper(*p);
         if (!isupper(i)) {
-            return uproc_error_msg(UPROC_EINVAL,
-                                  "string contains non-uppercase character");
+            return uproc_error_msg(UPROC_EINVAL, "invalid character '%c'", i);
         }
         if (alpha->aminos[i] != -1) {
-            return uproc_error_msg(UPROC_EINVAL,
-                                  "duplicate '%c' in input string", i);
+            return uproc_error_msg(UPROC_EINVAL, "duplicate character '%c'", i);
         }
         alpha->aminos[i] = p - s;
     }
@@ -69,7 +66,8 @@ uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha, int c)
 }
 
 int
-uproc_alphabet_amino_to_char(const struct uproc_alphabet *alpha, uproc_amino amino)
+uproc_alphabet_amino_to_char(const struct uproc_alphabet *alpha,
+                             uproc_amino amino)
 {
     if (amino >= UPROC_ALPHABET_SIZE) {
         return -1;

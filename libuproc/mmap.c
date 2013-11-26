@@ -39,24 +39,25 @@
 #include "uproc/mmap.h"
 #include "uproc/ecurve.h"
 
-struct mmap_header {
+struct mmap_header
+{
     char alphabet_str[UPROC_ALPHABET_SIZE];
     size_t suffix_count;
 };
 
 #define SIZE_HEADER (sizeof (struct mmap_header))
-#define SIZE_PREFIXES ((UPROC_PREFIX_MAX + 1) * sizeof (struct uproc_ecurve_pfxtable))
+#define SIZE_PREFIXES \
+    ((UPROC_PREFIX_MAX + 1) * sizeof (struct uproc_ecurve_pfxtable))
 #define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (uproc_suffix))
 #define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (uproc_family))
 #define SIZE_TOTAL(suffix_count) \
-    (SIZE_HEADER + \
-     SIZE_PREFIXES + \
-     SIZE_SUFFIXES(suffix_count) + \
+    (SIZE_HEADER + SIZE_PREFIXES + SIZE_SUFFIXES(suffix_count) + \
      SIZE_CLASSES(suffix_count))
 
 #define OFFSET_PREFIXES (SIZE_HEADER)
 #define OFFSET_SUFFIXES (OFFSET_PREFIXES + SIZE_PREFIXES)
-#define OFFSET_CLASSES(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
+#define OFFSET_CLASSES(suffix_count) \
+    (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -83,10 +84,9 @@ mmap_map(struct uproc_ecurve *ecurve, const char *path)
         return uproc_error(UPROC_ERRNO);
     }
     ecurve->mmap_size = st.st_size;
-    ecurve->mmap_ptr =
-        region = mmap(NULL, ecurve->mmap_size, PROT_READ,
-                MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
-                ecurve->mmap_fd, 0);
+    ecurve->mmap_ptr = mmap(NULL, ecurve->mmap_size, PROT_READ,
+                            MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
+                            ecurve->mmap_fd, 0);
 
     if (ecurve->mmap_ptr == MAP_FAILED) {
         res = uproc_error(UPROC_ERRNO);
@@ -112,9 +112,10 @@ mmap_map(struct uproc_ecurve *ecurve, const char *path)
     }
 
     ecurve->suffix_count = header->suffix_count;
-    ecurve->prefixes = (void *)(region + OFFSET_PREFIXES);
-    ecurve->suffixes = (void *)(region + OFFSET_SUFFIXES);
-    ecurve->families =  (void *)(region + OFFSET_CLASSES(ecurve->suffix_count));
+    ecurve->prefixes = (void *)(ecurve->mmap_ptr + OFFSET_PREFIXES);
+    ecurve->suffixes = (void *)(ecurve->mmap_ptr + OFFSET_SUFFIXES);
+    ecurve->families = (void *)(ecurve->mmap_ptr +
+                                OFFSET_CLASSES(ecurve->suffix_count));
 
     return 0;
 
@@ -126,7 +127,7 @@ error_close:
 #else
     (void) ecurve;
     (void) path;
-    return uproc_error(UPROC_ENOTSUP);;
+    return uproc_error(UPROC_ENOTSUP);
 #endif
 }
 
@@ -207,11 +208,11 @@ mmap_store(const struct uproc_ecurve *ecurve, const char *path)
 
     memcpy(region, &header, SIZE_HEADER);
     memcpy(region + OFFSET_PREFIXES, ecurve->prefixes, SIZE_PREFIXES);
-    memcpy(region + OFFSET_SUFFIXES,
-           ecurve->suffixes, SIZE_SUFFIXES(ecurve->suffix_count));
+    memcpy(region + OFFSET_SUFFIXES, ecurve->suffixes,
+           SIZE_SUFFIXES(ecurve->suffix_count));
 
-    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count),
-           ecurve->families, SIZE_CLASSES(ecurve->suffix_count));
+    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->families,
+           SIZE_CLASSES(ecurve->suffix_count));
 
     munmap(region, size);
     close(fd);
@@ -239,7 +240,7 @@ uproc_mmap_store(const struct uproc_ecurve *ecurve, const char *pathfmt, ...)
 
 int
 uproc_mmap_storev(const struct uproc_ecurve *ecurve, const char *pathfmt,
-        va_list ap)
+                  va_list ap)
 {
     int res;
     char *buf;

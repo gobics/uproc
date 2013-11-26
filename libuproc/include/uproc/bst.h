@@ -45,7 +45,7 @@ enum uproc_bst_return {
 
 /** Binary search tree */
 struct uproc_bst {
-    /** The root node (struct uproc_bst_node is defined in the implementation) */
+    /** The root node (the type is defined in the implementation) */
     struct uproc_bst_node *root;
 
     /** Number of nodes */
@@ -101,7 +101,8 @@ size_t uproc_bst_size(const struct uproc_bst *t);
  * \retval #UPROC_EEXIST   `key` is already present
  * \retval #UPROC_ENOMEM   memory allocation failed
  */
-int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key, const void *value);
+int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key,
+                     const void *value);
 
 /** Update item
  *
@@ -115,7 +116,8 @@ int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key, const void *v
  * \retval #UPROC_SUCCESS  item was inserted/updated
  * \retval #UPROC_ENOMEM   memory allocation failed
  */
-int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key, const void *data);
+int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key,
+                     const void *data);
 
 /** Get item
  *
@@ -158,12 +160,14 @@ int uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key,
  * #UPROC_SUCCESS if the iteration completed successfully, else whatever the
  * callback function returned.
  */
-int uproc_bst_walk(struct uproc_bst *t, uproc_bst_cb_walk callback, void *opaque);
+int uproc_bst_walk(struct uproc_bst *t, uproc_bst_cb_walk callback,
+                   void *opaque);
 
 /** Initialize iterator */
 void uproc_bstiter_init(struct uproc_bstiter *iter, const struct uproc_bst *t);
 
 /** Obtain next key/value pair */
-int uproc_bstiter_next(struct uproc_bstiter *iter, union uproc_bst_key *key, void *value);
+int uproc_bstiter_next(struct uproc_bstiter *iter, union uproc_bst_key *key,
+                       void *value);
 
 #endif

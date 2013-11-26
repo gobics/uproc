@@ -73,8 +73,11 @@ iupac_string_to_codon(const char *str)
 }
 
 #define LOW_BITS(x, n) ((x) & ~(~0 << (n)))
+
 #define NT_AT(c, pos) LOW_BITS(((c) >> (pos) * UPROC_NT_BITS), UPROC_NT_BITS)
-#define CODON(nt1, nt2, nt3) ((nt1 << 2 * UPROC_NT_BITS) | (nt2 << UPROC_NT_BITS) | nt3)
+
+#define CODON(nt1, nt2, nt3) \
+    ((nt1 << 2 * UPROC_NT_BITS) | (nt2 << UPROC_NT_BITS) | nt3)
 
 #define TABLE(T)                                                        \
 void table_ ## T (const char *prefix, const char *fmt, T *v, size_t n)  \
@@ -121,7 +124,9 @@ void gen_char_to_nt(void)
 
 void gen_codon(void)
 {
-    int codon_complement[UPROC_BINARY_CODON_COUNT], codon_is_stop[UPROC_BINARY_CODON_COUNT], codon_to_char[UPROC_BINARY_CODON_COUNT];
+    int codon_complement[UPROC_BINARY_CODON_COUNT],
+        codon_is_stop[UPROC_BINARY_CODON_COUNT],
+        codon_to_char[UPROC_BINARY_CODON_COUNT];
     size_t i;
     for (i = 0; i < UPROC_BINARY_CODON_COUNT; i++) {
         int k;
@@ -152,8 +157,8 @@ void gen_codon(void)
         }
 
         #define CASE(nt, aa)                                            \
-        else if (uproc_codon_match(i, iupac_string_to_codon(nt)))           \
-            codon_to_char[i] = aa
+        else if (uproc_codon_match(i, iupac_string_to_codon(nt)))       \
+            codon_to_char[i] = aa                                       \
 
         if (0) ;
         CASE("GCN", 'A');
@@ -181,7 +186,8 @@ void gen_codon(void)
         CASE("GTN", 'V');
         else codon_to_char[i] = 'X';
     }
-    table_int("codon_complement", "%5d", codon_complement, UPROC_BINARY_CODON_COUNT);
+    table_int("codon_complement", "%5d", codon_complement,
+              UPROC_BINARY_CODON_COUNT);
     printf("\n");
     table_int("codon_is_stop", "%2d", codon_is_stop, UPROC_BINARY_CODON_COUNT);
     printf("\n");
@@ -194,11 +200,10 @@ int main(void)
     gen_char_to_nt();
     gen_codon();
     printf("\n"
-            "#define CODON_IS_STOP(c) (codon_is_stop[(c)])\n"
-            "#define CODON_COMPLEMENT(c) (codon_complement[(c)])\n"
-            "#define CODON_TO_CHAR(c) (codon_to_char[(c)])\n"
-            "#define CHAR_TO_NT(c) (char_to_nt[(unsigned char) (c)])\n"
-          );
+           "#define CODON_IS_STOP(c) (codon_is_stop[(c)])\n"
+           "#define CODON_COMPLEMENT(c) (codon_complement[(c)])\n"
+           "#define CODON_TO_CHAR(c) (codon_to_char[(c)])\n"
+           "#define CHAR_TO_NT(c) (char_to_nt[(unsigned char) (c)])\n");
 
     return EXIT_SUCCESS;
 }

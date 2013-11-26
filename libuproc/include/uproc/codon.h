@@ -50,7 +50,8 @@ void uproc_codon_prepend(uproc_codon *codon, uproc_nt nt);
  * \param codon     codon to extract nt from
  * \param position  position of the desired nt
  *
- * \return Nucleotide at the given position or 0 if `position` is >= #UPROC_CODON_NTS
+ * \return Nucleotide at the given position or 0 if `position` is >=
+ * #UPROC_CODON_NTS
  */
 uproc_nt uproc_codon_get_nt(uproc_codon codon, unsigned position);
 

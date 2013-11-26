@@ -35,7 +35,8 @@ static char error_loc[256], error_msg[256];
 #pragma omp threadprivate(error_num, error_loc, error_msg)
 #endif
 
-static const char *error_strs[] = {
+static const char *error_strs[] =
+{
     [UPROC_SUCCESS]  = "success",
     [UPROC_FAILURE]  = "unspecified error",
     [UPROC_ENOMEM]   = "memory allocation failed",
@@ -48,7 +49,7 @@ static const char *error_strs[] = {
 
 int
 uproc_error_(int num, const char *func, const char *file, int line,
-            const char *fmt, ...)
+             const char *fmt, ...)
 {
     va_list ap;
     error_num = num;

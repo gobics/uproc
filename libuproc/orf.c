@@ -112,7 +112,7 @@ gc_content(const char *seq, size_t *len, double *gc)
 
 void
 uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
-        const struct uproc_matrix *score_matrix)
+                      const struct uproc_matrix *score_matrix)
 {
     uproc_codon c1, c2;
     for (c1 = 0; c1 < UPROC_BINARY_CODON_COUNT; c1++) {
@@ -135,8 +135,10 @@ uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
 }
 
 int
-uproc_orfiter_init(struct uproc_orfiter *iter, const char *seq,
-        const double *codon_scores, uproc_orf_filter *filter, void *filter_arg)
+uproc_orfiter_init(
+    struct uproc_orfiter *iter, const char *seq,
+    const double codon_scores[static UPROC_BINARY_CODON_COUNT],
+    uproc_orf_filter *filter, void *filter_arg)
 {
     unsigned i;
     *iter = (struct uproc_orfiter) {
@@ -196,11 +198,11 @@ uproc_orfiter_next(struct uproc_orfiter *iter, struct uproc_orf *next)
             while (next->length && next->data[next->length - 1] == 'X') {
                 next->length--;
             }
-            if (!next->length) {
-                continue;
-            }
-            if (iter->filter && !iter->filter(next, iter->seq, iter->seq_len,
-                        iter->seq_gc, iter->filter_arg)) {
+            if (!next->length ||
+                (iter->filter &&
+                 !iter->filter(next, iter->seq, iter->seq_len, iter->seq_gc,
+                               iter->filter_arg)))
+            {
                 continue;
             }
 
@@ -220,10 +222,9 @@ uproc_orfiter_next(struct uproc_orfiter *iter, struct uproc_orf *next)
 
         /* sequence completely processed, yield all ORFs */
         if (!iter->pos) {
-
             if (iter->nt_count > iter->frame) {
-                iter->yield[iter->frame] =
-                    iter->yield[iter->frame + FRAMES] = true;
+                iter->yield[iter->frame] = true;
+                iter->yield[iter->frame + FRAMES] = true;
             }
             iter->frame++;
             continue;
@@ -251,9 +252,9 @@ uproc_orfiter_next(struct uproc_orfiter *iter, struct uproc_orf *next)
             }
 
 #define ADD_CODON(codon, frame) do {                                        \
-    int res = orf_add_codon(&iter->orf[(frame)], &iter->data_sz[(frame)],   \
-            codon,                                                          \
-            iter->codon_scores ?  iter->codon_scores[codon] : 0.0);         \
+    int res = orf_add_codon(                                                \
+        &iter->orf[(frame)], &iter->data_sz[(frame)], codon,                \
+        iter->codon_scores ? iter->codon_scores[codon] : 0.0);              \
     if (res) {                                                              \
         return res;                                                         \
     }                                                                       \

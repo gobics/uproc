@@ -102,7 +102,8 @@ struct uproc_ecurve {
 /** Initialize an empty ecurve object
  *
  * \param ecurve        ecurve obejct to initialize
- * \param alphabet      string to initialize the ecurve's alphabet (see uproc_alphabet_init())
+ * \param alphabet      string to initialize the ecurve's alphabet
+ *                      (see uproc_alphabet_init())
  * \param suffix_count  number of entries in the suffix table
  *
  * \retval #UPROC_SUCCESS  ecurve was initialized successfully
@@ -141,19 +142,21 @@ void uproc_ecurve_get_alphabet(const struct uproc_ecurve *ecurve,
  * \retval #UPROC_ENOMEM   memory allocation failed
  * \retval #UPROC_SUCCESS  else
  */
-int uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *src);
+int uproc_ecurve_append(struct uproc_ecurve *dest,
+                        const struct uproc_ecurve *src);
 
 /** Find the closest neighbours of a word in the ecurve
  *
  * NOTE: `ecurve` may not be empty.
  *
- * If `word` was found exactly as it it in the ecurve, `#UPROC_ECURVE_EXACT` will
- * be returned; if `word` is "outside" of the ecurve, `#UPROC_ECURVE_OOB` will
- * be returned.  In both cases, the objects pointed to by `upper_neighbour` and
- * `upper_class` will be set equal to their `lower_*` counterparts.
+ * If `word` was found exactly as it it in the ecurve, `#UPROC_ECURVE_EXACT`
+ * will be returned; if `word` is "outside" of the ecurve, `#UPROC_ECURVE_OOB`
+ * will be returned.  In both cases, the objects pointed to by
+ * `upper_neighbour` and `upper_class` will be set equal to their `lower_*`
+ * counterparts.
  *
- * In case of an inexact match, `#UPROC_ECURVE_INEXACT` will be returned, `lower_*`
- * and their `upper_*` counterparts might or might not differ.
+ * In case of an inexact match, `#UPROC_ECURVE_INEXACT` will be returned,
+ * `lower_*` and their `upper_*` counterparts might or might not differ.
  *
  * \param ecurve            ecurve object
  * \param word              word to search
@@ -162,11 +165,14 @@ int uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *sr
  * \param upper_neighbour   _OUT_: upper neighbour word
  * \param upper_class       _OUT_: class of the upper neighbour
  *
- * \return `#UPROC_ECURVE_EXACT`, `#UPROC_ECURVE_OOB` or `#UPROC_ECURVE_INEXACT` as
- * described above.
+ * \return `#UPROC_ECURVE_EXACT`, `#UPROC_ECURVE_OOB` or
+ * `#UPROC_ECURVE_INEXACT` as described above.
  */
-int uproc_ecurve_lookup(const struct uproc_ecurve *ecurve, const struct uproc_word *word,
-                     struct uproc_word *lower_neighbour, uproc_family *lower_class,
-                     struct uproc_word *upper_neighbour, uproc_family *upper_class);
+int uproc_ecurve_lookup(const struct uproc_ecurve *ecurve,
+                        const struct uproc_word *word,
+                        struct uproc_word *lower_neighbour,
+                        uproc_family *lower_class,
+                        struct uproc_word *upper_neighbour,
+                        uproc_family *upper_class);
 
 #endif

@@ -135,8 +135,8 @@ scores_add(struct uproc_bst *scores, uproc_family family, size_t index,
 }
 
 static void
-align_suffixes(double dist[static UPROC_SUFFIX_LEN], uproc_suffix s1, uproc_suffix s2,
-               const struct uproc_substmat *substmat)
+align_suffixes(double dist[static UPROC_SUFFIX_LEN], uproc_suffix s1,
+               uproc_suffix s2, const struct uproc_substmat *substmat)
 {
     size_t i;
     uproc_amino a1, a2;
@@ -155,8 +155,8 @@ align_suffixes(double dist[static UPROC_SUFFIX_LEN], uproc_suffix s1, uproc_suff
 }
 
 static int
-scores_add_word(struct uproc_bst *scores, const struct uproc_word *word, size_t index,
-                bool reverse, const struct uproc_ecurve *ecurve,
+scores_add_word(struct uproc_bst *scores, const struct uproc_word *word,
+                size_t index, bool reverse, const struct uproc_ecurve *ecurve,
                 const struct uproc_substmat *substmat)
 {
     int res;
@@ -169,7 +169,8 @@ scores_add_word(struct uproc_bst *scores, const struct uproc_word *word, size_t 
     if (!ecurve) {
         return 0;
     }
-    uproc_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb, &upper_family);
+    uproc_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb,
+                        &upper_family);
     align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
     res = scores_add(scores, lower_family, index, dist, reverse);
     if (res || uproc_word_equal(&lower_nb, &upper_nb)) {
@@ -181,7 +182,8 @@ scores_add_word(struct uproc_bst *scores, const struct uproc_word *word, size_t 
 }
 
 static int
-scores_compute(const struct uproc_protclass *pc, const char *seq, struct uproc_bst *scores)
+scores_compute(const struct uproc_protclass *pc, const char *seq,
+               struct uproc_bst *scores)
 {
     int res;
     struct uproc_worditer iter;
@@ -193,7 +195,9 @@ scores_compute(const struct uproc_protclass *pc, const char *seq, struct uproc_b
     uproc_worditer_init(&iter, seq,
         pc->fwd ? &pc->fwd->alphabet : &pc->rev->alphabet);
 
-    while ((res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
+    while (res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word),
+           res > 0)
+    {
         res = scores_add_word(scores, &fwd_word, index, false, pc->fwd,
                 pc->substmat);
         if (res) {
@@ -215,7 +219,7 @@ scores_compute(const struct uproc_protclass *pc, const char *seq, struct uproc_b
 
 static int
 scores_finalize(const struct uproc_protclass *pc, const char *seq,
-        struct uproc_bst *score_tree, struct uproc_pc_results *results)
+                struct uproc_bst *score_tree, struct uproc_pc_results *results)
 {
     int res = 0;
     struct uproc_bstiter iter;
@@ -241,7 +245,7 @@ scores_finalize(const struct uproc_protclass *pc, const char *seq,
         uproc_family family = key.uint;
         double score = sc_finalize(&value);
         if (pc->filter &&
-                !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
+            !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
             continue;
         }
         results->preds[results->n].score = score;
@@ -270,12 +274,10 @@ error:
  **********************/
 
 int
-uproc_pc_init(struct uproc_protclass *pc,
-        enum uproc_pc_mode mode,
-        const struct uproc_ecurve *fwd,
-        const struct uproc_ecurve *rev,
-        const struct uproc_substmat *substmat,
-        uproc_pc_filter *filter, void *filter_arg)
+uproc_pc_init(struct uproc_protclass *pc, enum uproc_pc_mode mode,
+              const struct uproc_ecurve *fwd, const struct uproc_ecurve *rev,
+              const struct uproc_substmat *substmat, uproc_pc_filter *filter,
+              void *filter_arg)
 {
     if (!(fwd || rev)) {
         return uproc_error_msg(
@@ -294,7 +296,7 @@ uproc_pc_init(struct uproc_protclass *pc,
 
 static int
 classify(const struct uproc_protclass *pc, const char *seq,
-        struct uproc_pc_results *results)
+         struct uproc_pc_results *results)
 {
     int res;
     struct uproc_bst scores;
@@ -313,7 +315,7 @@ error:
 
 int
 uproc_pc_classify(const struct uproc_protclass *pc, const char *seq,
-        struct uproc_pc_results *results)
+                  struct uproc_pc_results *results)
 {
     int res;
     size_t i, imax = 0;

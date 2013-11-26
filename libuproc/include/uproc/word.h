@@ -41,8 +41,8 @@ struct uproc_word {
 
 /** Transform a string to amino acid word
  *
- * Translates the first `#UPROC_WORD_LEN` characters of the given string to a word
- * object. Failure occurs if the string ends or an invalid character is
+ * Translates the first `#UPROC_WORD_LEN` characters of the given string to a
+ * word object. Failure occurs if the string ends or an invalid character is
  * encountered.
  *
  * \param word  _OUT_: amino acid word
@@ -50,10 +50,11 @@ struct uproc_word {
  * \param alpha alphabet to use for translation
  *
  * \retval #UPROC_SUCCESS  the string was translated successfully
- * \retval #UPROC_FAILURE  the string was too short or contained an invalid character
+ * \retval #UPROC_FAILURE  the string was too short or contained an invalid
+ *                         character
  */
 int uproc_word_from_string(struct uproc_word *word, const char *str,
-                        const struct uproc_alphabet *alpha);
+                           const struct uproc_alphabet *alpha);
 
 /** Build string corresponding to amino acid word
  *
@@ -69,7 +70,7 @@ int uproc_word_from_string(struct uproc_word *word, const char *str,
  * \retval #UPROC_FAILURE  the word contained an invalid amino acid
  */
 int uproc_word_to_string(char *str, const struct uproc_word *word,
-                      const struct uproc_alphabet *alpha);
+                         const struct uproc_alphabet *alpha);
 
 /** Append amino acid
  *
@@ -101,7 +102,8 @@ bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
  *
  * \return `true` if the words are equal or `false` if not.
  */
-bool uproc_word_equal(const struct uproc_word *w1, const struct uproc_word *w2);
+bool uproc_word_equal(const struct uproc_word *w1,
+                      const struct uproc_word *w2);
 
 /** Compare words
  *

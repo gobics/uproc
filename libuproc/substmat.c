@@ -43,8 +43,8 @@ uproc_substmat_init(struct uproc_substmat *mat)
 }
 
 double
-uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos, uproc_amino x,
-        uproc_amino y)
+uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos,
+                   uproc_amino x, uproc_amino y)
 {
     return mat->dists[pos][UPROC_DISTMAT_INDEX(x, y)];
 }
@@ -58,7 +58,7 @@ uproc_substmat_set(struct uproc_substmat *mat, unsigned pos, uproc_amino x,
 
 int
 uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap)
+                     const char *pathfmt, va_list ap)
 {
     int res;
     size_t i, j, k, rows, cols, sz;
@@ -71,7 +71,8 @@ uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
 
     uproc_matrix_dimensions(&matrix, &rows, &cols);
     sz = rows * cols;
-#define SUBSTMAT_TOTAL (UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE)
+#define SUBSTMAT_TOTAL \
+    (UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE)
     if (sz != SUBSTMAT_TOTAL) {
         res = uproc_error_msg(
             UPROC_EINVAL,
@@ -83,12 +84,12 @@ uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
     for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
         for (j = 0; j < UPROC_ALPHABET_SIZE; j++) {
             for (k = 0; k < UPROC_ALPHABET_SIZE; k++) {
-                /* treat `matrix` like a vector of length
-                 *   UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE
-                 * (this assumes uproc_matrix uses a linear representation)
-                 */
-                size_t idx = (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
-                uproc_substmat_set(mat, i, k, j, uproc_matrix_get(&matrix, 0, idx));
+                /* treat `matrix` like a vector of length SUBSTMAT_TOTAL
+                 * (this assumes uproc_matrix uses a linear representation) */
+                size_t idx;
+                idx = (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
+                uproc_substmat_set(mat, i, k, j,
+                                   uproc_matrix_get(&matrix, 0, idx));
             }
         }
     }
@@ -99,7 +100,7 @@ error:
 
 int
 uproc_substmat_load(struct uproc_substmat *mat, enum uproc_io_type iotype,
-        const char *pathfmt, ...)
+                    const char *pathfmt, ...)
 {
     int res;
     va_list ap;

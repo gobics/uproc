@@ -35,7 +35,7 @@
 
 int
 uproc_matrix_init(struct uproc_matrix *matrix, size_t rows, size_t cols,
-               const double *values)
+                  const double *values)
 {
     if (rows == 1) {
         rows = cols;
@@ -61,7 +61,8 @@ uproc_matrix_destroy(struct uproc_matrix *matrix)
 }
 
 void
-uproc_matrix_set(struct uproc_matrix *matrix, size_t row, size_t col, double value)
+uproc_matrix_set(struct uproc_matrix *matrix, size_t row, size_t col,
+                 double value)
 {
     matrix->values[row * matrix->cols + col] = value;
 }
@@ -73,7 +74,8 @@ uproc_matrix_get(const struct uproc_matrix *matrix, size_t row, size_t col)
 }
 
 void
-uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows, size_t *cols)
+uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows,
+                        size_t *cols)
 {
     *rows = matrix->rows;
     *cols = matrix->cols;
@@ -113,7 +115,7 @@ matrix_load(struct uproc_matrix *matrix, uproc_io_stream *stream)
 
 int
 uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap)
+                   const char *pathfmt, va_list ap)
 {
     int res;
     uproc_io_stream *stream = uproc_io_openv("r", iotype, pathfmt, ap);
@@ -127,7 +129,7 @@ uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
 
 int
 uproc_matrix_load(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, ...)
+                  const char *pathfmt, ...)
 {
     int res;
     va_list ap;
@@ -149,7 +151,8 @@ matrix_store(const struct uproc_matrix *matrix, uproc_io_stream *stream)
     }
     for (i = 0; i < rows; i++) {
         for (k = 0; k < cols; k++) {
-            res = uproc_io_printf(stream, "%lf\n", uproc_matrix_get(matrix, i, k));
+            res = uproc_io_printf(stream, "%lf\n",
+                                  uproc_matrix_get(matrix, i, k));
             if (res < 0) {
                 return -1;
             }
@@ -159,8 +162,8 @@ matrix_store(const struct uproc_matrix *matrix, uproc_io_stream *stream)
 }
 
 int
-uproc_matrix_storev(const struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap)
+uproc_matrix_storev(const struct uproc_matrix *matrix,
+                    enum uproc_io_type iotype, const char *pathfmt, va_list ap)
 {
     int res;
     uproc_io_stream *stream = uproc_io_openv("w", iotype, pathfmt, ap);
@@ -173,8 +176,8 @@ uproc_matrix_storev(const struct uproc_matrix *matrix, enum uproc_io_type iotype
 }
 
 int
-uproc_matrix_store(const struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, ...)
+uproc_matrix_store(const struct uproc_matrix *matrix,
+                   enum uproc_io_type iotype, const char *pathfmt, ...)
 {
     int res;
     va_list ap;

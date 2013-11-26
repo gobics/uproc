@@ -45,7 +45,6 @@ void uproc_fasta_reader_free(struct uproc_fasta_reader *rd);
 
 int uproc_fasta_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd);
 
-
 /** Print FASTA formatted sequence to stream
  *
  * \param stream    stream to write to
@@ -55,6 +54,6 @@ int uproc_fasta_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd);
  * \param width     how many sequence characters are printed per line, if the
  *                  value 0 is specified, no line breaks are added
  */
-void uproc_fasta_write(uproc_io_stream *stream, const char *id, const char *comment,
-                    const char *seq, unsigned width);
+void uproc_fasta_write(uproc_io_stream *stream, const char *id,
+                       const char *comment, const char *seq, unsigned width);
 #endif

@@ -184,8 +184,8 @@ error:
 }
 
 uproc_io_stream *
-uproc_io_open(const char *mode, enum uproc_io_type type,
-        const char *pathfmt, ...)
+uproc_io_open(const char *mode, enum uproc_io_type type, const char *pathfmt,
+              ...)
 {
     uproc_io_stream *stream;
     va_list ap;
@@ -196,8 +196,8 @@ uproc_io_open(const char *mode, enum uproc_io_type type,
 }
 
 uproc_io_stream *
-uproc_io_openv(const char *mode, enum uproc_io_type type,
-        const char *pathfmt, va_list ap)
+uproc_io_openv(const char *mode, enum uproc_io_type type, const char *pathfmt,
+               va_list ap)
 {
     uproc_io_stream *stream;
     char *buf;
@@ -305,7 +305,8 @@ uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
 }
 
 size_t
-uproc_io_write(const void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
+uproc_io_write(const void *ptr, size_t size, size_t nmemb,
+               uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_STDIO:

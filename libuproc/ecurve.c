@@ -35,25 +35,72 @@
  *
  * \param table         table of prefixes
  * \param key           prefix to search
- * \param lower_prefix  OUT: closest lower prefix (`key` in case of an exact match)
- * \param lower_suffix  OUT: pointer to the lower neighbouring suffix table entry
- * \param upper_prefix  OUT: closest lower prefix (`key` in case of an exact match)
- * \param upper_suffix  OUT: pointer to the lower neighbouring suffix table entry
  *
  * \return
- * #UPROC_ECURVE_OOB if `key` was less than the first (or greater than the last)
- * prefix that has at least one suffix associated, #UPROC_ECURVE_EXACT in case of
- * an exact match, else #UPROC_ECURVE_INEXACT.
+ * #UPROC_ECURVE_OOB if `key` was less than the first (or greater than the
+ * last) prefix that has at least one suffix associated, #UPROC_ECURVE_EXACT in
+ * case of an exact match, else #UPROC_ECURVE_INEXACT.
  */
-static int prefix_lookup(const struct uproc_ecurve_pfxtable *table,
-                         uproc_prefix key, size_t *index, size_t *count,
-                         uproc_prefix *lower_prefix, uproc_prefix *upper_prefix);
+static int
+prefix_lookup(const struct uproc_ecurve_pfxtable *table,
+              uproc_prefix key, size_t *index, size_t *count,
+              uproc_prefix *lower_prefix, uproc_prefix *upper_prefix)
+{
+    uproc_prefix tmp;
+
+    /* outside of the "edge" */
+    if (UPROC_ECURVE_ISEDGE(table[key])) {
+        /* below the first prefix that has an entry */
+        if (!table[key].first) {
+            for (tmp = key;
+                 tmp < UPROC_PREFIX_MAX && UPROC_ECURVE_ISEDGE(table[tmp]);
+                 tmp++)
+            {
+                ;
+            }
+            *index = 0;
+        }
+        /* above the last prefix */
+        else {
+            for (tmp = key; tmp > 0 && UPROC_ECURVE_ISEDGE(table[tmp]); tmp--) {
+                ;
+            }
+            *index = table[tmp].first + table[tmp].count - 1;
+        }
+
+        *count = 1;
+        *lower_prefix = *upper_prefix = tmp;
+        return UPROC_ECURVE_OOB;
+    }
+
+    *index = table[key].first;
+
+    /* inexact match, walk outward to find the closest non-empty neighbour
+     * prefixes */
+    if (table[key].count == 0) {
+        *count = 2;
+        for (tmp = key; tmp > 0 && !table[tmp].count; tmp--) {
+            ;
+        }
+        *lower_prefix = tmp;
+        for (tmp = key; tmp < UPROC_PREFIX_MAX && !table[tmp].count; tmp++) {
+            ;
+        }
+        *upper_prefix = tmp;
+        return UPROC_ECURVE_INEXACT;
+    }
+
+    *count = table[key].count;
+    *lower_prefix = *upper_prefix = key;
+    return UPROC_ECURVE_EXACT;
+}
+
 
 /** Find exact match or nearest neighbours in suffix array.
  *
  * If `key` is less than the first item in `search` (resp. greater than the
- * last one), #UPROC_ECURVE_OOB is returned and both `*lower` and `*upper` are set to
- * `0` (resp. `n - 1`).
+ * last one), #UPROC_ECURVE_OOB is returned and both `*lower` and `*upper` are
+ * set to `0` (resp. `n - 1`).
  * If an exact match is found, returns #UPROC_ECURVE_EXACT and sets `*lower` and
  * `*upper` to the index of `key`.
  * Else, #UPROC_ECURVE_INEXACT is returned and `*lower` and `*upper` are set to
@@ -66,11 +113,50 @@ static int prefix_lookup(const struct uproc_ecurve_pfxtable *table,
  * \param lower     OUT: index of the lower neighbour
  * \param upper     OUT: index of the upper neighbour
  *
- * \return `#UPROC_ECURVE_EXACT`, `#UPROC_ECURVE_OOB` or `#UPROC_ECURVE_INEXACT` as
- * described above.
+ * \return `#UPROC_ECURVE_EXACT`, `#UPROC_ECURVE_OOB` or
+ * `#UPROC_ECURVE_INEXACT` as described above.
  */
-static int suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
-                         size_t *lower, size_t *upper);
+static int
+suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
+              size_t *lower, size_t *upper)
+{
+    size_t lo = 0, mid, hi = n - 1;
+
+    if (!n || key < search[0]) {
+        *lower = *upper = 0;
+        return UPROC_ECURVE_OOB;
+    }
+
+    if (key > search[n - 1]) {
+        *lower = *upper = n - 1;
+        return UPROC_ECURVE_OOB;
+    }
+
+    while (hi > lo + 1) {
+        mid = (hi + lo) / 2;
+
+        if (key == search[mid]) {
+            lo = mid;
+            break;
+        }
+        else if (key > search[mid]) {
+            lo = mid;
+        }
+        else {
+            hi = mid;
+        }
+    }
+    if (search[lo] == key) {
+        hi = lo;
+    }
+    else if (search[hi] == key) {
+        lo = hi;
+    }
+    *lower = lo;
+    *upper = hi;
+    return (lo == hi) ? UPROC_ECURVE_EXACT : UPROC_ECURVE_INEXACT;
+}
+
 
 int
 uproc_ecurve_init(struct uproc_ecurve *ecurve, const char *alphabet,
@@ -83,7 +169,8 @@ uproc_ecurve_init(struct uproc_ecurve *ecurve, const char *alphabet,
         return res;
     }
 
-    ecurve->prefixes = malloc(sizeof *ecurve->prefixes * (UPROC_PREFIX_MAX + 1));
+    ecurve->prefixes = malloc(
+        sizeof *ecurve->prefixes * (UPROC_PREFIX_MAX + 1));
     if (!ecurve->prefixes) {
         return uproc_error(UPROC_ENOMEM);
     }
@@ -108,6 +195,7 @@ uproc_ecurve_init(struct uproc_ecurve *ecurve, const char *alphabet,
     return 0;
 }
 
+
 void
 uproc_ecurve_destroy(struct uproc_ecurve *ecurve)
 {
@@ -119,6 +207,7 @@ uproc_ecurve_destroy(struct uproc_ecurve *ecurve)
     free(ecurve->suffixes);
     free(ecurve->families);
 }
+
 
 int
 uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *src)
@@ -179,16 +268,21 @@ uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *src)
     return 0;
 }
 
+
 void uproc_ecurve_get_alphabet(const struct uproc_ecurve *ecurve,
-                            struct uproc_alphabet *alpha)
+                               struct uproc_alphabet *alpha)
 {
     *alpha = ecurve->alphabet;
 }
 
+
 int
-uproc_ecurve_lookup(const struct uproc_ecurve *ecurve, const struct uproc_word *word,
-                 struct uproc_word *lower_neighbour, uproc_family *lower_class,
-                 struct uproc_word *upper_neighbour, uproc_family *upper_class)
+uproc_ecurve_lookup(const struct uproc_ecurve *ecurve,
+                    const struct uproc_word *word,
+                    struct uproc_word *lower_neighbour,
+                    uproc_family *lower_class,
+                    struct uproc_word *upper_neighbour,
+                    uproc_family *upper_class)
 {
     int res;
     uproc_prefix p_lower, p_upper;
@@ -201,7 +295,9 @@ uproc_ecurve_lookup(const struct uproc_ecurve *ecurve, const struct uproc_word *
     if (res == UPROC_ECURVE_EXACT) {
         res = suffix_lookup(&ecurve->suffixes[index], count, word->suffix,
                             &lower, &upper);
-        res = (res == UPROC_ECURVE_EXACT) ? UPROC_ECURVE_EXACT : UPROC_ECURVE_INEXACT;
+        if (res != UPROC_ECURVE_EXACT) {
+            res = UPROC_ECURVE_INEXACT;
+        }
     }
     else {
         lower = 0;
@@ -221,96 +317,4 @@ uproc_ecurve_lookup(const struct uproc_ecurve *ecurve, const struct uproc_word *
     *upper_class = ecurve->families[upper];
 
     return res;
-}
-
-static int
-prefix_lookup(const struct uproc_ecurve_pfxtable *table,
-              uproc_prefix key, size_t *index, size_t *count,
-              uproc_prefix *lower_prefix, uproc_prefix *upper_prefix)
-{
-    uproc_prefix tmp;
-
-    /* outside of the "edge" */
-    if (UPROC_ECURVE_ISEDGE(table[key])) {
-        /* below the first prefix that has an entry */
-        if (!table[key].first) {
-            for (tmp = key; tmp < UPROC_PREFIX_MAX && UPROC_ECURVE_ISEDGE(table[tmp]); tmp++) {
-                ;
-            }
-            *index = 0;
-        }
-        /* above the last prefix */
-        else {
-            for (tmp = key; tmp > 0 && UPROC_ECURVE_ISEDGE(table[tmp]); tmp--) {
-                ;
-            }
-            *index = table[tmp].first + table[tmp].count - 1;
-        }
-
-        *count = 1;
-        *lower_prefix = *upper_prefix = tmp;
-        return UPROC_ECURVE_OOB;
-    }
-
-    *index = table[key].first;
-
-    /* inexact match, walk outward to find the closest non-empty neighbour
-     * prefixes */
-    if (table[key].count == 0) {
-        *count = 2;
-        for (tmp = key; tmp > 0 && !table[tmp].count; tmp--) {
-            ;
-        }
-        *lower_prefix = tmp;
-        for (tmp = key; tmp < UPROC_PREFIX_MAX && !table[tmp].count; tmp++) {
-            ;
-        }
-        *upper_prefix = tmp;
-        return UPROC_ECURVE_INEXACT;
-    }
-
-    *count = table[key].count;
-    *lower_prefix = *upper_prefix = key;
-    return UPROC_ECURVE_EXACT;
-}
-
-static int
-suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
-              size_t *lower, size_t *upper)
-{
-    size_t lo = 0, mid, hi = n - 1;
-
-    if (!n || key < search[0]) {
-        *lower = *upper = 0;
-        return UPROC_ECURVE_OOB;
-    }
-
-    if (key > search[n - 1]) {
-        *lower = *upper = n - 1;
-        return UPROC_ECURVE_OOB;
-    }
-
-    while (hi > lo + 1) {
-        mid = (hi + lo) / 2;
-
-        if (key == search[mid]) {
-            lo = mid;
-            break;
-        }
-        else if (key > search[mid]) {
-            lo = mid;
-        }
-        else {
-            hi = mid;
-        }
-    }
-    if (search[lo] == key) {
-        hi = lo;
-    }
-    else if (search[hi] == key) {
-        lo = hi;
-    }
-    *lower = lo;
-    *upper = hi;
-    return (lo == hi) ? UPROC_ECURVE_EXACT : UPROC_ECURVE_INEXACT;
 }

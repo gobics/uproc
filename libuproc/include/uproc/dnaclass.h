@@ -59,11 +59,11 @@ struct uproc_dnaclass
 };
 
 int uproc_dc_init(struct uproc_dnaclass *dc,
-        enum uproc_dc_mode mode,
-        const struct uproc_protclass *pc,
-        const struct uproc_matrix *codon_scores,
-        uproc_orf_filter *orf_filter, void *orf_filter_arg);
+                  enum uproc_dc_mode mode,
+                  const struct uproc_protclass *pc,
+                  const struct uproc_matrix *codon_scores,
+                  uproc_orf_filter *orf_filter, void *orf_filter_arg);
 
 int uproc_dc_classify(const struct uproc_dnaclass *dc, const char *seq,
-        struct uproc_dc_results *results);
+                      struct uproc_dc_results *results);
 #endif

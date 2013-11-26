@@ -63,7 +63,7 @@ int uproc_substmat_init(struct uproc_substmat *mat);
  * \return  distance between x and y
  */
 double uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos,
-        uproc_amino x, uproc_amino y);
+                          uproc_amino x, uproc_amino y);
 
 /** Set distance of two amino acids
  *
@@ -77,8 +77,8 @@ double uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos,
  * \retval #UPROC_FAILURE  an error occured
  * \retval #UPROC_SUCCESS  else
  */
-void uproc_substmat_set(struct uproc_substmat *mat, unsigned pos, uproc_amino x,
-        uproc_amino y, double dist);
+void uproc_substmat_set(struct uproc_substmat *mat, unsigned pos,
+                        uproc_amino x, uproc_amino y, double dist);
 
 /** Load substition matrix from a file.
  *

@@ -31,7 +31,8 @@
 #include "uproc/bst.h"
 
 
-struct uproc_bst_node {
+struct uproc_bst_node
+{
     union uproc_bst_key key;
     void *value;
     struct uproc_bst_node *parent;
@@ -39,30 +40,8 @@ struct uproc_bst_node {
     struct uproc_bst_node *right;
 };
 
+
 /* compare keys */
-static int cmp_keys(struct uproc_bst *t, union uproc_bst_key x, union uproc_bst_key y);
-
-/* create a new bst node */
-static struct uproc_bst_node *bstnode_new(union uproc_bst_key key,
-        const void *value, size_t value_size,
-        struct uproc_bst_node *parent);
-
-/* free a bst node and all it's descendants recursively */
-static void bstnode_free(struct uproc_bst_node *n, size_t value_size,
-        uproc_bst_cb_remove callback);
-
-/* in-order iteration */
-static int bstnode_walk(struct uproc_bst_node *n, uproc_bst_cb_walk callback,
-        void *opaque);
-
-/* find node in tree */
-static struct uproc_bst_node *bstnode_find(struct uproc_bst *t,
-        struct uproc_bst_node *n, union uproc_bst_key key);
-
-/* find node that replaces a node n, move it to n's position and return it */
-static struct uproc_bst_node *bstnode_remove(struct uproc_bst_node *n);
-
-
 static int
 cmp_keys(struct uproc_bst *t, union uproc_bst_key x, union uproc_bst_key y)
 {
@@ -84,9 +63,10 @@ cmp_keys(struct uproc_bst *t, union uproc_bst_key x, union uproc_bst_key y)
     return uproc_error_msg(UPROC_EINVAL, "uninitialized bst");
 }
 
+/* create a new bst node */
 static struct uproc_bst_node *
 bstnode_new(union uproc_bst_key key, const void *value, size_t value_size,
-        struct uproc_bst_node *parent)
+            struct uproc_bst_node *parent)
 {
     struct uproc_bst_node *n = malloc(sizeof *n);
 
@@ -106,8 +86,10 @@ bstnode_new(union uproc_bst_key key, const void *value, size_t value_size,
     return n;
 }
 
+/* free a bst node and all it's descendants recursively */
 static void
-bstnode_free(struct uproc_bst_node *n, size_t value_size, uproc_bst_cb_remove callback)
+bstnode_free(struct uproc_bst_node *n, size_t value_size,
+             uproc_bst_cb_remove callback)
 {
     if (!n) {
         return;
@@ -121,6 +103,7 @@ bstnode_free(struct uproc_bst_node *n, size_t value_size, uproc_bst_cb_remove ca
     free(n);
 }
 
+/* in-order iteration */
 static int
 bstnode_walk(struct uproc_bst_node *n, uproc_bst_cb_walk callback, void *opaque)
 {
@@ -140,8 +123,10 @@ bstnode_walk(struct uproc_bst_node *n, uproc_bst_cb_walk callback, void *opaque)
     return res;
 }
 
+/* find node in tree */
 static struct uproc_bst_node *
-bstnode_find(struct uproc_bst *t, struct uproc_bst_node *n, union uproc_bst_key key)
+bstnode_find(struct uproc_bst *t, struct uproc_bst_node *n,
+             union uproc_bst_key key)
 {
     int cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
@@ -153,6 +138,7 @@ bstnode_find(struct uproc_bst *t, struct uproc_bst_node *n, union uproc_bst_key 
     return !n->right ? n : bstnode_find(t, n->right, key);
 }
 
+/* find node that replaces a node n, move it to n's position and return it */
 static struct uproc_bst_node *
 bstnode_remove(struct uproc_bst_node *n)
 {
@@ -225,9 +211,9 @@ bstnode_remove(struct uproc_bst_node *n)
     return p;
 }
 
-
 void
-uproc_bst_init(struct uproc_bst *t, enum uproc_bst_keytype key_type, size_t value_size)
+uproc_bst_init(struct uproc_bst *t, enum uproc_bst_keytype key_type,
+               size_t value_size)
 {
     t->root = NULL;
     t->size = 0;
@@ -301,13 +287,15 @@ insert_or_update(struct uproc_bst *t, union uproc_bst_key key,
 }
 
 int
-uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key, const void *value)
+uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key,
+                 const void *value)
 {
     return insert_or_update(t, key, value, false);
 }
 
 int
-uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key, const void *value)
+uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key,
+                 const void *value)
 {
     return insert_or_update(t, key, value, true);
 }
@@ -329,7 +317,8 @@ uproc_bst_get(struct uproc_bst *t, union uproc_bst_key key, void *value)
 }
 
 int
-uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key, uproc_bst_cb_remove callback)
+uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key,
+                 uproc_bst_cb_remove callback)
 {
     /* node to remove and its parent */
     struct uproc_bst_node *del, *par;

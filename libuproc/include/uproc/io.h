@@ -59,24 +59,24 @@ uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 #endif
 
 uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
-        const char *format, ...);
+                               const char *pathfmt, ...);
 
 uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
-        const char *format, va_list ap);
+                                const char *pathfmt, va_list ap);
 
 int uproc_io_close(uproc_io_stream *stream);
 
 int uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...);
 
-size_t uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream);
+size_t uproc_io_read(void *ptr, size_t size, size_t nmemb,
+                     uproc_io_stream *stream);
 
 size_t uproc_io_write(const void *ptr, size_t size, size_t nmemb,
-        uproc_io_stream *stream);
+                      uproc_io_stream *stream);
 
 char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
 
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream);
 
 int uproc_io_seek(uproc_io_stream *stream, long offset, int whence);
-
 #endif

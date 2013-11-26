@@ -55,7 +55,8 @@ uproc_dc_init(struct uproc_dnaclass *dc,
 }
 
 int
-uproc_dc_classify(const struct uproc_dnaclass *dc, const char *seq, struct uproc_dc_results *results)
+uproc_dc_classify(const struct uproc_dnaclass *dc, const char *seq,
+                  struct uproc_dc_results *results)
 {
     int res;
     size_t i;

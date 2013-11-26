@@ -35,7 +35,8 @@
 #define UPROC_MATRIX_HEADER_SCN "[%zu , %zu]"
 
 /** Matrix struct definition */
-struct uproc_matrix {
+struct uproc_matrix
+{
     /** Number of rows */
     size_t rows;
 
@@ -61,17 +62,18 @@ struct uproc_matrix {
  * \retval UPROC_ENOMEM    memory allocation failed
  */
 int uproc_matrix_init(struct uproc_matrix *matrix, size_t rows, size_t cols,
-                   const double *values);
+                      const double *values);
 
 /** Free resources of a matrix */
 void uproc_matrix_destroy(struct uproc_matrix *matrix);
 
 /** Set the value of matrix[row, col] */
 void uproc_matrix_set(struct uproc_matrix *matrix, size_t row, size_t col,
-                   double value);
+                      double value);
 
 /** Get the value of matrix[row, col] */
-double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row, size_t col);
+double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row,
+                        size_t col);
 
 /** Obtain matrix dimensions
  *
@@ -80,19 +82,20 @@ double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row, size_t co
  * \param cols      _OUT_: number of columns
  */
 void uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows,
-        size_t *cols);
+                             size_t *cols);
 
 /** Load matrix from file */
 int uproc_matrix_load(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, ...);
+                      const char *pathfmt, ...);
 
 int uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap);
+                       const char *pathfmt, va_list ap);
 
 /** Store matrix to file */
 int uproc_matrix_store(const struct uproc_matrix *matrix,
-        enum uproc_io_type iotype, const char *pathfmt, ...);
+                       enum uproc_io_type iotype, const char *pathfmt, ...);
 
 int uproc_matrix_storev(const struct uproc_matrix *matrix,
-        enum uproc_io_type iotype, const char *pathfmt, va_list ap);
+                        enum uproc_io_type iotype, const char *pathfmt,
+                        va_list ap);
 #endif

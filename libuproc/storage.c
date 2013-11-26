@@ -41,8 +41,10 @@
 #define STR(x) STR1(x)
 #define BUFSZ 1024
 #define COMMENT_CHAR '#'
-#define HEADER_PRI ">> alphabet: %." STR(UPROC_ALPHABET_SIZE) "s, suffixes: %zu\n"
-#define HEADER_SCN ">> alphabet: %"  STR(UPROC_ALPHABET_SIZE) "c, suffixes: %zu"
+#define HEADER_PRI \
+    ">> alphabet: %." STR(UPROC_ALPHABET_SIZE) "s, suffixes: %zu\n"
+#define HEADER_SCN \
+    ">> alphabet: %"  STR(UPROC_ALPHABET_SIZE) "c, suffixes: %zu"
 
 #define PREFIX_PRI ">%." STR(UPROC_PREFIX_LEN) "s %zu\n"
 #define PREFIX_SCN ">%"  STR(UPROC_PREFIX_LEN) "c %zu"
@@ -79,7 +81,7 @@ load_header(uproc_io_stream *stream, char *alpha, size_t *suffix_count)
 
 static int
 load_prefix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
-                  uproc_prefix *prefix, size_t *suffix_count)
+            uproc_prefix *prefix, size_t *suffix_count)
 {
     int res;
     char line[BUFSZ], word_str[UPROC_WORD_LEN + 1];
@@ -108,7 +110,7 @@ load_prefix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
 
 static int
 load_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
-                  uproc_suffix *suffix, uproc_family *family)
+            uproc_suffix *suffix, uproc_family *family)
 {
     int res;
     char line[BUFSZ], word_str[UPROC_WORD_LEN + 1];
@@ -125,7 +127,7 @@ load_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
     res = sscanf(line, SUFFIX_SCN, &word_str[UPROC_PREFIX_LEN], family);
     if (res != 2) {
         return uproc_error_msg(UPROC_EINVAL, "invalid suffix string: \"%s\"",
-                              line);
+                               line);
     }
     res = uproc_word_from_string(&word, word_str, alpha);
     if (res) {
@@ -165,8 +167,8 @@ uproc_storage_plain_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 
         if (prefix > UPROC_PREFIX_MAX) {
             return uproc_error_msg(UPROC_EINVAL,
-                                  "invalid prefix value: %" UPROC_PREFIX_PRI,
-                                  prefix);
+                                   "invalid prefix value: %" UPROC_PREFIX_PRI,
+                                   prefix);
         }
 
         for (; p < prefix; p++) {
@@ -178,8 +180,8 @@ uproc_storage_plain_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
         p++;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
-            res = load_suffix(stream, &ecurve->alphabet,
-                    &ecurve->suffixes[s], &ecurve->families[s]);
+            res = load_suffix(stream, &ecurve->alphabet, &ecurve->suffixes[s],
+                              &ecurve->families[s]);
             if (res) {
                 return res;
             }
@@ -203,7 +205,7 @@ store_header(uproc_io_stream *stream, const char *alpha, size_t suffix_count)
 
 static int
 store_prefix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
-        uproc_prefix prefix, size_t suffix_count)
+             uproc_prefix prefix, size_t suffix_count)
 {
     int res;
     char str[UPROC_WORD_LEN + 1];
@@ -220,7 +222,7 @@ store_prefix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
 
 static int
 store_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
-        uproc_suffix suffix, uproc_family family)
+             uproc_suffix suffix, uproc_family family)
 {
     int res;
     char str[UPROC_WORD_LEN + 1];
@@ -235,7 +237,8 @@ store_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
 }
 
 static int
-uproc_storage_plain_store(const struct uproc_ecurve *ecurve, uproc_io_stream *stream)
+uproc_storage_plain_store(const struct uproc_ecurve *ecurve,
+                          uproc_io_stream *stream)
 {
     int res;
     size_t p;
@@ -262,7 +265,8 @@ uproc_storage_plain_store(const struct uproc_ecurve *ecurve, uproc_io_stream *st
 
         for (i = 0; i < suffix_count; i++) {
             res = store_suffix(stream, &ecurve->alphabet,
-                    ecurve->suffixes[offset + i], ecurve->families[offset + i]);
+                               ecurve->suffixes[offset + i],
+                               ecurve->families[offset + i]);
             if (res) {
                 return res;
             }
@@ -296,14 +300,14 @@ uproc_storage_binary_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
         return res;
     }
 
-    sz = uproc_io_read(ecurve->suffixes, sizeof *ecurve->suffixes, suffix_count,
-            stream);
+    sz = uproc_io_read(ecurve->suffixes, sizeof *ecurve->suffixes,
+                       suffix_count, stream);
     if (sz != suffix_count) {
         res = uproc_error(UPROC_ERRNO);
         goto error;
     }
-    sz = uproc_io_read(ecurve->families, sizeof *ecurve->families, suffix_count,
-            stream);
+    sz = uproc_io_read(ecurve->families, sizeof *ecurve->families,
+                       suffix_count, stream);
     if (sz != suffix_count) {
         res = uproc_error(UPROC_ERRNO);
         goto error;
@@ -311,13 +315,13 @@ uproc_storage_binary_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
         sz = uproc_io_read(&ecurve->prefixes[i].first,
-                sizeof ecurve->prefixes[i].first, 1, stream);
+                           sizeof ecurve->prefixes[i].first, 1, stream);
         if (sz != 1) {
             res = uproc_error(UPROC_ERRNO);
             goto error;
         }
         sz = uproc_io_read(&ecurve->prefixes[i].count,
-                sizeof ecurve->prefixes[i].count, 1, stream);
+                           sizeof ecurve->prefixes[i].count, 1, stream);
         if (sz != 1) {
             res = uproc_error(UPROC_ERRNO);
             goto error;
@@ -331,7 +335,8 @@ error:
 }
 
 static int
-uproc_storage_binary_store(const struct uproc_ecurve *ecurve, uproc_io_stream *stream)
+uproc_storage_binary_store(const struct uproc_ecurve *ecurve,
+                           uproc_io_stream *stream)
 {
     int res;
     size_t sz;
@@ -344,19 +349,19 @@ uproc_storage_binary_store(const struct uproc_ecurve *ecurve, uproc_io_stream *s
     }
 
     sz = uproc_io_write(&ecurve->suffix_count, sizeof ecurve->suffix_count, 1,
-            stream);
+                        stream);
     if (sz != 1) {
         return uproc_error(UPROC_ERRNO);
     }
 
     sz = uproc_io_write(ecurve->suffixes, sizeof *ecurve->suffixes,
-            ecurve->suffix_count, stream);
+                        ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         res = UPROC_ERRNO;
         goto error;
     }
     sz = uproc_io_write(ecurve->families, sizeof *ecurve->families,
-            ecurve->suffix_count, stream);
+                        ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         res = uproc_error(UPROC_ERRNO);
         goto error;
@@ -364,13 +369,13 @@ uproc_storage_binary_store(const struct uproc_ecurve *ecurve, uproc_io_stream *s
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
         sz = uproc_io_write(&ecurve->prefixes[i].first,
-                sizeof ecurve->prefixes[i].first, 1, stream);
+                            sizeof ecurve->prefixes[i].first, 1, stream);
         if (sz != 1) {
             res = uproc_error(UPROC_ERRNO);
             goto error;
         }
         sz = uproc_io_write(&ecurve->prefixes[i].count,
-                sizeof ecurve->prefixes[i].count, 1, stream);
+                            sizeof ecurve->prefixes[i].count, 1, stream);
         if (sz != 1) {
             res = uproc_error(UPROC_ERRNO);
             goto error;
@@ -384,8 +389,8 @@ error:
 
 int
 uproc_storage_loadv(struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap)
+                    enum uproc_storage_format format,
+                    enum uproc_io_type iotype, const char *pathfmt, va_list ap)
 {
     int res;
     va_list aq;
@@ -421,8 +426,8 @@ uproc_storage_loadv(struct uproc_ecurve *ecurve,
 }
 int
 uproc_storage_load(struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, ...)
+                   enum uproc_storage_format format, enum uproc_io_type iotype,
+                   const char *pathfmt, ...)
 {
     int res;
     va_list ap;
@@ -434,8 +439,9 @@ uproc_storage_load(struct uproc_ecurve *ecurve,
 
 int
 uproc_storage_storev(const struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, va_list ap)
+                     enum uproc_storage_format format,
+                     enum uproc_io_type iotype, const char *pathfmt,
+                     va_list ap)
 {
     int res;
     va_list aq;
@@ -471,8 +477,8 @@ uproc_storage_storev(const struct uproc_ecurve *ecurve,
 
 int
 uproc_storage_store(const struct uproc_ecurve *ecurve,
-        enum uproc_storage_format format, enum uproc_io_type iotype,
-        const char *pathfmt, ...)
+                    enum uproc_storage_format format,
+                    enum uproc_io_type iotype, const char *pathfmt, ...)
 {
     int res;
     va_list ap;

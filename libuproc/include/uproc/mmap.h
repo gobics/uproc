@@ -41,7 +41,8 @@
  */
 int uproc_mmap_map(struct uproc_ecurve *ecurve, const char *pathfmt, ...);
 
-int uproc_mmap_mapv(struct uproc_ecurve *ecurve, const char *pathfmt, va_list ap);
+int uproc_mmap_mapv(struct uproc_ecurve *ecurve, const char *pathfmt,
+                    va_list ap);
 
 /** Release mapping and close the underlying file descriptor
  *
@@ -59,9 +60,9 @@ void uproc_mmap_unmap(struct uproc_ecurve *ecurve);
  * \retval #UPROC_SUCCESS      else
  */
 int uproc_mmap_store(const struct uproc_ecurve *ecurve, const char *pathfmt,
-        ...);
+                     ...);
 
 int uproc_mmap_storev(const struct uproc_ecurve *ecurve, const char *pathfmt,
-        va_list ap);
+                      va_list ap);
 
 #endif

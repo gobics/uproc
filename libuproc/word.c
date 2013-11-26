@@ -29,11 +29,12 @@
 #include "uproc/word.h"
 #include "uproc/error.h"
 
-#define AMINO_AT(x, n) (((x) >> (UPROC_AMINO_BITS * (n))) & UPROC_BITMASK(UPROC_AMINO_BITS))
+#define AMINO_AT(x, n) \
+    (((x) >> (UPROC_AMINO_BITS * (n))) & UPROC_BITMASK(UPROC_AMINO_BITS))
 
 int
 uproc_word_from_string(struct uproc_word *word, const char *str,
-                    const struct uproc_alphabet *alpha)
+                       const struct uproc_alphabet *alpha)
 {
     int i;
     uproc_amino a;
@@ -41,21 +42,21 @@ uproc_word_from_string(struct uproc_word *word, const char *str,
         a = uproc_alphabet_char_to_amino(alpha, str[i]);
         if (a < 0) {
             return uproc_error_msg(UPROC_EINVAL, "invalid amino acid '%c'",
-                                  str[i]);
+                                   str[i]);
         }
         uproc_word_append(word, a);
     }
     if (i < UPROC_WORD_LEN) {
         return uproc_error_msg(UPROC_EINVAL,
-                              "input string too short: %d chars instead of %d",
-                              i, UPROC_WORD_LEN);
+                               "string too short (%d chars instead of %d)", i,
+                               UPROC_WORD_LEN);
     }
     return 0;
 }
 
 int
 uproc_word_to_string(char *str, const struct uproc_word *word,
-                  const struct uproc_alphabet *alpha)
+                     const struct uproc_alphabet *alpha)
 {
     int i, c;
     uproc_prefix p = word->prefix;
@@ -113,13 +114,15 @@ uproc_word_prepend(struct uproc_word *word, uproc_amino amino)
 
     /* prepend AA */
     word->prefix += amino * ((UPROC_PREFIX_MAX + 1) / UPROC_ALPHABET_SIZE);
-    word->suffix |= (uproc_suffix)a << (UPROC_AMINO_BITS * (UPROC_SUFFIX_LEN - 1));
+    word->suffix |=
+        (uproc_suffix)a << (UPROC_AMINO_BITS * (UPROC_SUFFIX_LEN - 1));
 }
 
 bool
 uproc_word_startswith(const struct uproc_word *word, uproc_amino amino)
 {
-    uproc_amino first = word->prefix / ((UPROC_PREFIX_MAX + 1) / (UPROC_ALPHABET_SIZE));
+    uproc_amino first;
+    first = word->prefix / ((UPROC_PREFIX_MAX + 1) / (UPROC_ALPHABET_SIZE));
     return first == amino;
 }
 
@@ -149,7 +152,7 @@ uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2)
 
 void
 uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
-                 const struct uproc_alphabet *alpha)
+                    const struct uproc_alphabet *alpha)
 {
     iter->sequence = seq;
     iter->index = 0;
@@ -160,18 +163,20 @@ uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
 
 int
 uproc_worditer_next(struct uproc_worditer *iter, size_t *index,
-                 struct uproc_word *fwd_word, struct uproc_word *rev_word)
+                    struct uproc_word *fwd, struct uproc_word *rev)
 {
     int c;
     uproc_amino a;
     size_t n = (iter->index) ? (UPROC_WORD_LEN - 1) : 0;
 
     while (n < UPROC_WORD_LEN) {
-        if (!(c = iter->sequence[iter->index++])) {
+        c = iter->sequence[iter->index++];
+        if (!c) {
             /* end of sequence reached -> stop iteration */
             return 0;
         }
-        if ((a = uproc_alphabet_char_to_amino(iter->alphabet, c)) == -1) {
+        a = uproc_alphabet_char_to_amino(iter->alphabet, c);
+        if (a == -1) {
             /* invalid character -> begin new word */
             n = 0;
             continue;

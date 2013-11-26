@@ -172,7 +172,7 @@ uproc_fasta_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd)
 
 void
 uproc_fasta_write(uproc_io_stream *stream, const char *id, const char *comment,
-                 const char *seq, unsigned width)
+                  const char *seq, unsigned width)
 {
     uproc_io_printf(stream, ">%s\n", id);
 

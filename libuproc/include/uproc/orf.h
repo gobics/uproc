@@ -56,8 +56,8 @@ struct uproc_orf
  * content and finally a user-supplied "opaque" pointer as arguments and return
  * whether the ORF is accepted or not.
  */
-typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t, double,
-        void*);
+typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t,
+                              double, void*);
 
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
 struct uproc_orfiter
@@ -104,7 +104,7 @@ struct uproc_orfiter
 
 /** Prepare codon score table */
 void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
-        const struct uproc_matrix *score_matrix);
+                           const struct uproc_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *
@@ -113,9 +113,10 @@ void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
  * \param codon_scores  codon scores, must be a pointer into an array of size
  *                      #UPROC_BINARY_CODON_COUNT
  */
-int uproc_orfiter_init(struct uproc_orfiter *iter, const char *seq,
-        const double codon_scores[static UPROC_BINARY_CODON_COUNT],
-        uproc_orf_filter *filter, void *filter_arg);
+int uproc_orfiter_init(
+    struct uproc_orfiter *iter, const char *seq,
+    const double codon_scores[static UPROC_BINARY_CODON_COUNT],
+    uproc_orf_filter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
 void uproc_orfiter_destroy(struct uproc_orfiter *iter);

@@ -66,7 +66,7 @@ int uproc_alphabet_init(struct uproc_alphabet *alpha, const char *s);
  * Does not set ::uproc_errno.
  */
 uproc_amino uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha,
-                                       int c);
+                                         int c);
 
 /** Translate amino acid to character
  *
@@ -79,6 +79,5 @@ uproc_amino uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha,
  * Does not set ::uproc_errno.
  */
 int uproc_alphabet_amino_to_char(const struct uproc_alphabet *alpha,
-                                uproc_amino a);
-
+                                 uproc_amino a);
 #endif
