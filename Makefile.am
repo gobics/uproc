@@ -1,6 +1,6 @@
 SUBDIRS = libuproc
 
-bin_PROGRAMS = uproc-dna uproc-prot uproc-orf
+bin_PROGRAMS = uproc-dna uproc-prot uproc-orf uproc-import uproc-export
 
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 LDADD = $(top_builddir)/libuproc/libuproc.la
@@ -11,5 +11,11 @@ uproc_dna_CFLAGS = $(OPENMP_CFLAGS)
 
 uproc_prot_SOURCES = main.c
 uproc_prot_CFLAGS = $(OPENMP_CFLAGS)
+
+uproc_import_SOURCES = import.c
+uproc_import_CPPFLAGS = $(AM_CPPFLAGS) -DPROGNAME=\"uproc-import\"
+
+uproc_export_SOURCES = import.c
+uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1 -DPROGNAME=\"uproc-export\"
 
 uproc_orf_SOURCES = orf.c

@@ -18,9 +18,8 @@ AC_DEFINE([__USE_MINGW_ANSI_STDIO], [1], [Use mingw stdio])
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h])
-AC_CHECK_HEADERS([zlib.h])
-AC_CHECK_HEADERS([omp.h])
+AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h])
+AC_CHECK_HEADERS([unistd.h zlib.h getopt.h])
 
 AC_HEADER_STDBOOL
 AC_C_CONST
@@ -32,7 +31,7 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise])
+AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long])
 
 # Checks for libraries
 AC_SEARCH_LIBS([gzopen], [z])
