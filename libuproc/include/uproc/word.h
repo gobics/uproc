@@ -121,6 +121,12 @@ struct uproc_worditer {
 
     /** Translation alphabet */
     const struct uproc_alphabet *alphabet;
+
+    /** Current word in original order */
+    struct uproc_word fwd;
+
+    /** Current word in reversed order */
+    struct uproc_word rev;
 };
 
 /** Initialize an iterator over a sequence
@@ -133,24 +139,22 @@ struct uproc_worditer {
  * \param alpha translation alphabet
  */
 void uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
-                      const struct uproc_alphabet *alpha);
+                         const struct uproc_alphabet *alpha);
 
 /** Obtain the next word(s) from a word iterator
  *
  * Invalid characters are not simply skipped, instead the first complete after
  * such character is returned next.
  *
- * \param iter      iterator
- * \param index     _OUT_: starting index of the current "forward" word
- * \param fwd_word  _OUT_: word to append the next character to
- * \param rev_word  _OUT_: word to prepend the next character to
+ * \param iter  iterator
+ * \param index _OUT_: starting index of the current "forward" word
+ * \param fwd   _OUT_: read word in order as it appeared
+ * \param rev   _OUT_: read word in reversed order
  *
- * \retval #UPROC_ITER_YIELD   a pair of words was read
- * \retval #UPROC_ITER_STOP    the iterator is exhausted (i.e. the end of the
- *                          sequence was reached, no words were read)
- * \retval other            an error occured
+ * \retval 1    a pair of words was read
+ * \retval 0    the iterator is exhausted (i.e. the end of the sequence was
+ *              reached, no words were read)
  */
 int uproc_worditer_next(struct uproc_worditer *iter, size_t *index,
-                     struct uproc_word *fwd_word, struct uproc_word *rev_word);
-
+                        struct uproc_word *fwd, struct uproc_word *rev);
 #endif

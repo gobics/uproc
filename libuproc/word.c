@@ -154,6 +154,8 @@ uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
     iter->sequence = seq;
     iter->index = 0;
     iter->alphabet = alpha;
+    iter->fwd = (struct uproc_word) UPROC_WORD_INITIALIZER;
+    iter->rev = (struct uproc_word) UPROC_WORD_INITIALIZER;
 }
 
 int
@@ -175,9 +177,11 @@ uproc_worditer_next(struct uproc_worditer *iter, size_t *index,
             continue;
         }
         n++;
-        uproc_word_append(fwd_word, a);
-        uproc_word_prepend(rev_word, a);
+        uproc_word_append(&iter->fwd, a);
+        uproc_word_prepend(&iter->rev, a);
     }
     *index = iter->index - UPROC_WORD_LEN;
+    *fwd = iter->fwd;
+    *rev = iter->rev;
     return 1;
 }
