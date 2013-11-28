@@ -108,6 +108,9 @@ input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd, struct buffer
         free(buf->seq[i]);
         buf->seq[i] = NULL;
     }
+    if (res >= 0 && buf->n == chunk_size) {
+        return 1;
+    }
     return res;
 }
 
@@ -549,7 +552,14 @@ main(int argc, char **argv)
 #else
                     res = uproc_pc_classify(&protclass, out->seq[i], &out->results[i]);
 #endif
+                    if (res < 0) {
+                        uproc_perror("error");
+                        error = true;
+                    }
                 }
+            }
+            if (error) {
+                break;
             }
 #pragma omp parallel private(res) shared(more_input)
             {
@@ -558,7 +568,7 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         res = input_read(stream, &rd, in, chunk_size);
-                        more_input = res > 0;
+                        more_input = res > 0 || in->n;
                         if (res < 0) {
                             uproc_perror("error reading input");
                             error = true;
@@ -568,7 +578,7 @@ main(int argc, char **argv)
                     {
                         if (i_chunk) {
                             output(out, out_stream, (i_chunk - 1) * chunk_size,
-                                    out_counts, out_unexplained, &n_seqs);
+                                   out_counts, out_unexplained, &n_seqs);
                         }
                     }
                 }
