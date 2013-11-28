@@ -126,7 +126,7 @@ void uproc_ecurve_destroy(struct uproc_ecurve *ecurve);
  * \param alpha     _OUT_: alphabet of `ecurve`
  */
 void uproc_ecurve_get_alphabet(const struct uproc_ecurve *ecurve,
-                            struct uproc_alphabet *alpha);
+                               struct uproc_alphabet *alpha);
 
 /* Append one partial ecurve to another
  *

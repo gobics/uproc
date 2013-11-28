@@ -30,10 +30,15 @@
 #include "uproc/ecurve.h"
 
 /** Values to use as the `format` argument */
-enum uproc_storage_format {
+enum uproc_storage_format
+{
     UPROC_STORAGE_PLAIN,
     UPROC_STORAGE_BINARY,
 };
+
+int uproc_storage_loads(struct uproc_ecurve *ecurve,
+                        enum uproc_storage_format format,
+                        uproc_io_stream *stream);
 
 /** Load ecurve from a file
  *
@@ -57,6 +62,10 @@ int uproc_storage_loadv(struct uproc_ecurve *ecurve,
                         enum uproc_storage_format format,
                         enum uproc_io_type iotype, const char *pathfmt,
                         va_list ap);
+
+int uproc_storage_stores(const struct uproc_ecurve *ecurve,
+                         enum uproc_storage_format format,
+                         uproc_io_stream *stream);
 
 /** Store ecurve to a file
  *

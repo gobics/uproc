@@ -456,21 +456,15 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-#if HAVE_MMAP
-#define ECURVE_EXT "mmap"
-#else
-#define ECURVE_EXT "bin"
-#endif
-
     res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/fwd." ECURVE_EXT, argv[optind + DBDIR]);
+                             "%s/fwd.ecurve", argv[optind + DBDIR]);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
     res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/rev." ECURVE_EXT, argv[optind + DBDIR]);
+                             "%s/rev.ecurve", argv[optind + DBDIR]);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;

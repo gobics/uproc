@@ -84,12 +84,19 @@ double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row,
 void uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows,
                              size_t *cols);
 
+/** Load matrix from stream */
+int uproc_matrix_loads(struct uproc_matrix *matrix, uproc_io_stream *stream);
+
 /** Load matrix from file */
 int uproc_matrix_load(struct uproc_matrix *matrix, enum uproc_io_type iotype,
                       const char *pathfmt, ...);
 
 int uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
                        const char *pathfmt, va_list ap);
+
+/** Store matrix to stream */
+int uproc_matrix_stores(const struct uproc_matrix *matrix,
+                        uproc_io_stream *stream);
 
 /** Store matrix to file */
 int uproc_matrix_store(const struct uproc_matrix *matrix,

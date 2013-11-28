@@ -81,8 +81,8 @@ uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows,
     *cols = matrix->cols;
 }
 
-static int
-matrix_load(struct uproc_matrix *matrix, uproc_io_stream *stream)
+int
+uproc_matrix_loads(struct uproc_matrix *matrix, uproc_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
@@ -122,7 +122,7 @@ uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
     if (!stream) {
         return -1;
     }
-    res = matrix_load(matrix, stream);
+    res = uproc_matrix_loads(matrix, stream);
     (void) uproc_io_close(stream);
     return res;
 }
@@ -139,8 +139,8 @@ uproc_matrix_load(struct uproc_matrix *matrix, enum uproc_io_type iotype,
     return res;
 }
 
-static int
-matrix_store(const struct uproc_matrix *matrix, uproc_io_stream *stream)
+int
+uproc_matrix_stores(const struct uproc_matrix *matrix, uproc_io_stream *stream)
 {
     int res;
     size_t i, k, rows, cols;
@@ -170,7 +170,7 @@ uproc_matrix_storev(const struct uproc_matrix *matrix,
     if (!stream) {
         return -1;
     }
-    res = matrix_store(matrix, stream);
+    res = uproc_matrix_stores(matrix, stream);
     uproc_io_close(stream);
     return res;
 }

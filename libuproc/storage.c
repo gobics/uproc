@@ -138,7 +138,7 @@ load_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
 }
 
 static int
-uproc_storage_plain_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
+load_plain(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 {
     int res;
     uproc_prefix p;
@@ -237,8 +237,7 @@ store_suffix(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
 }
 
 static int
-uproc_storage_plain_store(const struct uproc_ecurve *ecurve,
-                          uproc_io_stream *stream)
+store_plain(const struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 {
     int res;
     size_t p;
@@ -277,7 +276,7 @@ uproc_storage_plain_store(const struct uproc_ecurve *ecurve,
 
 
 static int
-uproc_storage_binary_load(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
+load_binary(struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 {
     int res;
     size_t sz;
@@ -335,8 +334,7 @@ error:
 }
 
 static int
-uproc_storage_binary_store(const struct uproc_ecurve *ecurve,
-                           uproc_io_stream *stream)
+store_binary(const struct uproc_ecurve *ecurve, uproc_io_stream *stream)
 {
     int res;
     size_t sz;
@@ -388,6 +386,22 @@ error:
 }
 
 int
+uproc_storage_loads(struct uproc_ecurve *ecurve,
+                    enum uproc_storage_format format,
+                    uproc_io_stream *stream)
+{
+    if (format == UPROC_STORAGE_BINARY) {
+#if HAVE_MMAP
+        return uproc_error_msg(UPROC_EINVAL,
+                               "can't load mmap format from stream");
+#else
+        return load_binary(ecurve, stream);
+#endif
+    }
+    return load_plain(ecurve, stream);
+}
+
+int
 uproc_storage_loadv(struct uproc_ecurve *ecurve,
                     enum uproc_storage_format format,
                     enum uproc_io_type iotype, const char *pathfmt, va_list ap)
@@ -412,15 +426,7 @@ uproc_storage_loadv(struct uproc_ecurve *ecurve,
 
     stream = uproc_io_openv(mode[format], iotype, pathfmt, aq);
     va_end(aq);
-    if (!stream) {
-        return -1;
-    }
-    if (format == UPROC_STORAGE_BINARY) {
-        res = uproc_storage_binary_load(ecurve, stream);
-    }
-    else {
-        res = uproc_storage_plain_load(ecurve, stream);
-    }
+    res = uproc_storage_loads(ecurve, format, stream);
     uproc_io_close(stream);
     return res;
 }
@@ -435,6 +441,22 @@ uproc_storage_load(struct uproc_ecurve *ecurve,
     res = uproc_storage_loadv(ecurve, format, iotype, pathfmt, ap);
     va_end(ap);
     return res;
+}
+
+int
+uproc_storage_stores(const struct uproc_ecurve *ecurve,
+                     enum uproc_storage_format format,
+                     uproc_io_stream *stream)
+{
+    if (format == UPROC_STORAGE_BINARY) {
+#if HAVE_MMAP
+        return uproc_error_msg(UPROC_EINVAL,
+                               "can't store mmap format to stream");
+#else
+        return store_binary(ecurve, stream);
+#endif
+    }
+    return store_plain(ecurve, stream);
 }
 
 int
@@ -465,12 +487,7 @@ uproc_storage_storev(const struct uproc_ecurve *ecurve,
     if (!stream) {
         return -1;
     }
-    if (format == UPROC_STORAGE_BINARY) {
-        res = uproc_storage_binary_store(ecurve, stream);
-    }
-    else {
-        res = uproc_storage_plain_store(ecurve, stream);
-    }
+    res = uproc_storage_stores(ecurve, format, stream);
     uproc_io_close(stream);
     return res;
 }
