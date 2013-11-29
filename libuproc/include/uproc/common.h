@@ -129,7 +129,9 @@ typedef uint_least64_t uproc_suffix;
 typedef uint_least16_t uproc_family;
 
 /** Maximum value for #uproc_family */
-#define UPROC_FAMILY_MAX UINT_LEAST16_MAX
+#define UPROC_FAMILY_MAX (UINT_LEAST16_MAX - 1)
+
+#define UPROC_FAMILY_INVALID (UINT_LEAST16_MAX)
 
 /** printf() format for #uproc_family */
 #define UPROC_FAMILY_PRI PRIu16
