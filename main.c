@@ -259,7 +259,7 @@ PROTEIN CLASSIFICATION OPTIONS:\n\
                             0   fixed threshold of 0.0\n\
                             2   less restrictive\n\
                             3   more restrictive\n\
-                        Default is 2.\n\
+                        Default is 3.\n\
 "
 
 #if MAIN_DNA
@@ -278,7 +278,7 @@ DNA CLASSIFICATION OPTIONS:\n\
                             0   accept all ORFs\n\
                             1   less restrictive\n\
                             2   more restrictive\n\
-                        Default is 1.\n\
+                        Default is 2.\n\
 "
 #endif
 ;
@@ -324,14 +324,14 @@ main(int argc, char **argv)
     enum uproc_pc_mode pc_mode = UPROC_PC_ALL;
     struct uproc_matrix prot_thresholds;
     void *prot_filter_arg = &prot_thresholds;
-    int prot_thresh_num = 2;
+    int prot_thresh_num = 3;
 
 
 #if MAIN_DNA
     struct uproc_dnaclass dnaclass;
     enum uproc_dc_mode dc_mode = UPROC_DC_ALL;
     struct uproc_matrix codon_scores, orf_thresholds;
-    int orf_thresh_num = 1;
+    int orf_thresh_num = 2;
     bool short_read_mode = false;
 #endif
 
