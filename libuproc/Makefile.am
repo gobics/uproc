@@ -4,8 +4,22 @@ AM_CFLAGS = -Werror $(OPENMP_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 
 lib_LTLIBRARIES = libuproc.la
-libuproc_la_SOURCES = alphabet.c  bst.c  codon.c  dnaclass.c  ecurve.c  error.c  fasta.c \
-				  io.c  matrix.c  mmap.c  orf.c  protclass.c  storage.c  substmat.c  word.c
+libuproc_la_SOURCES = alphabet.c \
+					bst.c \
+					codon.c \
+					dnaclass.c \
+					ecurve.c \
+					error.c \
+					fasta.c \
+					idmap.c \
+					io.c \
+					matrix.c \
+					mmap.c \
+					orf.c \
+					protclass.c \
+					storage.c \
+					substmat.c \
+					word.c
 
 BUILT_SOURCES = codon_tables.h
 

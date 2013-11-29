@@ -7,6 +7,7 @@ nobase_include_HEADERS = uproc.h \
 	uproc/ecurve.h \
 	uproc/error.h \
 	uproc/fasta.h \
+	uproc/idmap.h \
 	uproc/io.h \
 	uproc/matrix.h \
 	uproc/mmap.h \

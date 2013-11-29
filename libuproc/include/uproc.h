@@ -16,6 +16,7 @@
 #include <uproc/ecurve.h>
 #include <uproc/error.h>
 #include <uproc/fasta.h>
+#include <uproc/idmap.h>
 #include <uproc/io.h>
 #include <uproc/mmap.h>
 #include <uproc/orf.h>
