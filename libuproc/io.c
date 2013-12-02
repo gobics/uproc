@@ -153,6 +153,7 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
 {
     uproc_io_stream *stream = malloc(sizeof *stream);
     if (!stream) {
+        uproc_error(UPROC_ENOMEM);
         return NULL;
     }
     stream->type = type;
