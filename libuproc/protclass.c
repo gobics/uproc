@@ -139,18 +139,19 @@ static void
 align_suffixes(double dist[static UPROC_SUFFIX_LEN], uproc_suffix s1,
                uproc_suffix s2, const struct uproc_substmat *substmat)
 {
-    size_t i;
+    size_t i, idx;
     uproc_amino a1, a2;
     for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
         a1 = s1 & UPROC_BITMASK(UPROC_AMINO_BITS);
         a2 = s2 & UPROC_BITMASK(UPROC_AMINO_BITS);
         s1 >>= UPROC_AMINO_BITS;
         s2 >>= UPROC_AMINO_BITS;
+        idx = UPROC_SUFFIX_LEN - i - 1;
         if (substmat) {
-            dist[i] = uproc_substmat_get(substmat, i, a1, a2);
+            dist[idx] = uproc_substmat_get(substmat, idx, a1, a2);
         }
         else {
-            dist[i] = a1 == a2 ? 1.0 : 0.0;
+            dist[idx] = a1 == a2 ? 1.0 : 0.0;
         }
     }
 }
