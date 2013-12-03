@@ -14,7 +14,6 @@
 #define POW_MAX 11
 #define POW_DIFF (POW_MAX - POW_MIN)
 #define LEN_MAX (1 << POW_MAX)
-#define ALPHABET "ARNDCQEGHILKMFPSTWYV"
 
 #define INTERP_MIN 20
 #define INTERP_MAX 5000
@@ -23,7 +22,7 @@
 
 #define ELEMENTS_OF(x) (sizeof (x) / sizeof (x)[0])
 
-void *
+static void *
 xrealloc(void *ptr, size_t sz)
 {
     ptr = realloc(ptr, sz);
@@ -35,8 +34,7 @@ xrealloc(void *ptr, size_t sz)
 }
 #define xmalloc(sz) xrealloc(NULL, sz)
 
-
-int
+static int
 choice(const struct uproc_matrix *p, size_t n)
 {
     double sum, c;
@@ -53,7 +51,7 @@ choice(const struct uproc_matrix *p, size_t n)
     return i - 1;
 }
 
-void
+static void
 randseq(char *buf, size_t len, const struct uproc_alphabet *alpha,
         const struct uproc_matrix *probs)
 {
@@ -70,9 +68,9 @@ randseq(char *buf, size_t len, const struct uproc_alphabet *alpha,
     buf[i] = '\0';
 }
 
-void
-append(double **dest, size_t *dest_n, size_t *dest_sz, struct uproc_pc_pred *src,
-        size_t n)
+static void
+append(double **dest, size_t *dest_n, size_t *dest_sz,
+       struct uproc_pc_pred *src, size_t n)
 {
     double *d = *dest;
     if (!d) {
@@ -92,7 +90,7 @@ append(double **dest, size_t *dest_n, size_t *dest_sz, struct uproc_pc_pred *src
     *dest_n += n;
 }
 
-int
+static int
 double_cmp(const void *p1, const void *p2)
 {
     double delta = *(const double *)p1 - *(const double*)p2;
@@ -104,8 +102,9 @@ double_cmp(const void *p1, const void *p2)
 }
 
 
-int
-csinterp(const double *xa, const double *ya, int m, const double *x, double *y, int n)
+static int
+csinterp(const double *xa, const double *ya, int m, const double *x, double *y,
+         int n)
 {
     int i, low, high, mid;
     double h, b, a, u[m], ya2[m];
@@ -116,7 +115,8 @@ csinterp(const double *xa, const double *ya, int m, const double *x, double *y, 
         a = (xa[i] - xa[i-1]) / (xa[i+1] - xa[i-1]);
         b = a * ya2[i-1] + 2.0;
         ya2[i] = (a - 1.0) / b;
-        u[i] = (ya[i+1] - ya[i]) / (xa[i+1] - xa[i]) - (ya[i] - ya[i-1]) / (xa[i] - xa[i-1]);
+        u[i] = (ya[i+1] - ya[i]) / (xa[i+1] - xa[i]) - (ya[i] - ya[i-1]) /
+            (xa[i] - xa[i-1]);
         u[i] = (6.0 * u[i] / (xa[i+1] - xa[i-1]) - a * u[i-1]) / b;
     }
 
@@ -159,16 +159,16 @@ csinterp(const double *xa, const double *ya, int m, const double *x, double *y, 
     return 0;
 }
 
-
-int
+static int
 store_interpolated(double thresh[static POW_DIFF + 1],
-        const char *prefix, size_t number)
+                   const char *dbdir, const char *name)
 {
     size_t i;
     double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
 
-    struct uproc_matrix thresh_interp = { .rows = 1, .cols = INTERP_MAX, .values = y };
+    struct uproc_matrix thresh_interp = {
+        .rows = 1, .cols = INTERP_MAX,.values = y };
 
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
@@ -183,73 +183,50 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     }
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
-    return uproc_matrix_store(&thresh_interp, UPROC_IO_STDIO, "%.100s%zu", prefix, number);
+    return uproc_matrix_store(&thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir,
+                              name);
 }
 
-
-enum args
-{
-    FWD = 1,
-    REV,
-    SUBSTMAT,
-    AA_PROBS,
-    ARGC,
-    OUT_PREFIX = ARGC,
-};
-
-int main(int argc, char **argv)
+int calib(char *dbdir, char *modeldir)
 {
     int res;
     struct uproc_alphabet alpha;
-    struct uproc_matrix alpha_probs;
+    struct uproc_matrix aa_probs;
     struct uproc_substmat substmat;
     struct uproc_ecurve fwd, rev;
     double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
-    char *outfile_prefix = OUT_PREFIX_DEFAULT;
-
-    if (argc < ARGC) {
-        fprintf(stderr, "usage: %s"
-                " forward.ecurve"
-                " reverse.ecurve"
-                " substmat.matrix"
-                " aa_prob.matrix"
-                " [output_file_prefix]"
-                "\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-    if (argc > OUT_PREFIX) {
-        outfile_prefix = argv[OUT_PREFIX];
+    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
+                              modeldir);
+    if (res) {
+        uproc_perror("error loading substmat");
+        return res;
     }
 
-    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, argv[SUBSTMAT]);
-    if (res != UPROC_SUCCESS) {
-        fprintf(stderr, "error opening %s: ", argv[SUBSTMAT]);
-        perror("");
-        return EXIT_FAILURE;
+    /* the string used to initialize alpha must match the one used to build
+     * aa_probs
+     */
+    uproc_alphabet_init(&alpha, "ARNDCQEGHILKMFPSTWYV");
+    res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs");
+    if (res) {
+        uproc_perror("error loading aa_probs");
+        return res;
     }
 
-    res = uproc_matrix_load(&alpha_probs, UPROC_IO_GZIP, argv[AA_PROBS]);
-    if (res != UPROC_SUCCESS) {
-        fprintf(stderr, "error opening %s: ", argv[AA_PROBS]);
-        perror("");
-        return EXIT_FAILURE;
+    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                             "%s/fwd.ecurve", dbdir);
+    if (res) {
+        uproc_perror("error opening forward ecurve");
+        return res;
     }
-    uproc_alphabet_init(&alpha, ALPHABET);
-
-    res = uproc_mmap_map(&fwd, argv[FWD]);
-    if (res != UPROC_SUCCESS) {
-        fprintf(stderr, "error opening %s: ", argv[FWD]);
-        return EXIT_FAILURE;
-    }
-    res = uproc_mmap_map(&rev, argv[REV]);
-    if (res != UPROC_SUCCESS) {
-        fprintf(stderr, "error opening %s: ", argv[REV]);
-        uproc_ecurve_destroy(&fwd);
-        return EXIT_FAILURE;
+    res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                             "%s/rev.ecurve", dbdir);
+    if (res) {
+        uproc_perror("error opening reverse ecurve");
+        return res;
     }
 
-#pragma omp parallel private(res) shared(fwd, rev, substmat)
+#pragma omp parallel private(res) shared(fwd, rev, substmat, alpha, aa_probs)
     {
 
 #pragma omp for
@@ -265,29 +242,35 @@ int main(int argc, char **argv)
             struct uproc_pc_results results;
             results.preds = NULL;
             results.n = results.sz = 0;
-            uproc_pc_init(&pc, UPROC_PC_ALL, &fwd, &rev, &substmat, NULL, NULL);
+            uproc_pc_init(&pc, UPROC_PC_ALL, &fwd, &rev, &substmat,
+                          NULL, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;
             seq_count = (1 << (POW_MAX - power)) * SEQ_COUNT_MULTIPLIER;
             seq[seq_len] = '\0';
             for (i = 0; i < seq_count; i++) {
-                randseq(seq, seq_len, &alpha, &alpha_probs);
+                randseq(seq, seq_len, &alpha, &aa_probs);
                 uproc_pc_classify(&pc, seq, &results);
-                append(&all_preds, &all_preds_n, &all_preds_sz, results.preds, results.n);
+                append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
+                       results.n);
             }
             qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-            thresh2[power - POW_MIN] = all_preds[MIN(seq_count / 100, all_preds_n - 1)];
-            thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000, all_preds_n - 1)];
+            thresh2[power - POW_MIN] = all_preds[MIN(seq_count / 100,
+                                                     all_preds_n - 1)];
+            thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000,
+                                                     all_preds_n - 1)];
             free(all_preds);
             free(results.preds);
         }
     }
 
-    store_interpolated(thresh2, outfile_prefix, 2);
-    store_interpolated(thresh3, outfile_prefix, 3);
-
-    return EXIT_SUCCESS;
+    res = store_interpolated(thresh2, dbdir, "prot_thresh_e2");
+    if (res) {
+        return res;
+    }
+    res = store_interpolated(thresh3, dbdir, "prot_thresh_e3");
+    return res;
 }

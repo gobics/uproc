@@ -2,8 +2,14 @@
 #include <config.h>
 #endif
 
-#include "uproc.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include <ctype.h>
+
+#include "uproc.h"
+
+#define ALPHA_DEFAULT "AGSTPKRQEDNHYWFMLIVC"
 
 unsigned long filtered_counts[UPROC_FAMILY_MAX] = { 0 };
 
@@ -13,27 +19,51 @@ struct ecurve_entry
     uproc_family family;
 };
 
-static int
-parse_family(const char *id, uproc_family *family)
+static char *
+crop_first_word(char *s)
 {
-    int res;
-    while (*id && !isdigit(*id)) {
-        id++;
+    char *p1, *p2;
+    size_t len;
+    p1 = s;
+    while (isspace(*p1)) {
+        p1++;
     }
+    p2 = strpbrk(p1, ", \f\n\r\t\v");
+    if (p2) {
+        len = p2 - p1 + 1;
+        *p2 = '\0';
+    }
+    else {
+        len = strlen(p1);
+    }
+    memmove(s, p1, len + 1);
+    return s;
+}
 
-    res = sscanf(id, "%" UPROC_FAMILY_SCN, family);
-    return res == 1 ? 0 : -1;
+static char *
+reverse_string(char *s)
+{
+    char *p1, *p2;
+    p1 = s;
+    p2 = s + strlen(s) - 1;
+    while (p2 > p1) {
+        char tmp = *p2;
+        *p2 = *p1;
+        *p1 = tmp;
+        p1++;
+        p2--;
+    }
+    return s;
 }
 
 static int
-extract_uniques(uproc_io_stream *stream, uproc_amino first,
-        const struct uproc_alphabet *alpha, struct ecurve_entry **entries,
-        size_t *n_entries)
+extract_uniques(uproc_io_stream *stream, const struct uproc_alphabet *alpha,
+                struct uproc_idmap *idmap, uproc_amino first, bool reverse,
+                struct ecurve_entry **entries, size_t *n_entries)
 {
     int res;
 
     struct uproc_fasta_reader rd;
-
     size_t index;
 
     struct uproc_bst tree;
@@ -46,16 +76,25 @@ extract_uniques(uproc_io_stream *stream, uproc_amino first,
 
     while ((res = uproc_fasta_read(stream, &rd)) > 0) {
         struct uproc_worditer iter;
-        struct uproc_word fwd_word = UPROC_WORD_INITIALIZER, rev_word = UPROC_WORD_INITIALIZER;
+        struct uproc_word fwd_word = UPROC_WORD_INITIALIZER,
+                          rev_word = UPROC_WORD_INITIALIZER;
         uproc_family tmp_family;
 
-        if (parse_family(rd.header, &family)) {
-            break;
+        crop_first_word(rd.header);
+        family = uproc_idmap_family(idmap, rd.header);
+        if (family == UPROC_FAMILY_INVALID) {
+            return -1;
         }
+
+        if (reverse) {
+            reverse_string(rd.seq);
+        }
+
         uproc_worditer_init(&iter, rd.seq, alpha);
 
-        while ((res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word)) > 0) {
-            if (!uproc_word_startswith(&fwd_word, first)) {
+        while (res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word),
+               res > 0) {
+           if (!uproc_word_startswith(&fwd_word, first)) {
                 continue;
             }
             tree_key.word = fwd_word;
@@ -66,10 +105,10 @@ extract_uniques(uproc_io_stream *stream, uproc_amino first,
             if (res == UPROC_SUCCESS) {
                 if (tmp_family != family) {
                     filtered_counts[family] += 1;
-                    if (tmp_family != (uproc_family)-1) {
+                    if (tmp_family != UPROC_FAMILY_INVALID) {
                         filtered_counts[tmp_family] += 1;
                     }
-                    tmp_family = -1;
+                    tmp_family = UPROC_FAMILY_INVALID;
                     res = uproc_bst_update(&tree, tree_key, &tmp_family);
                 }
             }
@@ -92,7 +131,7 @@ extract_uniques(uproc_io_stream *stream, uproc_amino first,
     uproc_bstiter_init(&iter, &tree);
     *n_entries = 0;
     while (uproc_bstiter_next(&iter, &tree_key, &family) > 0) {
-        if (family != (uproc_family) -1) {
+        if (family != UPROC_FAMILY_INVALID) {
             *n_entries += 1;
         }
     }
@@ -105,7 +144,7 @@ extract_uniques(uproc_io_stream *stream, uproc_amino first,
     uproc_bstiter_init(&iter, &tree);
     struct ecurve_entry *entries_insert = *entries;
     while (uproc_bstiter_next(&iter, &tree_key, &family) > 0) {
-        if (family != (uproc_family) -1) {
+        if (family != UPROC_FAMILY_INVALID) {
             entries_insert->word = tree_key.word;
             entries_insert->family = family;
             entries_insert++;
@@ -174,7 +213,8 @@ filter_singletons(struct ecurve_entry *entries, size_t n)
 
 
 static int
-insert_entries(struct uproc_ecurve *ecurve, struct ecurve_entry *entries, size_t n_entries)
+insert_entries(struct uproc_ecurve *ecurve, struct ecurve_entry *entries,
+               size_t n_entries)
 {
     size_t i, k;
     uproc_prefix p, current_prefix, next_prefix;
@@ -188,10 +228,12 @@ insert_entries(struct uproc_ecurve *ecurve, struct ecurve_entry *entries, size_t
 
     for (i = 0; i < n_entries;) {
         ecurve->prefixes[current_prefix].first = i;
-        for (k = i; k < n_entries && entries[k].word.prefix == current_prefix; k++) {
+        for (k = i;
+             k < n_entries && entries[k].word.prefix == current_prefix;
+             k++)
+        {
             ecurve->suffixes[k] = entries[k].word.suffix;
             ecurve->families[k] = entries[k].family;
-            ;
         }
         ecurve->prefixes[current_prefix].first = i;
         ecurve->prefixes[current_prefix].count = k - i;
@@ -220,21 +262,30 @@ insert_entries(struct uproc_ecurve *ecurve, struct ecurve_entry *entries, size_t
 
 
 static int
-build(uproc_io_stream *stream, struct uproc_ecurve *ecurve, const char *alphabet)
+build_ecurve(const char *infile,
+             const char *alphabet,
+             struct uproc_idmap *idmap,
+             bool reverse,
+             struct uproc_ecurve *ecurve)
 {
     int res;
+    uproc_io_stream *stream;
     struct ecurve_entry *entries = NULL;
     size_t n_entries;
     uproc_amino first;
     struct uproc_ecurve new;
 
     for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
-        fflush(stderr);
         n_entries = 0;
         free(entries);
-        uproc_io_seek(stream, 0, SEEK_SET);
-
-        res = extract_uniques(stream, first, &ecurve->alphabet, &entries, &n_entries);
+        stream = uproc_io_open("r", UPROC_IO_GZIP, infile);
+        if (!stream) {
+            res = -1;
+            goto error;
+        }
+        res = extract_uniques(stream, &ecurve->alphabet, idmap, first, reverse,
+                              &entries, &n_entries);
+        uproc_io_close(stream);
         if (res) {
             goto error;
         }
@@ -270,51 +321,41 @@ error:
     return res;
 }
 
-int
-main(int argc, char **argv)
+static int
+build_and_store(const char *infile, const char *outdir, const char *alphabet,
+                struct uproc_idmap *idmap, bool reverse)
 {
     int res;
-    uproc_io_stream *stream;
-
     struct uproc_ecurve ecurve;
-
-    enum args {
-        ALPHABET = 1,
-        INFILE,
-        OUTFILE,
-        ARGC
-    };
-
-    if (argc != ARGC) {
-        fprintf(stderr, "usage: %s ALPHABET INFILE OUTFILE\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    res = uproc_ecurve_init(&ecurve, argv[ALPHABET], 0);
+    res = uproc_ecurve_init(&ecurve, alphabet, 0);
     if (res) {
-        fprintf(stderr, "invalid alphabet string \"%s\"\n", argv[ALPHABET]);
-        return EXIT_FAILURE;
+        return res;
     }
-
-    stream = uproc_io_open("r", UPROC_IO_GZIP, argv[INFILE]);
-    if (!stream) {
-        perror("");
-        return EXIT_FAILURE;
-    }
-
-    res = build(stream, &ecurve, argv[ALPHABET]);
+    res = build_ecurve(infile, alphabet, idmap, reverse, &ecurve);
     if (res) {
-        fprintf(stderr, "an error occured\n");
+        return res;
     }
-    uproc_io_close(stream);
-    fprintf(stderr, "storing..\n");
-    uproc_storage_store(&ecurve, UPROC_STORAGE_PLAIN, UPROC_IO_GZIP, argv[OUTFILE]);
+    res = uproc_storage_store(&ecurve, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                              "%s/%s.ecurve", outdir, reverse ? "rev": "fwd");
     uproc_ecurve_destroy(&ecurve);
-    fprintf(stderr, "filtered:\n");
-    for (size_t i = 0; i < UPROC_FAMILY_MAX; i++) {
-        if (filtered_counts[i]) {
-            fprintf(stderr, "%5zu: %lu\n", i, filtered_counts[i]);
-        }
+    return res;
+}
+
+int
+build_ecurves(const char *infile,
+              const char *outdir,
+              const char *alphabet,
+              struct uproc_idmap *idmap)
+{
+    int res;
+    res = build_and_store(infile, outdir, alphabet, idmap, false);
+    if (res) {
+        uproc_perror("error building forward ecurve");
+        return res;
     }
-    return EXIT_SUCCESS;
+    res = build_and_store(infile, outdir, alphabet, idmap, true);
+    if (res) {
+        uproc_perror("error building reverse ecurve");
+    }
+    return res;
 }

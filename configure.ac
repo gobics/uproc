@@ -34,6 +34,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long])
 
 # Checks for libraries
+AC_SEARCH_LIBS([log2], [m])
 AC_SEARCH_LIBS([gzopen], [z])
 
 AC_OPENMP
@@ -45,5 +46,6 @@ AM_CONDITIONAL([HAVE_CHECK], [test x$have_check = xyes])
 AC_CONFIG_FILES([Makefile
                  libuproc/Makefile
                  libuproc/include/Makefile
-                 libuproc/tests/Makefile])
+                 libuproc/tests/Makefile
+                 uproc-makedb/Makefile])
 AC_OUTPUT
