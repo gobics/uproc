@@ -11,20 +11,11 @@
 #endif
 #include <unistd.h>
 
-#include "uproc.h"
+#include <uproc.h>
+#include "makedb.h"
 
 #define PROGNAME "uproc-makedb"
 #define ALPHA_DEFAULT "AGSTPKRQEDNHYWFMLIVC"
-
-
-/* from build_ecurves.c */
-int build_ecurves(const char *infile, const char *outdir, const char *alphabet,
-                  struct uproc_idmap *idmap);
-
-/* from calib.c */
-int calib(char *dbdir, char *modeldir);
-
-
 
 void
 print_version(void)
@@ -126,8 +117,9 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = uproc_idmap_store(&idmap, UPROC_IO_GZIP, "%s/idmap");
+    res = uproc_idmap_store(&idmap, UPROC_IO_GZIP, "%s/idmap", outdir);
     if (res) {
+        uproc_perror("error storing idmap");
         return EXIT_FAILURE;
     }
 

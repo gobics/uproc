@@ -168,7 +168,7 @@ store_interpolated(double thresh[static POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
 
     struct uproc_matrix thresh_interp = {
-        .rows = 1, .cols = INTERP_MAX,.values = y };
+        .rows = 1, .cols = INTERP_MAX, .values = y };
 
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;

@@ -7,7 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "uproc.h"
+#include <uproc.h>
+#include "makedb.h"
 
 #define ALPHA_DEFAULT "AGSTPKRQEDNHYWFMLIVC"
 
@@ -276,6 +277,7 @@ build_ecurve(const char *infile,
     struct uproc_ecurve new;
 
     for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
+        progress("building ecurve", first * 100 / UPROC_ALPHABET_SIZE);
         n_entries = 0;
         free(entries);
         stream = uproc_io_open("r", UPROC_IO_GZIP, infile);
@@ -312,9 +314,11 @@ build_ecurve(const char *infile,
             }
         }
     }
+    progress("building ecurve", first * 100 / UPROC_ALPHABET_SIZE);
 
     if (0) {
 error:
+        fputc('\n', stderr);
         uproc_ecurve_destroy(ecurve);
     }
     free(entries);
