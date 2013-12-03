@@ -7,7 +7,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "uproc.h"
+#include <uproc.h>
+#include "makedb.h"
 
 #define SEQ_COUNT_MULTIPLIER 10000
 #define POW_MIN 5
@@ -207,7 +208,7 @@ int calib(char *dbdir, char *modeldir)
      * aa_probs
      */
     uproc_alphabet_init(&alpha, "ARNDCQEGHILKMFPSTWYV");
-    res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs");
+    res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs", modeldir);
     if (res) {
         uproc_perror("error loading aa_probs");
         return res;
@@ -226,7 +227,9 @@ int calib(char *dbdir, char *modeldir)
         return res;
     }
 
-#pragma omp parallel private(res) shared(fwd, rev, substmat, alpha, aa_probs)
+    double perc = 0.0;
+    progress("calibrating", perc);
+#pragma omp parallel private(res) shared(fwd, rev, substmat, alpha, aa_probs, perc)
     {
 
 #pragma omp for
@@ -264,6 +267,11 @@ int calib(char *dbdir, char *modeldir)
                                                      all_preds_n - 1)];
             free(all_preds);
             free(results.preds);
+#pragma omp critical
+            {
+                perc += 100.0 / (POW_MAX - POW_MIN);
+                progress("calibrating", perc);
+            }
         }
     }
 
