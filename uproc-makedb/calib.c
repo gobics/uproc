@@ -269,7 +269,7 @@ int calib(char *dbdir, char *modeldir)
             free(results.preds);
 #pragma omp critical
             {
-                perc += 100.0 / (POW_MAX - POW_MIN);
+                perc += 100.0 / (POW_MAX - POW_MIN + 1);
                 progress("calibrating", perc);
             }
         }
