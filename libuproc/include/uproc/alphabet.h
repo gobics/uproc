@@ -23,11 +23,6 @@
 #ifndef UPROC_ALPHABET_H
 #define UPROC_ALPHABET_H
 
-/** \file uproc/alphabet.h
- *
- * Translate characters to/from amino acids
- */
-
 #include "uproc/common.h"
 #include <limits.h>
 
