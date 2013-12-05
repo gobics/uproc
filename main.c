@@ -161,15 +161,15 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 
 void
 output(struct buffer *buf,
-        uproc_io_stream *pr_stream,
-        struct uproc_idmap *idmap,
-        size_t pr_seq_offset,
-        uintmax_t *counts,
-        size_t *unexplained,
-        size_t *total)
+       size_t pr_seq_offset,
+       size_t *n_seqs,
+       struct uproc_idmap *idmap,
+       uproc_io_stream *pr_stream,
+       uintmax_t *counts,
+       size_t *unexplained)
 {
     size_t i, j;
-    *total += buf->n;
+    *n_seqs += buf->n;
     for (i = 0; i < buf->n; i++) {
         if (!buf->results[i].n) {
             if (unexplained) {
@@ -304,7 +304,7 @@ OPT("-O", "--othresh", "N") "\n\
 
 enum args
 {
-    DBDIR, MODELDIR, INFILE,
+    DBDIR, MODELDIR, INFILES,
     ARGC
 };
 
@@ -356,11 +356,15 @@ main(int argc, char **argv)
     int opt;
     int format = UPROC_STORAGE_BINARY;
 
-    uproc_io_stream *out_stream = NULL;
-    size_t unexplained = 0, *out_unexplained = NULL;
-    uintmax_t counts[UPROC_FAMILY_MAX] = { 0 }, *out_counts = NULL;
+    uproc_io_stream *out_stream = uproc_stdout;
+    bool out_preds = false,
+         out_stats = false,
+         out_counts = false;
 
-#define SHORT_OPTS_PROT "hvpcfnP:t:"
+    size_t unexplained = 0;
+    uintmax_t counts[UPROC_FAMILY_MAX] = { 0 };
+
+#define SHORT_OPTS_PROT "hvpcfo:nP:t:"
 #if MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "slO:"
 #else
@@ -374,6 +378,7 @@ main(int argc, char **argv)
         { "preds",      no_argument,        NULL, 'p' },
         { "counts",     no_argument,        NULL, 'c' },
         { "stats",      no_argument,        NULL, 'f' },
+        { "output",     required_argument,  NULL, 'o' },
         { "numeric",    no_argument,        NULL, 'n' },
         { "pthresh",    required_argument,  NULL, 'P' },
         { "threads",    required_argument,  NULL, 't' },
@@ -398,14 +403,20 @@ main(int argc, char **argv)
                 print_version();
                 return EXIT_SUCCESS;
             case 'p':
-                out_stream = uproc_stdout;
+                out_preds = true;
                 break;
             case 'c':
-                out_counts = counts;
+                out_counts = true;
                 break;
             case 'f':
-                out_unexplained = &unexplained;
+                out_stats = true;
                 break;
+            case 'o':
+                out_stream = uproc_io_open("w", UPROC_IO_STDIO, "%s", optarg);
+                if (!out_stream) {
+                    uproc_perror("can't open output file");
+                    return EXIT_FAILURE;
+                }
             case 'n':
                 use_idmap = false;
                 break;
@@ -463,8 +474,8 @@ main(int argc, char **argv)
         }
     }
 
-    if (!out_stream && !out_counts && !out_unexplained) {
-        out_counts = counts;
+    if (!out_stream && !out_counts && !out_stats) {
+        out_counts = true;
     }
 
     if (argc < optind + ARGC - 1) {
@@ -545,15 +556,15 @@ main(int argc, char **argv)
         argv[argc++] = "-";
     }
 
-    for (; optind + INFILE < argc; optind++)
+    for (; optind + INFILES < argc; optind++)
     {
-        if (!strcmp(argv[optind + INFILE], "-")) {
+        if (!strcmp(argv[optind + INFILES], "-")) {
             stream = uproc_stdin;
         }
         else {
-            stream = uproc_io_open("r", UPROC_IO_GZIP, argv[optind + INFILE]);
+            stream = uproc_io_open("r", UPROC_IO_GZIP, argv[optind + INFILES]);
             if (!stream) {
-                fprintf(stderr, "error opening %s: ", argv[optind + INFILE]);
+                fprintf(stderr, "error opening %s: ", argv[optind + INFILES]);
                 perror("");
                 return EXIT_FAILURE;
             }
@@ -598,9 +609,11 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         if (i_chunk) {
-                            output(out, out_stream, use_idmap ? &idmap : NULL,
-                                   (i_chunk - 1) * chunk_size, out_counts,
-                                   out_unexplained, &n_seqs);
+                            output(out, (i_chunk - 1) * chunk_size, &n_seqs,
+                                   use_idmap ? &idmap : NULL,
+                                   out_preds ? out_stream : NULL,
+                                   out_counts ? counts : NULL,
+                                   out_stats ? &unexplained : NULL);
                         }
                     }
                 }
@@ -625,20 +638,20 @@ main(int argc, char **argv)
     buf_free(&buf[0]);
     buf_free(&buf[1]);
 
-    if (out_unexplained) {
-        uproc_io_printf(uproc_stdout, "%zu,", n_seqs - unexplained);
-        uproc_io_printf(uproc_stdout, "%zu,", unexplained);
-        uproc_io_printf(uproc_stdout, "%zu\n", n_seqs);
+    if (out_stats) {
+        uproc_io_printf(out_stream, "%zu,", n_seqs - unexplained);
+        uproc_io_printf(out_stream, "%zu,", unexplained);
+        uproc_io_printf(out_stream, "%zu\n", n_seqs);
     }
     for (uproc_family i = 0; out_counts && i < UPROC_FAMILY_MAX; i++) {
-        if (out_counts[i]) {
+        if (counts[i]) {
             if (use_idmap) {
-                uproc_io_printf(uproc_stdout, "%s", uproc_idmap_str(&idmap, i));
+                uproc_io_printf(out_stream, "%s", uproc_idmap_str(&idmap, i));
             }
             else {
-                uproc_io_printf(uproc_stdout, "%" UPROC_FAMILY_PRI, i);
+                uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI, i);
             }
-            uproc_io_printf(uproc_stdout, ": %ju\n", out_counts[i]);
+            uproc_io_printf(out_stream, ": %ju\n", counts[i]);
         }
     }
 
