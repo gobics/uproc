@@ -1,8 +1,10 @@
 AC_PREREQ(2.62)
 AC_INIT([uproc], [0.0.0], [uproc@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
+
 LT_PREREQ([2.2])
-LT_INIT
+# Build libuproc statically by default
+LT_INIT([disable-shared])
 
 AC_CONFIG_SRCDIR([libuproc/ecurve.c])
 AC_CONFIG_HEADER([config.h])
