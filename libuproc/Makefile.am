@@ -1,4 +1,7 @@
 SUBDIRS = include tests
+if HAVE_DOXYGEN
+SUBDIRS += docs
+endif
 
 AM_CFLAGS = -Werror $(OPENMP_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include

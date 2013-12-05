@@ -44,10 +44,16 @@ AC_OPENMP
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=yes], [have_check=no])
 AM_CONDITIONAL([HAVE_CHECK], [test x$have_check = xyes])
 
+# Check for Doxygen
+test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen$EXEEXT])
+AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])
+
 AC_CONFIG_FILES([Makefile
                  libuproc/Makefile
                  libuproc/include/Makefile
                  libuproc/tests/Makefile
                  libuproc/tests/data/Makefile
+                 libuproc/docs/doxyfile
+                 libuproc/docs/Makefile
                  makedb/Makefile])
 AC_OUTPUT
