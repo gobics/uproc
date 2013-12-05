@@ -227,7 +227,18 @@ void
 print_usage(const char *progname)
 {
     const char *s = "\
-USAGE: %s db_dir model_dir [options] [input_file(s)]\n\
+USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]\n\
+\n\
+Classify "
+#if MAIN_DNA
+"DNA/RNA"
+#else
+"protein"
+#endif
+" sequences using the database in DBDIR and the model in MODELDIR.\n\
+INPUTFILES can be zero or more files containing sequences in FASTA format.\n\
+If no file is specified or the file name is -, sequences will be read from\n\
+standard input.\n\
 \n\
 GENERAL OPTIONS:\n"
 OPT("-h", "--help   ", " ") "\n\
@@ -256,14 +267,18 @@ OPT("-p", "--preds", "") "\n\
         protein family\n\
         classificaton score\n\
 \n"
-OPT("-c", "--counts", "") "\n\
-    Print number of classifications for each protein family (if\n\
-    this number is greater than 0) in the format: \"family: count\"\n\n"
 OPT("-f", "--stats", "") "\n\
     Print \"classified,unclassified,total\" numbers of sequences.\n\
-\n\
-If none of these is specified, -c is used.\n\
-If multiple of these are specified, they are printed in the order as above.\n\
+\n"
+OPT("-c", "--counts", "") "\n\
+    Print number of classifications for each protein family (if this number\n\
+    is greater than 0) in the format: \"family: count\"\n\
+\n"
+"If none of the above is specified, -c is used.\n\
+If multiple of them are specified, they are printed in the order as above.\n\
+\n\n"
+OPT("-o", "--output", "FILE") "\n\
+    Print output to FILE instead of standard output.\n\
 \n"
 OPT("-n", "--numeric", "") "\n\
     If used with -p or -c, print the internal numeric representation of\n\
