@@ -22,15 +22,7 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-
-#if HAVE_GETOPT_LONG
-#define _GNU_SOURCE
-#include <getopt.h>
-#define OPT(shortopt, longopt) shortopt ", " longopt "    "
-#else
-#define OPT(shortopt, longopt) shortopt "    "
-#endif
-#include <unistd.h>
+#include "uproc_opt.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,23 +30,6 @@
 #include <time.h>
 
 #include "uproc.h"
-
-
-void
-print_version(void)
-{
-    fputs(
-        PROGNAME ", version " PACKAGE_VERSION "\n"
-        "Copyright 2013 Peter Meinicke, Robin Martinjak\n"
-        "License GPLv3+: GNU GPL version 3 or later " /* no line break! */
-        "<http://gnu.org/licenses/gpl.html>\n"
-        "\n"
-        "This is free software; you are free to change and redistribute it.\n"
-        "There is NO WARRANTY, to the extent permitted by law.\n"
-        "\n"
-        "Please send bug reports to " PACKAGE_BUGREPORT "\n",
-        stderr);
-}
 
 void
 print_usage(const char *progname)
@@ -72,15 +47,14 @@ print_usage(const char *progname)
         "uproc database from SOURCEDIR to DESTDIR (which must exist).\n"
         "\n"
         "GENERAL OPTIONS:\n"
-        OPT("-h", "--help      ") "Print this message and exit.\n"
-        OPT("-v", "--version   ") "Print version and exit.\n"
+        OPT("-h", "--help      ", "") "Print this message and exit.\n"
+        OPT("-v", "--version   ", "") "Print version and exit.\n"
 #ifdef EXPORT
-        OPT("-n", "--nocompress") "Don't store using gzip compression\n"
+        OPT("-n", "--nocompress", "") "Don't store using gzip compression\n"
 #endif
         ,
         progname);
 }
-
 
 int
 export_ecurve(const char *dir, const char *name, uproc_io_stream *stream)
@@ -162,7 +136,7 @@ int main(int argc, char **argv)
 #define SHORT_OPTS "hv"
 #endif
 
-#ifdef _GNU_SOURCE
+#if HAVE_GETOPT_LONG
     struct option long_opts[] = {
         { "help",       no_argument,    NULL, 'h' },
         { "version",    no_argument,    NULL, 'v' },
@@ -171,10 +145,10 @@ int main(int argc, char **argv)
 #endif
         { 0, 0, 0, 0 }
     };
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
 #else
-    while ((opt = getopt(argc, argv, SHORT_OPTS)) != -1)
+#define long_opts NULL
 #endif
+    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
     {
         switch (opt) {
             case 'h':

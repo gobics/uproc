@@ -1,17 +1,18 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+#if MAIN_DNA
+#define PROGNAME "uproc-dna"
+#else
+#define PROGNAME "uproc-prot"
+#endif
+#include "uproc_opt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <ctype.h>
-
-#include <unistd.h>
-#ifdef _GNU_SOURCE
-#include <getopt.h>
-#endif
 
 #if _OPENMP
 #include <omp.h>
@@ -160,7 +161,9 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 
 void
 output(struct buffer *buf,
-        uproc_io_stream *pr_stream, size_t pr_seq_offset,
+        uproc_io_stream *pr_stream,
+        struct uproc_idmap *idmap,
+        size_t pr_seq_offset,
         uintmax_t *counts,
         size_t *unexplained,
         size_t *total)
@@ -176,25 +179,28 @@ output(struct buffer *buf,
         }
         for (j = 0; j < buf->results[i].n; j++) {
 #if MAIN_DNA
-            struct uproc_dc_pred *pred = &buf->results[i].preds[j];
-            if (pr_stream) {
-                uproc_io_printf(pr_stream, "%zu,%s,%u,%" UPROC_FAMILY_PRI ",%1.3f\n",
-                        i + pr_seq_offset + 1,
-                        buf->header[i],
-                        pred->frame + 1,
-                        pred->family,
-                        pred->score);
-            }
+                struct uproc_dc_pred *pred = &buf->results[i].preds[j];
 #else
-            struct uproc_pc_pred *pred = &buf->results[i].preds[j];
-            if (pr_stream) {
-                uproc_io_printf(pr_stream, "%zu,%s,%" UPROC_FAMILY_PRI ",%1.3f\n",
-                        i + pr_seq_offset + 1,
-                        buf->header[i],
-                        pred->family,
-                        pred->score);
-            }
+                struct uproc_pc_pred *pred = &buf->results[i].preds[j];
 #endif
+            if (pr_stream) {
+#if MAIN_DNA
+                uproc_io_printf(pr_stream, "%zu,%s,%u,", i + pr_seq_offset + 1,
+                                buf->header[i], pred->frame + 1);
+#else
+                uproc_io_printf(pr_stream, "%zu,%s,", i + pr_seq_offset + 1,
+                                buf->header[i]);
+#endif
+                if (idmap) {
+                    uproc_io_printf(pr_stream, "%s,",
+                                    uproc_idmap_str(idmap, pred->family));
+                }
+                else {
+                    uproc_io_printf(pr_stream, "%" UPROC_FAMILY_PRI ",",
+                                    pred->family);
+                }
+                uproc_io_printf(pr_stream, "%1.3f\n", pred->score);
+            }
             if (counts) {
                 counts[pred->family] += 1;
             }
@@ -223,73 +229,77 @@ print_usage(const char *progname)
     const char *s = "\
 USAGE: %s db_dir model_dir [options] [input_file(s)]\n\
 \n\
-GENERAL OPTIONS:\n\
--h | --help             Print this message and exit.\n\
--v | --version          Print version and exit.\n"
+GENERAL OPTIONS:\n"
+OPT("-h", "--help   ", " ") "\n\
+    Print this message and exit.\n\
+\n"
+OPT("-v", "--version", " ") "\n\
+    Print version and exit.\n\
+\n"
 #if _OPENMP
-"\
--t | --threads <n>      Maximum number of threads to use. This overrides the\n\
-                        environment variable OMP_NUM_THREADS. If neither is\n\
-                        set, the number of available CPU cores is used."
+OPT("-t", "--threads", "N") "\n\
+    Maximum number of threads to use.\n\
+    This overrides the environment variable OMP_NUM_THREADS. If neither is\n\
+    set, the number of available CPU cores is used.\n"
 #endif
 "\n\n\
-OUTPUT OPTIONS:\n\
--p | --preds    Print all classifications as CSV with the fields:\n\
-                    sequence number (starting with 1)\n\
-                    FASTA header up to the first whitespace\n"
+OUTPUT OPTIONS:\n"
+OPT("-p", "--preds", "") "\n\
+    Print all classifications as CSV with the fields:\n\
+        sequence number (starting with 1)\n\
+        FASTA header up to the first whitespace\n"
 #if MAIN_DNA
-"\
-                    frame number (1-6)\n"
+    "\
+        frame number (1-6)\n"
 #endif
-"\
-                    protein family\n\
-                    classificaton score\n\
-\n\
--c | --counts   Print number of classifications for each protein family (if\n\
-                this number is greater than 0) in the format:\n\
-                    \"family: count\"\n\
-\n\
--f | --stats    Print classified,unclassified,total numbers of sequences.\n\
+    "\
+        protein family\n\
+        classificaton score\n\
+\n"
+OPT("-c", "--counts", "") "\n\
+    Print number of classifications for each protein family (if\n\
+    this number is greater than 0) in the format: \"family: count\"\n\n"
+OPT("-f", "--stats", "") "\n\
+    Print \"classified,unclassified,total\" numbers of sequences.\n\
 \n\
 If none of these is specified, -c is used.\n\
 If multiple of these are specified, they are printed in the order as above.\n\
+\n"
+OPT("-n", "--numeric", "") "\n\
+    If used with -p or -c, print the internal numeric representation of\n\
+    the families instead of their names.\n\
 \n\n\
-PROTEIN CLASSIFICATION OPTIONS:\n\
--P | --pthresh <n>      Protein threshold level. Allowed values:\n\
-                            0   fixed threshold of 0.0\n\
-                            2   less restrictive\n\
-                            3   more restrictive\n\
-                        Default is 3.\n\
+PROTEIN CLASSIFICATION OPTIONS:\n"
+OPT("-P", "--pthresh", "N") "\n\
+    Protein threshold level. Allowed values:\n\
+        0   fixed threshold of 0.0\n\
+        2   less restrictive\n\
+        3   more restrictive\n\
+    Default is 3.\n\
 "
 
 #if MAIN_DNA
 "\n\n\
-DNA CLASSIFICATION OPTIONS:\n\
--l | --long             Use long read mode (default):\n\
-                        Only accept certain ORFs (see -O below) and report all\n\
-                        protein scores above the threshold (see -P above).\n\
-\n\
--s | --short            Use short read mode:\n\
-                        Accept all ORFS, report only maximum protein score (if\n\
-                        above threshold).\n\
-\n\
--O | --othresh <n>      ORF translation threshold level (only relevant in long\n\
-                        read mode. Allowed values:\n\
-                            0   accept all ORFs\n\
-                            1   less restrictive\n\
-                            2   more restrictive\n\
-                        Default is 2.\n\
+DNA CLASSIFICATION OPTIONS:\n"
+OPT("-l", "--long", " ") "\n\
+    Use long read mode (default):\n\
+    Only accept certain ORFs (see -O below) and report all protein scores above\n\
+    the threshold (see -P above).\n\
+\n"
+OPT("-s", "--short", " ") "\n\
+    Use short read mode:\n\
+    Accept all ORFS, report only maximum protein score (if above threshold).\n\
+\n"
+OPT("-O", "--othresh", "N") "\n\
+    ORF translation threshold level (only relevant in long read mode. Allowed values:\n\
+        0   accept all ORFs\n\
+        1   less restrictive\n\
+        2   more restrictive\n\
+    Default is 2.\n\
 "
 #endif
 ;
     fprintf(stderr, s, progname);
-}
-
-void
-print_version(const char *progname)
-{
-    (void) progname;
-    fprintf(stderr, "%s version 0.0\n", "uproc-beta");
 }
 
 enum args
@@ -318,6 +328,8 @@ main(int argc, char **argv)
     bool error = false, more_input;
 
     struct uproc_ecurve fwd, rev;
+    struct uproc_idmap idmap;
+    bool use_idmap = true;
     struct uproc_substmat substmat;
 
     struct uproc_protclass protclass;
@@ -348,20 +360,21 @@ main(int argc, char **argv)
     size_t unexplained = 0, *out_unexplained = NULL;
     uintmax_t counts[UPROC_FAMILY_MAX] = { 0 }, *out_counts = NULL;
 
-#define SHORT_OPTS_PROT "hvpcfP:t:"
+#define SHORT_OPTS_PROT "hvpcfnP:t:"
 #if MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "slO:"
 #else
 #define SHORT_OPTS SHORT_OPTS_PROT
 #endif
 
-#ifdef _GNU_SOURCE
+#if HAVE_GETOPT_LONG
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
         { "preds",      no_argument,        NULL, 'p' },
         { "counts",     no_argument,        NULL, 'c' },
         { "stats",      no_argument,        NULL, 'f' },
+        { "numeric",    no_argument,        NULL, 'n' },
         { "pthresh",    required_argument,  NULL, 'P' },
         { "threads",    required_argument,  NULL, 't' },
 #if MAIN_DNA
@@ -371,18 +384,18 @@ main(int argc, char **argv)
 #endif
         { 0, 0, 0, 0 }
     };
+#else
+#define long_opts NULL
+#endif
 
     while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-#else
-    while ((opt = getopt(argc, argv, SHORT_OPTS)) != -1)
-#endif
     {
         switch (opt) {
             case 'h':
                 print_usage(argv[0]);
                 return EXIT_SUCCESS;
             case 'v':
-                print_version(argv[0]);
+                print_version();
                 return EXIT_SUCCESS;
             case 'p':
                 out_stream = uproc_stdout;
@@ -392,6 +405,9 @@ main(int argc, char **argv)
                 break;
             case 'f':
                 out_unexplained = &unexplained;
+                break;
+            case 'n':
+                use_idmap = false;
                 break;
             case 'P':
                 {
@@ -470,15 +486,26 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if (use_idmap) {
+        res = uproc_idmap_load(&idmap, UPROC_IO_GZIP,
+                               "%s/idmap", argv[optind + DBDIR]);
+        if (res != UPROC_SUCCESS) {
+            fprintf(stderr, "failed to load idmap\n");
+            return EXIT_FAILURE;
+        }
+    }
+
     res = uproc_matrix_load(&prot_thresholds, UPROC_IO_GZIP,
-                           "%s/prot_thresh_e%d", argv[optind + DBDIR], prot_thresh_num);
+                            "%s/prot_thresh_e%d", argv[optind + DBDIR],
+                            prot_thresh_num);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load protein thresholds\n");
         return EXIT_FAILURE;
     }
 
     const char *model_dir = argv[optind + MODELDIR];
-    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat", model_dir);
+    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
+                              model_dir);
     if (res != UPROC_SUCCESS) {
         fprintf(stderr, "failed to load protein thresholds\n");
         return EXIT_FAILURE;
@@ -571,8 +598,9 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         if (i_chunk) {
-                            output(out, out_stream, (i_chunk - 1) * chunk_size,
-                                   out_counts, out_unexplained, &n_seqs);
+                            output(out, out_stream, use_idmap ? &idmap : NULL,
+                                   (i_chunk - 1) * chunk_size, out_counts,
+                                   out_unexplained, &n_seqs);
                         }
                     }
                 }
@@ -602,13 +630,15 @@ main(int argc, char **argv)
         uproc_io_printf(uproc_stdout, "%zu,", unexplained);
         uproc_io_printf(uproc_stdout, "%zu\n", n_seqs);
     }
-    if (out_counts) {
-        for (uproc_family i = 0; i < UPROC_FAMILY_MAX; i++) {
-            if (out_counts[i]) {
-                uproc_io_printf(uproc_stdout, "%" UPROC_FAMILY_PRI ": %ju\n",
-                        i, out_counts[i]);
+    for (uproc_family i = 0; out_counts && i < UPROC_FAMILY_MAX; i++) {
+        if (out_counts[i]) {
+            if (use_idmap) {
+                uproc_io_printf(uproc_stdout, "%s", uproc_idmap_str(&idmap, i));
             }
-
+            else {
+                uproc_io_printf(uproc_stdout, "%" UPROC_FAMILY_PRI, i);
+            }
+            uproc_io_printf(uproc_stdout, ": %ju\n", out_counts[i]);
         }
     }
 
