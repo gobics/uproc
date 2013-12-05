@@ -1,6 +1,7 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #if MAIN_DNA
 #define PROGNAME "uproc-dna"
 #else
@@ -18,8 +19,7 @@
 #include <omp.h>
 #endif
 
-#include "uproc.h"
-
+#include <uproc.h>
 
 #define MAX_CHUNK_SIZE (1 << 10)
 
@@ -65,8 +65,8 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
 }
 
 int
-input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd, struct buffer *buf,
-           size_t chunk_size)
+input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
+           struct buffer *buf, size_t chunk_size)
 {
     int res = UPROC_SUCCESS;
     size_t i;
@@ -117,7 +117,7 @@ input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd, struct buffer
 
 bool
 prot_filter(const char *seq, size_t len, uproc_family family, double score,
-        void *opaque)
+            void *opaque)
 {
     static size_t rows, cols;
     struct uproc_matrix *thresh = opaque;
@@ -136,7 +136,7 @@ prot_filter(const char *seq, size_t len, uproc_family family, double score,
 
 bool
 orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
-        double seq_gc, void *opaque)
+           double seq_gc, void *opaque)
 {
     size_t r, c, rows, cols;
     struct uproc_matrix *thresh = opaque;
@@ -160,13 +160,9 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 }
 
 void
-output(struct buffer *buf,
-       size_t pr_seq_offset,
-       size_t *n_seqs,
-       struct uproc_idmap *idmap,
-       uproc_io_stream *pr_stream,
-       uintmax_t *counts,
-       size_t *unexplained)
+output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
+       struct uproc_idmap *idmap, uproc_io_stream *pr_stream,
+       uintmax_t *counts, size_t *unexplained)
 {
     size_t i, j;
     *n_seqs += buf->n;
@@ -221,7 +217,6 @@ get_chunk_size(void)
     }
     return MAX_CHUNK_SIZE;
 }
-
 
 void
 print_usage(const char *progname)
@@ -298,15 +293,16 @@ OPT("-P", "--pthresh", "N") "\n\
 DNA CLASSIFICATION OPTIONS:\n"
 OPT("-l", "--long", " ") "\n\
     Use long read mode (default):\n\
-    Only accept certain ORFs (see -O below) and report all protein scores above\n\
-    the threshold (see -P above).\n\
+    Only accept certain ORFs (see -O below) and report all protein scores\n\
+    above the threshold (see -P above).\n\
 \n"
 OPT("-s", "--short", " ") "\n\
     Use short read mode:\n\
     Accept all ORFS, report only maximum protein score (if above threshold).\n\
 \n"
 OPT("-O", "--othresh", "N") "\n\
-    ORF translation threshold level (only relevant in long read mode. Allowed values:\n\
+    ORF translation threshold level (only relevant in long read mode).\n\
+    Allowed values:\n\
         0   accept all ORFs\n\
         1   less restrictive\n\
         2   more restrictive\n\
@@ -440,7 +436,8 @@ main(int argc, char **argv)
                     int tmp = 42;
                     (void) parse_int(optarg, &tmp);
                     if (tmp != 0 && tmp != 2 && tmp != 3) {
-                        fprintf(stderr, "protein threshold must be either 0, 2 or 3\n");
+                        fprintf(
+                            stderr, "protein threshold must be 0, 2 or 3\n");
                         return EXIT_FAILURE;
                     }
                     if (tmp == 0) {
@@ -457,7 +454,7 @@ main(int argc, char **argv)
                     int res, tmp;
                     res = parse_int(optarg, &tmp);
                     if (res != UPROC_SUCCESS || tmp <= 0) {
-                        fprintf(stderr, "-t argument must be a positive integer\n");
+                        fprintf(stderr, "-t requires a positive integer\n");
                         return EXIT_FAILURE;
                     }
                     omp_set_num_threads(tmp);
@@ -476,7 +473,7 @@ main(int argc, char **argv)
                     int tmp = 42;
                     (void) parse_int(optarg, &tmp);
                     if (tmp != 0 && tmp != 1 && tmp != 2) {
-                        fprintf(stderr, "-O argument must be either 0, 1 or 2\n");
+                        fprintf(stderr, "-O argument must be 0, 1 or 2\n");
                         return EXIT_FAILURE;
                     }
                     orf_thresh_num = tmp;
@@ -547,23 +544,28 @@ main(int argc, char **argv)
         dc_mode = UPROC_DC_ALL;
     }
     if (!short_read_mode && orf_thresh_num != 0) {
-        res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP, "%s/orf_thresh_e%d", model_dir, orf_thresh_num);
+        res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP,
+                                "%s/orf_thresh_e%d", model_dir,
+                                orf_thresh_num);
         if (res != UPROC_SUCCESS) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
-        res = uproc_matrix_load(&codon_scores, UPROC_IO_GZIP, "%s/codon_scores", model_dir);
+        res = uproc_matrix_load(&codon_scores, UPROC_IO_GZIP,
+                                "%s/codon_scores", model_dir);
         if (res != UPROC_SUCCESS) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
-        uproc_dc_init(&dnaclass, dc_mode, &protclass, &codon_scores, orf_filter, &orf_thresholds);
+        uproc_dc_init(&dnaclass, dc_mode, &protclass, &codon_scores,
+                      orf_filter, &orf_thresholds);
     }
     else {
         uproc_dc_init(&dnaclass, dc_mode, &protclass, NULL, orf_filter, NULL);
     }
 #endif
-    uproc_pc_init(&protclass, pc_mode, &fwd, &rev, &substmat, prot_filter, prot_filter_arg);
+    uproc_pc_init(&protclass, pc_mode, &fwd, &rev, &substmat, prot_filter,
+                  prot_filter_arg);
 
 
     /* use stdin if no input file specified */
@@ -595,9 +597,11 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < out->n; i++) {
 #if MAIN_DNA
-                    res = uproc_dc_classify(&dnaclass, out->seq[i], &out->results[i]);
+                    res = uproc_dc_classify(&dnaclass, out->seq[i],
+                                            &out->results[i]);
 #else
-                    res = uproc_pc_classify(&protclass, out->seq[i], &out->results[i]);
+                    res = uproc_pc_classify(&protclass, out->seq[i],
+                                            &out->results[i]);
 #endif
                     if (res < 0) {
                         uproc_perror("error");
