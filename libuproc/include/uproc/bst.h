@@ -61,7 +61,7 @@ enum
 /** Binary search tree */
 struct uproc_bst {
     /** The root node (the type is defined in the implementation) */
-    struct uproc_bst_node *root;
+    struct uproc_bstnode *root;
 
     /** Number of nodes */
     size_t size;
@@ -81,7 +81,7 @@ struct uproc_bstiter
     const struct uproc_bst *t;
 
     /** Current position */
-    struct uproc_bst_node *cur;
+    struct uproc_bstnode *cur;
 };
 
 /** Callback function type for uproc_bst_walk */
