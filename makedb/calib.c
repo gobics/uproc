@@ -213,8 +213,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     struct uproc_substmat substmat;
     struct uproc_ecurve fwd, rev;
     double thresh2[POW_DIFF + 1],
-           thresh3[POW_DIFF + 1],
-           thresh4[POW_DIFF + 1];
+           thresh3[POW_DIFF + 1];
 
     res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
                               modeldir);
@@ -292,8 +291,6 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                     all_preds_n - 1)];
             thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000,
                     all_preds_n - 1)];
-            thresh4[power - POW_MIN] = all_preds[MIN(seq_count / 10000,
-                    all_preds_n - 1)];
             free(all_preds);
             free(results.preds);
 #pragma omp critical
@@ -309,9 +306,5 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
         return res;
     }
     res = store_interpolated(thresh3, dbdir, "prot_thresh_e3");
-    if (res) {
-        return res;
-    }
-    res = store_interpolated(thresh4, dbdir, "prot_thresh_e4");
     return res;
 }
