@@ -38,13 +38,13 @@ print_usage(const char *progname)
         stderr,
         PROGNAME ", version " PACKAGE_VERSION "\n"
         "\n"
-        "USAGE: %s [options] SOURCEDIR DESTDIR\n"
 #ifdef EXPORT
-        "Export "
+        "USAGE: %s [options] SOURCEDIR DEST\n"
+        "Export database from SOURCEDIR to DEST.\n"
 #else
-        "Import "
+        "USAGE: %s [options] SOURCE DESTDIR\n"
+        "Import database from SOURCE to DESTDIR (which must exist).\n"
 #endif
-        "uproc database from SOURCEDIR to DESTDIR (which must exist).\n"
         "\n"
         "GENERAL OPTIONS:\n"
         OPT("-h", "--help      ", "") "Print this message and exit.\n"
