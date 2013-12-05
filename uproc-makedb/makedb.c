@@ -5,9 +5,9 @@
 #if HAVE_GETOPT_LONG
 #define _GNU_SOURCE
 #include <getopt.h>
-#define OPT(shortopt, longopt) shortopt ", " longopt "    "
+#define OPT(shortopt, longopt, arg) shortopt " " arg "  " longopt " " arg "    "
 #else
-#define OPT(shortopt, longopt) shortopt "    "
+#define OPT(shortopt, longopt, arg) shortopt " " arg "    "
 #endif
 #include <unistd.h>
 
@@ -40,21 +40,16 @@ print_usage(const char *progname)
         stderr,
         PROGNAME ", version " PACKAGE_VERSION "\n"
         "\n"
-        "USAGE: %s [options] SOURCEDIR DESTDIR\n"
-#ifdef EXPORT
-        "Export "
-#else
-        "Import "
-#endif
-        "uproc database from SOURCEDIR to DESTDIR (which must exist).\n"
+        "USAGE: %s [options] MODELDIR SOURCEFILE DESTDIR\n"
+        "Build uproc database from the model in MODELDIR and a fasta SOURCEFILE\n"
+        "and store it in DESTDIR (which must exist).\n"
         "\n"
         "GENERAL OPTIONS:\n"
-        OPT("-h", "--help      ") "Print this message and exit.\n"
-        OPT("-v", "--version   ") "Print version and exit.\n"
-#ifdef EXPORT
-        OPT("-n", "--nocompress") "Don't store using gzip compression\n"
-#endif
-        ,
+        OPT("-h", "--help    ", "     ") "Print this message and exit.\n"
+        OPT("-v", "--version ", "     ") "Print version and exit.\n"
+        OPT("-c", "--calib   ", "     ") "Only re-calibrate existing DB.\n"
+        OPT("-a", "--alphabet", "ALPHA") "Use alphabet ALPHA instead of \""
+            ALPHA_DEFAULT "\"\n",
         progname);
 }
 
@@ -67,6 +62,7 @@ main(int argc, char **argv)
          *modeldir,
          *infile,
          *outdir;
+    bool calib_only = false;
 
     int opt;
     enum args
@@ -75,12 +71,13 @@ main(int argc, char **argv)
         ARGC
     };
 
-#define SHORT_OPTS "hva:"
+#define SHORT_OPTS "hvca:"
 
 #ifdef _GNU_SOURCE
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
+        { "calib",      no_argument,        NULL, 'c' },
         { "alphabet",   no_argument,        NULL, 'a' },
         { 0, 0, 0, 0 }
     };
@@ -97,6 +94,9 @@ main(int argc, char **argv)
             case 'v':
                 print_version();
                 return EXIT_SUCCESS;
+            case 'c':
+                calib_only = true;
+                break;
             case 'a':
                 alphabet = optarg;
                 break;
@@ -112,18 +112,20 @@ main(int argc, char **argv)
     infile = argv[optind + INFILE];
     outdir = argv[optind + OUTDIR];
 
-    res = build_ecurves(infile, outdir, alphabet, &idmap);
-    if (res) {
-        return EXIT_FAILURE;
+    if (!calib_only) {
+        res = build_ecurves(infile, outdir, alphabet, &idmap);
+        if (res) {
+            return EXIT_FAILURE;
+        }
+
+        res = uproc_idmap_store(&idmap, UPROC_IO_GZIP, "%s/idmap", outdir);
+        if (res) {
+            uproc_perror("error storing idmap");
+            return EXIT_FAILURE;
+        }
     }
 
-    res = uproc_idmap_store(&idmap, UPROC_IO_GZIP, "%s/idmap", outdir);
-    if (res) {
-        uproc_perror("error storing idmap");
-        return EXIT_FAILURE;
-    }
-
-    res = calib(outdir, modeldir);
+    res = calib(alphabet, outdir, modeldir);
     if (res) {
         return EXIT_FAILURE;
     }

@@ -8,7 +8,7 @@ int build_ecurves(const char *infile, const char *outdir, const char *alphabet,
                   struct uproc_idmap *idmap);
 
 /* from calib.c */
-int calib(char *dbdir, char *modeldir);
+int calib(const char *alphabet, const char *dbdir, const char *modeldir);
 
 /* from progress.c */
 void progress(const char *label, double percent);

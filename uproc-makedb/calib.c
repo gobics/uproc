@@ -4,8 +4,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
+
+#if _OPENMP
+#include <omp.h>
+#endif
 
 #include <uproc.h>
 #include "makedb.h"
@@ -188,14 +193,28 @@ store_interpolated(double thresh[static POW_DIFF + 1],
                               name);
 }
 
-int calib(char *dbdir, char *modeldir)
+static bool
+prot_filter(const char *seq, size_t len, uproc_family family, double score,
+            void *opaque)
+{
+    (void) seq;
+    (void) len;
+    (void) family;
+    (void) opaque;
+    return true;
+    return score > 0.0;
+}
+
+int calib(const char *alphabet, const char *dbdir, const char *modeldir)
 {
     int res;
     struct uproc_alphabet alpha;
     struct uproc_matrix aa_probs;
     struct uproc_substmat substmat;
     struct uproc_ecurve fwd, rev;
-    double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
+    double thresh2[POW_DIFF + 1],
+           thresh3[POW_DIFF + 1],
+           thresh4[POW_DIFF + 1];
 
     res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
                               modeldir);
@@ -207,7 +226,12 @@ int calib(char *dbdir, char *modeldir)
     /* the string used to initialize alpha must match the one used to build
      * aa_probs
      */
-    uproc_alphabet_init(&alpha, "ARNDCQEGHILKMFPSTWYV");
+    res = uproc_alphabet_init(&alpha, alphabet);
+    if (res) {
+        uproc_perror("invalid alphabet string");
+        return res;
+    }
+
     res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs", modeldir);
     if (res) {
         uproc_perror("error loading aa_probs");
@@ -227,6 +251,9 @@ int calib(char *dbdir, char *modeldir)
         return res;
     }
 
+#if _OPENMP
+    omp_set_num_threads(POW_MAX - POW_MIN + 1);
+#endif
     double perc = 0.0;
     progress("calibrating", perc);
 #pragma omp parallel private(res) shared(fwd, rev, substmat, alpha, aa_probs, perc)
@@ -234,19 +261,19 @@ int calib(char *dbdir, char *modeldir)
 
 #pragma omp for
         for (unsigned power = POW_MIN; power <= POW_MAX; power++) {
-        char seq[LEN_MAX + 1];
+            char seq[LEN_MAX + 1];
 
-        size_t all_preds_n, all_preds_sz;
-        double *all_preds = NULL;
+            size_t all_preds_n = 0, all_preds_sz = 0;
+            double *all_preds = NULL;
 
-        unsigned long i, seq_count;
-        size_t seq_len;
+            unsigned long i, seq_count;
+            size_t seq_len;
             struct uproc_protclass pc;
             struct uproc_pc_results results;
             results.preds = NULL;
             results.n = results.sz = 0;
             uproc_pc_init(&pc, UPROC_PC_ALL, &fwd, &rev, &substmat,
-                          NULL, NULL);
+                          prot_filter, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;
@@ -256,15 +283,17 @@ int calib(char *dbdir, char *modeldir)
                 randseq(seq, seq_len, &alpha, &aa_probs);
                 uproc_pc_classify(&pc, seq, &results);
                 append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
-                       results.n);
+                        results.n);
             }
             qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
             thresh2[power - POW_MIN] = all_preds[MIN(seq_count / 100,
-                                                     all_preds_n - 1)];
+                    all_preds_n - 1)];
             thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000,
-                                                     all_preds_n - 1)];
+                    all_preds_n - 1)];
+            thresh4[power - POW_MIN] = all_preds[MIN(seq_count / 10000,
+                    all_preds_n - 1)];
             free(all_preds);
             free(results.preds);
 #pragma omp critical
@@ -280,5 +309,9 @@ int calib(char *dbdir, char *modeldir)
         return res;
     }
     res = store_interpolated(thresh3, dbdir, "prot_thresh_e3");
+    if (res) {
+        return res;
+    }
+    res = store_interpolated(thresh4, dbdir, "prot_thresh_e4");
     return res;
 }
