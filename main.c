@@ -55,20 +55,20 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
     if (len > *dest_sz) {
         char *tmp = realloc(*dest, len);
         if (!tmp) {
-            return UPROC_FAILURE;
+            return -1;
         }
         *dest = tmp;
         *dest_sz = len;
     }
     memcpy(*dest, src, len);
-    return UPROC_SUCCESS;
+    return 0;
 }
 
 int
 input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
            struct buffer *buf, size_t chunk_size)
 {
-    int res = UPROC_SUCCESS;
+    int res = 0;
     size_t i;
 
     for (i = 0; i < chunk_size; i++) {
@@ -325,10 +325,10 @@ parse_int(const char *arg, int *x)
     char *end;
     int tmp = strtol(arg, &end, 10);
     if (!*arg || *end) {
-        return UPROC_FAILURE;
+        return -1;
     }
     *x = tmp;
-    return UPROC_SUCCESS;
+    return 0;
 }
 
 int
@@ -453,7 +453,7 @@ main(int argc, char **argv)
                 {
                     int res, tmp;
                     res = parse_int(optarg, &tmp);
-                    if (res != UPROC_SUCCESS || tmp <= 0) {
+                    if (res || tmp <= 0) {
                         fprintf(stderr, "-t requires a positive integer\n");
                         return EXIT_FAILURE;
                     }
@@ -497,14 +497,16 @@ main(int argc, char **argv)
 
     res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/fwd.ecurve", argv[optind + DBDIR]);
-    if (res != UPROC_SUCCESS) {
+    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                             "%s/fwd.ecurve", argv[optind + DBDIR]);
+    if (res) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
     res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/rev.ecurve", argv[optind + DBDIR]);
-    if (res != UPROC_SUCCESS) {
+    if (res) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;
     }
@@ -512,7 +514,7 @@ main(int argc, char **argv)
     if (use_idmap) {
         res = uproc_idmap_load(&idmap, UPROC_IO_GZIP,
                                "%s/idmap", argv[optind + DBDIR]);
-        if (res != UPROC_SUCCESS) {
+        if (res) {
             fprintf(stderr, "failed to load idmap\n");
             return EXIT_FAILURE;
         }
@@ -521,7 +523,7 @@ main(int argc, char **argv)
     res = uproc_matrix_load(&prot_thresholds, UPROC_IO_GZIP,
                             "%s/prot_thresh_e%d", argv[optind + DBDIR],
                             prot_thresh_num);
-    if (res != UPROC_SUCCESS) {
+    if (res) {
         fprintf(stderr, "failed to load protein thresholds\n");
         return EXIT_FAILURE;
     }
@@ -529,7 +531,7 @@ main(int argc, char **argv)
     const char *model_dir = argv[optind + MODELDIR];
     res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
                               model_dir);
-    if (res != UPROC_SUCCESS) {
+    if (res) {
         fprintf(stderr, "failed to load protein thresholds\n");
         return EXIT_FAILURE;
     }
@@ -547,13 +549,13 @@ main(int argc, char **argv)
         res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP,
                                 "%s/orf_thresh_e%d", model_dir,
                                 orf_thresh_num);
-        if (res != UPROC_SUCCESS) {
+        if (res) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
         res = uproc_matrix_load(&codon_scores, UPROC_IO_GZIP,
                                 "%s/codon_scores", model_dir);
-        if (res != UPROC_SUCCESS) {
+        if (res) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
