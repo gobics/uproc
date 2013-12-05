@@ -1,4 +1,4 @@
-SUBDIRS = libuproc uproc-makedb
+SUBDIRS = libuproc makedb
 
 bin_PROGRAMS = uproc-dna uproc-prot uproc-orf uproc-import uproc-export
 
