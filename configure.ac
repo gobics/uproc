@@ -10,7 +10,6 @@ AC_CONFIG_HEADER([config.h])
 # Checks for programs.
 AC_PROG_CC_C99
 AC_PROG_INSTALL
-AC_PROG_RANLIB
 AM_PROG_CC_C_O
 
 # Needed for %zu in printf/sscanf when compiling for Windows
