@@ -20,6 +20,7 @@ libuproc_la_SOURCES = alphabet.c \
 					storage.c \
 					substmat.c \
 					word.c
+libuproc_la_LDFLAGS = -no-undefined
 
 BUILT_SOURCES = codon_tables.h
 
