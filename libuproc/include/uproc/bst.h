@@ -28,18 +28,33 @@
 #include "uproc/common.h"
 #include "uproc/word.h"
 
-union uproc_bst_key {
+/** Key type */
+union uproc_bst_key
+{
+    /** uintmax_t */
     uintmax_t uint;
+
+    /** struct uproc_word */
     struct uproc_word word;
 };
 
-enum uproc_bst_keytype {
+/** Which member of union uproc_bst_key is used */
+enum uproc_bst_keytype
+{
+    /** uintmax_t */
     UPROC_BST_UINT,
+
+    /** struct uproc_word */
     UPROC_BST_WORD,
 };
 
-enum uproc_bst_return {
+/** BST specific return codes */
+enum
+{
+    /** BST doesn't contain an item with the given key */
     UPROC_BST_KEY_NOT_FOUND = -404,
+
+    /** BST already contains an item with the given key */
     UPROC_BST_KEY_EXISTS = -403,
 };
 
@@ -58,13 +73,21 @@ struct uproc_bst {
     size_t value_size;
 };
 
+
+/** BST iterator */
 struct uproc_bstiter
 {
+    /** BST being iterated */
     const struct uproc_bst *t;
+
+    /** Current position */
     struct uproc_bst_node *cur;
 };
 
+/** Callback function type for uproc_bst_walk */
 typedef int (*uproc_bst_cb_walk)(union uproc_bst_key, const void*, void*);
+
+/** Callback function type for uproc_bst_remove and uproc_bst_clear */
 typedef int (*uproc_bst_cb_remove)(const void*);
 
 /** Initialize an empty binary search tree
@@ -74,7 +97,7 @@ typedef int (*uproc_bst_cb_remove)(const void*);
  * \param value_size    size of the stored values
  */
 void uproc_bst_init(struct uproc_bst *t, enum uproc_bst_keytype key_type,
-        size_t data_size);
+                    size_t value_size);
 
 /** Remove all nodes from tree; leaves an empty tree
  *
@@ -95,7 +118,7 @@ size_t uproc_bst_size(const struct uproc_bst *t);
  *
  * \param t     bst instance
  * \param key   search key
- * \param value pointer to data to be stored
+ * \param value pointer to value to be stored
  *
  * \retval #UPROC_SUCCESS  item was inserted
  * \retval #UPROC_EEXIST   `key` is already present
@@ -111,19 +134,19 @@ int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key,
  *
  * \param t     bst instance
  * \param key   search key
- * \param value pointer to data to be stored
+ * \param value pointer to value to be stored
  *
  * \retval #UPROC_SUCCESS  item was inserted/updated
  * \retval #UPROC_ENOMEM   memory allocation failed
  */
 int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key,
-                     const void *data);
+                     const void *value);
 
 /** Get item
  *
  * \param t     bst instance
  * \param key   search key
- * \param value _OUT_: data associated with `key`
+ * \param value _OUT_: value associated with `key`
  *
  * \retval #UPROC_SUCCESS  an item for `key` was found and stored in `*value`
  * \retval #UPROC_ENOENT   no item found, `*value` remains unchanged
