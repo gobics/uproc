@@ -135,27 +135,6 @@ scores_add(struct uproc_bst *scores, uproc_family family, size_t index,
     return uproc_bst_update(scores, key, &sc);
 }
 
-static void
-align_suffixes(double dist[static UPROC_SUFFIX_LEN], uproc_suffix s1,
-               uproc_suffix s2, const struct uproc_substmat *substmat)
-{
-    size_t i, idx;
-    uproc_amino a1, a2;
-    for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
-        a1 = s1 & UPROC_BITMASK(UPROC_AMINO_BITS);
-        a2 = s2 & UPROC_BITMASK(UPROC_AMINO_BITS);
-        s1 >>= UPROC_AMINO_BITS;
-        s2 >>= UPROC_AMINO_BITS;
-        idx = UPROC_SUFFIX_LEN - i - 1;
-        if (substmat) {
-            dist[idx] = uproc_substmat_get(substmat, idx, a1, a2);
-        }
-        else {
-            dist[idx] = a1 == a2 ? 1.0 : 0.0;
-        }
-    }
-}
-
 static int
 scores_add_word(struct uproc_bst *scores, const struct uproc_word *word,
                 size_t index, bool reverse, const struct uproc_ecurve *ecurve,
@@ -173,12 +152,14 @@ scores_add_word(struct uproc_bst *scores, const struct uproc_word *word,
     }
     uproc_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb,
                         &upper_family);
-    align_suffixes(dist, word->suffix, lower_nb.suffix, substmat);
+    uproc_substmat_align_suffixes(substmat, word->suffix, lower_nb.suffix,
+                                  dist);
     res = scores_add(scores, lower_family, index, dist, reverse);
     if (res || uproc_word_equal(&lower_nb, &upper_nb)) {
         return res;
     }
-    align_suffixes(dist, word->suffix, upper_nb.suffix, substmat);
+    uproc_substmat_align_suffixes(substmat, word->suffix, upper_nb.suffix,
+                                  dist);
     res = scores_add(scores, upper_family, index, dist, reverse);
     return res;
 }

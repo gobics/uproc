@@ -80,6 +80,17 @@ double uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos,
 void uproc_substmat_set(struct uproc_substmat *mat, unsigned pos,
                         uproc_amino x, uproc_amino y, double dist);
 
+/** Look up distances between amino acids of a suffix
+ *
+ * \param mat   substitution matrix
+ * \param s1    first suffix
+ * \param s2    second suffix
+ * \param dist  _OUT_: array containing distance of each amino acid pair
+ */
+void uproc_substmat_align_suffixes(const struct uproc_substmat *mat,
+                                   uproc_suffix s1, uproc_suffix s2,
+                                   double dist[static UPROC_SUFFIX_LEN]);
+
 /** Load substition matrix from a file.
  *
  * \param mat   pointer to the first of `n` distance matrices

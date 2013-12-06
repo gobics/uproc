@@ -56,6 +56,23 @@ uproc_substmat_set(struct uproc_substmat *mat, unsigned pos, uproc_amino x,
     mat->dists[pos][UPROC_DISTMAT_INDEX(x, y)] = dist;
 }
 
+void
+uproc_substmat_align_suffixes(const struct uproc_substmat *mat,
+                              uproc_suffix s1, uproc_suffix s2,
+                              double dist[static UPROC_SUFFIX_LEN])
+{
+    size_t i, idx;
+    uproc_amino a1, a2;
+    for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
+        a1 = s1 & UPROC_BITMASK(UPROC_AMINO_BITS);
+        a2 = s2 & UPROC_BITMASK(UPROC_AMINO_BITS);
+        s1 >>= UPROC_AMINO_BITS;
+        s2 >>= UPROC_AMINO_BITS;
+        idx = UPROC_SUFFIX_LEN - i - 1;
+        dist[idx] = uproc_substmat_get(mat, idx, a1, a2);
+    }
+}
+
 int
 uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
                      const char *pathfmt, va_list ap)
