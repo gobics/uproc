@@ -17,6 +17,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static void
 print_version(void)
@@ -32,6 +33,18 @@ print_version(void)
         "\n"
         "Please send bug reports to " PACKAGE_BUGREPORT "\n",
         stderr);
+}
+
+static int
+parse_int(const char *arg, int *x)
+{
+    char *end;
+    int tmp = strtol(arg, &end, 10);
+    if (!*arg || *end) {
+        return -1;
+    }
+    *x = tmp;
+    return 0;
 }
 
 #endif

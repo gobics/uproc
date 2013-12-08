@@ -320,18 +320,6 @@ enum args
 };
 
 int
-parse_int(const char *arg, int *x)
-{
-    char *end;
-    int tmp = strtol(arg, &end, 10);
-    if (!*arg || *end) {
-        return -1;
-    }
-    *x = tmp;
-    return 0;
-}
-
-int
 main(int argc, char **argv)
 {
     int res;
