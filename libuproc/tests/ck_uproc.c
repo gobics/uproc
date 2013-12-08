@@ -4,6 +4,7 @@
 
 Suite *common_suite(void);
 Suite *alphabet_suite(void);
+Suite *idmap_suite(void);
 
 int main(void)
 {
