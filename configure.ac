@@ -6,6 +6,7 @@ LT_PREREQ([2.2])
 # Build libuproc statically by default
 LT_INIT([disable-shared])
 
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([libuproc/ecurve.c])
 AC_CONFIG_HEADER([config.h])
 

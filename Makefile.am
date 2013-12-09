@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = libuproc makedb
 
 bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf
