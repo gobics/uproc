@@ -27,38 +27,30 @@
 #include "uproc/common.h"
 #include "uproc/io.h"
 
-#define UPROC_IDMAP_MAXLEN 64
+typedef struct uproc_idmap_s uproc_idmap;
 
-struct uproc_idmap
-{
-    uproc_family n;
-    char *s[UPROC_FAMILY_MAX];
-};
+uproc_idmap *uproc_idmap_create(void);
 
-#define UPROC_IDMAP_INITIALIZER { 0, { NULL } }
+void uproc_idmap_destroy(uproc_idmap *map);
 
-int uproc_idmap_init(struct uproc_idmap *map);
+uproc_family uproc_idmap_family(uproc_idmap *map, const char *s);
 
-void uproc_idmap_destroy(struct uproc_idmap *map);
+const char *uproc_idmap_str(const uproc_idmap *map, uproc_family family);
 
-uproc_family uproc_idmap_family(struct uproc_idmap *map, const char *s);
+uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);
 
-const char *uproc_idmap_str(const struct uproc_idmap *map, uproc_family family);
-
-int uproc_idmap_loads(struct uproc_idmap *map, uproc_io_stream *stream);
-
-int uproc_idmap_loadv(struct uproc_idmap *map, enum uproc_io_type iotype,
+uproc_idmap *uproc_idmap_loadv(enum uproc_io_type iotype,
                       const char *pathfmt, va_list ap);
 
-int uproc_idmap_load(struct uproc_idmap *map, enum uproc_io_type iotype,
+uproc_idmap *uproc_idmap_load(enum uproc_io_type iotype,
                      const char *pathfmt, ...);
 
-int uproc_idmap_stores(const struct uproc_idmap *map, uproc_io_stream *stream);
+int uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream);
 
 
-int uproc_idmap_storev(const struct uproc_idmap *map, enum uproc_io_type iotype,
+int uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
                        const char *pathfmt, va_list ap);
 
-int uproc_idmap_store(const struct uproc_idmap *map, enum uproc_io_type iotype,
+int uproc_idmap_store(const uproc_idmap *map, enum uproc_io_type iotype,
                       const char *pathfmt, ...);
 #endif

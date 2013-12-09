@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include -I$(top_srcdir) -I$(top_srcdir)/libuproc
 LDADD = $(top_builddir)/libuproc/libuproc.la
 
 bin_PROGRAMS = uproc-makedb

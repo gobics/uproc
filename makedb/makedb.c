@@ -71,7 +71,6 @@ int
 main(int argc, char **argv)
 {
     int res;
-    struct uproc_idmap idmap = UPROC_IDMAP_INITIALIZER;
     char alphabet[UPROC_ALPHABET_SIZE + 1],
          *modeldir,
          *infile,
@@ -129,13 +128,19 @@ main(int argc, char **argv)
     }
 
     if (!calib_only) {
-        res = build_ecurves(infile, outdir, alphabet, &idmap);
+        uproc_idmap *idmap = uproc_idmap_create();
+        if (!idmap) {
+            uproc_perror("");
+            return EXIT_FAILURE;
+        }
+        res = build_ecurves(infile, outdir, alphabet, idmap);
         if (res) {
             uproc_perror("error building ecurves");
             return EXIT_FAILURE;
         }
 
-        res = uproc_idmap_store(&idmap, UPROC_IO_GZIP, "%s/idmap", outdir);
+        res = uproc_idmap_store(idmap, UPROC_IO_GZIP, "%s/idmap", outdir);
+        uproc_idmap_destroy(idmap);
         if (res) {
             uproc_perror("error storing idmap");
             return EXIT_FAILURE;

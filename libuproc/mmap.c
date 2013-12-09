@@ -39,6 +39,8 @@
 #include "uproc/mmap.h"
 #include "uproc/ecurve.h"
 
+#include "ecurve_internal.h"
+
 struct mmap_header
 {
     char alphabet_str[UPROC_ALPHABET_SIZE];
@@ -66,86 +68,93 @@ struct mmap_header
 #define MAP_POPULATE 0
 #endif
 
-static int
-mmap_map(struct uproc_ecurve *ecurve, const char *path)
+static uproc_ecurve *
+mmap_map(const char *path)
 {
 #if HAVE_MMAP
     int res;
     struct stat st;
     struct mmap_header *header;
     char alphabet_str[UPROC_ALPHABET_SIZE + 1];
+    struct uproc_ecurve_s *ec = malloc(sizeof *ec);;
 
-    ecurve->mmap_fd = open(path, O_RDONLY);
-    if (ecurve->mmap_fd == -1) {
-        return uproc_error(UPROC_ERRNO);
+    if (!ec) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
     }
 
-    if (fstat(ecurve->mmap_fd, &st) == -1) {
-        return uproc_error(UPROC_ERRNO);
+    ec->mmap_fd = open(path, O_RDONLY);
+    if (ec->mmap_fd == -1) {
+        uproc_error(UPROC_ERRNO);
+        goto error;
     }
-    ecurve->mmap_size = st.st_size;
-    ecurve->mmap_ptr = mmap(NULL, ecurve->mmap_size, PROT_READ,
+
+    if (fstat(ec->mmap_fd, &st) == -1) {
+        uproc_error(UPROC_ERRNO);
+        goto error_close;
+    }
+    ec->mmap_size = st.st_size;
+    ec->mmap_ptr = mmap(NULL, ec->mmap_size, PROT_READ,
                             MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
-                            ecurve->mmap_fd, 0);
+                            ec->mmap_fd, 0);
 
-    if (ecurve->mmap_ptr == MAP_FAILED) {
-        res = uproc_error(UPROC_ERRNO);
+    if (ec->mmap_ptr == MAP_FAILED) {
+        uproc_error(UPROC_ERRNO);
         goto error_close;
     }
 
 #if HAVE_POSIX_MADVISE
-    posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_WILLNEED);
-    posix_madvise(ecurve->mmap_ptr, ecurve->mmap_size, POSIX_MADV_RANDOM);
+    posix_madvise(ec->mmap_ptr, ec->mmap_size, POSIX_MADV_WILLNEED);
+    posix_madvise(ec->mmap_ptr, ec->mmap_size, POSIX_MADV_RANDOM);
 #endif
 
-    header = ecurve->mmap_ptr;
-    if (ecurve->mmap_size != SIZE_TOTAL(header->suffix_count)) {
-        res = uproc_error(UPROC_ERRNO);
+    header = ec->mmap_ptr;
+    if (ec->mmap_size != SIZE_TOTAL(header->suffix_count)) {
+        uproc_error(UPROC_ERRNO);
         goto error_munmap;
     }
 
     memcpy(alphabet_str, header->alphabet_str, UPROC_ALPHABET_SIZE);
     alphabet_str[UPROC_ALPHABET_SIZE] = '\0';
-    res = uproc_alphabet_init(&ecurve->alphabet, alphabet_str);
-    if (res) {
+    ec->alphabet = uproc_alphabet_create(alphabet_str);
+    if (!ec->alphabet) {
         goto error_munmap;
     }
 
-    ecurve->suffix_count = header->suffix_count;
-    ecurve->prefixes = (void *)(ecurve->mmap_ptr + OFFSET_PREFIXES);
-    ecurve->suffixes = (void *)(ecurve->mmap_ptr + OFFSET_SUFFIXES);
-    ecurve->families = (void *)(ecurve->mmap_ptr +
-                                OFFSET_CLASSES(ecurve->suffix_count));
-
-    return 0;
+    ec->suffix_count = header->suffix_count;
+    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
+    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
+    ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
+    return ec;
 
 error_munmap:
-    munmap(ecurve->mmap_ptr, ecurve->mmap_size);
+    munmap(ec->mmap_ptr, ec->mmap_size);
 error_close:
-    close(ecurve->mmap_fd);
-    return res;
+    close(ec->mmap_fd);
+error:
+    return NULL;
 #else
-    (void) ecurve;
     (void) path;
-    return uproc_error(UPROC_ENOTSUP);
+    uproc_error(UPROC_ENOTSUP);
+    return NULL;
 #endif
 }
 
-int
-uproc_mmap_map(struct uproc_ecurve *ecurve, const char *pathfmt, ...)
+uproc_ecurve *
+uproc_mmap_map(const char *pathfmt, ...)
 {
-    int res;
+    struct uproc_ecurve_s *ec;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_mmap_mapv(ecurve, pathfmt, ap);
+    ec = uproc_mmap_mapv(pathfmt, ap);
     va_end(ap);
-    return res;
+    return ec;
 }
 
-int
-uproc_mmap_mapv(struct uproc_ecurve *ecurve, const char *pathfmt, va_list ap)
+uproc_ecurve *
+uproc_mmap_mapv(const char *pathfmt, va_list ap)
 {
-    int res;
+    struct uproc_ecurve_s *ec;
     char *buf;
     size_t n;
     va_list aq;
@@ -156,17 +165,18 @@ uproc_mmap_mapv(struct uproc_ecurve *ecurve, const char *pathfmt, va_list ap)
 
     buf = malloc(n + 1);
     if (!buf) {
-        return uproc_error(UPROC_ENOMEM);
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
     }
     vsprintf(buf, pathfmt, ap);
 
-    res = mmap_map(ecurve, buf);
+    ec = mmap_map(buf);
     free(buf);
-    return res;
+    return ec;
 }
 
 void
-uproc_mmap_unmap(struct uproc_ecurve *ecurve)
+uproc_mmap_unmap(struct uproc_ecurve_s *ecurve)
 {
 #if HAVE_MMAP
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
@@ -177,7 +187,7 @@ uproc_mmap_unmap(struct uproc_ecurve *ecurve)
 }
 
 static int
-mmap_store(const struct uproc_ecurve *ecurve, const char *path)
+mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
 {
 #if HAVE_MMAP
     int fd, res = 0;
@@ -204,7 +214,8 @@ mmap_store(const struct uproc_ecurve *ecurve, const char *path)
     }
 
     header.suffix_count = ecurve->suffix_count;
-    memcpy(&header.alphabet_str, ecurve->alphabet.str, UPROC_ALPHABET_SIZE);
+    memcpy(&header.alphabet_str, uproc_alphabet_str(ecurve->alphabet),
+           UPROC_ALPHABET_SIZE);
 
     memcpy(region, &header, SIZE_HEADER);
     memcpy(region + OFFSET_PREFIXES, ecurve->prefixes, SIZE_PREFIXES);
@@ -228,7 +239,7 @@ error_close:
 #endif
 }
 int
-uproc_mmap_store(const struct uproc_ecurve *ecurve, const char *pathfmt, ...)
+uproc_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...)
 {
     int res;
     va_list ap;
@@ -239,7 +250,7 @@ uproc_mmap_store(const struct uproc_ecurve *ecurve, const char *pathfmt, ...)
 }
 
 int
-uproc_mmap_storev(const struct uproc_ecurve *ecurve, const char *pathfmt,
+uproc_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
                   va_list ap)
 {
     int res;

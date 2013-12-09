@@ -22,7 +22,9 @@ libuproc_la_SOURCES = alphabet.c \
 					protclass.c \
 					storage.c \
 					substmat.c \
-					word.c
+					word.c \
+					ecurve_internal.h
+
 libuproc_la_LDFLAGS = -no-undefined
 
 BUILT_SOURCES = codon_tables.h

@@ -29,25 +29,37 @@
 #include "uproc/io.h"
 #include "uproc/error.h"
 
-int
-uproc_idmap_init(struct uproc_idmap *map)
+struct uproc_idmap_s
 {
-    *map = (struct uproc_idmap) UPROC_IDMAP_INITIALIZER;
-    return 0;
+    uproc_family n;
+    char *s[UPROC_FAMILY_MAX];
+};
+
+uproc_idmap *
+uproc_idmap_create(void)
+{
+    uproc_idmap *map = malloc(sizeof *map);
+    if (!map) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    *map = (struct uproc_idmap_s) { 0, { NULL } };
+    return map;
 }
 
 void
-uproc_idmap_destroy(struct uproc_idmap *map)
+uproc_idmap_destroy(uproc_idmap *map)
 {
     uproc_family i;
     for (i = 0; i < map->n; i++) {
         free(map->s[i]);
         map->s[i] = NULL;
     }
+    free(map);
 }
 
 uproc_family
-uproc_idmap_family(struct uproc_idmap *map, const char *s)
+uproc_idmap_family(uproc_idmap *map, const char *s)
 {
     uproc_family i;
     for (i = 0; i < map->n; i++) {
@@ -70,82 +82,86 @@ uproc_idmap_family(struct uproc_idmap *map, const char *s)
 }
 
 const char *
-uproc_idmap_str(const struct uproc_idmap *map, uproc_family family)
+uproc_idmap_str(const uproc_idmap *map, uproc_family family)
 {
     return map->s[family];
 }
 
-int
-uproc_idmap_loads(struct uproc_idmap *map, uproc_io_stream *stream)
+uproc_idmap *
+uproc_idmap_loads(uproc_io_stream *stream)
 {
     int res;
+    struct uproc_idmap_s *map;
     uproc_family i;
     unsigned long long n;
     char buf[UPROC_FAMILY_MAX + 1];
 
-    res = uproc_idmap_init(map);
-    if (res) {
-        return res;
+    map = uproc_idmap_create();
+    if (!map) {
+        return NULL;
     }
     if (!uproc_io_gets(buf, sizeof buf, stream)) {
-        return -1;
+        return NULL;
     }
     res = sscanf(buf, "[%llu]\n", &n);
     if (res != 1) {
-        return uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
+        uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
+        return NULL;
     }
     if (n > UPROC_FAMILY_MAX) {
-        return uproc_error_msg(UPROC_EINVAL, "idmap size too large");
+        uproc_error_msg(UPROC_EINVAL, "idmap size too large");
+        return NULL;
     }
     for (i = 0; i < n; i++) {
         size_t len;
         if (!uproc_io_gets(buf, sizeof buf, stream)) {
-            return -1;
+            return NULL;
         }
         len = strlen(buf);
         if (len < 1 || buf[len - 1] != '\n') {
-            return uproc_error_msg(UPROC_EINVAL,
-                                   "line %u: expected newline after ID",
-                                   (unsigned)i + 2);
+            uproc_error_msg(
+                UPROC_EINVAL,
+                "line %" UPROC_FAMILY_PRI ": expected newline after ID",
+                i + 2);
+            return NULL;
         }
         buf[len - 1] = '\0';
         if (uproc_idmap_family(map, buf) != i) {
-            return uproc_error_msg(UPROC_EINVAL,
-                                   "line %u: duplicate ID",
-                                   (unsigned)i + 2);
+            uproc_error_msg(UPROC_EINVAL,
+                            "line %" UPROC_FAMILY_PRI ": duplicate ID", i + 2);
+            return NULL;
         }
     }
-    return 0;
+    return map;
 }
 
-int
-uproc_idmap_loadv(struct uproc_idmap *map, enum uproc_io_type iotype,
-                  const char *pathfmt, va_list ap)
+
+uproc_idmap *
+uproc_idmap_loadv(enum uproc_io_type iotype, const char *pathfmt, va_list ap)
 {
-    int res;
+    struct uproc_idmap_s *map;
     uproc_io_stream *stream = uproc_io_openv("r", iotype, pathfmt, ap);
     if (!stream) {
-        return -1;
+        return NULL;
     }
-    res = uproc_idmap_loads(map, stream);
+    map = uproc_idmap_loads(stream);
     (void) uproc_io_close(stream);
-    return res;
+    return map;
 }
 
-int
-uproc_idmap_load(struct uproc_idmap *map, enum uproc_io_type iotype,
-                 const char *pathfmt, ...)
+uproc_idmap *
+uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt, ...)
 {
-    int res;
+    struct uproc_idmap_s *map;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_idmap_loadv(map, iotype, pathfmt, ap);
+    map = uproc_idmap_loadv(iotype, pathfmt, ap);
     va_end(ap);
-    return res;
+    return map;
 }
 
 int
-uproc_idmap_stores(const struct uproc_idmap *map, uproc_io_stream *stream)
+uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
 {
     uproc_family i;
     uproc_io_printf(stream, "[%" UPROC_FAMILY_PRI "]\n", map->n);
@@ -159,7 +175,7 @@ uproc_idmap_stores(const struct uproc_idmap *map, uproc_io_stream *stream)
 
 
 int
-uproc_idmap_storev(const struct uproc_idmap *map, enum uproc_io_type iotype,
+uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
                    const char *pathfmt, va_list ap)
 {
     int res;
@@ -173,7 +189,7 @@ uproc_idmap_storev(const struct uproc_idmap *map, enum uproc_io_type iotype,
 }
 
 int
-uproc_idmap_store(const struct uproc_idmap *map, enum uproc_io_type iotype,
+uproc_idmap_store(const uproc_idmap *map, enum uproc_io_type iotype,
                   const char *pathfmt, ...)
 {
     int res;

@@ -141,7 +141,7 @@ prot_filter(const char *seq, size_t len, uproc_family family, double score,
             void *opaque)
 {
     static size_t rows, cols;
-    struct uproc_matrix *thresh = opaque;
+    uproc_matrix *thresh = opaque;
     (void) seq, (void) family;
     if (!thresh) {
         return score > 0.0;
@@ -160,7 +160,7 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
            double seq_gc, void *opaque)
 {
     size_t r, c, rows, cols;
-    struct uproc_matrix *thresh = opaque;
+    uproc_matrix *thresh = opaque;
     (void) seq;
     if (orf->length < 20) {
         return false;
@@ -182,7 +182,7 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 
 void
 output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
-       struct uproc_idmap *idmap, uproc_io_stream *pr_stream,
+       uproc_idmap *idmap, uproc_io_stream *pr_stream,
        uintmax_t *counts, size_t *unexplained)
 {
     size_t i, j;
@@ -343,26 +343,25 @@ enum args
 int
 main(int argc, char **argv)
 {
-    int res;
+    int res = -1;
     size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool error = false, more_input;
 
-    struct uproc_ecurve fwd, rev;
-    struct uproc_idmap idmap;
+    uproc_ecurve *fwd, *rev;
+    uproc_idmap *idmap = NULL;
     bool use_idmap = true;
-    struct uproc_substmat substmat;
+    uproc_substmat *substmat;
 
-    struct uproc_protclass protclass;
+    uproc_protclass *protclass;
     enum uproc_pc_mode pc_mode = UPROC_PC_ALL;
-    struct uproc_matrix prot_thresholds;
-    void *prot_filter_arg = &prot_thresholds;
+    uproc_matrix *prot_thresholds = NULL;
     int prot_thresh_num = 3;
 
 
 #if MAIN_DNA
-    struct uproc_dnaclass dnaclass;
+    uproc_dnaclass *dnaclass;
     enum uproc_dc_mode dc_mode = UPROC_DC_ALL;
-    struct uproc_matrix codon_scores, orf_thresholds;
+    uproc_matrix *codon_scores = NULL, *orf_thresholds = NULL;
     int orf_thresh_num = 2;
     bool short_read_mode = false;
 #endif
@@ -448,12 +447,7 @@ main(int argc, char **argv)
                             stderr, "protein threshold must be 0, 2 or 3\n");
                         return EXIT_FAILURE;
                     }
-                    if (tmp == 0) {
-                        prot_filter_arg = NULL;
-                    }
-                    else {
-                        prot_thresh_num = tmp;
-                    }
+                    prot_thresh_num = tmp;
                 }
                 break;
             case 't':
@@ -503,43 +497,46 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+    fwd = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/fwd.ecurve", argv[optind + DBDIR]);
-    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/fwd.ecurve", argv[optind + DBDIR]);
-    if (res) {
+    if (!fwd) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+    rev = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/rev.ecurve", argv[optind + DBDIR]);
-    if (res) {
+    if (!rev) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;
     }
 
     if (use_idmap) {
-        res = uproc_idmap_load(&idmap, UPROC_IO_GZIP,
-                               "%s/idmap", argv[optind + DBDIR]);
-        if (res) {
+        idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap",
+                                 argv[optind + DBDIR]);
+        if (!idmap) {
             fprintf(stderr, "failed to load idmap\n");
             return EXIT_FAILURE;
         }
     }
 
-    res = uproc_matrix_load(&prot_thresholds, UPROC_IO_GZIP,
-                            "%s/prot_thresh_e%d", argv[optind + DBDIR],
-                            prot_thresh_num);
-    if (res) {
-        fprintf(stderr, "failed to load protein thresholds\n");
-        return EXIT_FAILURE;
+    if (prot_thresh_num) {
+        prot_thresholds = uproc_matrix_load(UPROC_IO_GZIP,
+                                            "%s/prot_thresh_e%d",
+                                            argv[optind + DBDIR],
+                                            prot_thresh_num);
+        if (!prot_thresholds) {
+            fprintf(stderr, "failed to load protein thresholds\n");
+            return EXIT_FAILURE;
+        }
+    }
+    else {
+        prot_thresholds = NULL;
     }
 
     const char *model_dir = argv[optind + MODELDIR];
-    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
-                              model_dir);
-    if (res) {
+    substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", model_dir);
+    if (!substmat) {
         fprintf(stderr, "failed to load protein thresholds\n");
         return EXIT_FAILURE;
     }
@@ -553,30 +550,35 @@ main(int argc, char **argv)
         pc_mode = UPROC_PC_ALL;
         dc_mode = UPROC_DC_ALL;
     }
+#endif
+    protclass = uproc_pc_create(pc_mode, fwd, rev, substmat, prot_filter,
+                                prot_thresholds);
+    if (!protclass) {
+        uproc_perror("");
+        return EXIT_FAILURE;
+    }
+#if MAIN_DNA
     if (!short_read_mode && orf_thresh_num != 0) {
-        res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP,
-                                "%s/orf_thresh_e%d", model_dir,
-                                orf_thresh_num);
-        if (res) {
+        orf_thresholds = uproc_matrix_load(UPROC_IO_GZIP, "%s/orf_thresh_e%d",
+                                           model_dir, orf_thresh_num);
+        if (!orf_thresholds) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
-        res = uproc_matrix_load(&codon_scores, UPROC_IO_GZIP,
-                                "%s/codon_scores", model_dir);
-        if (res) {
+        codon_scores = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores",
+                                         model_dir);
+        if (!codon_scores) {
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
-        uproc_dc_init(&dnaclass, dc_mode, &protclass, &codon_scores,
-                      orf_filter, &orf_thresholds);
+        dnaclass = uproc_dc_create(dc_mode, protclass, codon_scores,
+                                   orf_filter, orf_thresholds);
     }
     else {
-        uproc_dc_init(&dnaclass, dc_mode, &protclass, NULL, orf_filter, NULL);
+        dnaclass = uproc_dc_create(dc_mode, protclass, NULL, orf_filter,
+                                   NULL);
     }
 #endif
-    uproc_pc_init(&protclass, pc_mode, &fwd, &rev, &substmat, prot_filter,
-                  prot_filter_arg);
-
 
     /* use stdin if no input file specified */
     if (argc < optind + ARGC) {
@@ -607,10 +609,10 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < out->n; i++) {
 #if MAIN_DNA
-                    res = uproc_dc_classify(&dnaclass, out->seq[i],
+                    res = uproc_dc_classify(dnaclass, out->seq[i],
                                             &out->results[i]);
 #else
-                    res = uproc_pc_classify(&protclass, out->seq[i],
+                    res = uproc_pc_classify(protclass, out->seq[i],
                                             &out->results[i]);
 #endif
                     if (res < 0) {
@@ -639,7 +641,7 @@ main(int argc, char **argv)
                     {
                         if (i_chunk) {
                             output(out, (i_chunk - 1) * chunk_size, &n_seqs,
-                                   use_idmap ? &idmap : NULL,
+                                   use_idmap ? idmap : NULL,
                                    out_preds ? out_stream : NULL,
                                    out_counts ? counts : NULL,
                                    out_stats ? &unexplained : NULL);
@@ -654,13 +656,18 @@ main(int argc, char **argv)
         uproc_fasta_reader_free(&rd);
     }
 
-    uproc_ecurve_destroy(&fwd);
-    uproc_ecurve_destroy(&rev);
-    uproc_matrix_destroy(&prot_thresholds);
+    uproc_ecurve_destroy(fwd);
+    uproc_ecurve_destroy(rev);
+    uproc_substmat_destroy(substmat);
+    if (prot_thresholds) {
+        uproc_matrix_destroy(prot_thresholds);
+    }
 #if MAIN_DNA
-    if (!short_read_mode) {
-        uproc_matrix_destroy(&codon_scores);
-        uproc_matrix_destroy(&orf_thresholds);
+    if (codon_scores) {
+        uproc_matrix_destroy(codon_scores);
+    }
+    if (orf_thresholds) {
+        uproc_matrix_destroy(orf_thresholds);
     }
 #endif
 
@@ -675,7 +682,7 @@ main(int argc, char **argv)
     for (uproc_family i = 0; out_counts && i < UPROC_FAMILY_MAX; i++) {
         if (counts[i]) {
             if (use_idmap) {
-                uproc_io_printf(out_stream, "%s", uproc_idmap_str(&idmap, i));
+                uproc_io_printf(out_stream, "%s", uproc_idmap_str(idmap, i));
             }
             else {
                 uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI, i);

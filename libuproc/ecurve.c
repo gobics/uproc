@@ -31,6 +31,8 @@
 #include "uproc/word.h"
 #include "uproc/mmap.h"
 
+#include "ecurve_internal.h"
+
 /** Perform a lookup in the prefix table.
  *
  * \param table         table of prefixes
@@ -158,46 +160,50 @@ suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
 }
 
 
-int
-uproc_ecurve_init(struct uproc_ecurve *ecurve, const char *alphabet,
-               size_t suffix_count)
+uproc_ecurve *
+uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 {
-    int res;
-
-    res = uproc_alphabet_init(&ecurve->alphabet, alphabet);
-    if (res) {
-        return res;
+    struct uproc_ecurve_s *ec = malloc(sizeof *ec);
+    if (!ec) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    ec->alphabet = uproc_alphabet_create(alphabet);
+    if (!ec->alphabet) {
+        return NULL;
     }
 
-    ecurve->prefixes = malloc(
-        sizeof *ecurve->prefixes * (UPROC_PREFIX_MAX + 1));
-    if (!ecurve->prefixes) {
-        return uproc_error(UPROC_ENOMEM);
+    ec->prefixes = malloc(
+        sizeof *ec->prefixes * (UPROC_PREFIX_MAX + 1));
+    if (!ec->prefixes) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
     }
 
     if (suffix_count) {
-        ecurve->suffixes = malloc(sizeof *ecurve->suffixes * suffix_count);
-        ecurve->families = malloc(sizeof *ecurve->families * suffix_count);
-        if (!ecurve->suffixes || !ecurve->families) {
-            uproc_ecurve_destroy(ecurve);
-            return uproc_error(UPROC_ENOMEM);
+        ec->suffixes = malloc(sizeof *ec->suffixes * suffix_count);
+        ec->families = malloc(sizeof *ec->families * suffix_count);
+        if (!ec->suffixes || !ec->families) {
+            uproc_ecurve_destroy(ec);
+            uproc_error(UPROC_ENOMEM);
+            return NULL;
         }
     }
     else {
-        ecurve->suffixes = NULL;
-        ecurve->families = NULL;
+        ec->suffixes = NULL;
+        ec->families = NULL;
     }
-    ecurve->suffix_count = suffix_count;
+    ec->suffix_count = suffix_count;
 
-    ecurve->mmap_fd = -1;
-    ecurve->mmap_ptr = NULL;
-    ecurve->mmap_size = 0;
-    return 0;
+    ec->mmap_fd = -1;
+    ec->mmap_ptr = NULL;
+    ec->mmap_size = 0;
+    return ec;
 }
 
 
 void
-uproc_ecurve_destroy(struct uproc_ecurve *ecurve)
+uproc_ecurve_destroy(uproc_ecurve *ecurve)
 {
     if (ecurve->mmap_fd > -1) {
         uproc_mmap_unmap(ecurve);
@@ -206,11 +212,12 @@ uproc_ecurve_destroy(struct uproc_ecurve *ecurve)
     free(ecurve->prefixes);
     free(ecurve->suffixes);
     free(ecurve->families);
+    free(ecurve);
 }
 
 
 int
-uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *src)
+uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
 {
     void *tmp;
     size_t new_suffix_count;
@@ -269,15 +276,8 @@ uproc_ecurve_append(struct uproc_ecurve *dest, const struct uproc_ecurve *src)
 }
 
 
-void uproc_ecurve_get_alphabet(const struct uproc_ecurve *ecurve,
-                               struct uproc_alphabet *alpha)
-{
-    *alpha = ecurve->alphabet;
-}
-
-
 int
-uproc_ecurve_lookup(const struct uproc_ecurve *ecurve,
+uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                     const struct uproc_word *word,
                     struct uproc_word *lower_neighbour,
                     uproc_family *lower_class,
@@ -317,4 +317,10 @@ uproc_ecurve_lookup(const struct uproc_ecurve *ecurve,
     *upper_class = ecurve->families[upper];
 
     return res;
+}
+
+uproc_alphabet *
+uproc_ecurve_alphabet(const uproc_ecurve *ecurve)
+{
+    return ecurve->alphabet;
 }

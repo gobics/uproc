@@ -36,9 +36,8 @@ enum uproc_storage_format
     UPROC_STORAGE_BINARY,
 };
 
-int uproc_storage_loads(struct uproc_ecurve *ecurve,
-                        enum uproc_storage_format format,
-                        uproc_io_stream *stream);
+uproc_ecurve *uproc_storage_loads(enum uproc_storage_format format,
+                                  uproc_io_stream *stream);
 
 /** Load ecurve from a file
  *
@@ -54,16 +53,15 @@ int uproc_storage_loads(struct uproc_ecurve *ecurve,
  * \retval #UPROC_FAILURE  an error occured
  * \retval #UPROC_SUCCESS  else
  */
-int uproc_storage_load(struct uproc_ecurve *ecurve,
-                       enum uproc_storage_format format,
-                       enum uproc_io_type iotype, const char *pathfmt, ...);
+uproc_ecurve *uproc_storage_load(enum uproc_storage_format format,
+                                 enum uproc_io_type iotype,
+                                 const char *pathfmt, ...);
 
-int uproc_storage_loadv(struct uproc_ecurve *ecurve,
-                        enum uproc_storage_format format,
-                        enum uproc_io_type iotype, const char *pathfmt,
-                        va_list ap);
+uproc_ecurve *uproc_storage_loadv(enum uproc_storage_format format,
+                                  enum uproc_io_type iotype,
+                                  const char *pathfmt, va_list ap);
 
-int uproc_storage_stores(const struct uproc_ecurve *ecurve,
+int uproc_storage_stores(const uproc_ecurve *ecurve,
                          enum uproc_storage_format format,
                          uproc_io_stream *stream);
 
@@ -80,11 +78,11 @@ int uproc_storage_stores(const struct uproc_ecurve *ecurve,
  * \retval #UPROC_FAILURE  an error occured
  * \retval #UPROC_SUCCESS  else
  */
-int uproc_storage_store(const struct uproc_ecurve *ecurve,
+int uproc_storage_store(const uproc_ecurve *ecurve,
                         enum uproc_storage_format format,
                         enum uproc_io_type iotype, const char *pathfmt, ...);
 
-int uproc_storage_storev(const struct uproc_ecurve *ecurve,
+int uproc_storage_storev(const uproc_ecurve *ecurve,
                          enum uproc_storage_format format,
                          enum uproc_io_type iotype, const char *pathfmt,
                          va_list ap);

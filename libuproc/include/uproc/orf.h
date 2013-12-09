@@ -60,66 +60,26 @@ typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t,
                               double, void*);
 
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
-struct uproc_orfiter
-{
-    /** DNA/RNA sequence being iterated */
-    const char *seq;
-
-    /** Length of the sequence */
-    size_t seq_len;
-
-    /** GC content of the sequence */
-    double seq_gc;
-
-    /** User-supplied argument to `filter` */
-    void *filter_arg;
-
-    /** Pointer to filter function */
-    uproc_orf_filter *filter;
-
-    /** current position in the DNA/RNA sequence */
-    const char *pos;
-
-    /** Codon score table */
-    const double *codon_scores;
-
-    /** Number of processed nucleotide symbols */
-    size_t nt_count;
-
-    /** Current frame */
-    unsigned frame;
-
-    /** Current forward codons */
-    uproc_codon codon[UPROC_ORF_FRAMES / 2];
-
-    /** ORFs to "work with" */
-    struct uproc_orf orf[UPROC_ORF_FRAMES];
-
-    /** Sizes of the corresponding orf.data buffers */
-    size_t data_sz[UPROC_ORF_FRAMES];
-
-    /** Indicate whether an ORF was completed and should be returned next */
-    bool yield[UPROC_ORF_FRAMES];
-};
+typedef struct uproc_orfiter_s uproc_orfiter;
 
 /** Prepare codon score table */
 void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
-                           const struct uproc_matrix *score_matrix);
+                           const uproc_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *
  * \param iter          _OUT_: iterator object
  * \param seq           sequence to iterate over
- * \param codon_scores  codon scores, must be a pointer into an array of size
- *                      #UPROC_BINARY_CODON_COUNT
+ * \param codon_scores  codon scores, must be a pointer to the first element of
+ *                      an array of size #UPROC_BINARY_CODON_COUNT
  */
-int uproc_orfiter_init(
-    struct uproc_orfiter *iter, const char *seq,
+uproc_orfiter *uproc_orfiter_create(
+    const char *seq,
     const double codon_scores[static UPROC_BINARY_CODON_COUNT],
     uproc_orf_filter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
-void uproc_orfiter_destroy(struct uproc_orfiter *iter);
+void uproc_orfiter_destroy(uproc_orfiter *iter);
 
 /** Obtain the next ORF from an iterator
  *
@@ -134,6 +94,6 @@ void uproc_orfiter_destroy(struct uproc_orfiter *iter);
  * \retval #UPROC_ITER_STOP    the end of the sequence was reached
  * \retval other            an error occured
  */
-int uproc_orfiter_next(struct uproc_orfiter *iter, struct uproc_orf *next);
+int uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next);
 
 #endif

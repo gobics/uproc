@@ -62,54 +62,54 @@ int                                                                         \
 name(const char *dir, const char *name, uproc_io_stream *stream)            \
 {                                                                           \
     int res;                                                                \
-    type thing;                                                             \
+    type *thing;                                                            \
     fprintf(stderr, "exporting %s/%s\n", dir, name);                        \
-    res = load(&thing, UPROC_IO_GZIP, "%s/%s", dir, name);                  \
-    if (res) {                                                              \
-        return res;                                                         \
+    thing = load(UPROC_IO_GZIP, "%s/%s", dir, name);                        \
+    if (!thing) {                                                           \
+        return -1;                                                          \
     }                                                                       \
-    res = store(&thing, stream);                                            \
-    destroy(&thing);                                                        \
+    res = store(thing, stream);                                             \
+    destroy(thing);                                                         \
     return res;                                                             \
 }
 
-#define ECURVE_LOAD(ptr, iotype, fmt, dir, name) \
-    uproc_storage_load(ptr, UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
+#define ECURVE_LOAD(iotype, fmt, dir, name) \
+    uproc_storage_load(UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
 #define ECURVE_STORES(ptr, stream) \
     uproc_storage_stores(ptr, UPROC_STORAGE_PLAIN, stream)
-EXPORT_FUNC(ecurve, struct uproc_ecurve, ECURVE_LOAD, ECURVE_STORES,
+EXPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOAD, ECURVE_STORES,
             uproc_ecurve_destroy)
-EXPORT_FUNC(matrix, struct uproc_matrix, uproc_matrix_load,
-            uproc_matrix_stores, uproc_matrix_destroy)
-EXPORT_FUNC(idmap, struct uproc_idmap, uproc_idmap_load,
-            uproc_idmap_stores, uproc_idmap_destroy)
+EXPORT_FUNC(matrix, uproc_matrix, uproc_matrix_load, uproc_matrix_stores,
+            uproc_matrix_destroy)
+EXPORT_FUNC(idmap, uproc_idmap, uproc_idmap_load, uproc_idmap_stores,
+            uproc_idmap_destroy)
 #else
 #define IMPORT_FUNC(name, type, load, store, destroy)                       \
 int                                                                         \
 name(const char *dir, const char *name, uproc_io_stream *stream)            \
 {                                                                           \
     int res;                                                                \
-    type thing;                                                             \
+    type *thing;                                                            \
     fprintf(stderr, "importing %s/%s\n", dir, name);                        \
-    res = load(&thing, stream);                                             \
-    if (res) {                                                              \
-        return res;                                                         \
+    thing = load(stream);                                                   \
+    if (!thing) {                                                           \
+        return -1;                                                          \
     }                                                                       \
-    res = store(&thing, UPROC_IO_GZIP, "%s/%s", dir, name);                 \
-    destroy(&thing);                                                        \
+    res = store(thing, UPROC_IO_GZIP, "%s/%s", dir, name);                  \
+    destroy(thing);                                                         \
     return res;                                                             \
 }
 
-#define ECURVE_LOADS(ptr, stream) \
-    uproc_storage_loads(ptr, UPROC_STORAGE_PLAIN, stream)
+#define ECURVE_LOADS(stream) \
+    uproc_storage_loads(UPROC_STORAGE_PLAIN, stream)
 #define ECURVE_STORE(ptr, iotype, fmt, dir, name) \
     uproc_storage_store(ptr, UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
-IMPORT_FUNC(ecurve, struct uproc_ecurve, ECURVE_LOADS, ECURVE_STORE,
+IMPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOADS, ECURVE_STORE,
             uproc_ecurve_destroy)
-IMPORT_FUNC(matrix, struct uproc_matrix, uproc_matrix_loads,
-            uproc_matrix_store, uproc_matrix_destroy)
-IMPORT_FUNC(idmap, struct uproc_idmap, uproc_idmap_loads,
-            uproc_idmap_store, uproc_idmap_destroy)
+IMPORT_FUNC(matrix, uproc_matrix, uproc_matrix_loads, uproc_matrix_store,
+            uproc_matrix_destroy)
+IMPORT_FUNC(idmap, uproc_idmap, uproc_idmap_loads, uproc_idmap_store,
+            uproc_idmap_destroy)
 #endif
 
 enum args

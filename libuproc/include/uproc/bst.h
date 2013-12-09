@@ -58,31 +58,11 @@ enum
     UPROC_BST_KEY_EXISTS = -403,
 };
 
-/** Binary search tree */
-struct uproc_bst {
-    /** The root node (the type is defined in the implementation) */
-    struct uproc_bstnode *root;
-
-    /** Number of nodes */
-    size_t size;
-
-    /** Key type */
-    enum uproc_bst_keytype key_type;
-
-    /** Size of value objects */
-    size_t value_size;
-};
-
+/** Opaque type for binary search trees */
+typedef struct uproc_bst_s uproc_bst;
 
 /** BST iterator */
-struct uproc_bstiter
-{
-    /** BST being iterated */
-    const struct uproc_bst *t;
-
-    /** Current position */
-    struct uproc_bstnode *cur;
-};
+typedef struct uproc_bstiter_s uproc_bstiter;
 
 /** Callback function type for uproc_bst_walk */
 typedef int (*uproc_bst_cb_walk)(union uproc_bst_key, const void*, void*);
@@ -96,23 +76,16 @@ typedef int (*uproc_bst_cb_remove)(const void*);
  * \param key_type      key type
  * \param value_size    size of the stored values
  */
-void uproc_bst_init(struct uproc_bst *t, enum uproc_bst_keytype key_type,
-                    size_t value_size);
+uproc_bst *uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size);
 
-/** Remove all nodes from tree; leaves an empty tree
- *
- * Takes a callback function pointer similar to uproc_bst_remove()
- *
- * \param t         bst instance
- * \param callback  callback function or null pointer
- */
-void uproc_bst_clear(struct uproc_bst *t, uproc_bst_cb_remove callback);
+/** Destroy BST and all contained nodes */
+void uproc_bst_destroy(uproc_bst *t);
 
 /** Return non-zero if the tree is empty */
-int uproc_bst_isempty(struct uproc_bst *t);
+int uproc_bst_isempty(uproc_bst *t);
 
 /** Obtain the number of nodes */
-size_t uproc_bst_size(const struct uproc_bst *t);
+size_t uproc_bst_size(const uproc_bst *t);
 
 /** Insert item
  *
@@ -124,7 +97,7 @@ size_t uproc_bst_size(const struct uproc_bst *t);
  * \retval #UPROC_EEXIST   `key` is already present
  * \retval #UPROC_ENOMEM   memory allocation failed
  */
-int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key,
+int uproc_bst_insert(uproc_bst *t, union uproc_bst_key key,
                      const void *value);
 
 /** Update item
@@ -139,7 +112,7 @@ int uproc_bst_insert(struct uproc_bst *t, union uproc_bst_key key,
  * \retval #UPROC_SUCCESS  item was inserted/updated
  * \retval #UPROC_ENOMEM   memory allocation failed
  */
-int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key,
+int uproc_bst_update(uproc_bst *t, union uproc_bst_key key,
                      const void *value);
 
 /** Get item
@@ -151,7 +124,7 @@ int uproc_bst_update(struct uproc_bst *t, union uproc_bst_key key,
  * \retval #UPROC_SUCCESS  an item for `key` was found and stored in `*value`
  * \retval #UPROC_ENOENT   no item found, `*value` remains unchanged
  */
-int uproc_bst_get(struct uproc_bst *t, union uproc_bst_key key, void *value);
+int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
 
 /** Remove item
  *
@@ -165,7 +138,7 @@ int uproc_bst_get(struct uproc_bst *t, union uproc_bst_key key, void *value);
  * \retval #UPROC_SUCCESS  item was removed
  * \retval #UPROC_ENOENT  `key` not found in the tree
  */
-int uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key,
+int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
         uproc_bst_cb_remove callback);
 
 /** In-order iteration
@@ -183,14 +156,17 @@ int uproc_bst_remove(struct uproc_bst *t, union uproc_bst_key key,
  * #UPROC_SUCCESS if the iteration completed successfully, else whatever the
  * callback function returned.
  */
-int uproc_bst_walk(struct uproc_bst *t, uproc_bst_cb_walk callback,
+int uproc_bst_walk(uproc_bst *t, uproc_bst_cb_walk callback,
                    void *opaque);
 
-/** Initialize iterator */
-void uproc_bstiter_init(struct uproc_bstiter *iter, const struct uproc_bst *t);
+/** Create BST iterator */
+uproc_bstiter *uproc_bstiter_create(const uproc_bst *t);
 
 /** Obtain next key/value pair */
-int uproc_bstiter_next(struct uproc_bstiter *iter, union uproc_bst_key *key,
+int uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key,
                        void *value);
+
+/** Destroy BST iterator */
+void uproc_bstiter_destroy(uproc_bstiter *iter);
 
 #endif

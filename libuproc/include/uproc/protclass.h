@@ -48,24 +48,16 @@ struct uproc_pc_results
 
 #define UPROC_PC_RESULTS_INITIALIZER { NULL, 0, 0 }
 
-struct uproc_protclass
-{
-    enum uproc_pc_mode mode;
-    const struct uproc_substmat *substmat;
-    const struct uproc_ecurve *fwd;
-    const struct uproc_ecurve *rev;
-    uproc_pc_filter *filter;
-    void *filter_arg;
-};
+typedef struct uproc_protclass_s uproc_protclass;
 
-int uproc_pc_init(struct uproc_protclass *pc, enum uproc_pc_mode mode,
-                  const struct uproc_ecurve *fwd,
-                  const struct uproc_ecurve *rev,
-                  const struct uproc_substmat *substmat,
-                  uproc_pc_filter *filter, void *filter_arg);
+uproc_protclass *uproc_pc_create(enum uproc_pc_mode mode,
+                                 const uproc_ecurve *fwd,
+                                 const uproc_ecurve *rev,
+                                 const uproc_substmat *substmat,
+                                 uproc_pc_filter *filter, void *filter_arg);
 
-void uproc_pc_destroy(struct uproc_protclass *pc);
+void uproc_pc_destroy(uproc_protclass *pc);
 
-int uproc_pc_classify(const struct uproc_protclass *pc, const char *seq,
+int uproc_pc_classify(const uproc_protclass *pc, const char *seq,
                       struct uproc_pc_results *results);
 #endif

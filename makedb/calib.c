@@ -62,7 +62,7 @@ xrealloc(void *ptr, size_t sz)
 #define xmalloc(sz) xrealloc(NULL, sz)
 
 static int
-choice(const struct uproc_matrix *p, size_t n)
+choice(const uproc_matrix *p, size_t n)
 {
     double sum, c;
     unsigned i;
@@ -79,8 +79,8 @@ choice(const struct uproc_matrix *p, size_t n)
 }
 
 static void
-randseq(char *buf, size_t len, const struct uproc_alphabet *alpha,
-        const struct uproc_matrix *probs)
+randseq(char *buf, size_t len, const uproc_alphabet *alpha,
+        const uproc_matrix *probs)
 {
     size_t i;
     static bool rand_seeded = false;
@@ -190,13 +190,14 @@ static int
 store_interpolated(double thresh[static POW_DIFF + 1],
                    const char *dbdir, const char *name)
 {
+    int res;
     size_t i;
     double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
-
-    struct uproc_matrix thresh_interp = {
-        .rows = 1, .cols = INTERP_MAX, .values = y };
-
+    uproc_matrix *thresh_interp = uproc_matrix_create(1, INTERP_MAX, y);
+    if (!thresh_interp) {
+        return -1;
+    }
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
     }
@@ -210,8 +211,10 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     }
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
-    return uproc_matrix_store(&thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir,
-                              name);
+    res = uproc_matrix_store(thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir,
+                             name);
+    uproc_matrix_destroy(thresh_interp);
+    return res;
 }
 
 static bool
@@ -229,41 +232,38 @@ prot_filter(const char *seq, size_t len, uproc_family family, double score,
 int calib(const char *alphabet, const char *dbdir, const char *modeldir)
 {
     int res;
-    struct uproc_alphabet alpha;
-    struct uproc_matrix aa_probs;
-    struct uproc_substmat substmat;
-    struct uproc_ecurve fwd, rev;
+    uproc_alphabet *alpha;
+    uproc_matrix *aa_probs;
+    uproc_substmat *substmat;
+    uproc_ecurve *fwd, *rev;
     double thresh2[POW_DIFF + 1],
            thresh3[POW_DIFF + 1];
 
-    res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
-                              modeldir);
-    if (res) {
-        return res;
+    substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", modeldir);
+    if (!substmat) {
+        return -1;
     }
 
-    /* the string used to initialize alpha must match the one used to build
-     * aa_probs
-     */
-    res = uproc_alphabet_init(&alpha, alphabet);
-    if (res) {
-        return res;
+    alpha = uproc_alphabet_create(alphabet);
+    if (!alpha) {
+        return -1;
     }
 
-    res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs", modeldir);
-    if (res) {
-        return res;
+    aa_probs = uproc_matrix_load(UPROC_IO_GZIP, "%s/aa_probs", modeldir);
+    if (!aa_probs) {
+        return -1;
     }
 
-    res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+    fwd = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/fwd.ecurve", dbdir);
-    if (res) {
-        return res;
+    if (!fwd) {
+        return -1;
     }
-    res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+    rev = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/rev.ecurve", dbdir);
-    if (res) {
-        return res;
+    if (!rev) {
+        uproc_ecurve_destroy(fwd);
+        return -1;
     }
 
 #if _OPENMP
@@ -283,12 +283,12 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
 
             unsigned long i, seq_count;
             size_t seq_len;
-            struct uproc_protclass pc;
+            uproc_protclass *pc;
             struct uproc_pc_results results;
             results.preds = NULL;
             results.n = results.sz = 0;
-            uproc_pc_init(&pc, UPROC_PC_ALL, &fwd, &rev, &substmat,
-                          prot_filter, NULL);
+            pc = uproc_pc_create(UPROC_PC_ALL, fwd, rev, substmat,
+                                 prot_filter, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;
@@ -302,8 +302,8 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                         progress(NULL, perc);
                     }
                 }
-                randseq(seq, seq_len, &alpha, &aa_probs);
-                uproc_pc_classify(&pc, seq, &results);
+                randseq(seq, seq_len, alpha, aa_probs);
+                uproc_pc_classify(pc, seq, &results);
                 append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
                         results.n);
             }
@@ -321,9 +321,12 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     progress(NULL, 100.0);
 
     res = store_interpolated(thresh2, dbdir, "prot_thresh_e2");
-    if (res) {
-        return res;
+    if (!res) {
+        res = store_interpolated(thresh3, dbdir, "prot_thresh_e3");
     }
-    res = store_interpolated(thresh3, dbdir, "prot_thresh_e3");
+    uproc_alphabet_destroy(alpha);
+    uproc_substmat_destroy(substmat);
+    uproc_ecurve_destroy(fwd);
+    uproc_ecurve_destroy(rev);
     return res;
 }

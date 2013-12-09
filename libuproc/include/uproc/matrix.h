@@ -28,24 +28,13 @@
 #include <stdarg.h>
 #include "uproc/io.h"
 
+typedef struct uproc_matrix_s uproc_matrix;
+
 /** printf() format for matrix file header */
 #define UPROC_MATRIX_HEADER_PRI "[%zu, %zu]\n"
 
 /** scanf() format for matrix file header */
 #define UPROC_MATRIX_HEADER_SCN "[%zu , %zu]"
-
-/** Matrix struct definition */
-struct uproc_matrix
-{
-    /** Number of rows */
-    size_t rows;
-
-    /** Number of columns */
-    size_t cols;
-
-    /** Values (as "flat" array) */
-    double *values;
-};
 
 /** Initialize matrix
  *
@@ -61,19 +50,18 @@ struct uproc_matrix
  * \retval UPROC_SUCCESS   success
  * \retval UPROC_ENOMEM    memory allocation failed
  */
-int uproc_matrix_init(struct uproc_matrix *matrix, size_t rows, size_t cols,
-                      const double *values);
+uproc_matrix *uproc_matrix_create(size_t rows, size_t cols,
+                                  const double *values);
 
 /** Free resources of a matrix */
-void uproc_matrix_destroy(struct uproc_matrix *matrix);
+void uproc_matrix_destroy(uproc_matrix *matrix);
 
 /** Set the value of matrix[row, col] */
-void uproc_matrix_set(struct uproc_matrix *matrix, size_t row, size_t col,
+void uproc_matrix_set(uproc_matrix *matrix, size_t row, size_t col,
                       double value);
 
 /** Get the value of matrix[row, col] */
-double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row,
-                        size_t col);
+double uproc_matrix_get(const uproc_matrix *matrix, size_t row, size_t col);
 
 /** Obtain matrix dimensions
  *
@@ -81,28 +69,26 @@ double uproc_matrix_get(const struct uproc_matrix *matrix, size_t row,
  * \param rows      _OUT_: number of rows
  * \param cols      _OUT_: number of columns
  */
-void uproc_matrix_dimensions(const struct uproc_matrix *matrix, size_t *rows,
+void uproc_matrix_dimensions(const uproc_matrix *matrix, size_t *rows,
                              size_t *cols);
 
 /** Load matrix from stream */
-int uproc_matrix_loads(struct uproc_matrix *matrix, uproc_io_stream *stream);
+uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream);
 
 /** Load matrix from file */
-int uproc_matrix_load(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-                      const char *pathfmt, ...);
+uproc_matrix *uproc_matrix_load(enum uproc_io_type iotype, const char *pathfmt,
+                                ...);
 
-int uproc_matrix_loadv(struct uproc_matrix *matrix, enum uproc_io_type iotype,
-                       const char *pathfmt, va_list ap);
+uproc_matrix *uproc_matrix_loadv(enum uproc_io_type iotype,
+                                 const char *pathfmt, va_list ap);
 
 /** Store matrix to stream */
-int uproc_matrix_stores(const struct uproc_matrix *matrix,
-                        uproc_io_stream *stream);
+int uproc_matrix_stores(const uproc_matrix *matrix, uproc_io_stream *stream);
 
 /** Store matrix to file */
-int uproc_matrix_store(const struct uproc_matrix *matrix,
-                       enum uproc_io_type iotype, const char *pathfmt, ...);
+int uproc_matrix_store(const uproc_matrix *matrix, enum uproc_io_type iotype,
+                       const char *pathfmt, ...);
 
-int uproc_matrix_storev(const struct uproc_matrix *matrix,
-                        enum uproc_io_type iotype, const char *pathfmt,
-                        va_list ap);
+int uproc_matrix_storev(const uproc_matrix *matrix, enum uproc_io_type iotype,
+                        const char *pathfmt, va_list ap);
 #endif

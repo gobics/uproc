@@ -33,31 +33,48 @@
 #include "uproc/matrix.h"
 #include "uproc/substmat.h"
 
-#define UPROC_DISTMAT_INDEX(x, y) ((x) << UPROC_AMINO_BITS | (y))
-
-int
-uproc_substmat_init(struct uproc_substmat *mat)
+struct uproc_substmat_s
 {
-    *mat = (struct uproc_substmat) { { { 0.0 } } };
-    return 0;
+    /** Matrix containing distances */
+    double dists[UPROC_SUFFIX_LEN][UPROC_ALPHABET_SIZE << UPROC_AMINO_BITS];
+};
+
+#define SUBSTMAT_INDEX(x, y) ((x) << UPROC_AMINO_BITS | (y))
+
+uproc_substmat *
+uproc_substmat_create(void)
+{
+    struct uproc_substmat_s *mat = malloc(sizeof *mat);
+    if (!mat) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    *mat = (struct uproc_substmat_s) { { { 0.0 } } };
+    return mat;
+}
+
+void
+uproc_substmat_destroy(uproc_substmat *mat)
+{
+    free(mat);
 }
 
 double
-uproc_substmat_get(const struct uproc_substmat *mat, unsigned pos,
+uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
                    uproc_amino x, uproc_amino y)
 {
-    return mat->dists[pos][UPROC_DISTMAT_INDEX(x, y)];
+    return mat->dists[pos][SUBSTMAT_INDEX(x, y)];
 }
 
 void
-uproc_substmat_set(struct uproc_substmat *mat, unsigned pos, uproc_amino x,
+uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
         uproc_amino y, double dist)
 {
-    mat->dists[pos][UPROC_DISTMAT_INDEX(x, y)] = dist;
+    mat->dists[pos][SUBSTMAT_INDEX(x, y)] = dist;
 }
 
 void
-uproc_substmat_align_suffixes(const struct uproc_substmat *mat,
+uproc_substmat_align_suffixes(const uproc_substmat *mat,
                               uproc_suffix s1, uproc_suffix s2,
                               double dist[static UPROC_SUFFIX_LEN])
 {
@@ -73,25 +90,31 @@ uproc_substmat_align_suffixes(const struct uproc_substmat *mat,
     }
 }
 
-int
-uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
-                     const char *pathfmt, va_list ap)
+uproc_substmat *
+uproc_substmat_loadv(enum uproc_io_type iotype, const char *pathfmt,
+                     va_list ap)
 {
-    int res;
+    struct uproc_substmat_s *mat;
     size_t i, j, k, rows, cols, sz;
-    struct uproc_matrix matrix;
+    uproc_matrix *matrix;
 
-    res = uproc_matrix_loadv(&matrix, iotype, pathfmt, ap);
-    if (res) {
-        return res;
+    mat = uproc_substmat_create();
+    if (!mat) {
+        return NULL;
     }
 
-    uproc_matrix_dimensions(&matrix, &rows, &cols);
+    matrix = uproc_matrix_loadv(iotype, pathfmt, ap);
+    if (!matrix) {
+        uproc_substmat_destroy(mat);
+        return NULL;
+    }
+
+    uproc_matrix_dimensions(matrix, &rows, &cols);
     sz = rows * cols;
 #define SUBSTMAT_TOTAL \
     (UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE)
     if (sz != SUBSTMAT_TOTAL) {
-        res = uproc_error_msg(
+        uproc_error_msg(
             UPROC_EINVAL,
             "invalid substitution matrix (%zu elements; expected %zu)", sz,
             SUBSTMAT_TOTAL);
@@ -106,23 +129,23 @@ uproc_substmat_loadv(struct uproc_substmat *mat, enum uproc_io_type iotype,
                 size_t idx;
                 idx = (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
                 uproc_substmat_set(mat, i, k, j,
-                                   uproc_matrix_get(&matrix, 0, idx));
+                                   uproc_matrix_get(matrix, 0, idx));
             }
         }
     }
 error:
-    uproc_matrix_destroy(&matrix);
-    return res;
+    uproc_matrix_destroy(matrix);
+    return mat;
 }
 
-int
-uproc_substmat_load(struct uproc_substmat *mat, enum uproc_io_type iotype,
-                    const char *pathfmt, ...)
+uproc_substmat *
+uproc_substmat_load(enum uproc_io_type iotype, const char *pathfmt, ...)
 {
     int res;
+    struct uproc_substmat_s *mat;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_substmat_loadv(mat, iotype, pathfmt, ap);
+    mat = uproc_substmat_loadv(iotype, pathfmt, ap);
     va_end(ap);
-    return res;
+    return mat;
 }

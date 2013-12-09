@@ -26,28 +26,24 @@
 #include "uproc/common.h"
 #include <limits.h>
 
-/** Struct defining an amino acid alphabet */
-struct uproc_alphabet
-{
-    /** Original alphabet string */
-    char str[UPROC_ALPHABET_SIZE + 1];
+/** Opaque type for alphabets */
+typedef struct uproc_alphabet_s uproc_alphabet;
 
-    /** Lookup table for mapping characters to amino acids */
-    uproc_amino aminos[UCHAR_MAX + 1];
-};
-
-/** Initialize an alphabet object with the given string
+/** Allocate alphabet object and initialize it with the given string
  *
  * The string must be exactly ::UPROC_ALPHABET_SIZE characters long and consist
  * only of uppercase letters. No letter shall be included twice.
  *
  * \return
- * On success, returns 0.
+ * On success, returns a new uproc_alphabet object.
  * \return
- * On failure, returns a negative value, sets ::uproc_errno to ::UPROC_EINVAL and
- * ::uproc_errmsg accordingly.
+ * On failure, returns NULL and sets ::uproc_errno to ::UPROC_EINVAL
+ * and ::uproc_errmsg accordingly.
  */
-int uproc_alphabet_init(struct uproc_alphabet *alpha, const char *s);
+uproc_alphabet *uproc_alphabet_create(const char *s);
+
+/** Free an alphabet object */
+void uproc_alphabet_destroy(uproc_alphabet *alpha);
 
 /** Translate character to amino acid
  *
@@ -60,8 +56,7 @@ int uproc_alphabet_init(struct uproc_alphabet *alpha, const char *s);
  *
  * Does not set ::uproc_errno.
  */
-uproc_amino uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha,
-                                         int c);
+uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c);
 
 /** Translate amino acid to character
  *
@@ -73,6 +68,12 @@ uproc_amino uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha,
  *
  * Does not set ::uproc_errno.
  */
-int uproc_alphabet_amino_to_char(const struct uproc_alphabet *alpha,
-                                 uproc_amino a);
+int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
+
+/** Return the underlying string
+ *
+ *  Returns a pointer to the underlying string, which is a copy of the argument
+ *  passed to uproc_alphabet_create().
+ */
+const char *uproc_alphabet_str(const uproc_alphabet *alpha);
 #endif

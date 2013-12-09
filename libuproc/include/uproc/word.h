@@ -27,8 +27,9 @@
 #include <stdbool.h>
 #include "uproc/alphabet.h"
 
-/** Struct defining an amino acid word */
-struct uproc_word {
+/** Amino acid word */
+struct uproc_word
+{
     /** First few amino acids */
     uproc_prefix prefix;
 
@@ -38,6 +39,9 @@ struct uproc_word {
 
 /** Initializer to be used for all `struct uproc_word` objects */
 #define UPROC_WORD_INITIALIZER { 0, 0 }
+
+/** Iterator over all words in an amino acid sequence */
+typedef struct uproc_worditer_s uproc_worditer;
 
 /** Transform a string to amino acid word
  *
@@ -54,7 +58,7 @@ struct uproc_word {
  *                         character
  */
 int uproc_word_from_string(struct uproc_word *word, const char *str,
-                           const struct uproc_alphabet *alpha);
+                           const uproc_alphabet *alpha);
 
 /** Build string corresponding to amino acid word
  *
@@ -70,7 +74,7 @@ int uproc_word_from_string(struct uproc_word *word, const char *str,
  * \retval #UPROC_FAILURE  the word contained an invalid amino acid
  */
 int uproc_word_to_string(char *str, const struct uproc_word *word,
-                         const struct uproc_alphabet *alpha);
+                         const uproc_alphabet *alpha);
 
 /** Append amino acid
  *
@@ -113,24 +117,6 @@ bool uproc_word_equal(const struct uproc_word *w1,
  */
 int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
 
-/** Iterator over all words in an amino acid sequence */
-struct uproc_worditer {
-    /** Iterated sequence */
-    const char *sequence;
-
-    /** Index of the next character to read */
-    size_t index;
-
-    /** Translation alphabet */
-    const struct uproc_alphabet *alphabet;
-
-    /** Current word in original order */
-    struct uproc_word fwd;
-
-    /** Current word in reversed order */
-    struct uproc_word rev;
-};
-
 /** Initialize an iterator over a sequence
  *
  * The iterator may not be used after the lifetime of the objects pointed to
@@ -140,8 +126,8 @@ struct uproc_worditer {
  * \param seq   sequence to iterate
  * \param alpha translation alphabet
  */
-void uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
-                         const struct uproc_alphabet *alpha);
+uproc_worditer *uproc_worditer_create(const char *seq,
+                                      const uproc_alphabet *alpha);
 
 /** Obtain the next word(s) from a word iterator
  *
@@ -157,6 +143,6 @@ void uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
  * \retval 0    the iterator is exhausted (i.e. the end of the sequence was
  *              reached, no words were read)
  */
-int uproc_worditer_next(struct uproc_worditer *iter, size_t *index,
+int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
 #endif

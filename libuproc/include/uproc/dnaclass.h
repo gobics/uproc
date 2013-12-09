@@ -30,7 +30,6 @@
 enum uproc_dc_mode
 {
     UPROC_DC_ALL,
-
     UPROC_DC_MAX,
 };
 
@@ -47,23 +46,19 @@ struct uproc_dc_results
 
 #define UPROC_DC_RESULTS_INITIALIZER { NULL, 0, 0 }
 
-struct uproc_dnaclass
-{
-    enum uproc_dc_mode mode;
+/** DNA/RNA sequence classifier */
+typedef struct uproc_dnaclass_s uproc_dnaclass;
 
-    const struct uproc_protclass *pc;
+/** Create new DNA classifier */
+uproc_dnaclass *uproc_dc_create(enum uproc_dc_mode mode,
+                                const uproc_protclass *pc,
+                                const uproc_matrix *codon_scores,
+                                uproc_orf_filter *orf_filter,
+                                void *orf_filter_arg);
 
-    double codon_scores[UPROC_BINARY_CODON_COUNT];
-    uproc_orf_filter *orf_filter;
-    void *orf_filter_arg;
-};
+/** Destroy DNA classifier */
+void uproc_dc_destroy(uproc_dnaclass *dc);
 
-int uproc_dc_init(struct uproc_dnaclass *dc,
-                  enum uproc_dc_mode mode,
-                  const struct uproc_protclass *pc,
-                  const struct uproc_matrix *codon_scores,
-                  uproc_orf_filter *orf_filter, void *orf_filter_arg);
-
-int uproc_dc_classify(const struct uproc_dnaclass *dc, const char *seq,
+int uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
                       struct uproc_dc_results *results);
 #endif

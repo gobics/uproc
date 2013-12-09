@@ -29,12 +29,30 @@
 #include "uproc/word.h"
 #include "uproc/error.h"
 
+struct uproc_worditer_s
+{
+    /** Iterated sequence */
+    const char *sequence;
+
+    /** Index of the next character to read */
+    size_t index;
+
+    /** Translation alphabet */
+    const uproc_alphabet *alphabet;
+
+    /** Current word in original order */
+    struct uproc_word fwd;
+
+    /** Current word in reversed order */
+    struct uproc_word rev;
+};
+
 #define AMINO_AT(x, n) \
     (((x) >> (UPROC_AMINO_BITS * (n))) & UPROC_BITMASK(UPROC_AMINO_BITS))
 
 int
 uproc_word_from_string(struct uproc_word *word, const char *str,
-                       const struct uproc_alphabet *alpha)
+                       const uproc_alphabet *alpha)
 {
     int i;
     uproc_amino a;
@@ -56,7 +74,7 @@ uproc_word_from_string(struct uproc_word *word, const char *str,
 
 int
 uproc_word_to_string(char *str, const struct uproc_word *word,
-                     const struct uproc_alphabet *alpha)
+                     const uproc_alphabet *alpha)
 {
     int i, c;
     uproc_prefix p = word->prefix;
@@ -150,19 +168,25 @@ uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2)
     return 1;
 }
 
-void
-uproc_worditer_init(struct uproc_worditer *iter, const char *seq,
-                    const struct uproc_alphabet *alpha)
+
+uproc_worditer *
+uproc_worditer_create(const char *seq, const uproc_alphabet *alpha)
 {
+    struct uproc_worditer_s *iter = malloc(sizeof *iter);
+    if (!iter) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
     iter->sequence = seq;
     iter->index = 0;
     iter->alphabet = alpha;
     iter->fwd = (struct uproc_word) UPROC_WORD_INITIALIZER;
     iter->rev = (struct uproc_word) UPROC_WORD_INITIALIZER;
+    return iter;
 }
 
 int
-uproc_worditer_next(struct uproc_worditer *iter, size_t *index,
+uproc_worditer_next(uproc_worditer *iter, size_t *index,
                     struct uproc_word *fwd, struct uproc_word *rev)
 {
     int c;

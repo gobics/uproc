@@ -30,7 +30,15 @@
 #include "uproc/bst.h"
 #include "uproc/protclass.h"
 
-
+struct uproc_protclass_s
+{
+    enum uproc_pc_mode mode;
+    const uproc_substmat *substmat;
+    const uproc_ecurve *fwd;
+    const uproc_ecurve *rev;
+    uproc_pc_filter *filter;
+    void *filter_arg;
+};
 
 /*********************
  * score computation *
@@ -124,7 +132,7 @@ sc_finalize(struct sc *score)
 }
 
 static int
-scores_add(struct uproc_bst *scores, uproc_family family, size_t index,
+scores_add(uproc_bst *scores, uproc_family family, size_t index,
            double dist[static UPROC_SUFFIX_LEN], bool reverse)
 {
     struct sc sc;
@@ -136,9 +144,9 @@ scores_add(struct uproc_bst *scores, uproc_family family, size_t index,
 }
 
 static int
-scores_add_word(struct uproc_bst *scores, const struct uproc_word *word,
-                size_t index, bool reverse, const struct uproc_ecurve *ecurve,
-                const struct uproc_substmat *substmat)
+scores_add_word(uproc_bst *scores, const struct uproc_word *word,
+                size_t index, bool reverse, const uproc_ecurve *ecurve,
+                const uproc_substmat *substmat)
 {
     int res;
     struct uproc_word
@@ -165,20 +173,22 @@ scores_add_word(struct uproc_bst *scores, const struct uproc_word *word,
 }
 
 static int
-scores_compute(const struct uproc_protclass *pc, const char *seq,
-               struct uproc_bst *scores)
+scores_compute(const struct uproc_protclass_s *pc, const char *seq,
+               uproc_bst *scores)
 {
     int res;
-    struct uproc_worditer iter;
+    uproc_worditer *iter;
     size_t index;
     struct uproc_word
         fwd_word = UPROC_WORD_INITIALIZER,
         rev_word = UPROC_WORD_INITIALIZER;
 
-    uproc_worditer_init(&iter, seq,
-        pc->fwd ? &pc->fwd->alphabet : &pc->rev->alphabet);
+    iter = uproc_worditer_create(seq, uproc_ecurve_alphabet(pc->fwd));
+    if (!iter) {
+        return -1;
+    }
 
-    while (res = uproc_worditer_next(&iter, &index, &fwd_word, &rev_word),
+    while (res = uproc_worditer_next(iter, &index, &fwd_word, &rev_word),
            res > 0)
     {
         res = scores_add_word(scores, &fwd_word, index, false, pc->fwd,
@@ -201,11 +211,11 @@ scores_compute(const struct uproc_protclass *pc, const char *seq,
  ****************/
 
 static int
-scores_finalize(const struct uproc_protclass *pc, const char *seq,
-                struct uproc_bst *score_tree, struct uproc_pc_results *results)
+scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
+                uproc_bst *score_tree, struct uproc_pc_results *results)
 {
     int res = 0;
-    struct uproc_bstiter iter;
+    uproc_bstiter *iter;
     union uproc_bst_key key;
     struct sc value;
     size_t seq_len = strlen(seq);
@@ -223,8 +233,11 @@ scores_finalize(const struct uproc_protclass *pc, const char *seq,
     }
 
     results->n = 0;
-    uproc_bstiter_init(&iter, score_tree);
-    while (uproc_bstiter_next(&iter, &key, &value) > 0) {
+    iter = uproc_bstiter_create(score_tree);
+    if (!iter) {
+        goto error;
+    }
+    while (uproc_bstiter_next(iter, &key, &value) > 0) {
         uproc_family family = key.uint;
         double score = sc_finalize(&value);
         if (pc->filter &&
@@ -235,6 +248,7 @@ scores_finalize(const struct uproc_protclass *pc, const char *seq,
         results->preds[results->n].family = family;
         results->n++;
     }
+    uproc_bstiter_destroy(iter);
 
     if (pc->mode == UPROC_PC_MAX && results->n > 0) {
         size_t imax = 0;
@@ -256,17 +270,23 @@ error:
  * exported functions *
  **********************/
 
-int
-uproc_pc_init(struct uproc_protclass *pc, enum uproc_pc_mode mode,
-              const struct uproc_ecurve *fwd, const struct uproc_ecurve *rev,
-              const struct uproc_substmat *substmat, uproc_pc_filter *filter,
-              void *filter_arg)
+uproc_protclass *
+uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
+                const uproc_ecurve *rev, const uproc_substmat *substmat,
+                uproc_pc_filter *filter, void *filter_arg)
 {
+    struct uproc_protclass_s *pc;
     if (!(fwd || rev)) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "protein classifier requires at least one ecurve");
+        uproc_error_msg(UPROC_EINVAL,
+                        "protein classifier requires at least one ecurve");
+        return NULL;
     }
-    *pc = (struct uproc_protclass) {
+    pc = malloc(sizeof *pc);
+    if (!pc) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    *pc = (struct uproc_protclass_s) {
         .mode = mode,
         .substmat = substmat,
         .fwd = fwd,
@@ -274,30 +294,33 @@ uproc_pc_init(struct uproc_protclass *pc, enum uproc_pc_mode mode,
         .filter = filter,
         .filter_arg = filter_arg,
     };
-    return 0;
+    return pc;
 }
 
 static int
-classify(const struct uproc_protclass *pc, const char *seq,
+classify(const struct uproc_protclass_s *pc, const char *seq,
          struct uproc_pc_results *results)
 {
     int res;
-    struct uproc_bst scores;
+    uproc_bst *scores;
 
-    uproc_bst_init(&scores, UPROC_BST_UINT, sizeof (struct sc));
-    res = scores_compute(pc, seq, &scores);
-    if (res || uproc_bst_isempty(&scores)) {
+    scores = uproc_bst_create(UPROC_BST_UINT, sizeof (struct sc));
+    if (!scores) {
+        return -1;
+    }
+    res = scores_compute(pc, seq, scores);
+    if (res || uproc_bst_isempty(scores)) {
         results->n = 0;
         goto error;
     }
-    res = scores_finalize(pc, seq, &scores, results);
+    res = scores_finalize(pc, seq, scores, results);
 error:
-    uproc_bst_clear(&scores, NULL);
+    uproc_bst_destroy(scores);
     return res;
 }
 
 int
-uproc_pc_classify(const struct uproc_protclass *pc, const char *seq,
+uproc_pc_classify(const uproc_protclass *pc, const char *seq,
                   struct uproc_pc_results *results)
 {
     int res;

@@ -39,16 +39,15 @@
  * \retval #UPROC_EINVAL       malformed file
  * \retval #UPROC_SUCCESS      else
  */
-int uproc_mmap_map(struct uproc_ecurve *ecurve, const char *pathfmt, ...);
+uproc_ecurve *uproc_mmap_map(const char *pathfmt, ...);
 
-int uproc_mmap_mapv(struct uproc_ecurve *ecurve, const char *pathfmt,
-                    va_list ap);
+uproc_ecurve *uproc_mmap_mapv(const char *pathfmt, va_list ap);
 
 /** Release mapping and close the underlying file descriptor
  *
  * \param ecurve    ecurve mapped with `uproc_mmap_map()`
  */
-void uproc_mmap_unmap(struct uproc_ecurve *ecurve);
+void uproc_mmap_unmap(uproc_ecurve *ecurve);
 
 /** Store ecurve in a format suitable for `uproc_mmap_map()`
  *
@@ -59,10 +58,9 @@ void uproc_mmap_unmap(struct uproc_ecurve *ecurve);
  * \retval #UPROC_ESYSCALL     an error occured while calling an OS function
  * \retval #UPROC_SUCCESS      else
  */
-int uproc_mmap_store(const struct uproc_ecurve *ecurve, const char *pathfmt,
-                     ...);
+int uproc_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...);
 
-int uproc_mmap_storev(const struct uproc_ecurve *ecurve, const char *pathfmt,
+int uproc_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
                       va_list ap);
 
 #endif

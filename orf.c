@@ -35,7 +35,7 @@
 struct orf_filter_arg
 {
     unsigned min_length;
-    struct uproc_matrix *thresh;
+    uproc_matrix *thresh;
 };
 
 bool
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     const char *model_dir = NULL;
 
     double codon_scores[UPROC_BINARY_CODON_COUNT];
-    struct uproc_matrix orf_thresholds;
+    uproc_matrix *orf_thresholds = NULL;
 
     enum { NONE, MODEL, VALUE, MAX } thresh_mode = NONE;
     int orf_thresh_num = 2;
@@ -179,8 +179,12 @@ int main(int argc, char **argv)
                                 "-S argument must be a decimal number\n");
                         return EXIT_FAILURE;
                     }
-                    uproc_matrix_init(&orf_thresholds, 1, 1, &min_score);
-                    filter_arg.thresh = &orf_thresholds;
+                    orf_thresholds = uproc_matrix_create(1, 1, &min_score);
+                    if (!orf_thresholds) {
+                        uproc_perror("");
+                        return EXIT_FAILURE;
+                    }
+                    filter_arg.thresh = orf_thresholds;
                     thresh_mode = VALUE;
                 }
                 break;
@@ -196,24 +200,24 @@ int main(int argc, char **argv)
     }
 
     if (model_dir) {
-        struct uproc_matrix cs;
-        res = uproc_matrix_load(&cs, UPROC_IO_GZIP,
-                                "%s/codon_scores", model_dir);
-        if (res) {
+        uproc_matrix *cs;
+        cs = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores", model_dir);
+        if (!cs) {
             uproc_perror("can't load model from \"%s\"", model_dir);
             return EXIT_FAILURE;
         }
-        uproc_orf_codonscores(codon_scores, &cs);
+        uproc_orf_codonscores(codon_scores, cs);
+        uproc_matrix_destroy(cs);
 
         if (thresh_mode == MODEL && orf_thresh_num) {
-            res = uproc_matrix_load(&orf_thresholds, UPROC_IO_GZIP,
-                                    "%s/orf_thresh_e%d", model_dir,
-                                    orf_thresh_num);
-            if (res) {
+            orf_thresholds = uproc_matrix_load(UPROC_IO_GZIP,
+                                               "%s/orf_thresh_e%d", model_dir,
+                                               orf_thresh_num);
+            if (!orf_thresholds) {
                 uproc_perror("can't load ORF thresholds");
                 return EXIT_FAILURE;
             }
-            filter_arg.thresh = &orf_thresholds;
+            filter_arg.thresh = orf_thresholds;
         }
     }
     else if (!model_dir && thresh_mode != NONE) {
@@ -247,15 +251,15 @@ int main(int argc, char **argv)
         }
 
         while ((res = uproc_fasta_read(stream, &rd)) > 0) {
-            struct uproc_orfiter oi;
+            uproc_orfiter *oi;
             struct uproc_orf orf;
 
             char *max_orf = NULL;
             double max_score = -INFINITY;
-            uproc_orfiter_init(&oi, rd.seq,
-                               thresh_mode == NONE ? NULL : codon_scores,
-                               orf_filter, &filter_arg);
-            while (uproc_orfiter_next(&oi, &orf) > 0) {
+            oi = uproc_orfiter_create(
+                rd.seq, thresh_mode == NONE ? NULL : codon_scores, orf_filter,
+                &filter_arg);
+            while (uproc_orfiter_next(oi, &orf) > 0) {
                 if (thresh_mode == MAX && orf.score > max_score) {
                     free(max_orf);
                     max_orf = strdup(orf.data);
@@ -270,12 +274,13 @@ int main(int argc, char **argv)
                                   0);
                 free(max_orf);
             }
-            uproc_orfiter_destroy(&oi);
+            uproc_orfiter_destroy(oi);
         }
         uproc_io_close(stream);
     }
     if (res) {
         uproc_perror("error reading input");
     }
+    uproc_matrix_destroy(orf_thresholds);
     return EXIT_SUCCESS;
 }

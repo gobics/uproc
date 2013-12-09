@@ -31,46 +31,79 @@
 #include "uproc/error.h"
 #include "uproc/alphabet.h"
 
-int
-uproc_alphabet_init(struct uproc_alphabet *alpha, const char *s)
+/** Struct defining an amino acid alphabet */
+struct uproc_alphabet_s
+{
+    /** Original alphabet string */
+    char str[UPROC_ALPHABET_SIZE + 1];
+
+    /** Lookup table for mapping characters to amino acids */
+    uproc_amino aminos[UCHAR_MAX + 1];
+};
+
+uproc_alphabet *
+uproc_alphabet_create(const char *s)
 {
     unsigned char i;
     const char *p;
+    struct uproc_alphabet_s *a = malloc(sizeof *a);
+    if (!a) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
 
     if (strlen(s) != UPROC_ALPHABET_SIZE) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "string too short: %d characters instead of %d",
+        uproc_error_msg(
+            UPROC_EINVAL, "string too short: %zu characters instead of %d",
             strlen(s), UPROC_ALPHABET_SIZE);
+        goto error;
     }
-    strcpy(alpha->str, s);
+    strcpy(a->str, s);
     for (i = 0; i < UCHAR_MAX; i++) {
-        alpha->aminos[i] = -1;
+        a->aminos[i] = -1;
     }
     for (p = s; *p; p++) {
         i = toupper(*p);
         if (!isupper(i)) {
-            return uproc_error_msg(UPROC_EINVAL, "invalid character '%c'", i);
+            uproc_error_msg(UPROC_EINVAL, "invalid character '%c'", i);
+            goto error;
         }
-        if (alpha->aminos[i] != -1) {
-            return uproc_error_msg(UPROC_EINVAL, "duplicate character '%c'", i);
+        if (a->aminos[i] != -1) {
+            uproc_error_msg(UPROC_EINVAL, "duplicate character '%c'", i);
+            goto error;
         }
-        alpha->aminos[i] = p - s;
+        a->aminos[i] = p - s;
     }
-    return 0;
+    return a;
+error:
+    free(a);
+    return NULL;
+}
+
+void
+uproc_alphabet_destroy(uproc_alphabet *alpha)
+{
+    free(alpha);
 }
 
 uproc_amino
-uproc_alphabet_char_to_amino(const struct uproc_alphabet *alpha, int c)
+uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c)
 {
     return alpha->aminos[(unsigned char)c];
 }
 
 int
-uproc_alphabet_amino_to_char(const struct uproc_alphabet *alpha,
+uproc_alphabet_amino_to_char(const uproc_alphabet *alpha,
                              uproc_amino amino)
 {
     if (amino >= UPROC_ALPHABET_SIZE) {
         return -1;
     }
     return alpha->str[amino];
+}
+
+const char *
+uproc_alphabet_str(const uproc_alphabet *alpha)
+{
+    return alpha->str;
 }

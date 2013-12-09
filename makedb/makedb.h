@@ -5,7 +5,7 @@
 
 /* from build_ecurves.c */
 int build_ecurves(const char *infile, const char *outdir, const char *alphabet,
-                  struct uproc_idmap *idmap);
+                  uproc_idmap *idmap);
 
 /* from calib.c */
 int calib(const char *alphabet, const char *dbdir, const char *modeldir);
