@@ -3,7 +3,7 @@ if HAVE_DOXYGEN
 SUBDIRS += docs
 endif
 
-AM_CFLAGS = -Werror $(OPENMP_CFLAGS)
+AM_CFLAGS = $(OPENMP_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 
 lib_LTLIBRARIES = libuproc.la
