@@ -74,6 +74,9 @@ void
 uproc_perror(const char *fmt, ...)
 {
     va_list ap;
+#ifndef NDEBUG
+    fprintf(stderr, "%s: ", error_loc);
+#endif
     va_start(ap, fmt);
     if (fmt && *fmt) {
         vfprintf(stderr, fmt, ap);
