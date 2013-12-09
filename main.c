@@ -287,8 +287,8 @@ OPT("-f", "--stats", "") "\n\
     Print \"classified,unclassified,total\" numbers of sequences.\n\
 \n"
 OPT("-c", "--counts", "") "\n\
-    Print number of classifications for each protein family (if this number\n\
-    is greater than 0) in the format: \"family: count\"\n\
+    Print protein family and number of classifications (if greater than 0)\n\
+    separated by a comma.\n\
 \n"
 "If none of the above is specified, -c is used.\n\
 If multiple of them are specified, they are printed in the order as above.\n\
@@ -681,7 +681,7 @@ main(int argc, char **argv)
             else {
                 uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI, i);
             }
-            uproc_io_printf(out_stream, ": %ju\n", counts[i]);
+            uproc_io_printf(out_stream, ",%ju\n", counts[i]);
         }
     }
 
