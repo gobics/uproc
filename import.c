@@ -164,7 +164,7 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
         }
     }
-    if (argc < optind + ARGC - 1) {
+    if (argc < optind + ARGC) {
         print_usage(argv[0]);
         return EXIT_SUCCESS;
     }
