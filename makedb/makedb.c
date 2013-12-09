@@ -25,10 +25,10 @@
 #define PROGNAME "uproc-makedb"
 #include "uproc_opt.h"
 
+#include <string.h>
+
 #include <uproc.h>
 #include "makedb.h"
-
-#define ALPHA_DEFAULT "AGSTPKRQEDNHYWFMLIVC"
 
 void
 print_usage(const char *progname)
@@ -45,17 +45,34 @@ print_usage(const char *progname)
         OPT("-h", "--help    ", "     ") "Print this message and exit.\n"
         OPT("-v", "--version ", "     ") "Print version and exit.\n"
         OPT("-c", "--calib   ", "     ") "Only re-calibrate existing DB.\n"
-        OPT("-a", "--alphabet", "ALPHA") "Use alphabet ALPHA instead of \""
-            ALPHA_DEFAULT "\"\n",
+        ,
         progname);
 }
+
+static int
+load_alphabet(const char *modeldir,
+              char alphabet[static UPROC_ALPHABET_SIZE + 1])
+{
+    char tmp[UPROC_ALPHABET_SIZE + 2];
+    uproc_io_stream *stream;
+    stream = uproc_io_open("r", UPROC_IO_GZIP, "%s/alphabet", modeldir);
+    if (!stream) {
+        return -1;
+    }
+    if (!uproc_io_gets(tmp, sizeof tmp, stream)) {
+        return -1;
+    }
+    alphabet[UPROC_ALPHABET_SIZE] = '\0';
+    memcpy(alphabet, tmp, UPROC_ALPHABET_SIZE);
+    return 0;
+};
 
 int
 main(int argc, char **argv)
 {
     int res;
     struct uproc_idmap idmap = UPROC_IDMAP_INITIALIZER;
-    char *alphabet = ALPHA_DEFAULT,
+    char alphabet[UPROC_ALPHABET_SIZE + 1],
          *modeldir,
          *infile,
          *outdir;
@@ -75,7 +92,6 @@ main(int argc, char **argv)
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
         { "calib",      no_argument,        NULL, 'c' },
-        { "alphabet",   no_argument,        NULL, 'a' },
         { 0, 0, 0, 0 }
     };
 #else
@@ -94,9 +110,6 @@ main(int argc, char **argv)
             case 'c':
                 calib_only = true;
                 break;
-            case 'a':
-                alphabet = optarg;
-                break;
             case '?':
                 return EXIT_FAILURE;
         }
@@ -108,6 +121,11 @@ main(int argc, char **argv)
     modeldir = argv[optind + MODELDIR];
     infile = argv[optind + INFILE];
     outdir = argv[optind + OUTDIR];
+
+    res = load_alphabet(modeldir, alphabet);
+    if (res) {
+        return EXIT_FAILURE;
+    }
 
     if (!calib_only) {
         res = build_ecurves(infile, outdir, alphabet, &idmap);
