@@ -296,6 +296,12 @@ build_ecurve(const char *infile,
     size_t n_entries;
     uproc_amino first;
     struct uproc_ecurve new;
+    struct uproc_alphabet alpha;
+
+    res = uproc_alphabet_init(&alpha, alphabet);
+    if (res) {
+        return res;
+    }
 
     for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
         progress("building ecurve", first * 100 / UPROC_ALPHABET_SIZE);
@@ -306,7 +312,7 @@ build_ecurve(const char *infile,
             res = -1;
             goto error;
         }
-        res = extract_uniques(stream, &ecurve->alphabet, idmap, first, reverse,
+        res = extract_uniques(stream, &alpha, idmap, first, reverse,
                               &entries, &n_entries);
         uproc_io_close(stream);
         if (res) {
