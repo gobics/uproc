@@ -124,12 +124,14 @@ main(int argc, char **argv)
 
     res = load_alphabet(modeldir, alphabet);
     if (res) {
+        uproc_perror("error loading model");
         return EXIT_FAILURE;
     }
 
     if (!calib_only) {
         res = build_ecurves(infile, outdir, alphabet, &idmap);
         if (res) {
+            uproc_perror("error building ecurves");
             return EXIT_FAILURE;
         }
 
@@ -142,6 +144,7 @@ main(int argc, char **argv)
 
     res = calib(alphabet, outdir, modeldir);
     if (res) {
+        uproc_perror("error while calibrating");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;

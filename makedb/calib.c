@@ -239,7 +239,6 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     res = uproc_substmat_load(&substmat, UPROC_IO_GZIP, "%s/substmat",
                               modeldir);
     if (res) {
-        uproc_perror("error loading substmat");
         return res;
     }
 
@@ -248,26 +247,22 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
      */
     res = uproc_alphabet_init(&alpha, alphabet);
     if (res) {
-        uproc_perror("invalid alphabet string");
         return res;
     }
 
     res = uproc_matrix_load(&aa_probs, UPROC_IO_GZIP, "%s/aa_probs", modeldir);
     if (res) {
-        uproc_perror("error loading aa_probs");
         return res;
     }
 
     res = uproc_storage_load(&fwd, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/fwd.ecurve", dbdir);
     if (res) {
-        uproc_perror("error opening forward ecurve");
         return res;
     }
     res = uproc_storage_load(&rev, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
                              "%s/rev.ecurve", dbdir);
     if (res) {
-        uproc_perror("error opening reverse ecurve");
         return res;
     }
 
@@ -300,6 +295,13 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             seq_count = (1 << (POW_MAX - power)) * SEQ_COUNT_MULTIPLIER;
             seq[seq_len] = '\0';
             for (i = 0; i < seq_count; i++) {
+                if (i && i % (seq_count / 100) == 0) {
+#pragma omp critical
+                    {
+                        perc += 100.0 / (POW_MAX - POW_MIN + 1) / 100.0;
+                        progress(NULL, perc);
+                    }
+                }
                 randseq(seq, seq_len, &alpha, &aa_probs);
                 uproc_pc_classify(&pc, seq, &results);
                 append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
@@ -314,13 +316,9 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                     all_preds_n - 1)];
             free(all_preds);
             free(results.preds);
-#pragma omp critical
-            {
-                perc += 100.0 / (POW_MAX - POW_MIN + 1);
-                progress("calibrating", perc);
-            }
         }
     }
+    progress(NULL, 100.0);
 
     res = store_interpolated(thresh2, dbdir, "prot_thresh_e2");
     if (res) {

@@ -303,9 +303,8 @@ build_ecurve(const char *infile,
         return res;
     }
 
+    progress(reverse ? "rev.ecurve" : "fwd.ecurve", -1.0);
     for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
-        progress(reverse ? "rev.ecurve" : "fwd.ecurve",
-                 first * 100 / UPROC_ALPHABET_SIZE);
         n_entries = 0;
         free(entries);
         stream = uproc_io_open("r", UPROC_IO_GZIP, infile);
@@ -313,6 +312,7 @@ build_ecurve(const char *infile,
             res = -1;
             goto error;
         }
+        progress(NULL, first * 100 / UPROC_ALPHABET_SIZE);
         res = extract_uniques(stream, &alpha, idmap, first, reverse,
                               &entries, &n_entries);
         uproc_io_close(stream);
@@ -343,12 +343,14 @@ build_ecurve(const char *infile,
             }
         }
     }
-    progress("building ecurve", first * 100 / UPROC_ALPHABET_SIZE);
+    progress(NULL, first * 100 / UPROC_ALPHABET_SIZE);
 
     if (0) {
 error:
-        fputc('\n', stderr);
-        uproc_ecurve_destroy(ecurve);
+        if (first) {
+            fputc('\n', stderr);
+            uproc_ecurve_destroy(ecurve);
+        }
     }
     free(entries);
     return res;
@@ -381,12 +383,8 @@ build_ecurves(const char *infile,
     int res;
     res = build_and_store(infile, outdir, alphabet, idmap, false);
     if (res) {
-        uproc_perror("error building forward ecurve");
         return res;
     }
     res = build_and_store(infile, outdir, alphabet, idmap, true);
-    if (res) {
-        uproc_perror("error building reverse ecurve");
-    }
     return res;
 }

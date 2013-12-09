@@ -25,9 +25,16 @@
 #define WIDTH 20
 
 void
-progress(const char *label, double percent)
+progress(const char *new_label, double percent)
 {
+    static char *label;
     unsigned i, p = percent / 100 * WIDTH;
+    if (new_label) {
+        label = new_label;
+    }
+    if (percent < 0.0) {
+        return;
+    }
     fprintf(stderr, "\r%s: [", label);
     for (i = 0; i < WIDTH; i++) {
         fputc(i < p ? '#' : ' ', stderr);
