@@ -161,16 +161,18 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
     switch (stream->type) {
         case UPROC_IO_STDIO:
             if (!(stream->s.fp = fopen(path, mode))) {
-                uproc_error(UPROC_ERRNO);
-                goto error;
+                goto error_errno;
             }
             break;
 #if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
             if (!(stream->s.gz = gzopen(path, mode))) {
                 /* gzopen sets errno to 0 if memory allocation failed */
-                uproc_error(errno ? UPROC_ERRNO : UPROC_ENOMEM);
-                goto error;
+                if (!errno) {
+                    uproc_error(UPROC_ENOMEM);
+                    goto error;
+                }
+                goto error_errno;
             }
             (void) gzbuffer(stream->s.gz, GZIP_BUFSZ);
             break;
@@ -179,6 +181,9 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
             goto error;
     }
     return stream;
+error_errno:
+    uproc_error_msg(UPROC_ERRNO, "can't open \"%s\" with mode \"%s\"",
+                    path, mode);
 error:
     free(stream);
     return NULL;
