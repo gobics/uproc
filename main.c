@@ -319,7 +319,7 @@ OPT("-l", "--long", " ") "\n\
 \n"
 OPT("-s", "--short", " ") "\n\
     Use short read mode:\n\
-    Accept all ORFS, report only maximum protein score (if above threshold).\n\
+    Accept all ORFs, report only maximum protein score (if above threshold).\n\
 \n"
 OPT("-O", "--othresh", "N") "\n\
     ORF translation threshold level (only relevant in long read mode).\n\
