@@ -37,14 +37,13 @@ static char error_loc[256], error_msg[256];
 
 static const char *error_strs[] =
 {
-    [UPROC_SUCCESS]  = "success",
-    [UPROC_FAILURE]  = "unspecified error",
-    [UPROC_ENOMEM]   = "memory allocation failed",
-    [UPROC_EINVAL]   = "invalid argument",
-    [UPROC_ENOENT]   = "no such object",
-    [UPROC_EIO]      = "I/O error",
-    [UPROC_EEXIST]   = "object already exists",
-    [UPROC_ERRNO] = "call to OS function failed"
+    [UPROC_SUCCESS] = "success",
+    [UPROC_FAILURE] = "unspecified error",
+    [UPROC_ENOMEM]  = "memory allocation failed",
+    [UPROC_EINVAL]  = "invalid argument",
+    [UPROC_ENOENT]  = "no such object",
+    [UPROC_EIO]     = "I/O error",
+    [UPROC_EEXIST]  = "object already exists",
 };
 
 int
@@ -80,16 +79,14 @@ uproc_perror(const char *fmt, ...)
         vfprintf(stderr, fmt, ap);
         fputs(": ", stderr);
     }
-    fputs(error_strs[error_num], stderr);
     if (error_msg[0]) {
-        fprintf(stderr, ": %s", error_msg);
+        fprintf(stderr, "%s: ", error_msg);
     }
     if (error_num == UPROC_ERRNO) {
-        fputs(": ", stderr);
         perror("");
     }
     else {
-        fputc('\n', stderr);
+        fprintf(stderr, "%s\n", error_strs[error_num]);
     }
     va_end(ap);
 }
