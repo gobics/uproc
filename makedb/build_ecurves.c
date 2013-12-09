@@ -336,6 +336,7 @@ build_ecurve(const char *infile,
 
             insert_entries(&new, entries, n_entries);
             res = uproc_ecurve_append(ecurve, &new);
+            uproc_ecurve_destroy(&new);
             if (res) {
                 goto error;
             }
