@@ -166,7 +166,7 @@ int main(int argc, char **argv)
     }
     if (argc < optind + ARGC) {
         print_usage(argv[0]);
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
     }
 
     uproc_io_stream *stream;
