@@ -304,7 +304,8 @@ build_ecurve(const char *infile,
     }
 
     for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
-        progress("building ecurve", first * 100 / UPROC_ALPHABET_SIZE);
+        progress(reverse ? "rev.ecurve" : "fwd.ecurve",
+                 first * 100 / UPROC_ALPHABET_SIZE);
         n_entries = 0;
         free(entries);
         stream = uproc_io_open("r", UPROC_IO_GZIP, infile);
@@ -359,17 +360,15 @@ build_and_store(const char *infile, const char *outdir, const char *alphabet,
 {
     int res;
     struct uproc_ecurve ecurve;
-    res = uproc_ecurve_init(&ecurve, alphabet, 0);
-    if (res) {
-        return res;
-    }
     res = build_ecurve(infile, alphabet, idmap, reverse, &ecurve);
     if (res) {
         return res;
     }
+    fprintf(stderr, "Storing %s/%s.ecurve...", outdir, reverse ? "rev" : "fwd");
     res = uproc_storage_store(&ecurve, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                              "%s/%s.ecurve", outdir, reverse ? "rev": "fwd");
+                              "%s/%s.ecurve", outdir, reverse ? "rev" : "fwd");
     uproc_ecurve_destroy(&ecurve);
+    fprintf(stderr, " Done.");
     return res;
 }
 
