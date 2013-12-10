@@ -118,6 +118,36 @@ import_matrix(const char *dir, const char *name, uproc_io_stream *stream)
     return res;
 }
 
+int
+export_idmap(const char *dir, const char *name, uproc_io_stream *stream)
+{
+    int res;
+    struct uproc_idmap m;
+    fprintf(stderr, "exporting %s/%s\n", dir, name);
+    res = uproc_idmap_load(&m, UPROC_IO_GZIP, "%s/%s", dir, name);
+    if (res) {
+        return res;
+    }
+    res = uproc_idmap_stores(&m, stream);
+    uproc_idmap_destroy(&m);
+    return res;
+}
+
+int
+import_idmap(const char *dir, const char *name, uproc_io_stream *stream)
+{
+    int res;
+    struct uproc_idmap m;
+    fprintf(stderr, "importing %s/%s\n", dir, name);
+    res = uproc_idmap_loads(&m, stream);
+    if (res) {
+        return res;
+    }
+    res = uproc_idmap_store(&m, UPROC_IO_GZIP, "%s/%s", dir, name);
+    uproc_idmap_destroy(&m);
+    return res;
+}
+
 enum args
 {
     SOURCE,
@@ -178,16 +208,6 @@ int main(int argc, char **argv)
         uproc_perror("error opening %s", dest);
         return EXIT_FAILURE;
     }
-    res = export_ecurve(src, "fwd", stream);
-    if (res) {
-        uproc_perror("error exporting forward ecurve");
-        return EXIT_FAILURE;
-    }
-    res = export_ecurve(src, "rev", stream);
-    if (res) {
-        uproc_perror("error exporting reverse ecurve");
-        return EXIT_FAILURE;
-    }
     res = export_matrix(src, "prot_thresh_e2", stream);
     if (res) {
         uproc_perror("error exporting matrix");
@@ -198,22 +218,27 @@ int main(int argc, char **argv)
         uproc_perror("error exporting matrix");
         return EXIT_FAILURE;
     }
+    res = export_idmap(src, "idmap", stream);
+    if (res) {
+        uproc_perror("error exporting idmap");
+        return EXIT_FAILURE;
+    }
+    res = export_ecurve(src, "fwd", stream);
+    if (res) {
+        uproc_perror("error exporting forward ecurve");
+        return EXIT_FAILURE;
+    }
+    res = export_ecurve(src, "rev", stream);
+    if (res) {
+        uproc_perror("error exporting reverse ecurve");
+        return EXIT_FAILURE;
+    }
     uproc_io_close(stream);
     return EXIT_SUCCESS;
 #else
     stream = uproc_io_open("r", UPROC_IO_GZIP, "%s", src);
     if (!stream) {
         uproc_perror("error opening %s", src);
-        return EXIT_FAILURE;
-    }
-    res = import_ecurve(dest, "fwd", stream);
-    if (res) {
-        uproc_perror("error importing forward ecurve");
-        return EXIT_FAILURE;
-    }
-    res = import_ecurve(dest, "rev", stream);
-    if (res) {
-        uproc_perror("error importing reverse ecurve");
         return EXIT_FAILURE;
     }
     res = import_matrix(dest, "prot_thresh_e2", stream);
@@ -224,6 +249,21 @@ int main(int argc, char **argv)
     res = import_matrix(dest, "prot_thresh_e3", stream);
     if (res) {
         uproc_perror("error importing matrix");
+        return EXIT_FAILURE;
+    }
+    res = import_idmap(dest, "idmap", stream);
+    if (res) {
+        uproc_perror("error importing idmap");
+        return EXIT_FAILURE;
+    }
+    res = import_ecurve(dest, "fwd", stream);
+    if (res) {
+        uproc_perror("error importing forward ecurve");
+        return EXIT_FAILURE;
+    }
+    res = import_ecurve(dest, "rev", stream);
+    if (res) {
+        uproc_perror("error importing reverse ecurve");
         return EXIT_FAILURE;
     }
     uproc_io_close(stream);
