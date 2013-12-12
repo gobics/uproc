@@ -27,7 +27,7 @@
 void
 progress(const char *new_label, double percent)
 {
-    static char *label;
+    static const char *label;
     unsigned i, p = percent / 100 * WIDTH;
     if (new_label) {
         label = new_label;
