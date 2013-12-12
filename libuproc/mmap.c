@@ -73,7 +73,7 @@ mmap_map(struct uproc_ecurve *ecurve, const char *path)
     int res;
     struct stat st;
     struct mmap_header *header;
-    char *region, alphabet_str[UPROC_ALPHABET_SIZE + 1];
+    char alphabet_str[UPROC_ALPHABET_SIZE + 1];
 
     ecurve->mmap_fd = open(path, O_RDONLY);
     if (ecurve->mmap_fd == -1) {

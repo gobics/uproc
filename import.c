@@ -122,11 +122,11 @@ enum args
 int main(int argc, char **argv)
 {
     int res, opt;
-    enum uproc_io_type iotype = UPROC_IO_GZIP;
     uproc_io_stream *stream;
     const char *dir, *file;
 
 #ifdef EXPORT
+    enum uproc_io_type iotype = UPROC_IO_GZIP;
 #define SHORT_OPTS "hvn"
 #else
 #define SHORT_OPTS "hv"

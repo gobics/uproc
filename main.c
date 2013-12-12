@@ -374,7 +374,6 @@ main(int argc, char **argv)
     size_t chunk_size = get_chunk_size();
 
     int opt;
-    int format = UPROC_STORAGE_BINARY;
 
     uproc_io_stream *out_stream = uproc_stdout;
     bool out_preds = false,
