@@ -495,7 +495,7 @@ main(int argc, char **argv)
         }
     }
 
-    if (!out_stream && !out_counts && !out_stats) {
+    if (!out_counts && !out_preds && !out_stats) {
         out_counts = true;
     }
 
