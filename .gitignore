@@ -1,4 +1,4 @@
-*.o
+Makefile
 Makefile.in
 
 /autom4te.cache
@@ -13,20 +13,34 @@ Makefile.in
 /config.h.in
 /config.log
 /config.status
+/config.sub
+/config.guess
+/ltmain.sh
+/libtool
+/m4
+/\[config.h\].in
 
 .deps
+.libs
 
-/src/Makefile
-/src/uproc-dna
-/src/uproc-orf
-/src/uproc-prot
+/uproc-dna
+/uproc-prot
+/uproc-orf
+/uproc-import
+/uproc-export
+
+/makedb/uproc-makedb
 
 /libuproc/codon_tables.h
-/libuproc/libuproc.a
+/libuproc/gen_ct
+/libuproc/libuproc.la
+
+/libuproc/docs/doxyfile
+/libuproc/docs/doxywarn.txt
+/libuproc/docs/doxygen.stamp
 
 /tests/ck_uproc
 /tests/ck_uproc.log
 /tests/ck_uproc.trs
 /tests/test-suite.log
-/tests/Makefile
 /test-driver
