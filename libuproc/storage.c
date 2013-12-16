@@ -415,7 +415,7 @@ uproc_ecurve_loadv(enum uproc_ecurve_format format,
 
 #if HAVE_MMAP
     if (format == UPROC_STORAGE_BINARY) {
-        ec = uproc_mmap_mapv(pathfmt, aq);
+        ec = uproc_ecurve_mmapv(pathfmt, aq);
         va_end(aq);
         return ec;
     }
@@ -472,7 +472,7 @@ uproc_ecurve_storev(const uproc_ecurve *ecurve,
 
 #if HAVE_MMAP
     if (format == UPROC_STORAGE_BINARY) {
-        res = uproc_mmap_storev(ecurve, pathfmt, aq);
+        res = uproc_ecurve_mmap_storev(ecurve, pathfmt, aq);
         va_end(aq);
         return res;
     }

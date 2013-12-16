@@ -74,14 +74,13 @@ static const uint64_t magic_number = 0xd2eadfUL;
 #endif
 
 static uproc_ecurve *
-mmap_map(const char *path)
+ecurve_map(const char *path)
 {
 #if HAVE_MMAP
-    int res;
     struct stat st;
     struct mmap_header *header;
     char alphabet_str[UPROC_ALPHABET_SIZE + 1];
-    struct uproc_ecurve_s *ec = malloc(sizeof *ec);;
+    struct uproc_ecurve_s *ec = malloc(sizeof *ec);
 
     if (!ec) {
         uproc_error(UPROC_ENOMEM);
@@ -100,8 +99,8 @@ mmap_map(const char *path)
     }
     ec->mmap_size = st.st_size;
     ec->mmap_ptr = mmap(NULL, ec->mmap_size, PROT_READ,
-                            MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
-                            ec->mmap_fd, 0);
+                        MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
+                        ec->mmap_fd, 0);
 
     if (ec->mmap_ptr == MAP_FAILED) {
         uproc_error(UPROC_ERRNO);
@@ -154,18 +153,18 @@ error:
 }
 
 uproc_ecurve *
-uproc_mmap_map(const char *pathfmt, ...)
+uproc_ecurve_mmap(const char *pathfmt, ...)
 {
     struct uproc_ecurve_s *ec;
     va_list ap;
     va_start(ap, pathfmt);
-    ec = uproc_mmap_mapv(pathfmt, ap);
+    ec = uproc_ecurve_mmapv(pathfmt, ap);
     va_end(ap);
     return ec;
 }
 
 uproc_ecurve *
-uproc_mmap_mapv(const char *pathfmt, va_list ap)
+uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
 {
     struct uproc_ecurve_s *ec;
     char *buf;
@@ -183,13 +182,13 @@ uproc_mmap_mapv(const char *pathfmt, va_list ap)
     }
     vsprintf(buf, pathfmt, ap);
 
-    ec = mmap_map(buf);
+    ec = ecurve_map(buf);
     free(buf);
     return ec;
 }
 
 void
-uproc_mmap_unmap(struct uproc_ecurve_s *ecurve)
+uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)
 {
 #if HAVE_MMAP
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
@@ -253,19 +252,20 @@ error_close:
     return uproc_error(UPROC_ENOTSUP);
 #endif
 }
+
 int
-uproc_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...)
+uproc_ecurve_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...)
 {
     int res;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_mmap_storev(ecurve, pathfmt, ap);
+    res = uproc_ecurve_mmap_storev(ecurve, pathfmt, ap);
     va_end(ap);
     return res;
 }
 
 int
-uproc_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
+uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
                   va_list ap)
 {
     int res;

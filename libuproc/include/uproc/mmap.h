@@ -28,8 +28,8 @@
 
 /** Map a file to an ecurve
  *
- * The file must have been created by `uproc_mmap_store()`, preferably on
- * the same machine.
+ * The file must have been created by `uproc_ecurve_mmap_store()`, preferably
+ * on the same machine.
  *
  * \param ecurve    ecurve to be mapped
  * \param pathfmt   printf format string for file path
@@ -39,17 +39,17 @@
  * \retval #UPROC_EINVAL       malformed file
  * \retval #UPROC_SUCCESS      else
  */
-uproc_ecurve *uproc_mmap_map(const char *pathfmt, ...);
+uproc_ecurve *uproc_ecurve_mmap(const char *pathfmt, ...);
 
-uproc_ecurve *uproc_mmap_mapv(const char *pathfmt, va_list ap);
+uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap);
 
 /** Release mapping and close the underlying file descriptor
  *
  * \param ecurve    ecurve mapped with `uproc_mmap_map()`
  */
-void uproc_mmap_unmap(uproc_ecurve *ecurve);
+void uproc_ecurve_munmap(uproc_ecurve *ecurve);
 
-/** Store ecurve in a format suitable for `uproc_mmap_map()`
+/** Store ecurve in a format suitable for `uproc_ecurve_mmap()`
  *
  * \param ecurve    ecurve to store
  * \param pathfmt   printf format string for file path
@@ -58,9 +58,10 @@ void uproc_mmap_unmap(uproc_ecurve *ecurve);
  * \retval #UPROC_ESYSCALL     an error occured while calling an OS function
  * \retval #UPROC_SUCCESS      else
  */
-int uproc_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...);
+int uproc_ecurve_mmap_store(const uproc_ecurve *ecurve,
+                            const char *pathfmt, ...);
 
-int uproc_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
-                      va_list ap);
+int uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
+                             va_list ap);
 
 #endif
