@@ -12,8 +12,9 @@ AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
 AC_PROG_CC_C99
-AC_PROG_INSTALL
 AM_PROG_CC_C_O
+AC_C___ATTRIBUTE__
+AC_PROG_INSTALL
 
 # Needed for %zu in printf/sscanf when compiling for Windows
 AC_DEFINE([__USE_MINGW_ANSI_STDIO], [1], [Use mingw stdio])

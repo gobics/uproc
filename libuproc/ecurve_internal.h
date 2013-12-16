@@ -49,6 +49,9 @@ struct uproc_ecurve_s {
          */
         pfxtab_count count;
     }
+#if HAVE___ATTRIBUTE__
+    __attribute__ ((packed))
+#endif
     /** Table of prefixes
      *
      * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
