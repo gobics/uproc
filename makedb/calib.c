@@ -275,7 +275,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     {
 
 #pragma omp for
-        for (unsigned power = POW_MIN; power <= POW_MAX; power++) {
+        for (int power = POW_MIN; power <= POW_MAX; power++) {
             char seq[LEN_MAX + 1];
 
             size_t all_preds_n = 0, all_preds_sz = 0;

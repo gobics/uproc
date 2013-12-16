@@ -344,7 +344,8 @@ int
 main(int argc, char **argv)
 {
     int res = -1;
-    size_t i, i_chunk = 0, i_buf = 0, n_seqs = 0;
+    long long i;
+    size_t i_chunk = 0, i_buf = 0, n_seqs = 0;
     bool error = false, more_input;
 
     uproc_ecurve *fwd, *rev;
@@ -607,7 +608,7 @@ main(int argc, char **argv)
 #pragma omp parallel private(i, res) shared(buf)
             {
 #pragma omp for schedule(dynamic) nowait
-                for (i = 0; i < out->n; i++) {
+                for (i = 0; i < (long long)out->n; i++) {
 #if MAIN_DNA
                     res = uproc_dc_classify(dnaclass, out->seq[i],
                                             &out->results[i]);
