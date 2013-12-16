@@ -264,7 +264,7 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
 
     for (p = 0; p < current_prefix; p++) {
         ecurve->prefixes[p].first = 0;
-        ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
+        ecurve->prefixes[p].count = ECURVE_EDGE;
     }
 
     for (i = 0; i < n_entries;) {
@@ -287,7 +287,7 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
 
         for (p = current_prefix + 1; p < next_prefix; p++) {
             ecurve->prefixes[p].first = k - 1;
-            ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
+            ecurve->prefixes[p].count = ECURVE_EDGE;
         }
         current_prefix = next_prefix;
         i = k;
@@ -295,7 +295,7 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
 
     for (p = current_prefix + 1; p <= UPROC_PREFIX_MAX; p++) {
         ecurve->prefixes[p].first = n_entries - 1;
-        ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
+        ecurve->prefixes[p].count = ECURVE_EDGE;
     }
 
     return UPROC_SUCCESS;

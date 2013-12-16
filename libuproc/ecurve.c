@@ -51,11 +51,11 @@ prefix_lookup(const struct uproc_ecurve_pfxtable *table,
     uproc_prefix tmp;
 
     /* outside of the "edge" */
-    if (UPROC_ECURVE_ISEDGE(table[key])) {
+    if (ECURVE_ISEDGE(table[key])) {
         /* below the first prefix that has an entry */
         if (!table[key].first) {
             for (tmp = key;
-                 tmp < UPROC_PREFIX_MAX && UPROC_ECURVE_ISEDGE(table[tmp]);
+                 tmp < UPROC_PREFIX_MAX && ECURVE_ISEDGE(table[tmp]);
                  tmp++)
             {
                 ;
@@ -64,7 +64,7 @@ prefix_lookup(const struct uproc_ecurve_pfxtable *table,
         }
         /* above the last prefix */
         else {
-            for (tmp = key; tmp > 0 && UPROC_ECURVE_ISEDGE(table[tmp]); tmp--) {
+            for (tmp = key; tmp > 0 && ECURVE_ISEDGE(table[tmp]); tmp--) {
                 ;
             }
             *index = table[tmp].first + table[tmp].count - 1;
@@ -163,7 +163,12 @@ suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
 uproc_ecurve *
 uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 {
-    struct uproc_ecurve_s *ec = malloc(sizeof *ec);
+    struct uproc_ecurve_s *ec;
+    if (suffix_count > PFXTAB_SUFFIX_MAX) {
+        uproc_error_msg(UPROC_EINVAL, "too many suffixes");
+        return NULL;
+    }
+    ec = malloc(sizeof *ec);
     if (!ec) {
         uproc_error(UPROC_ENOMEM);
         return NULL;
@@ -228,12 +233,12 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
     }
 
     for (dest_last = UPROC_PREFIX_MAX; dest_last > 0; dest_last--) {
-        if (!UPROC_ECURVE_ISEDGE(dest->prefixes[dest_last])) {
+        if (!ECURVE_ISEDGE(dest->prefixes[dest_last])) {
             break;
         }
     }
     for (src_first = 0; src_first < UPROC_PREFIX_MAX; src_first++) {
-        if (!UPROC_ECURVE_ISEDGE(src->prefixes[src_first])) {
+        if (!ECURVE_ISEDGE(src->prefixes[src_first])) {
             break;
         }
     }
@@ -243,6 +248,9 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
     }
 
     new_suffix_count = dest->suffix_count + src->suffix_count;
+    if (new_suffix_count > PFXTAB_SUFFIX_MAX) {
+        return uproc_error_msg(UPROC_EINVAL, "too many suffixes");
+    }
     tmp = realloc(dest->suffixes, new_suffix_count * sizeof *dest->suffixes);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);

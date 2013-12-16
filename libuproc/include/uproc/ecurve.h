@@ -38,9 +38,6 @@ enum {
     UPROC_ECURVE_OOB,
 };
 
-#define UPROC_ECURVE_EDGE ((size_t) -1)
-#define UPROC_ECURVE_ISEDGE(p) ((p).count == UPROC_ECURVE_EDGE)
-
 /** Opaque type for ecurves */
 typedef struct uproc_ecurve_s uproc_ecurve;
 

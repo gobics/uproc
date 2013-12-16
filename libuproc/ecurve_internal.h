@@ -1,6 +1,15 @@
 #ifndef UPROC_ECURVE_INTERNAL_H
 #define UPROC_ECURVE_INTERNAL_H
 
+#include <stdint.h>
+
+typedef uint_least32_t pfxtab_suffix;
+#define PFXTAB_SUFFIX_MAX UINT_LEAST32_MAX
+
+typedef uint_least16_t pfxtab_count;
+#define ECURVE_EDGE ((pfxtab_count) -1)
+#define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
+
 /** Struct defining an ecurve */
 struct uproc_ecurve_s {
     /** Translation alphabet */
@@ -30,7 +39,7 @@ struct uproc_ecurve_s {
          * `#first - 1` of the next non-empty one). In case of an "edge prefix"
          * the value is either `0` or `#suffix_count - 1`.
          */
-        size_t first;
+        pfxtab_suffix first;
 
         /** Number of associated suffixes
          *
@@ -38,7 +47,7 @@ struct uproc_ecurve_s {
          * there is no lower (resp. higher) prefix value with an associated
          * suffix in the ecurve.
          */
-        size_t count;
+        pfxtab_count count;
     }
     /** Table of prefixes
      *

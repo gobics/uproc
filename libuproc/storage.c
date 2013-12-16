@@ -145,7 +145,8 @@ load_plain(uproc_io_stream *stream)
     struct uproc_ecurve_s *ecurve;
     uproc_prefix p;
     uproc_suffix s;
-    size_t suffix_count, prev_last;
+    size_t suffix_count;
+    pfxtab_suffix prev_last;
     char alpha[UPROC_ALPHABET_SIZE + 1];
     res = load_header(stream, alpha, &suffix_count);
     if (res) {
@@ -175,7 +176,7 @@ load_plain(uproc_io_stream *stream)
 
         for (; p < prefix; p++) {
             ecurve->prefixes[p].first = prev_last;
-            ecurve->prefixes[p].count = prev_last ? 0 : UPROC_ECURVE_EDGE;
+            ecurve->prefixes[p].count = prev_last ? 0 : ECURVE_EDGE;
         }
         ecurve->prefixes[prefix].first = s;
         ecurve->prefixes[prefix].count = p_suffixes;
@@ -192,7 +193,7 @@ load_plain(uproc_io_stream *stream)
     }
     for (; p < UPROC_PREFIX_MAX + 1; p++) {
         ecurve->prefixes[p].first = prev_last;
-        ecurve->prefixes[p].count = UPROC_ECURVE_EDGE;
+        ecurve->prefixes[p].count = ECURVE_EDGE;
     }
     return ecurve;
 error:
@@ -259,7 +260,7 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
         size_t offset = ecurve->prefixes[p].first;
         size_t i;
 
-        if (!suffix_count || UPROC_ECURVE_ISEDGE(ecurve->prefixes[p])) {
+        if (!suffix_count || ECURVE_ISEDGE(ecurve->prefixes[p])) {
             continue;
         }
 
