@@ -254,13 +254,13 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
         return -1;
     }
 
-    fwd = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/fwd.ecurve", dbdir);
+    fwd = uproc_ecurve_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                            "%s/fwd.ecurve", dbdir);
     if (!fwd) {
         return -1;
     }
-    rev = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/rev.ecurve", dbdir);
+    rev = uproc_ecurve_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                            "%s/rev.ecurve", dbdir);
     if (!rev) {
         uproc_ecurve_destroy(fwd);
         return -1;

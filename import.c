@@ -74,9 +74,9 @@ name(const char *dir, const char *name, uproc_io_stream *stream)            \
 }
 
 #define ECURVE_LOAD(iotype, fmt, dir, name) \
-    uproc_storage_load(UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
+    uproc_ecurve_load(UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
 #define ECURVE_STORES(ptr, stream) \
-    uproc_storage_stores(ptr, UPROC_STORAGE_PLAIN, stream)
+    uproc_ecurve_stores(ptr, UPROC_STORAGE_PLAIN, stream)
 EXPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOAD, ECURVE_STORES,
             uproc_ecurve_destroy)
 EXPORT_FUNC(matrix, uproc_matrix, uproc_matrix_load, uproc_matrix_stores,
@@ -101,9 +101,9 @@ name(const char *dir, const char *name, uproc_io_stream *stream)            \
 }
 
 #define ECURVE_LOADS(stream) \
-    uproc_storage_loads(UPROC_STORAGE_PLAIN, stream)
+    uproc_ecurve_loads(UPROC_STORAGE_PLAIN, stream)
 #define ECURVE_STORE(ptr, iotype, fmt, dir, name) \
-    uproc_storage_store(ptr, UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
+    uproc_ecurve_store(ptr, UPROC_STORAGE_BINARY, iotype, fmt, dir, name)
 IMPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOADS, ECURVE_STORE,
             uproc_ecurve_destroy)
 IMPORT_FUNC(matrix, uproc_matrix, uproc_matrix_loads, uproc_matrix_store,

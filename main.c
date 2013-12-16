@@ -497,15 +497,15 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    fwd = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/fwd.ecurve", argv[optind + DBDIR]);
+    fwd = uproc_ecurve_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                            "%s/fwd.ecurve", argv[optind + DBDIR]);
     if (!fwd) {
         fprintf(stderr, "failed to load forward ecurve\n");
         return EXIT_FAILURE;
     }
 
-    rev = uproc_storage_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
-                             "%s/rev.ecurve", argv[optind + DBDIR]);
+    rev = uproc_ecurve_load(UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+                            "%s/rev.ecurve", argv[optind + DBDIR]);
     if (!rev) {
         fprintf(stderr, "failed to load reverse ecurve\n");
         return EXIT_FAILURE;

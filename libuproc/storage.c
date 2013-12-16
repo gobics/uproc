@@ -384,7 +384,7 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
 }
 
 uproc_ecurve *
-uproc_storage_loads(enum uproc_storage_format format, uproc_io_stream *stream)
+uproc_ecurve_loads(enum uproc_ecurve_format format, uproc_io_stream *stream)
 {
     if (format == UPROC_STORAGE_BINARY) {
 #if HAVE_MMAP
@@ -399,7 +399,7 @@ uproc_storage_loads(enum uproc_storage_format format, uproc_io_stream *stream)
 }
 
 uproc_ecurve *
-uproc_storage_loadv(enum uproc_storage_format format,
+uproc_ecurve_loadv(enum uproc_ecurve_format format,
                     enum uproc_io_type iotype, const char *pathfmt, va_list ap)
 {
     struct uproc_ecurve_s *ec;
@@ -422,27 +422,26 @@ uproc_storage_loadv(enum uproc_storage_format format,
 
     stream = uproc_io_openv(mode[format], iotype, pathfmt, aq);
     va_end(aq);
-    ec = uproc_storage_loads(format, stream);
+    ec = uproc_ecurve_loads(format, stream);
     uproc_io_close(stream);
     return ec;
 }
 
 uproc_ecurve *
-uproc_storage_load(enum uproc_storage_format format, enum uproc_io_type iotype,
-                   const char *pathfmt, ...)
+uproc_ecurve_load(enum uproc_ecurve_format format, enum uproc_io_type iotype,
+                  const char *pathfmt, ...)
 {
     struct uproc_ecurve_s *ec;
     va_list ap;
     va_start(ap, pathfmt);
-    ec = uproc_storage_loadv(format, iotype, pathfmt, ap);
+    ec = uproc_ecurve_loadv(format, iotype, pathfmt, ap);
     va_end(ap);
     return ec;
 }
 
 int
-uproc_storage_stores(const uproc_ecurve *ecurve,
-                     enum uproc_storage_format format,
-                     uproc_io_stream *stream)
+uproc_ecurve_stores(const uproc_ecurve *ecurve,
+                    enum uproc_ecurve_format format, uproc_io_stream *stream)
 {
     if (format == UPROC_STORAGE_BINARY) {
 #if HAVE_MMAP
@@ -456,10 +455,9 @@ uproc_storage_stores(const uproc_ecurve *ecurve,
 }
 
 int
-uproc_storage_storev(const uproc_ecurve *ecurve,
-                     enum uproc_storage_format format,
-                     enum uproc_io_type iotype, const char *pathfmt,
-                     va_list ap)
+uproc_ecurve_storev(const uproc_ecurve *ecurve,
+                    enum uproc_ecurve_format format, enum uproc_io_type iotype,
+                    const char *pathfmt, va_list ap)
 {
     int res;
     va_list aq;
@@ -483,20 +481,19 @@ uproc_storage_storev(const uproc_ecurve *ecurve,
     if (!stream) {
         return -1;
     }
-    res = uproc_storage_stores(ecurve, format, stream);
+    res = uproc_ecurve_stores(ecurve, format, stream);
     uproc_io_close(stream);
     return res;
 }
 
 int
-uproc_storage_store(const uproc_ecurve *ecurve,
-                    enum uproc_storage_format format,
-                    enum uproc_io_type iotype, const char *pathfmt, ...)
+uproc_ecurve_store(const uproc_ecurve *ecurve, enum uproc_ecurve_format format,
+                   enum uproc_io_type iotype, const char *pathfmt, ...)
 {
     int res;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_storage_storev(ecurve, format, iotype, pathfmt, ap);
+    res = uproc_ecurve_storev(ecurve, format, iotype, pathfmt, ap);
     va_end(ap);
     return res;
 }
