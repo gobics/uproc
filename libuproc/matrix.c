@@ -101,7 +101,6 @@ uproc_matrix_dimensions(const uproc_matrix *matrix, size_t *rows, size_t *cols)
 uproc_matrix *
 uproc_matrix_loads(uproc_io_stream *stream)
 {
-    int res;
     struct uproc_matrix_s *matrix;
     size_t i, k, rows, cols;
     double val;

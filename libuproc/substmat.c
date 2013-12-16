@@ -141,7 +141,6 @@ error:
 uproc_substmat *
 uproc_substmat_load(enum uproc_io_type iotype, const char *pathfmt, ...)
 {
-    int res;
     struct uproc_substmat_s *mat;
     va_list ap;
     va_start(ap, pathfmt);

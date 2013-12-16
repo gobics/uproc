@@ -285,7 +285,6 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
 static uproc_ecurve *
 load_binary(uproc_io_stream *stream)
 {
-    int res;
     struct uproc_ecurve_s *ecurve;
     size_t sz;
     size_t suffix_count;
@@ -343,9 +342,7 @@ error:
 static int
 store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
 {
-    int res;
     size_t sz;
-
     sz = uproc_io_write(uproc_alphabet_str(ecurve->alphabet), 1,
                         UPROC_ALPHABET_SIZE, stream);
     if (sz != UPROC_ALPHABET_SIZE) {
