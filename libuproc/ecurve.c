@@ -29,7 +29,6 @@
 #include "uproc/error.h"
 #include "uproc/ecurve.h"
 #include "uproc/word.h"
-#include "uproc/mmap.h"
 
 #include "ecurve_internal.h"
 

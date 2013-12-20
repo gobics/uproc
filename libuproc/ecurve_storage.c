@@ -32,9 +32,7 @@
 #include "uproc/error.h"
 #include "uproc/ecurve.h"
 #include "uproc/io.h"
-#include "uproc/mmap.h"
 #include "uproc/word.h"
-#include "uproc/storage.h"
 
 #include "ecurve_internal.h"
 

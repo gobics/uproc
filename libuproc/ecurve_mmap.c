@@ -36,7 +36,6 @@
 
 #include "uproc/common.h"
 #include "uproc/error.h"
-#include "uproc/mmap.h"
 #include "uproc/ecurve.h"
 
 #include "ecurve_internal.h"

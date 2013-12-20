@@ -18,9 +18,7 @@
 #include <uproc/fasta.h>
 #include <uproc/idmap.h>
 #include <uproc/io.h>
-#include <uproc/mmap.h>
 #include <uproc/orf.h>
-#include <uproc/storage.h>
 #include <uproc/substmat.h>
 #include <uproc/word.h>
 

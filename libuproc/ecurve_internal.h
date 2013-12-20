@@ -11,7 +11,8 @@ typedef uint_least16_t pfxtab_count;
 #define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
 
 /** Struct defining an ecurve */
-struct uproc_ecurve_s {
+struct uproc_ecurve_s
+{
     /** Translation alphabet */
     uproc_alphabet *alphabet;
 

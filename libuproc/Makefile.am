@@ -12,18 +12,18 @@ libuproc_la_SOURCES = alphabet.c \
 					codon.c \
 					dnaclass.c \
 					ecurve.c \
+					ecurve_internal.h \
+					ecurve_mmap.c \
+					ecurve_storage.c \
 					error.c \
 					fasta.c \
 					idmap.c \
 					io.c \
 					matrix.c \
-					mmap.c \
 					orf.c \
 					protclass.c \
-					storage.c \
 					substmat.c \
-					word.c \
-					ecurve_internal.h
+					word.c
 
 libuproc_la_LDFLAGS = -no-undefined
 

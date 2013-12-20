@@ -24,10 +24,22 @@
 #define UPROC_ECURVE_H
 
 #include <stdio.h>
+#include <stdarg.h>
+
+#include "uproc/alphabet.h"
+#include "uproc/io.h"
 #include "uproc/word.h"
 
+/** Storage format */
+enum uproc_ecurve_format
+{
+    UPROC_STORAGE_PLAIN,
+    UPROC_STORAGE_BINARY,
+};
+
 /** Lookup return codes */
-enum {
+enum
+{
     /** Exact match */
     UPROC_ECURVE_EXACT,
 
@@ -107,4 +119,93 @@ int uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                         uproc_family *upper_class);
 
 uproc_alphabet *uproc_ecurve_alphabet(const uproc_ecurve *ecurve);
+
+uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
+                                 uproc_io_stream *stream);
+
+/** Load ecurve from a file
+ *
+ * Opens a file for reading, allocates a new #uproc_ecurve object and parses
+ * the data in the file using the given format.
+ *
+ * \param ecurve    pointer to ecurve to which the data will be loaded into
+ * \param format    format to use, see #uproc_ecurve_format
+ * \param iotype    IO type, see #uproc_io_type
+ * \param pathfmt   printf format string for file path
+ * \param ...       format string arguments
+ *
+ * \retval #UPROC_FAILURE  an error occured
+ * \retval #UPROC_SUCCESS  else
+ */
+uproc_ecurve *uproc_ecurve_load(enum uproc_ecurve_format format,
+                                enum uproc_io_type iotype,
+                                const char *pathfmt, ...);
+
+uproc_ecurve *uproc_ecurve_loadv(enum uproc_ecurve_format format,
+                                 enum uproc_io_type iotype,
+                                 const char *pathfmt, va_list ap);
+
+int uproc_ecurve_stores(const uproc_ecurve *ecurve,
+                        enum uproc_ecurve_format format,
+                        uproc_io_stream *stream);
+
+/** Store ecurve to a file
+ *
+ * Stores an #uproc_ecurve object to a file using the given format.
+ *
+ * \param ecurve    pointer to ecurve to store
+ * \param format    format to use, see #uproc_ecurve_format
+ * \param iotype    IO type, see #uproc_io_type
+ * \param pathfmt   printf format string for file path
+ * \param ...       format string arguments
+ *
+ * \retval #UPROC_FAILURE  an error occured
+ * \retval #UPROC_SUCCESS  else
+ */
+int uproc_ecurve_store(const uproc_ecurve *ecurve,
+                       enum uproc_ecurve_format format,
+                       enum uproc_io_type iotype, const char *pathfmt, ...);
+
+int uproc_ecurve_storev(const uproc_ecurve *ecurve,
+                        enum uproc_ecurve_format format,
+                        enum uproc_io_type iotype, const char *pathfmt,
+                        va_list ap);
+
+/** Map a file to an ecurve
+ *
+ * The file must have been created by `uproc_ecurve_mmap_store()`, preferably
+ * on the same machine.
+ *
+ * \param ecurve    ecurve to be mapped
+ * \param pathfmt   printf format string for file path
+ * \param ...       format string arguments
+ *
+ * \retval #UPROC_ESYSCALL     an error occured while calling an OS function
+ * \retval #UPROC_EINVAL       malformed file
+ * \retval #UPROC_SUCCESS      else
+ */
+uproc_ecurve *uproc_ecurve_mmap(const char *pathfmt, ...);
+
+uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap);
+
+/** Release mapping and close the underlying file descriptor
+ *
+ * \param ecurve    ecurve mapped with `uproc_mmap_map()`
+ */
+void uproc_ecurve_munmap(uproc_ecurve *ecurve);
+
+/** Store ecurve in a format suitable for `uproc_ecurve_mmap()`
+ *
+ * \param ecurve    ecurve to store
+ * \param pathfmt   printf format string for file path
+ * \param ...       format string arguments
+ *
+ * \retval #UPROC_ESYSCALL     an error occured while calling an OS function
+ * \retval #UPROC_SUCCESS      else
+ */
+int uproc_ecurve_mmap_store(const uproc_ecurve *ecurve,
+                            const char *pathfmt, ...);
+
+int uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
+                             va_list ap);
 #endif

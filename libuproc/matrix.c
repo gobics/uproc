@@ -30,7 +30,6 @@
 #include "uproc/matrix.h"
 #include "uproc/error.h"
 #include "uproc/common.h"
-#include "uproc/storage.h"
 #include "uproc/io.h"
 
 /** Matrix */
