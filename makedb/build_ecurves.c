@@ -273,8 +273,8 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
              k < n_entries && entries[k].word.prefix == current_prefix;
              k++)
         {
-            ecurve->suffixes[k] = entries[k].word.suffix;
-            ecurve->families[k] = entries[k].family;
+            ecurve->suffixes[k].suffix = entries[k].word.suffix;
+            ecurve->suffixes[k].family = entries[k].family;
         }
         ecurve->prefixes[current_prefix].first = i;
         ecurve->prefixes[current_prefix].count = k - i;

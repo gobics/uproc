@@ -144,7 +144,7 @@ load_plain(uproc_io_stream *stream)
     uproc_prefix p;
     uproc_suffix s;
     size_t suffix_count;
-    pfxtab_suffix prev_last;
+    ecurve_ptab_suffix prev_last;
     char alpha[UPROC_ALPHABET_SIZE + 1];
     res = load_header(stream, alpha, &suffix_count);
     if (res) {
@@ -181,8 +181,9 @@ load_plain(uproc_io_stream *stream)
         p++;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
-            res = load_suffix(stream, ecurve->alphabet, &ecurve->suffixes[s],
-                              &ecurve->families[s]);
+            res = load_suffix(stream, ecurve->alphabet,
+                              &ecurve->suffixes[s].suffix,
+                              &ecurve->suffixes[s].family);
             if (res) {
                 goto error;
             }
@@ -269,8 +270,8 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
 
         for (i = 0; i < suffix_count; i++) {
             res = store_suffix(stream, ecurve->alphabet,
-                               ecurve->suffixes[offset + i],
-                               ecurve->families[offset + i]);
+                               ecurve->suffixes[offset + i].suffix,
+                               ecurve->suffixes[offset + i].family);
             if (res) {
                 return res;
             }
@@ -307,11 +308,6 @@ load_binary(uproc_io_stream *stream)
     }
 
     sz = uproc_io_read(ecurve->suffixes, sizeof *ecurve->suffixes,
-                       suffix_count, stream);
-    if (sz != suffix_count) {
-        goto error;
-    }
-    sz = uproc_io_read(ecurve->families, sizeof *ecurve->families,
                        suffix_count, stream);
     if (sz != suffix_count) {
         goto error;
@@ -354,11 +350,6 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
     }
 
     sz = uproc_io_write(ecurve->suffixes, sizeof *ecurve->suffixes,
-                        ecurve->suffix_count, stream);
-    if (sz != ecurve->suffix_count) {
-        return uproc_error(UPROC_ERRNO);
-    }
-    sz = uproc_io_write(ecurve->families, sizeof *ecurve->families,
                         ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         return uproc_error(UPROC_ERRNO);

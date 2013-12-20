@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-typedef uint_least32_t pfxtab_suffix;
-#define PFXTAB_SUFFIX_MAX UINT_LEAST32_MAX
+typedef uint_least32_t ecurve_ptab_suffix;
+#define ECURVE_PTAB_SUFFIX_MAX UINT_LEAST32_MAX
 
-typedef uint_least16_t pfxtab_count;
-#define ECURVE_EDGE ((pfxtab_count) -1)
+typedef uint_least16_t ecurve_ptab_count;
+#define ECURVE_EDGE ((ecurve_ptab_count) -1)
 #define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
 
 /** Struct defining an ecurve */
@@ -19,20 +19,25 @@ struct uproc_ecurve_s
     /** Number of suffixes */
     size_t suffix_count;
 
-    /** Table of suffixes
+    /** Table of suffix/family pairs
      *
      * Will be allocated to hold `#suffix_count` objects
      */
-    uproc_suffix *suffixes;
+    struct ecurve_stab
+    {
+        uproc_suffix suffix;
+        uproc_family family;
+    }
+#if HAVE___ATTRIBUTE__
+    __attribute__ ((packed))
+#endif
+    *suffixes;
 
-    /** Table of families associated with the suffixes
+    /** Table that maps prefixes to entries in `#suffixes`
      *
-     * Will be allocated to hold `#suffix_count` objects
+     * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
      */
-    uproc_family *families;
-
-    /** Table that maps prefixes to entries in the ecurve's suffix table */
-    struct uproc_ecurve_pfxtable {
+    struct ecurve_ptab {
         /** Index of the first associated entry in #suffixes
          *
          * If there is no entry for the given prefix, this member contains
@@ -40,7 +45,7 @@ struct uproc_ecurve_s
          * `#first - 1` of the next non-empty one). In case of an "edge prefix"
          * the value is either `0` or `#suffix_count - 1`.
          */
-        pfxtab_suffix first;
+        ecurve_ptab_suffix first;
 
         /** Number of associated suffixes
          *
@@ -48,15 +53,11 @@ struct uproc_ecurve_s
          * there is no lower (resp. higher) prefix value with an associated
          * suffix in the ecurve.
          */
-        pfxtab_count count;
+        ecurve_ptab_count count;
     }
 #if HAVE___ATTRIBUTE__
     __attribute__ ((packed))
 #endif
-    /** Table of prefixes
-     *
-     * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
-     */
     *prefixes;
 
     /** `mmap()` file descriptor
