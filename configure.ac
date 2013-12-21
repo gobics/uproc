@@ -46,6 +46,11 @@ AC_OPENMP
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=yes], [have_check=no])
 AM_CONDITIONAL([HAVE_CHECK], [test x$have_check = xyes])
 
+AC_ARG_ENABLE([shared],
+              AS_HELP_STRING([--enable-shared],
+                             [Build (and install) libuproc.so and header files]))
+AM_CONDITIONAL([SHARED_LIBUPROC], [test "x$enable_shared" = "xyes"])
+
 # Check for Doxygen
 test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen$EXEEXT])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])

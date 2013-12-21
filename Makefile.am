@@ -21,3 +21,5 @@ uproc_export_SOURCES = import.c uproc_opt.h
 uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1 -DPROGNAME=\"uproc-export\"
 
 uproc_orf_SOURCES = orf.c uproc_opt.h
+
+doc_DATA = INSTALL README NEWS AUTHORS COPYING COPYING.LESSER
