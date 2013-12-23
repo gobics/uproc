@@ -118,17 +118,17 @@ prefix_lookup(const struct ecurve_ptab *table,
  * `#UPROC_ECURVE_INEXACT` as described above.
  */
 static int
-suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
+suffix_lookup(const struct ecurve_stab *search, size_t n, uproc_suffix key,
               size_t *lower, size_t *upper)
 {
     size_t lo = 0, mid, hi = n - 1;
 
-    if (!n || key < search[0]) {
+    if (!n || key < search[0].suffix) {
         *lower = *upper = 0;
         return UPROC_ECURVE_OOB;
     }
 
-    if (key > search[n - 1]) {
+    if (key > search[n - 1].suffix) {
         *lower = *upper = n - 1;
         return UPROC_ECURVE_OOB;
     }
@@ -136,21 +136,21 @@ suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
     while (hi > lo + 1) {
         mid = (hi + lo) / 2;
 
-        if (key == search[mid]) {
+        if (key == search[mid].suffix) {
             lo = mid;
             break;
         }
-        else if (key > search[mid]) {
+        else if (key > search[mid].suffix) {
             lo = mid;
         }
         else {
             hi = mid;
         }
     }
-    if (search[lo] == key) {
+    if (search[lo].suffix == key) {
         hi = lo;
     }
-    else if (search[hi] == key) {
+    else if (search[hi].suffix == key) {
         lo = hi;
     }
     *lower = lo;
