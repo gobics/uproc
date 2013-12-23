@@ -126,7 +126,7 @@ ecurve_map(const char *path)
 
    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
-   uint64_t *m1, *m2, *m3;
+   uint64_t *m1, *m2;
    m1 = (void*)(ec->mmap_ptr + OFFSET_MAGIC1);
    m2 = (void*)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
    if (*m1 != magic_number || *m2 != magic_number) {

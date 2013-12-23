@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include "uproc.h"
+#undef UPROC_FAMILY_MAX
 #define UPROC_FAMILY_MAX 100
 #include "../idmap.c"
 

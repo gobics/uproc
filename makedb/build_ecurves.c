@@ -382,7 +382,7 @@ build_and_store(const char *infile, const char *outdir, const char *alphabet,
                 uproc_idmap *idmap, bool reverse)
 {
     int res;
-    uproc_ecurve *ecurve;
+    uproc_ecurve *ecurve = NULL;
     res = build_ecurve(infile, alphabet, idmap, reverse, &ecurve);
     if (res) {
         return res;

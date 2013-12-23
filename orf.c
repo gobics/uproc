@@ -106,7 +106,7 @@ enum args
 
 int main(int argc, char **argv)
 {
-    int res, opt;
+    int res = 0, opt;
     struct orf_filter_arg filter_arg = { 20, NULL };
     const char *model_dir = NULL;
 
