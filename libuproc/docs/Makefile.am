@@ -1,9 +1,10 @@
-docpkg = $(PACKAGE_TARNAME)-doxy-$(PACKAGE_VERSION).tar.gz
+# must correspond to HTML_OUTPUT in doxyfile.in!
+html = libuproc-$(PACKAGE_VERSION)
 
-doc_DATA = $(docpkg)
+docpkg = $(html).tar.gz
 
 $(docpkg) : doxygen.stamp
-	tar chozf $@ html
+	tar chozf $@ $(html)
 
 doxygen.stamp : doxyfile
 	$(DOXYGEN) $(DOXYFLAGS) $<
@@ -12,4 +13,15 @@ doxygen.stamp : doxyfile
 CLEANFILES = doxywarn.txt doxygen.stamp $(docpkg)
 
 clean-local :
-	-rm -rf html
+	-rm -rf
+	-rm -rf $(docpkg)
+	-rm -rf $(html)
+
+install-data-local : $(docpkg)
+	@$(NORMAL_INSTALL)
+	$(MKDIR_P) $(DESTDIR)$(docdir)
+	tar -C $(DESTDIR)$(docdir) -x -f $<
+
+uninstall-local :
+	@$(NORMAL_UNINSTALL)
+	-rm -rf $(DESTDIR)$(docdir)/$(html)
