@@ -39,8 +39,11 @@ Makefile.in
 /libuproc/docs/doxywarn.txt
 /libuproc/docs/doxygen.stamp
 
-/tests/ck_uproc
-/tests/ck_uproc.log
-/tests/ck_uproc.trs
-/tests/test-suite.log
+/libuproc/tests/ck_*
+!/libuproc/tests/ck_*.c
+/libuproc/tests/*.trs
+/libuproc/tests/*.log
+/libuproc/tests/test-suite.log
 /test-driver
+
+/uproc-*.*.*.tar.gz
