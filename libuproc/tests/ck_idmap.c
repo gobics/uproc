@@ -110,12 +110,9 @@ START_TEST(idmap_load_invalid)
 }
 END_TEST
 
-
-Suite *
-idmap_suite(void)
+int main(void)
 {
     Suite *s = suite_create("idmap");
-
     TCase *tc_idmap = tcase_create("idmap operations");
     tcase_add_checked_fixture(tc_idmap, setup, teardown);
     tcase_add_test(tc_idmap, idmap_usage);
@@ -124,5 +121,9 @@ idmap_suite(void)
     tcase_add_test(tc_idmap, idmap_load_invalid);
     suite_add_tcase(s, tc_idmap);
 
-    return s;
+    SRunner *sr = srunner_create(s);
+    srunner_run_all(sr, CK_NORMAL);
+    int n_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return n_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

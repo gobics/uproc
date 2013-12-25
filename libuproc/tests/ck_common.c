@@ -15,12 +15,16 @@ START_TEST(test_defs)
 }
 END_TEST
 
-Suite *
-common_suite(void)
+int main(void)
 {
     Suite *s = suite_create("common definitions");
     TCase *tc_core = tcase_create("core");
     tcase_add_test(tc_core, test_defs);
     suite_add_tcase(s, tc_core);
-    return s;
+
+    SRunner *sr = srunner_create(s);
+    srunner_run_all(sr, CK_NORMAL);
+    int n_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return n_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

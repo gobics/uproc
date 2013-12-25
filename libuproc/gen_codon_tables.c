@@ -201,7 +201,7 @@ int main(void)
     gen_codon();
     printf("\n"
            "#define CODON_IS_STOP(c) (codon_is_stop[(c)])\n"
-           "#define CODON_COMPLEMENT(c) (codon_complement[(c)])\n"
+           "#define CODON_COMPLEMENT(c) ((uproc_codon)codon_complement[(c)])\n"
            "#define CODON_TO_CHAR(c) (codon_to_char[(c)])\n"
            "#define CHAR_TO_NT(c) (char_to_nt[(unsigned char) (c)])\n");
 

@@ -96,9 +96,7 @@ START_TEST(test_translate_a2c)
 }
 END_TEST
 
-
-Suite *
-alphabet_suite(void)
+int main(void)
 {
     Suite *s = suite_create("alphabet");
 
@@ -116,5 +114,9 @@ alphabet_suite(void)
     tcase_add_test(tc_trans, test_translate_a2c);
     suite_add_tcase(s, tc_trans);
 
-    return s;
+    SRunner *sr = srunner_create(s);
+    srunner_run_all(sr, CK_NORMAL);
+    int n_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return n_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
