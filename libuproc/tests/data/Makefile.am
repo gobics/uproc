@@ -1,4 +1,4 @@
-dist_data_DATA = \
+dist_check_DATA = \
 		duplicate.idmap \
 		invalid_header.idmap \
 		missing_entry.idmap
