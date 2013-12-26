@@ -2,6 +2,7 @@ if HAVE_CHECK
 SUBDIRS = data
 TESTS = ck_common \
 		ck_alphabet \
+		ck_bst \
 		ck_codon \
 		ck_idmap
 
