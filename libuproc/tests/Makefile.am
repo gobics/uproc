@@ -5,7 +5,8 @@ TESTS = ck_common \
 		ck_bst \
 		ck_codon \
 		ck_idmap \
-		ck_matrix
+		ck_matrix \
+		ck_word
 
 check_PROGRAMS = $(TESTS)
 
