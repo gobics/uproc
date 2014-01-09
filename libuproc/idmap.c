@@ -115,6 +115,9 @@ uproc_idmap_loads(uproc_io_stream *stream)
     for (i = 0; i < n; i++) {
         size_t len;
         if (!uproc_io_gets(buf, sizeof buf, stream)) {
+            if (uproc_io_eof(stream)) {
+                uproc_error_msg(UPROC_EINVAL, "unexpected end of file");
+            }
             return NULL;
         }
         len = strlen(buf);
