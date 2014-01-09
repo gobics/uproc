@@ -79,4 +79,6 @@ char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream);
 
 int uproc_io_seek(uproc_io_stream *stream, long offset, int whence);
+
+int uproc_io_eof(uproc_io_stream *stream);
 #endif

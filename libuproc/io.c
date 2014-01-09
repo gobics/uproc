@@ -419,3 +419,18 @@ uproc_io_seek(uproc_io_stream *stream, long offset, int whence)
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return -1;
 }
+
+int
+uproc_io_eof(uproc_io_stream *stream)
+{
+    switch (stream->type) {
+        case UPROC_IO_STDIO:
+            return feof(stream->s.fp);
+#if HAVE_ZLIB_H
+        case UPROC_IO_GZIP:
+            return gzeof(stream->s.gz);
+#endif
+    }
+    uproc_error_msg(UPROC_EINVAL, "invalid stream");
+    return 0;
+}
