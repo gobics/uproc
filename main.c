@@ -436,6 +436,7 @@ main(int argc, char **argv)
                     uproc_perror("can't open output file");
                     return EXIT_FAILURE;
                 }
+                break;
             case 'n':
                 use_idmap = false;
                 break;
