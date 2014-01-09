@@ -1,6 +1,6 @@
 /* Map a file to an ecurve
  *
- * Copyright 2013 Peter Meinicke, Robin Martinjak
+ * Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -50,19 +50,20 @@ static const uint64_t magic_number = 0xd2eadfUL;
 
 #define SIZE_HEADER (sizeof (struct mmap_header))
 #define SIZE_PREFIXES \
-    ((UPROC_PREFIX_MAX + 1) * \
-     sizeof (*((struct uproc_ecurve_s*)0)->prefixes))
-#define SIZE_SUFFIXES(suffix_count) \
-    ((suffix_count) * \
-     sizeof (*((struct uproc_ecurve_s*)0)->suffixes))
+    ((UPROC_PREFIX_MAX + 1) * sizeof (struct uproc_ecurve_pfxtable))
+#define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (uproc_suffix))
+#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (uproc_family))
 #define SIZE_TOTAL(suffix_count) \
     (SIZE_HEADER + SIZE_PREFIXES + SIZE_SUFFIXES(suffix_count) + \
-     (2 * sizeof magic_number))
+     SIZE_CLASSES(suffix_count) + (3 * sizeof magic_number))
 
 #define OFFSET_PREFIXES (SIZE_HEADER)
 #define OFFSET_MAGIC1 (OFFSET_PREFIXES + SIZE_PREFIXES)
 #define OFFSET_SUFFIXES (OFFSET_MAGIC1 + (sizeof magic_number))
 #define OFFSET_MAGIC2(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
+#define OFFSET_CLASSES(suffix_count) (OFFSET_MAGIC2(suffix_count) + (sizeof magic_number))
+#define OFFSET_MAGIC3(suffix_count) \
+    (OFFSET_CLASSES(suffix_count) + SIZE_CLASSES(suffix_count))
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -126,10 +127,12 @@ ecurve_map(const char *path)
 
    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
-   uint64_t *m1, *m2;
+   ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
+   uint64_t *m1, *m2, *m3;
    m1 = (void*)(ec->mmap_ptr + OFFSET_MAGIC1);
    m2 = (void*)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
-   if (*m1 != magic_number || *m2 != magic_number) {
+   m3 = (void*)(ec->mmap_ptr + OFFSET_MAGIC3(ec->suffix_count));
+   if (*m1 != magic_number || *m2 != magic_number || *m3 != magic_number) {
        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number");
        goto error_munmap;
    }
@@ -231,6 +234,10 @@ mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
     memcpy(region + OFFSET_SUFFIXES, ecurve->suffixes,
            SIZE_SUFFIXES(ecurve->suffix_count));
     memcpy(region + OFFSET_MAGIC2(ecurve->suffix_count), &magic_number, sizeof magic_number);
+    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->families,
+           SIZE_CLASSES(ecurve->suffix_count));
+    memcpy(region + OFFSET_MAGIC3(ecurve->suffix_count), &magic_number, sizeof magic_number);
+
     munmap(region, size);
     close(fd);
     return 0;

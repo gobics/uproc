@@ -24,7 +24,7 @@ print_version(void)
 {
     fputs(
         PROGNAME ", version " PACKAGE_VERSION "\n"
-        "Copyright 2013 Peter Meinicke, Robin Martinjak\n"
+        "Copyright 2014 Peter Meinicke, Robin Martinjak\n"
         "License GPLv3+: GNU GPL version 3 or later " /* no line break! */
         "<http://gnu.org/licenses/gpl.html>\n"
         "\n"

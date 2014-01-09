@@ -1,6 +1,6 @@
 /* Look up protein sequences from an "Evolutionary Curve"
  *
- * Copyright 2013 Peter Meinicke, Robin Martinjak
+ * Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -43,7 +43,7 @@
  * case of an exact match, else #UPROC_ECURVE_INEXACT.
  */
 static int
-prefix_lookup(const struct ecurve_ptab *table,
+prefix_lookup(const struct uproc_ecurve_pfxtable *table,
               uproc_prefix key, size_t *index, size_t *count,
               uproc_prefix *lower_prefix, uproc_prefix *upper_prefix)
 {
@@ -118,17 +118,17 @@ prefix_lookup(const struct ecurve_ptab *table,
  * `#UPROC_ECURVE_INEXACT` as described above.
  */
 static int
-suffix_lookup(const struct ecurve_stab *search, size_t n, uproc_suffix key,
+suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
               size_t *lower, size_t *upper)
 {
     size_t lo = 0, mid, hi = n - 1;
 
-    if (!n || key < search[0].suffix) {
+    if (!n || key < search[0]) {
         *lower = *upper = 0;
         return UPROC_ECURVE_OOB;
     }
 
-    if (key > search[n - 1].suffix) {
+    if (key > search[n - 1]) {
         *lower = *upper = n - 1;
         return UPROC_ECURVE_OOB;
     }
@@ -136,21 +136,21 @@ suffix_lookup(const struct ecurve_stab *search, size_t n, uproc_suffix key,
     while (hi > lo + 1) {
         mid = (hi + lo) / 2;
 
-        if (key == search[mid].suffix) {
+        if (key == search[mid]) {
             lo = mid;
             break;
         }
-        else if (key > search[mid].suffix) {
+        else if (key > search[mid]) {
             lo = mid;
         }
         else {
             hi = mid;
         }
     }
-    if (search[lo].suffix == key) {
+    if (search[lo] == key) {
         hi = lo;
     }
-    else if (search[hi].suffix == key) {
+    else if (search[hi] == key) {
         lo = hi;
     }
     *lower = lo;
@@ -163,7 +163,7 @@ uproc_ecurve *
 uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 {
     struct uproc_ecurve_s *ec;
-    if (suffix_count > ECURVE_PTAB_SUFFIX_MAX) {
+    if (suffix_count > PFXTAB_SUFFIX_MAX) {
         uproc_error_msg(UPROC_EINVAL, "too many suffixes");
         return NULL;
     }
@@ -186,7 +186,8 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 
     if (suffix_count) {
         ec->suffixes = malloc(sizeof *ec->suffixes * suffix_count);
-        if (!ec->suffixes) {
+        ec->families = malloc(sizeof *ec->families * suffix_count);
+        if (!ec->suffixes || !ec->families) {
             uproc_ecurve_destroy(ec);
             uproc_error(UPROC_ENOMEM);
             return NULL;
@@ -194,6 +195,7 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
     }
     else {
         ec->suffixes = NULL;
+        ec->families = NULL;
     }
     ec->suffix_count = suffix_count;
 
@@ -214,6 +216,7 @@ uproc_ecurve_destroy(uproc_ecurve *ecurve)
     else {
         free(ecurve->prefixes);
         free(ecurve->suffixes);
+        free(ecurve->families);
     }
     free(ecurve);
 }
@@ -246,7 +249,7 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
     }
 
     new_suffix_count = dest->suffix_count + src->suffix_count;
-    if (new_suffix_count > ECURVE_PTAB_SUFFIX_MAX) {
+    if (new_suffix_count > PFXTAB_SUFFIX_MAX) {
         return uproc_error_msg(UPROC_EINVAL, "too many suffixes");
     }
     tmp = realloc(dest->suffixes, new_suffix_count * sizeof *dest->suffixes);
@@ -254,9 +257,19 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
         return uproc_error(UPROC_ENOMEM);
     }
     dest->suffixes = tmp;
+
+    tmp = realloc(dest->families, new_suffix_count * sizeof *dest->families);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    dest->families = tmp;
+
     memcpy(dest->suffixes + dest->suffix_count,
-           src->suffixes,
-           src->suffix_count * sizeof *src->suffixes);
+            src->suffixes,
+            src->suffix_count * sizeof *src->suffixes);
+    memcpy(dest->families + dest->suffix_count,
+            src->families,
+            src->suffix_count * sizeof *src->families);
 
     for (p = dest_last + 1; p < src_first; p++) {
         dest->prefixes[p].count = 0;
@@ -276,9 +289,9 @@ int
 uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                     const struct uproc_word *word,
                     struct uproc_word *lower_neighbour,
-                    uproc_family *lower_family,
+                    uproc_family *lower_class,
                     struct uproc_word *upper_neighbour,
-                    uproc_family *upper_family)
+                    uproc_family *upper_class)
 {
     int res;
     uproc_prefix p_lower, p_upper;
@@ -306,11 +319,11 @@ uproc_ecurve_lookup(const uproc_ecurve *ecurve,
 
     /* populate output variables */
     lower_neighbour->prefix = p_lower;
-    lower_neighbour->suffix = ecurve->suffixes[lower].suffix;
-    *lower_family = ecurve->suffixes[lower].family;
+    lower_neighbour->suffix = ecurve->suffixes[lower];
+    *lower_class = ecurve->families[lower];
     upper_neighbour->prefix = p_upper;
-    upper_neighbour->suffix = ecurve->suffixes[upper].suffix;
-    *upper_family = ecurve->suffixes[upper].family;
+    upper_neighbour->suffix = ecurve->suffixes[upper];
+    *upper_class = ecurve->families[upper];
 
     return res;
 }

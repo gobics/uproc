@@ -75,11 +75,11 @@ START_TEST(test_store_load)
     uproc_idmap_family(map, "quux");
     uproc_idmap_family(map, "42");
     uproc_idmap_family(map, "herp derp");
-    res = uproc_idmap_store(map, UPROC_IO_GZIP, DATADIR "test.idmap");
+    res = uproc_idmap_store(map, UPROC_IO_GZIP, TMPDATADIR "test.idmap");
     ck_assert_msg(res == 0, "storing idmap failed");
 
     uproc_idmap_destroy(map);
-    map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "test.idmap");
+    map = uproc_idmap_load(UPROC_IO_GZIP, TMPDATADIR "test.idmap");
     ck_assert_ptr_ne(map, NULL);
 
     fam = uproc_idmap_family(map, "bar");
@@ -100,6 +100,7 @@ START_TEST(test_load_invalid)
     ck_assert_ptr_eq(map, NULL);
     ck_assert_int_eq(uproc_errno, UPROC_ERRNO);
     ck_assert_int_eq(errno, ENOENT);
+
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "invalid_header.idmap");
     ck_assert_ptr_eq(map, NULL);

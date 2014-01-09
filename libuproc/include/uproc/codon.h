@@ -2,7 +2,7 @@
  *
  * Operations on tri-nucleotide codons
  *
- * Copyright 2013 Peter Meinicke, Robin Martinjak
+ * Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
