@@ -10,6 +10,7 @@ check_PROGRAMS = $(TESTS)
 
 AM_CFLAGS = @CHECK_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include \
-				-DDATADIR=\"$(abs_top_builddir)/libuproc/tests/data/\"
+				-DDATADIR=\"$(abs_top_srcdir)/libuproc/tests/data/\" \
+				-DTMPDATADIR=\"$(abs_top_builddir)/libuproc/tests/data/\"
 LDADD = $(top_builddir)/libuproc/libuproc.la @CHECK_LIBS@
 endif
