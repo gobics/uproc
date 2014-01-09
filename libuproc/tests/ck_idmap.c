@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <errno.h>
 #include <check.h>
 #include "uproc.h"
 #undef UPROC_FAMILY_MAX
@@ -20,7 +21,7 @@ void teardown(void)
     }
 }
 
-START_TEST(idmap_usage)
+START_TEST(test_usage)
 {
     uproc_family fam1, fam2;
 
@@ -45,8 +46,7 @@ START_TEST(idmap_usage)
 }
 END_TEST
 
-
-START_TEST(idmap_exhaust)
+START_TEST(test_exhaust)
 {
     uproc_family fam, i;
     char foo[1024];
@@ -64,9 +64,7 @@ START_TEST(idmap_exhaust)
 }
 END_TEST
 
-
-
-START_TEST(idmap_store_load)
+START_TEST(test_store_load)
 {
     int res;
     uproc_family fam;
@@ -95,31 +93,38 @@ START_TEST(idmap_store_load)
 }
 END_TEST
 
-START_TEST(idmap_load_invalid)
+START_TEST(test_load_invalid)
 {
     uproc_idmap_destroy(map);
-    map = NULL;
+    map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "no_such_file");
+    ck_assert_ptr_eq(map, NULL);
+    ck_assert_int_eq(uproc_errno, UPROC_ERRNO);
+    ck_assert_int_eq(errno, ENOENT);
+
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "invalid_header.idmap");
     ck_assert_ptr_eq(map, NULL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "duplicate.idmap");
     ck_assert_ptr_eq(map, NULL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "missing_entry.idmap");
     ck_assert_ptr_eq(map, NULL);
+    ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 }
 END_TEST
 
 int main(void)
 {
     Suite *s = suite_create("idmap");
-    TCase *tc_idmap = tcase_create("idmap operations");
-    tcase_add_checked_fixture(tc_idmap, setup, teardown);
-    tcase_add_test(tc_idmap, idmap_usage);
-    tcase_add_test(tc_idmap, idmap_exhaust);
-    tcase_add_test(tc_idmap, idmap_store_load);
-    tcase_add_test(tc_idmap, idmap_load_invalid);
-    suite_add_tcase(s, tc_idmap);
+    TCase *tc = tcase_create("idmap operations");
+    tcase_add_checked_fixture(tc, setup, teardown);
+    tcase_add_test(tc, test_usage);
+    tcase_add_test(tc, test_exhaust);
+    tcase_add_test(tc, test_store_load);
+    tcase_add_test(tc, test_load_invalid);
+    suite_add_tcase(s, tc);
 
     SRunner *sr = srunner_create(s);
     srunner_run_all(sr, CK_NORMAL);
