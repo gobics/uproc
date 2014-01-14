@@ -32,13 +32,8 @@ enum uproc_io_type
 {
     /** standard C's FILE pointer */
     UPROC_IO_STDIO,
-#if HAVE_ZLIB_H
     /** transparent gzip stream using zlib */
     UPROC_IO_GZIP,
-#else
-    /** or fall back to stdio */
-    UPROC_IO_GZIP = UPROC_IO_STDIO,
-#endif
 };
 
 

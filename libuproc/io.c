@@ -159,13 +159,8 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
     stream->type = type;
     stream->stdstream = false;
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            if (!(stream->s.fp = fopen(path, mode))) {
-                goto error_errno;
-            }
-            break;
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             if (!(stream->s.gz = gzopen(path, mode))) {
                 /* gzopen sets errno to 0 if memory allocation failed */
                 if (!errno) {
@@ -177,6 +172,11 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
             (void) gzbuffer(stream->s.gz, GZIP_BUFSZ);
             break;
 #endif
+        case UPROC_IO_STDIO:
+            if (!(stream->s.fp = fopen(path, mode))) {
+                goto error_errno;
+            }
+            break;
         default:
             goto error;
     }
@@ -230,17 +230,8 @@ uproc_io_close(uproc_io_stream *stream)
 {
     int res = 1;
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            if (stream->s.fp) {
-                res = fclose(stream->s.fp);
-                if (res) {
-                    res = -1;
-                }
-                stream->s.fp = NULL;
-            }
-            break;
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             if (stream->s.gz) {
                 res = gzclose(stream->s.gz);
                 stream->s.gz = NULL;
@@ -255,6 +246,15 @@ uproc_io_close(uproc_io_stream *stream)
             }
             break;
 #endif
+        case UPROC_IO_STDIO:
+            if (stream->s.fp) {
+                res = fclose(stream->s.fp);
+                if (res) {
+                    res = -1;
+                }
+                stream->s.fp = NULL;
+            }
+            break;
         default:
             return uproc_error_msg(UPROC_EINVAL, "invalid stream");
     }
@@ -271,14 +271,14 @@ uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            res = vfprintf(stream->s.fp, fmt, ap);
-            break;
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             res = gzvprintf(stream->s.gz, fmt, ap);
             break;
 #endif
+        case UPROC_IO_STDIO:
+            res = vfprintf(stream->s.fp, fmt, ap);
+            break;
         default:
             res = uproc_error_msg(UPROC_EINVAL, "invalid stream");
     }
@@ -290,10 +290,8 @@ size_t
 uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
 {
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            return fread(ptr, size, nmemb, stream->s.fp);
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             {
                 size_t i, n;
                 for (i = 0; i < nmemb; i++) {
@@ -305,6 +303,8 @@ uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
                 return i;
             }
 #endif
+        case UPROC_IO_STDIO:
+            return fread(ptr, size, nmemb, stream->s.fp);
     }
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return 0;
@@ -315,10 +315,8 @@ uproc_io_write(const void *ptr, size_t size, size_t nmemb,
                uproc_io_stream *stream)
 {
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            return fwrite(ptr, size, nmemb, stream->s.fp);
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             {
                 size_t i, n;
                 for (i = 0; i < nmemb; i++) {
@@ -330,6 +328,8 @@ uproc_io_write(const void *ptr, size_t size, size_t nmemb,
                 return i;
             }
 #endif
+        case UPROC_IO_STDIO:
+            return fwrite(ptr, size, nmemb, stream->s.fp);
     }
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return 0;
@@ -340,20 +340,20 @@ uproc_io_gets(char *s, int size, uproc_io_stream *stream)
 {
     char *res;
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            res = fgets(s, size, stream->s.fp);
-            if (!res) {
-                uproc_error_msg(UPROC_EIO, "failed to read from stream");
-            }
-            break;
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             res = gzgets(stream->s.gz, s, size);
             if (!res) {
                 uproc_error_msg(UPROC_EIO, "failed to read from gz stream");
             }
             break;
 #endif
+        case UPROC_IO_STDIO:
+            res = fgets(s, size, stream->s.fp);
+            if (!res) {
+                uproc_error_msg(UPROC_EIO, "failed to read from stream");
+            }
+            break;
         default:
             uproc_error_msg(UPROC_EINVAL, "invalid stream");
             return NULL;
@@ -409,12 +409,12 @@ int
 uproc_io_seek(uproc_io_stream *stream, long offset, int whence)
 {
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            return fseek(stream->s.fp, offset, whence);
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             return gzseek(stream->s.gz, offset, whence) >= 0 ? 0 : -1;
 #endif
+        case UPROC_IO_STDIO:
+            return fseek(stream->s.fp, offset, whence);
     }
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return -1;
@@ -424,12 +424,12 @@ int
 uproc_io_eof(uproc_io_stream *stream)
 {
     switch (stream->type) {
-        case UPROC_IO_STDIO:
-            return feof(stream->s.fp);
-#if HAVE_ZLIB_H
         case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
             return gzeof(stream->s.gz);
 #endif
+        case UPROC_IO_STDIO:
+            return feof(stream->s.fp);
     }
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return 0;
