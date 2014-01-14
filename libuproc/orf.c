@@ -250,19 +250,19 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
             while (next->length && next->data[next->length - 1] == 'X') {
                 next->length--;
             }
-            if (!next->length ||
-                (iter->filter &&
-                 !iter->filter(next, iter->seq, iter->seq_len, iter->seq_gc,
-                               iter->filter_arg)))
-            {
+            if (!next->length) {
                 continue;
             }
-
             next->data[next->length] = '\0';
-
             /* revert ORF on complementery strand */
             if (i >= FRAMES) {
                 reverse_str(next->data);
+            }
+
+            if (iter->filter && !iter->filter(next, iter->seq, iter->seq_len,
+                                              iter->seq_gc, iter->filter_arg))
+            {
+                continue;
             }
             return 1;
         }
