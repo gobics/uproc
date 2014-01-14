@@ -225,6 +225,62 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
     }
 }
 
+
+struct count
+{
+    uproc_family fam;
+    uintmax_t n;
+};
+
+int
+compare_count(const void *p1, const void *p2)
+{
+    const struct count *c1 = p1, *c2 = p2;
+
+    /* sort by n in descending order */
+    if (c1->n > c2->n) {
+        return -1;
+    }
+    else if (c1->n < c2->n) {
+        return 1;
+    }
+
+    /* or fam in ascending */
+    if (c1->fam < c2->fam) {
+        return -1;
+    }
+    else if (c1->fam > c2->fam) {
+        return 1;
+    }
+    return 0;
+}
+
+void
+output_counts(uintmax_t *counts, uproc_idmap *idmap, uproc_io_stream *out_stream)
+{
+    struct count c[UPROC_FAMILY_MAX];
+    uproc_family i, n = 0;
+    for (i = 0; i < UPROC_FAMILY_MAX; i++) {
+        if (counts[i]) {
+            c[n].fam = i;
+            c[n].n = counts[i];
+            n++;
+        }
+    }
+
+    qsort(c, n, sizeof *c, compare_count);
+
+    for (i = 0; i < n; i++) {
+        if (idmap) {
+            uproc_io_printf(out_stream, "%s", uproc_idmap_str(idmap, c[i].fam));
+        }
+        else {
+            uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI, c[i].fam);
+        }
+        uproc_io_printf(out_stream, ",%ju\n", c[i].n);
+    }
+}
+
 size_t
 get_chunk_size(void)
 {
@@ -436,6 +492,7 @@ main(int argc, char **argv)
                     uproc_perror("can't open output file");
                     return EXIT_FAILURE;
                 }
+                break;
             case 'n':
                 use_idmap = false;
                 break;
@@ -682,16 +739,8 @@ main(int argc, char **argv)
         uproc_io_printf(out_stream, "%zu,", unexplained);
         uproc_io_printf(out_stream, "%zu\n", n_seqs);
     }
-    for (uproc_family i = 0; out_counts && i < UPROC_FAMILY_MAX; i++) {
-        if (counts[i]) {
-            if (use_idmap) {
-                uproc_io_printf(out_stream, "%s", uproc_idmap_str(idmap, i));
-            }
-            else {
-                uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI, i);
-            }
-            uproc_io_printf(out_stream, ",%ju\n", counts[i]);
-        }
+    if (out_counts) {
+        output_counts(counts, use_idmap ? idmap : NULL, out_stream);
     }
 
     return res == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
