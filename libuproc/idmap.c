@@ -50,10 +50,12 @@ uproc_idmap_create(void)
 void
 uproc_idmap_destroy(uproc_idmap *map)
 {
+    if (!map) {
+        return;
+    }
     uproc_family i;
     for (i = 0; i < map->n; i++) {
         free(map->s[i]);
-        map->s[i] = NULL;
     }
     free(map);
 }

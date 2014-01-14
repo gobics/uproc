@@ -215,8 +215,11 @@ uproc_orfiter_create(
 void
 uproc_orfiter_destroy(uproc_orfiter *iter)
 {
-    unsigned i;
-    for (i = 0; i < UPROC_ORF_FRAMES; i++) {
+    if (!iter) {
+        return;
+    }
+
+    for (unsigned i = 0; i < UPROC_ORF_FRAMES; i++) {
         free(iter->orf[i].data);
     }
     free(iter);

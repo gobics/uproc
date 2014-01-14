@@ -246,6 +246,9 @@ uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size)
 void
 uproc_bst_destroy(uproc_bst *t)
 {
+    if (!t) {
+        return;
+    }
     bstnode_free(t->root, t->value_size);
     free(t);
 }

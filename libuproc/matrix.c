@@ -73,6 +73,9 @@ uproc_matrix_create(size_t rows, size_t cols, const double *values)
 void
 uproc_matrix_destroy(uproc_matrix *matrix)
 {
+    if (!matrix) {
+        return;
+    }
     free(matrix->values);
     free(matrix);
 }

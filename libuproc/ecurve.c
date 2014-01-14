@@ -209,6 +209,10 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 void
 uproc_ecurve_destroy(uproc_ecurve *ecurve)
 {
+    if (!ecurve) {
+        return;
+    }
+
     uproc_alphabet_destroy(ecurve->alphabet);
     if (ecurve->mmap_fd > -1) {
         uproc_ecurve_munmap(ecurve);
