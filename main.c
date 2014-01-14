@@ -657,6 +657,7 @@ main(int argc, char **argv)
         uproc_fasta_reader_free(&rd);
     }
 
+    uproc_pc_destroy(protclass);
     uproc_ecurve_destroy(fwd);
     uproc_ecurve_destroy(rev);
     uproc_substmat_destroy(substmat);
@@ -664,6 +665,7 @@ main(int argc, char **argv)
         uproc_matrix_destroy(prot_thresholds);
     }
 #if MAIN_DNA
+    uproc_dc_destroy(dnaclass);
     if (codon_scores) {
         uproc_matrix_destroy(codon_scores);
     }
