@@ -297,6 +297,12 @@ uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
     return pc;
 }
 
+void
+uproc_pc_destroy(uproc_protclass *pc)
+{
+    free(pc);
+}
+
 static int
 classify(const struct uproc_protclass_s *pc, const char *seq,
          struct uproc_pc_results *results)
