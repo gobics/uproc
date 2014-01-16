@@ -47,8 +47,8 @@ static const char *error_strs[] =
 };
 
 int
-uproc_error_(int num, const char *func, const char *file, int line,
-             const char *fmt, ...)
+uproc_error_(enum uproc_error_code num, const char *func, const char *file,
+             int line, const char *fmt, ...)
 {
     va_list ap;
     error_num = num;

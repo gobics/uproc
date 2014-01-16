@@ -25,7 +25,7 @@
 
 #include "uproc/common.h"
 
-enum
+enum uproc_error_code
 {
     /** Success */
     UPROC_SUCCESS = 0,
@@ -55,8 +55,8 @@ enum
     UPROC_ENOTSUP,
 };
 
-int uproc_error_(int num, const char *func, const char *file, int line,
-                 const char *fmt, ...);
+int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
+                 int line, const char *fmt, ...);
 
 #define uproc_error_msg(num, ...) uproc_error_(num, __func__, __FILE__, \
                                                __LINE__, __VA_ARGS__)
