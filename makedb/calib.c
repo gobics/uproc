@@ -270,12 +270,12 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     omp_set_num_threads(POW_MAX - POW_MIN + 1);
 #endif
     double perc = 0.0;
+    int power;
     progress("calibrating", perc);
 #pragma omp parallel private(res, power) shared(fwd, rev, substmat, alpha, aa_probs, perc)
     {
-
 #pragma omp for
-        for (int power = POW_MIN; power <= POW_MAX; power++) {
+        for (power = POW_MIN; power <= POW_MAX; power++) {
             char seq[LEN_MAX + 1];
 
             size_t all_preds_n = 0, all_preds_sz = 0;
