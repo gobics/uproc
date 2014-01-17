@@ -144,7 +144,7 @@ prot_filter(const char *seq, size_t len, uproc_family family, double score,
     uproc_matrix *thresh = opaque;
     (void) seq, (void) family;
     if (!thresh) {
-        return score > 0.0;
+        return score > UPROC_EPSILON;
     }
     if (!rows) {
         uproc_matrix_dimensions(thresh, &rows, &cols);
