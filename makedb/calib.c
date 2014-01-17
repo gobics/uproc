@@ -194,10 +194,6 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     size_t i;
     double xa[POW_DIFF + 1],
            x[INTERP_MAX], y[INTERP_MAX];
-    uproc_matrix *thresh_interp = uproc_matrix_create(1, INTERP_MAX, y);
-    if (!thresh_interp) {
-        return -1;
-    }
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
     }
@@ -211,6 +207,11 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     }
 
     csinterp(xa, thresh, POW_DIFF + 1, x, y, INTERP_MAX);
+
+    uproc_matrix *thresh_interp = uproc_matrix_create(1, INTERP_MAX, y);
+    if (!thresh_interp) {
+        return -1;
+    }
     res = uproc_matrix_store(thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir,
                              name);
     uproc_matrix_destroy(thresh_interp);
@@ -270,7 +271,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
 #endif
     double perc = 0.0;
     progress("calibrating", perc);
-#pragma omp parallel private(res) shared(fwd, rev, substmat, alpha, aa_probs, perc)
+#pragma omp parallel private(res, power) shared(fwd, rev, substmat, alpha, aa_probs, perc)
     {
 
 #pragma omp for
