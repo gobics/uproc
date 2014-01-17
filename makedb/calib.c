@@ -225,8 +225,7 @@ prot_filter(const char *seq, size_t len, uproc_family family, double score,
     (void) len;
     (void) family;
     (void) opaque;
-    return true;
-    return score > 0.0;
+    return score > UPROC_EPSILON;
 }
 
 int calib(const char *alphabet, const char *dbdir, const char *modeldir)
