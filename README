@@ -1,0 +1,172 @@
+##############################
+UProC Version 0.3.2 2014-01-20
+##############################
+
+.. This document is formatted using reStructuredText_. You can either view it
+   as plain text or use the python ``docutils`` package to render it to a
+   prettier format, e.g. HTML.
+
+.. _reStructuredText: http://docutils.sourceforge.net/rst.html
+
+.. contents::
+.. sectnum::
+
+
+=============
+General Notes
+=============
+
+Contact
+-------
+
+Please send bug reports, suggestions or questions to robin@gobics.de
+
+
+Version numbering
+-----------------
+
+UProC uses `semantic versioning`_. This means that the version number has the
+format ``MAJOR.MINOR.PATCH`` and an increment in one of the parts has the
+following meaning:
+
+1. ``MAJOR``: The user interface (input, output and/or command-line arguments)
+   of the programs or the format of the supplementary files was changed in a
+   backwards-incompatible manner.
+2. ``MINOR``: Some functionality was added.
+3. ``PATCH``: One or more bugs were fixed.
+
+If ``MINOR`` or ``PATCH`` are incremented, all modifications are
+backwards-compatible. See the `semantic versioning`_ homepage for details.
+
+.. _`semantic versioning`: http://semver.org
+
+
+License
+-------
+
+The code for the UProC executables is available under the GNU GPL (see the
+``COPYING`` file). However, most of the functionality is separated into a
+library called ``libuproc``, using the GNU LGPL (see the ``COPYING.LESSER``
+file). By default, the executables are built statically, you have to pass
+``--enable-shared`` to the configure script if you want to build ``libuproc``
+as a shared library (see the `Installation from source`_ section below).
+
+
+============
+Installation
+============
+
+Prerequisites
+-------------
+
+UProC uses the `GNU Autotools`_, so installation should work on any system that
+has a POSIX compatible ``/bin/sh``, ``make`` and a C99 compiler.
+
+For additional features, UProC has the following **optional** dependencies:
+
+zlib
+    On-the-fly ``gzip`` (de-)compression of files. This is probably already
+    installed on your computer, but you need to make sure that the development
+    headers are also available.
+
+OpenMP
+    UProC uses OpenMP for parallelization, if the compiler suports it. The
+    configure script automatically detects whether this is the case.
+
+
+.. _`GNU Autotools`: http://www.gnu.org/software/automake/manual
+
+
+Installation from source
+------------------------
+
+To install UProC from a source tarball, simply extract it and run the
+commands::
+
+        ./configure
+        make
+        make install
+
+By default, the executables are built in a way that you can omit the ``make
+install`` step and just run them from wherever you wish.
+
+You can pass the following options (and more) to the ``configure`` script:
+
+--prefix=PREFIX     Install all files below ``PREFIX`` (see the ``INSTALL``
+                    file for details).
+
+--disable-openmp    Do not use OpenMP (i.e. disable multi-threading). This will
+                    usually cause longer running times. You probably don't want
+                    this.
+
+--enable-shared     Build and install ``libuproc`` as shared library. This will
+                    also install the header files and, if ``doxygen`` is
+                    installed, API reference.
+
+
+See the ``INSTALL`` file for a more detailed generic description of the
+installation process.
+
+
+===================
+Supplementary files
+===================
+
+UProC needs certain files at runtime. These files are split into two
+categories, usually available as two distinct directories in the file system.
+
+
+Database
+--------
+
+The database consists of files representing a set of known protein subsequences
+that map to given families, e.g. extracted from PFAM.
+
+There are two ways to obtain a database:
+
+1.  You can download a database from http://no-url-yet and import it with the
+    `uproc-import` program.
+2.  Alternatively, you can create your own database with the `uproc-makedb`
+    program.
+
+Detailed instructions for these programs can be found by passing the `-h`
+option when running them.
+
+
+Model
+-----
+
+The model consists of files containing certain parameters that are not tied to
+a particular database. You can download the newest model files from
+http://no-url-yet.
+
+
+=============
+Running UProC
+=============
+
+UProC consists of the following command-line programs:
+
+``uproc-prot``
+    Protein sequence classifier.
+
+``uproc-dna``
+    DNA/RNA sequence classifier.
+
+``uproc-orf``
+    Command-line interface to the ORF translation mechanism used by
+    ``uproc-dna``.
+
+``uproc-import``
+    Import database.
+
+``uproc-export``
+    Export database.
+
+``uproc-makedb``
+    Create a new database.
+
+You can pass the ``-h`` argument to find out how they are used.
+
+
+.. vim: ft=rst
