@@ -1,5 +1,5 @@
 AC_PREREQ(2.62)
-AC_INIT([uproc], [0.3.2-devel], [robin@gobics.de])
+AC_INIT([uproc], [0.3.2], [robin@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
 LT_PREREQ([2.2])
