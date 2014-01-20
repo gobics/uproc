@@ -61,6 +61,5 @@ AC_CONFIG_FILES([Makefile
                  libuproc/tests/Makefile
                  libuproc/tests/data/Makefile
                  libuproc/docs/doxyfile
-                 libuproc/docs/Makefile
-                 makedb/Makefile])
+                 libuproc/docs/Makefile])
 AC_OUTPUT
