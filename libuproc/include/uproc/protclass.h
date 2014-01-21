@@ -60,4 +60,7 @@ void uproc_pc_destroy(uproc_protclass *pc);
 
 int uproc_pc_classify(const uproc_protclass *pc, const char *seq,
                       struct uproc_pc_results *results);
+
+void uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
+                        void (*cb)(const char*, size_t, const double*, bool));
 #endif
