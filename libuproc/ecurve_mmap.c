@@ -113,7 +113,7 @@ ecurve_map(const char *path)
 
     header = ec->mmap_ptr;
     if (ec->mmap_size != SIZE_TOTAL(header->suffix_count)) {
-        uproc_error(UPROC_ERRNO);
+        uproc_error(UPROC_EINVAL);
         goto error_munmap;
     }
     ec->suffix_count = header->suffix_count;
