@@ -131,7 +131,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
 
             /* word was already present -> mark as duplicate if stored class
              * differs */
-            if (res == UPROC_SUCCESS) {
+            if (!res) {
                 if (tmp_family != family) {
                     filtered_counts[family] += 1;
                     if (tmp_family != UPROC_FAMILY_INVALID) {
