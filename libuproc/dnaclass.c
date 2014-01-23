@@ -163,3 +163,11 @@ error:
     uproc_orfiter_destroy(orf_iter);
     return res;
 }
+
+void
+uproc_dc_results_free(struct uproc_dc_results *results)
+{
+    results->n = 0;
+    free(results->preds);
+    results->preds = NULL;
+}

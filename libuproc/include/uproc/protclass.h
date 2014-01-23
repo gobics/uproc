@@ -63,4 +63,6 @@ int uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 
 void uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
                         void (*cb)(const char*, size_t, const double*, bool));
+
+void uproc_pc_results_free(struct uproc_pc_results *results);
 #endif

@@ -381,3 +381,11 @@ uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
     pc->trace.family = family;
     pc->trace.cb = cb;
 }
+
+void
+uproc_pc_results_free(struct uproc_pc_results *results)
+{
+    results->n = 0;
+    free(results->preds);
+    results->preds = NULL;
+}

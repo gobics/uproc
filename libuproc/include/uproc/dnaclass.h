@@ -61,4 +61,6 @@ void uproc_dc_destroy(uproc_dnaclass *dc);
 
 int uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
                       struct uproc_dc_results *results);
+
+void uproc_dc_results_free(struct uproc_dc_results *results);
 #endif
