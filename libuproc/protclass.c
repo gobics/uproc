@@ -41,7 +41,8 @@ struct uproc_protclass_s
     struct uproc_protclass_trace
     {
         uproc_family family;
-        void (*cb)(const char*, size_t, const double*, bool);
+        void (*cb)(const char*, size_t, const double*, bool, void*);
+        void *opaque;
     } trace;
 };
 
@@ -159,7 +160,7 @@ trace(const uproc_protclass *pc, uproc_family family,
     }
     char w[UPROC_WORD_LEN + 1];
     uproc_word_to_string(w, word, uproc_ecurve_alphabet(pc->fwd));
-    pc->trace.cb(w, index, dist, reverse);
+    pc->trace.cb(w, index, dist, reverse, pc->trace.opaque);
 }
 
 
@@ -376,8 +377,10 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 
 void
 uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                   void (*cb)(const char*, size_t, const double*, bool))
+                   void (*cb)(const char*, size_t, const double*, bool, void*),
+                   void *opaque)
 {
     pc->trace.family = family;
     pc->trace.cb = cb;
+    pc->trace.opaque = opaque;
 }
