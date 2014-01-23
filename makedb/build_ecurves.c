@@ -32,8 +32,6 @@
 #include "ecurve_internal.h"
 #include "makedb.h"
 
-#define ALPHA_DEFAULT "AGSTPKRQEDNHYWFMLIVC"
-
 unsigned long filtered_counts[UPROC_FAMILY_MAX] = { 0 };
 
 struct ecurve_entry
