@@ -41,7 +41,7 @@ struct uproc_protclass_s
     struct uproc_protclass_trace
     {
         uproc_family family;
-        void (*cb)(const char*, size_t, const double*, void*);
+        uproc_pc_trace_cb *cb;
         void *opaque;
     } trace;
 };
@@ -158,7 +158,9 @@ trace(const uproc_protclass *pc, uproc_family family,
     {
         return;
     }
-    char w[UPROC_WORD_LEN + 1], s[UPROC_SUFFIX_LEN + 1] = "";
+    char w[UPROC_WORD_LEN + 1];
+    char p[UPROC_PREFIX_LEN + 1] = "";
+    char s[UPROC_SUFFIX_LEN + 1] = "";
     double tmp[UPROC_SUFFIX_LEN];
 
     uproc_word_to_string(w, word, uproc_ecurve_alphabet(pc->fwd));
@@ -166,13 +168,16 @@ trace(const uproc_protclass *pc, uproc_family family,
 
     if (reverse) {
         reverse_array(w, UPROC_WORD_LEN, sizeof *w);
+        memcpy(p, w + UPROC_SUFFIX_LEN, UPROC_PREFIX_LEN);
+        memcpy(s, w, UPROC_SUFFIX_LEN);
         reverse_array(tmp, UPROC_SUFFIX_LEN, sizeof *tmp);
     }
     else {
         index += UPROC_PREFIX_LEN;
+        memcpy(p, w, UPROC_PREFIX_LEN);
+        memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
     }
-    memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
-    pc->trace.cb(s, index, tmp, pc->trace.opaque);
+    pc->trace.cb(p, s, index, reverse, tmp, pc->trace.opaque);
 }
 
 
@@ -390,8 +395,7 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 
 void
 uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                   void (*cb)(const char*, size_t, const double*, void*),
-                   void *opaque)
+                   uproc_pc_trace_cb *cb, void *opaque)
 {
     pc->trace.family = family;
     pc->trace.cb = cb;
