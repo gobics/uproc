@@ -173,7 +173,6 @@ trace(const uproc_protclass *pc, uproc_family family,
         reverse_array(tmp, UPROC_SUFFIX_LEN, sizeof *tmp);
     }
     else {
-        index += UPROC_PREFIX_LEN;
         memcpy(p, w, UPROC_PREFIX_LEN);
         memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
     }
