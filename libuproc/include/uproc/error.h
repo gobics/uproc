@@ -72,4 +72,8 @@ void uproc_perror(const char *fmt, ...);
 const char *uproc_error_errmsg_(void);
 
 #define uproc_errmsg (uproc_error_errmsg_())
+
+const char *uproc_error_errloc_(void);
+
+#define uproc_errloc (uproc_error_errloc_())
 #endif

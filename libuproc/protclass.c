@@ -42,7 +42,7 @@ struct uproc_protclass_s
     {
         uproc_family family;
         uproc_pc_trace_cb *cb;
-        void *opaque;
+        void *cb_arg;
     } trace;
 };
 
@@ -176,7 +176,7 @@ trace(const uproc_protclass *pc, uproc_family family,
         memcpy(p, w, UPROC_PREFIX_LEN);
         memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
     }
-    pc->trace.cb(p, s, index, reverse, tmp, pc->trace.opaque);
+    pc->trace.cb(p, s, index, reverse, tmp, pc->trace.cb_arg);
 }
 
 
@@ -336,7 +336,7 @@ uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
         .trace = {
             .family = UPROC_FAMILY_INVALID,
             .cb = NULL,
-            .opaque = NULL,
+            .cb_arg = NULL,
         },
     };
     return pc;
@@ -394,9 +394,9 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 
 void
 uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                   uproc_pc_trace_cb *cb, void *opaque)
+                   uproc_pc_trace_cb *cb, void *cb_arg)
 {
     pc->trace.family = family;
     pc->trace.cb = cb;
-    pc->trace.opaque = opaque;
+    pc->trace.cb_arg = cb_arg;
 }

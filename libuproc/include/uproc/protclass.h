@@ -62,8 +62,9 @@ int uproc_pc_classify(const uproc_protclass *pc, const char *seq,
                       struct uproc_pc_results *results);
 
 typedef void uproc_pc_trace_cb(const char *pfx, const char *sfx, size_t index,
-                               bool reverse, const double *scores, void *opaque);
+                               bool reverse, const double *scores,
+                               void *opaque);
 
 void uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                        uproc_pc_trace_cb *cb, void *opaque);
+                        uproc_pc_trace_cb *cb, void *cb_arg);
 #endif

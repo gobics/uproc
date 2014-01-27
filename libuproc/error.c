@@ -99,3 +99,9 @@ uproc_error_errmsg_(void)
 {
     return error_msg;
 }
+
+const char *
+uproc_error_errloc_(void)
+{
+    return error_loc;
+}
