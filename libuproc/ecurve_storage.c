@@ -418,6 +418,9 @@ uproc_ecurve_loadv(enum uproc_ecurve_format format,
 
     stream = uproc_io_openv(mode[format], iotype, pathfmt, aq);
     va_end(aq);
+    if (!stream) {
+        return NULL;
+    }
     ec = uproc_ecurve_loads(format, stream);
     uproc_io_close(stream);
     return ec;

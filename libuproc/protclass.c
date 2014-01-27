@@ -41,7 +41,8 @@ struct uproc_protclass_s
     struct uproc_protclass_trace
     {
         uproc_family family;
-        void (*cb)(const char*, size_t, const double*, bool);
+        uproc_pc_trace_cb *cb;
+        void *cb_arg;
     } trace;
 };
 
@@ -158,8 +159,24 @@ trace(const uproc_protclass *pc, uproc_family family,
         return;
     }
     char w[UPROC_WORD_LEN + 1];
+    char p[UPROC_PREFIX_LEN + 1] = "";
+    char s[UPROC_SUFFIX_LEN + 1] = "";
+    double tmp[UPROC_SUFFIX_LEN];
+
     uproc_word_to_string(w, word, uproc_ecurve_alphabet(pc->fwd));
-    pc->trace.cb(w, index, dist, reverse);
+    memcpy(tmp, dist, sizeof *dist * UPROC_SUFFIX_LEN);
+
+    if (reverse) {
+        reverse_array(w, UPROC_WORD_LEN, sizeof *w);
+        memcpy(p, w + UPROC_SUFFIX_LEN, UPROC_PREFIX_LEN);
+        memcpy(s, w, UPROC_SUFFIX_LEN);
+        reverse_array(tmp, UPROC_SUFFIX_LEN, sizeof *tmp);
+    }
+    else {
+        memcpy(p, w, UPROC_PREFIX_LEN);
+        memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
+    }
+    pc->trace.cb(p, s, index, reverse, tmp, pc->trace.cb_arg);
 }
 
 
@@ -319,6 +336,7 @@ uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
         .trace = {
             .family = UPROC_FAMILY_INVALID,
             .cb = NULL,
+            .cb_arg = NULL,
         },
     };
     return pc;
@@ -376,10 +394,11 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 
 void
 uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                   void (*cb)(const char*, size_t, const double*, bool))
+                   uproc_pc_trace_cb *cb, void *cb_arg)
 {
     pc->trace.family = family;
     pc->trace.cb = cb;
+    pc->trace.cb_arg = cb_arg;
 }
 
 void
