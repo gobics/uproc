@@ -65,7 +65,11 @@ buf_free(struct buffer *buf) {
     for (size_t i = 0; i < MAX_CHUNK_SIZE; i++) {
         free(buf->header[i]);
         free(buf->seq[i]);
-        free(buf->results[i].preds);
+#if MAIN_DNA
+        uproc_dc_results_free(&buf->results[i]);
+#else
+        uproc_pc_results_free(&buf->results[i]);
+#endif
     }
 }
 
