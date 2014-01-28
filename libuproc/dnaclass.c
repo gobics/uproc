@@ -86,7 +86,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
     uproc_bst *max_scores;
     uproc_bstiter *max_scores_iter;
     union uproc_bst_key key;
-    struct { double score; unsigned frame; } value;
+    struct uproc_dc_pred value;
     struct uproc_pc_results pc_res = { NULL, 0, 0 };
 
     max_scores = uproc_bst_create(UPROC_BST_UINT, sizeof value);
@@ -109,16 +109,26 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
             double score = pc_res.preds[i].score;
             key.uint = pc_res.preds[i].family;
             value.score = -INFINITY;
+            value.orf.data = NULL;
             (void) uproc_bst_get(max_scores, key, &value);
             if (score > value.score) {
+                uproc_orf_free(&value.orf);
+                value.family = pc_res.preds[i].family;
                 value.score = score;
-                value.frame = orf.frame;
+                res = uproc_orf_copy(&value.orf, &orf);
+                if (res) {
+                    goto error;
+                }
                 res = uproc_bst_update(max_scores, key, &value);
                 if (res) {
                     goto error;
                 }
             }
         }
+    }
+
+    for (i = 0; i < results->n; i++) {
+        uproc_orf_free(&results->preds[i].orf);
     }
 
     results->n = uproc_bst_size(max_scores);
@@ -137,9 +147,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
         goto error;
     }
     for (i = 0; uproc_bstiter_next(max_scores_iter, &key, &value) > 0; i++) {
-        results->preds[i].family = key.uint;
-        results->preds[i].score = value.score;
-        results->preds[i].frame = value.frame;
+        results->preds[i] = value;
     }
     uproc_bstiter_destroy(max_scores_iter);
 
@@ -158,7 +166,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
 error:
         results->n = 0;
     }
-    free(pc_res.preds);
+    uproc_pc_results_free(&pc_res);
     uproc_bst_destroy(max_scores);
     uproc_orfiter_destroy(orf_iter);
     return res;
@@ -167,6 +175,9 @@ error:
 void
 uproc_dc_results_free(struct uproc_dc_results *results)
 {
+    for (size_t i = 0; i < results->n; i++) {
+        free(results->preds[i].orf.data);
+    }
     results->n = 0;
     free(results->preds);
     results->preds = NULL;

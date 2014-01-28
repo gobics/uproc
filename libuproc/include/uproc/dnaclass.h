@@ -39,7 +39,7 @@ struct uproc_dc_results
     {
         uproc_family family;
         double score;
-        unsigned frame;
+        struct uproc_orf orf;
     } *preds;
     size_t n, sz;
 };

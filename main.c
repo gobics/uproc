@@ -203,7 +203,7 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
             if (pr_stream) {
 #if MAIN_DNA
                 uproc_io_printf(pr_stream, "%zu,%s,%u,", i + pr_seq_offset + 1,
-                                buf->header[i], pred->frame + 1);
+                                buf->header[i], pred->orf.frame + 1);
 #else
                 uproc_io_printf(pr_stream, "%zu,%s,", i + pr_seq_offset + 1,
                                 buf->header[i]);
