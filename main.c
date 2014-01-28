@@ -721,6 +721,7 @@ main(int argc, char **argv)
     uproc_pc_destroy(protclass);
     uproc_ecurve_destroy(fwd);
     uproc_ecurve_destroy(rev);
+    uproc_idmap_destroy(idmap);
     uproc_substmat_destroy(substmat);
     if (prot_thresholds) {
         uproc_matrix_destroy(prot_thresholds);
