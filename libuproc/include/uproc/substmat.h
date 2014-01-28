@@ -75,8 +75,7 @@ void uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
  * \param dist  _OUT_: array containing distance of each amino acid pair
  */
 void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
-                                   uproc_suffix s2,
-                                   double dist[static UPROC_SUFFIX_LEN]);
+                                   uproc_suffix s2, double *dist);
 
 /** Load substition matrix from a file */
 uproc_substmat *uproc_substmat_load(enum uproc_io_type iotype,

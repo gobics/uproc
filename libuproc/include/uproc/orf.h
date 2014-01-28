@@ -70,8 +70,7 @@ typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t,
 typedef struct uproc_orfiter_s uproc_orfiter;
 
 /** Prepare codon score table */
-void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
-                           const uproc_matrix *score_matrix);
+void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
 
 /** Initialize ORF iterator
  *
@@ -82,7 +81,7 @@ void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
  */
 uproc_orfiter *uproc_orfiter_create(
     const char *seq,
-    const double codon_scores[static UPROC_BINARY_CODON_COUNT],
+    const double *codon_scores,
     uproc_orf_filter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
