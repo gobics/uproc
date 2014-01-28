@@ -406,15 +406,41 @@ uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
 }
 
 int
-uproc_io_seek(uproc_io_stream *stream, long offset, int whence)
+uproc_io_seek(uproc_io_stream *stream, long offset,
+              enum uproc_io_seek_whence whence)
+{
+    int w;
+    switch (whence) {
+        case UPROC_IO_SEEK_SET:
+            w = SEEK_SET;
+            break;
+        case UPROC_IO_SEEK_CUR:
+            w = SEEK_CUR;
+            break;
+    }
+
+    switch (stream->type) {
+        case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
+            return gzseek(stream->s.gz, offset, w) >= 0 ? 0 : -1;
+#endif
+        case UPROC_IO_STDIO:
+            return fseek(stream->s.fp, offset, w);
+    }
+    uproc_error_msg(UPROC_EINVAL, "invalid stream");
+    return -1;
+}
+
+long
+uproc_io_tell(uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
-            return gzseek(stream->s.gz, offset, whence) >= 0 ? 0 : -1;
+            return gztell(stream->s.gz);
 #endif
         case UPROC_IO_STDIO:
-            return fseek(stream->s.fp, offset, whence);
+            return ftell(stream->s.fp);
     }
     uproc_error_msg(UPROC_EINVAL, "invalid stream");
     return -1;
