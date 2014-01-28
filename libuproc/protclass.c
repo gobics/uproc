@@ -242,6 +242,7 @@ scores_compute(const struct uproc_protclass_s *pc, const char *seq,
             break;
         }
     }
+    uproc_worditer_destroy(iter);
     return res;
 }
 

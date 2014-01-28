@@ -214,3 +214,9 @@ uproc_worditer_next(uproc_worditer *iter, size_t *index,
     *rev = iter->rev;
     return 1;
 }
+
+void
+uproc_worditer_destroy(uproc_worditer *iter)
+{
+    free(iter);
+}

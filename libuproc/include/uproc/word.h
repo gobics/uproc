@@ -145,4 +145,6 @@ uproc_worditer *uproc_worditer_create(const char *seq,
  */
 int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
+
+void uproc_worditer_destroy(uproc_worditer *iter);
 #endif
