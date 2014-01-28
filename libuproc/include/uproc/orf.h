@@ -40,6 +40,9 @@ struct uproc_orf
     /** Derived amino acid sequence as string */
     char *data;
 
+    /** Starting index w.r.t. the original DNA string */
+    size_t start;
+
     /** Length of the amino acid sequence */
     size_t length;
 

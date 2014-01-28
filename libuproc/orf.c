@@ -225,6 +225,7 @@ uproc_orfiter_create(
             return NULL;
         }
         iter->orf[i].frame = i;
+        iter->orf[i].start = i % FRAMES;
     }
     iter->codon_scores = codon_scores;
     return iter;
@@ -262,6 +263,7 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
             /* reinitialize working ORF */
             iter->orf[i].length = 0;
             iter->orf[i].score = 0;
+            iter->orf[i].start = iter->pos - iter->seq;
             iter->yield[i] = false;
 
             /* chop trailing wildcard aminoacids */
