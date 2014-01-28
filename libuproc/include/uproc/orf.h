@@ -50,6 +50,10 @@ struct uproc_orf
     unsigned frame;
 };
 
+void uproc_orf_free(struct uproc_orf *orf);
+
+int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
+
 /** ORF filter function
  *
  * The function should take an ORF, the DNA sequence, it's length and GC

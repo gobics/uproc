@@ -152,6 +152,24 @@ gc_content(const char *seq, size_t *len, double *gc)
 }
 
 void
+uproc_orf_free(struct uproc_orf *orf)
+{
+    free(orf->data);
+}
+
+int
+uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src)
+{
+    char *d = strdup(src->data);
+    if (!d) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    *dest = *src;
+    dest->data = d;
+    return 0;
+}
+
+void
 uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
                       const uproc_matrix *score_matrix)
 {
