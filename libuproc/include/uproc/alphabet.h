@@ -1,8 +1,4 @@
-/** \file uproc/alphabet.h
- *
- * Translate characters to/from amino acids
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -20,30 +16,46 @@
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file uproc/alphabet.h
+ *
+ * Convert between the character and internal representation of amino acids.
+ */
+
 #ifndef UPROC_ALPHABET_H
 #define UPROC_ALPHABET_H
 
-#include "uproc/common.h"
 #include <limits.h>
+#include "uproc/common.h"
 
-/** Opaque type for alphabets */
+
+/** Alphabet type
+ *
+ * An object of this type is required to translate between characters and the
+ * internal representation of amino acids. The order of this alphabet is very
+ * significant to the results. Each ::uproc_ecurve has an "intrinsic" alphabet
+ * and should not be used with a ::uproc_substmat that was derived from a
+ * different alphabet.
+ */
 typedef struct uproc_alphabet_s uproc_alphabet;
+
 
 /** Allocate alphabet object and initialize it with the given string
  *
  * The string must be exactly ::UPROC_ALPHABET_SIZE characters long and consist
- * only of uppercase letters. No letter shall be included twice.
+ * only of uppercase letters. No letter shall be included twice. Passing a char
+ * array that is not \0 terminated results in undefined behaviour.
  *
  * \return
  * On success, returns a new uproc_alphabet object.
  * \return
- * On failure, returns NULL and sets ::uproc_errno to ::UPROC_EINVAL
- * and ::uproc_errmsg accordingly.
+ * On failure, returns NULL and sets ::uproc_errno to ::UPROC_ENOMEM or ::UPROC_EINVAL.
  */
 uproc_alphabet *uproc_alphabet_create(const char *s);
 
-/** Free an alphabet object */
+
+/** Destroy an alphabet object */
 void uproc_alphabet_destroy(uproc_alphabet *alpha);
+
 
 /** Translate character to amino acid
  *
@@ -58,6 +70,7 @@ void uproc_alphabet_destroy(uproc_alphabet *alpha);
  */
 uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c);
 
+
 /** Translate amino acid to character
  *
  * \param alpha     alphabet to use
@@ -69,6 +82,7 @@ uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c);
  * Does not set ::uproc_errno.
  */
 int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
+
 
 /** Return the underlying string
  *
