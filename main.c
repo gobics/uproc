@@ -200,27 +200,29 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
         }
         for (j = 0; j < buf->results[i].n; j++) {
 #if MAIN_DNA
-                struct uproc_dc_pred *pred = &buf->results[i].preds[j];
+            struct uproc_dc_pred *pred;
 #else
-                struct uproc_pc_pred *pred = &buf->results[i].preds[j];
+            struct uproc_pc_pred *pred;
 #endif
+            pred = &buf->results[i].preds[j];
             if (pr_stream) {
+                uproc_io_printf(pr_stream, "%zu,%s,%zu", i + pr_seq_offset + 1,
+                                buf->header[i], strlen(buf->seq[i]));
 #if MAIN_DNA
-                uproc_io_printf(pr_stream, "%zu,%s,%u,", i + pr_seq_offset + 1,
-                                buf->header[i], pred->orf.frame + 1);
-#else
-                uproc_io_printf(pr_stream, "%zu,%s,", i + pr_seq_offset + 1,
-                                buf->header[i]);
+                uproc_io_printf(pr_stream, ",%u,%zu,%zu",
+                                pred->orf.frame + 1, pred->orf.start + 1,
+                                pred->orf.length);
 #endif
                 if (idmap) {
-                    uproc_io_printf(pr_stream, "%s,",
+                    uproc_io_printf(pr_stream, ",%s",
                                     uproc_idmap_str(idmap, pred->family));
                 }
                 else {
-                    uproc_io_printf(pr_stream, "%" UPROC_FAMILY_PRI ",",
+                    uproc_io_printf(pr_stream, ",%" UPROC_FAMILY_PRI,
                                     pred->family);
                 }
-                uproc_io_printf(pr_stream, "%1.3f\n", pred->score);
+                uproc_io_printf(pr_stream, ",%1.3f", pred->score);
+                uproc_io_printf(pr_stream, "\n");
             }
             if (counts) {
                 counts[pred->family] += 1;
@@ -334,13 +336,16 @@ OUTPUT OPTIONS:\n"
 OPT("-p", "--preds", "") "\n\
     Print all classifications as CSV with the fields:\n\
         sequence number (starting with 1)\n\
-        FASTA header up to the first whitespace\n"
+        FASTA header up to the first whitespace\n\
+        sequence length\n"
 #if MAIN_DNA
     "\
-        frame number (1-6)\n"
+        ORF frame number (1-6)\n\
+        ORF index in the DNA sequence (starting from 1)\n\
+        ORF length\n"
 #endif
     "\
-        protein family\n\
+        predicted protein family\n\
         classificaton score\n\
 \n"
 OPT("-f", "--stats", "") "\n\
