@@ -27,6 +27,7 @@
 #include <math.h>
 
 #include "uproc/common.h"
+#include "uproc/codon.h"
 #include "uproc/error.h"
 #include "uproc/bst.h"
 #include "uproc/dnaclass.h"

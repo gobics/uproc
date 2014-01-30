@@ -26,55 +26,6 @@
 #define UPROC_WORD_LEN (UPROC_PREFIX_LEN + UPROC_SUFFIX_LEN)
 
 
-/** Type to represent a nucleotide */
-typedef int uproc_nt;
-
-/** Bits used to represent a nucleotide */
-#define UPROC_NT_BITS 4
-
-/** Nucleotide values */
-enum {
-    /** Adenine */
-    UPROC_NT_A = (1 << 0),
-
-    /** Cytosine */
-    UPROC_NT_C = (1 << 1),
-
-    /** Guanine */
-    UPROC_NT_G = (1 << 2),
-
-    /** Thymine */
-    UPROC_NT_T = (1 << 3),
-
-    /** Uracil */
-    UPROC_NT_U = UPROC_NT_T,
-
-    /** Wildcard matching any base */
-    UPROC_NT_N = (UPROC_NT_A | UPROC_NT_C | UPROC_NT_G | UPROC_NT_T),
-
-    /** Result of converting a non-alphabetic ([A-Za-z]) character */
-    UPROC_NT_NOT_CHAR = -1,
-
-    /** Result of converting a non-IUPAC symbol */
-    UPROC_NT_NOT_IUPAC = -2,
-};
-
-/** Type used to represent a codon (or codon mask) */
-typedef unsigned uproc_codon;
-
-/** Nucleotides in a codon */
-#define UPROC_CODON_NTS 3
-
-/** Bits used to represent a codon */
-#define UPROC_CODON_BITS (UPROC_CODON_NTS * UPROC_NT_BITS)
-
-/** Number of "real" codons */
-#define UPROC_CODON_COUNT 64
-
-/** Number of all possible binary representations of a codon or codon mask */
-#define UPROC_BINARY_CODON_COUNT (1 << UPROC_CODON_BITS)
-
-
 /** Type to represent one amino acid. */
 typedef int uproc_amino;
 
