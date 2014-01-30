@@ -3,6 +3,8 @@ html = libuproc-$(PACKAGE_VERSION)
 
 docpkg = $(html).tar.gz
 
+noinst_DATA = $(docpkg)
+
 $(docpkg) : doxygen.stamp
 	tar chozf $@ $(html)
 
