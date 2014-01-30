@@ -1,8 +1,4 @@
-/** \file uproc/error.h
- *
- * Error handling facilities
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -20,11 +16,21 @@
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file uproc/error.h
+ *
+ * Error handling facilities.
+ *
+ * This module provides functions and macros to retrieve information about
+ * errors that may have occured.
+ */
+
 #ifndef UPROC_ERROR_H
 #define UPROC_ERROR_H
 
 #include "uproc/common.h"
 
+
+/** Available error codes */
 enum uproc_error_code
 {
     /** Success */
@@ -55,25 +61,79 @@ enum uproc_error_code
     UPROC_ENOTSUP,
 };
 
+
+/* Set error information */
 int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
                  int line, const char *fmt, ...);
 
-#define uproc_error_msg(num, ...) uproc_error_(num, __func__, __FILE__, \
-                                               __LINE__, __VA_ARGS__)
 
-#define uproc_error(num) uproc_error_msg(num, NULL)
+/** Set ::uproc_errno with a custom message
+ *
+ * Example:
+ * \code
+ * void *foo = malloc(sz);
+ * if (!foo) {
+ *     uproc_error_msg(UPROC_EINVAL, "can't allocate foo with size %zu", sz);
+ *     return -1;
+ *  }
+ * \endcode
+ * \hideinitializer
+ * \param num   error code
+ * \param ...   printf-style format string and corresponding arguments
+ *
+ */
+#define uproc_error_msg(num, ...) \
+    uproc_error_(num, __func__, __FILE__, __LINE__, __VA_ARGS__)
 
+
+/* Get pointer to thread-local uproc_errno */
 int *uproc_error_errno_(void);
 
+
+/** Set ::uproc_errno with a standard message */
+#define uproc_error(num) uproc_error_msg(num, NULL)
+
+
+/** `errno`-like error indicator
+ *
+ * Like the original `errno`, evaluates to an (assignable) lvalue of type int,
+ * used as an error indicator. This should usually be one of the values of
+ * ::uproc_error_code.
+ */
 #define uproc_errno (*(uproc_error_errno_()))
 
-void uproc_perror(const char *fmt, ...);
 
+/* Get thread-local uproc_errmsg */
 const char *uproc_error_errmsg_(void);
 
+
+/** Error message
+ *
+ * Evaluates to a `const char*` containing a description of the last occured
+ * error.
+ */
 #define uproc_errmsg (uproc_error_errmsg_())
 
+
+/* Get thread-local uproc_errloc */
 const char *uproc_error_errloc_(void);
 
+
+/** Error location
+ *
+ * Evaluates to a `const char*` containing the location (source file, function
+ * and line number) from where ::uproc_error_ was called the last time.
+ */
 #define uproc_errloc (uproc_error_errloc_())
+
+
+/** Print error message to stderr
+ *
+ * If `fmt` is a nonempty string, format it using the other arguments an
+ * prepend the result, followed by a colon and space, to the error message.
+ *
+ * \param fmt   printf-style format string
+ * \param ...   format string arguments
+ */
+void uproc_perror(const char *fmt, ...);
 #endif
