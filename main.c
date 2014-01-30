@@ -46,10 +46,12 @@
 
 struct buffer
 {
-    char *header[MAX_CHUNK_SIZE];
-    size_t header_sz[MAX_CHUNK_SIZE];
-    char *seq[MAX_CHUNK_SIZE];
-    size_t seq_sz[MAX_CHUNK_SIZE];
+    struct {
+        char *header;
+        size_t header_sz;
+        char *seq;
+        size_t seq_sz;
+    } seq[MAX_CHUNK_SIZE];
 
 #if MAIN_DNA
     struct uproc_dc_results results[MAX_CHUNK_SIZE];
@@ -63,8 +65,8 @@ struct buffer
 void
 buf_free(struct buffer *buf) {
     for (size_t i = 0; i < MAX_CHUNK_SIZE; i++) {
-        free(buf->header[i]);
-        free(buf->seq[i]);
+        free(buf->seq[i].header);
+        free(buf->seq[i].seq);
 #if MAIN_DNA
         uproc_dc_results_free(&buf->results[i]);
 #else
@@ -118,12 +120,12 @@ input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
             header_len = strlen(p1);
         }
 
-        res = dup_str(&buf->header[i], &buf->header_sz[i], p1, header_len);
+        res = dup_str(&buf->seq[i].header, &buf->seq[i].header_sz, p1, header_len);
         if (res) {
             break;
         }
 
-        res = dup_str(&buf->seq[i], &buf->seq_sz[i], rd->seq, rd->seq_len);
+        res = dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz, rd->seq, rd->seq_len);
         if (res) {
             break;
         }
@@ -131,8 +133,10 @@ input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
     buf->n = i;
 
     for (; i < chunk_size; i++) {
-        free(buf->seq[i]);
-        buf->seq[i] = NULL;
+        free(buf->seq[i].header);
+        buf->seq[i].header = NULL;
+        free(buf->seq[i].seq);
+        buf->seq[i].seq = NULL;
     }
     if (res >= 0 && buf->n == chunk_size) {
         return 1;
@@ -207,7 +211,7 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
             pred = &buf->results[i].preds[j];
             if (pr_stream) {
                 uproc_io_printf(pr_stream, "%zu,%s,%zu", i + pr_seq_offset + 1,
-                                buf->header[i], strlen(buf->seq[i]));
+                                buf->seq[i].header, strlen(buf->seq[i].seq));
 #if MAIN_DNA
                 uproc_io_printf(pr_stream, ",%u,%zu,%zu",
                                 pred->orf.frame + 1, pred->orf.start + 1,
@@ -676,10 +680,10 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < (long long)out->n; i++) {
 #if MAIN_DNA
-                    res = uproc_dc_classify(dnaclass, out->seq[i],
+                    res = uproc_dc_classify(dnaclass, out->seq[i].seq,
                                             &out->results[i]);
 #else
-                    res = uproc_pc_classify(protclass, out->seq[i],
+                    res = uproc_pc_classify(protclass, out->seq[i].seq,
                                             &out->results[i]);
 #endif
                     if (res < 0) {
