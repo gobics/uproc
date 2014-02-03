@@ -107,8 +107,12 @@ ecurve_map(const char *path)
     }
 
 #if HAVE_POSIX_MADVISE
+#ifdef POSIX_MADV_WILLNEED
     posix_madvise(ec->mmap_ptr, ec->mmap_size, POSIX_MADV_WILLNEED);
+#endif
+#ifdef POSIX_MADV_RANDOM
     posix_madvise(ec->mmap_ptr, ec->mmap_size, POSIX_MADV_RANDOM);
+#endif
 #endif
 
     header = ec->mmap_ptr;
