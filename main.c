@@ -92,22 +92,22 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
 }
 
 int
-input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
-           struct buffer *buf, size_t chunk_size)
+input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
 {
     int res = 0;
     size_t i;
+    struct uproc_sequence seq;
 
     for (i = 0; i < chunk_size; i++) {
         char *p1, *p2;
         size_t header_len;
 
-        res = uproc_fasta_read(stream, rd);
+        res = uproc_seqiter_next(rd, &seq);
         if (res <= 0) {
             break;
         }
 
-        p1 = rd->header;
+        p1 = seq.header;
         while (isspace(*p1)) {
             p1++;
         }
@@ -120,12 +120,14 @@ input_read(uproc_io_stream *stream, struct uproc_fasta_reader *rd,
             header_len = strlen(p1);
         }
 
-        res = dup_str(&buf->seq[i].header, &buf->seq[i].header_sz, p1, header_len);
+        res = dup_str(&buf->seq[i].header, &buf->seq[i].header_sz,
+                      p1, header_len);
         if (res) {
             break;
         }
 
-        res = dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz, rd->seq, rd->seq_len);
+        res = dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz,
+                      seq.seq, strlen(seq.seq));
         if (res) {
             break;
         }
@@ -318,7 +320,8 @@ Classify "
 "protein"
 #endif
 " sequences using the database in DBDIR and the model in MODELDIR.\n\
-INPUTFILES can be zero or more files containing sequences in FASTA format.\n\
+INPUTFILES can be zero or more files containing sequences in FASTA or FASTQ\n\
+format (FASTQ qualities are ignored).\n\
 If no file is specified or the file name is -, sequences will be read from\n\
 standard input.\n\
 \n\
@@ -340,7 +343,7 @@ OUTPUT OPTIONS:\n"
 OPT("-p", "--preds", "") "\n\
     Print all classifications as CSV with the fields:\n\
         sequence number (starting with 1)\n\
-        FASTA header up to the first whitespace\n\
+        sequence header up to the first whitespace\n\
         sequence length\n"
 #if MAIN_DNA
     "\
@@ -437,7 +440,7 @@ main(int argc, char **argv)
 #endif
 
     uproc_io_stream *stream;
-    struct uproc_fasta_reader rd;
+    uproc_seqiter *rd;
 
     struct buffer *in, *out;
     size_t chunk_size = get_chunk_size();
@@ -670,7 +673,11 @@ main(int argc, char **argv)
             }
         }
 
-        uproc_fasta_reader_init(&rd, 8192);
+        rd = uproc_seqiter_create(stream, 8192);
+        if (!rd) {
+            uproc_perror("");
+            return EXIT_FAILURE;
+        }
 
         do {
             in = &buf[!i_buf];
@@ -701,7 +708,7 @@ main(int argc, char **argv)
                 {
 #pragma omp section
                     {
-                        res = input_read(stream, &rd, in, chunk_size);
+                        res = input_read(rd, in, chunk_size);
                         more_input = res > 0 || in->n;
                         if (res < 0) {
                             uproc_perror("error reading input");
@@ -723,8 +730,8 @@ main(int argc, char **argv)
             i_chunk += 1;
             i_buf ^= 1;
         } while (!error && more_input);
+        uproc_seqiter_destroy(rd);
         uproc_io_close(stream);
-        uproc_fasta_reader_free(&rd);
     }
 
     uproc_pc_destroy(protclass);

@@ -73,7 +73,8 @@ print_usage(const char *progname)
         "USAGE: %s [options] [INPUTFILES] \n"
         "Translate DNA/RNA to protein sequences\n"
         "INPUTFILES can be zero or more files containing sequences in FASTA\n"
-        "format. If no file is specified or the file name is -, sequences\n"
+        "or FASTQ format (FASTQ qualities are ignored).\n"
+        "If no file is specified or the file name is -, sequences\n"
         "will be read from standard input.\n"
         "\n"
         "GENERAL OPTIONS:\n"
@@ -234,10 +235,10 @@ int main(int argc, char **argv)
         argv[argc++] = "-";
     }
 
-    struct uproc_fasta_reader rd;
-    uproc_fasta_reader_init(&rd, 4096);
     for (; optind + INFILES < argc; optind++) {
         struct uproc_io_stream *stream;
+        uproc_seqiter *rd;
+        struct uproc_sequence seq;
         if (!strcmp(argv[optind + INFILES], "-")) {
             stream = uproc_stdin;
         }
@@ -249,15 +250,20 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
         }
+        rd = uproc_seqiter_create(stream, 8192);
+        if (!rd) {
+            uproc_perror("");
+            return EXIT_FAILURE;
+        }
 
-        while ((res = uproc_fasta_read(stream, &rd)) > 0) {
+        while ((res = uproc_seqiter_next(rd, &seq)) > 0) {
             uproc_orfiter *oi;
             struct uproc_orf orf;
 
             char *max_orf = NULL;
             double max_score = -INFINITY;
             oi = uproc_orfiter_create(
-                rd.seq, thresh_mode == NONE ? NULL : codon_scores, orf_filter,
+                seq.seq, thresh_mode == NONE ? NULL : codon_scores, orf_filter,
                 &filter_arg);
             while (uproc_orfiter_next(oi, &orf) > 0) {
                 if (thresh_mode == MAX && orf.score > max_score) {
@@ -265,17 +271,17 @@ int main(int argc, char **argv)
                     max_orf = strdup(orf.data);
                 }
                 else {
-                    uproc_fasta_write(uproc_stdout, rd.header, rd.comment,
-                                      orf.data, 0);
+                    uproc_seqio_write_fasta(uproc_stdout, seq.header, orf.data,
+                                            0);
                 }
             }
             if (thresh_mode == MAX && max_orf) {
-                uproc_fasta_write(uproc_stdout, rd.header, rd.comment, max_orf,
-                                  0);
+                uproc_seqio_write_fasta(uproc_stdout, seq.header, max_orf, 0);
                 free(max_orf);
             }
             uproc_orfiter_destroy(oi);
         }
+        uproc_seqiter_destroy(rd);
         uproc_io_close(stream);
     }
     if (res) {

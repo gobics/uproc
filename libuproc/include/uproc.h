@@ -15,11 +15,11 @@
 #include <uproc/common.h>
 #include <uproc/ecurve.h>
 #include <uproc/error.h>
-#include <uproc/fasta.h>
 #include <uproc/idmap.h>
 #include <uproc/io.h>
 #include <uproc/orf.h>
 #include <uproc/substmat.h>
+#include <uproc/seqio.h>
 #include <uproc/word.h>
 
 #include <uproc/protclass.h>

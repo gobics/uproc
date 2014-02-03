@@ -22,12 +22,12 @@ libuproc_la_SOURCES = alphabet.c \
 					ecurve_mmap.c \
 					ecurve_storage.c \
 					error.c \
-					fasta.c \
 					idmap.c \
 					io.c \
 					matrix.c \
 					orf.c \
 					protclass.c \
+					seqio.c \
 					substmat.c \
 					word.c
 

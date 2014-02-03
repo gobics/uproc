@@ -84,7 +84,8 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
 {
     int res;
 
-    struct uproc_fasta_reader rd;
+    uproc_seqiter *rd;
+    struct uproc_sequence seq;
     size_t index;
 
     uproc_bst *tree;
@@ -92,33 +93,37 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
 
     uproc_family family;
 
-    uproc_fasta_reader_init(&rd, 8192);
     tree = uproc_bst_create(UPROC_BST_WORD, sizeof family);
     if (!tree) {
         return -1;
     }
+    rd = uproc_seqiter_create(stream, 8192);
+    if (!rd) {
+        res = -1;
+        goto error;
+    }
 
-    while ((res = uproc_fasta_read(stream, &rd)) > 0) {
+    while ((res = uproc_seqiter_next(rd, &seq)) > 0) {
         uproc_worditer *iter;
         struct uproc_word fwd_word = UPROC_WORD_INITIALIZER,
                           rev_word = UPROC_WORD_INITIALIZER;
         uproc_family tmp_family;
 
-        crop_first_word(rd.header);
-        family = uproc_idmap_family(idmap, rd.header);
+        crop_first_word(seq.header);
+        family = uproc_idmap_family(idmap, seq.header);
         if (family == UPROC_FAMILY_INVALID) {
             res = -1;
-            goto error;
+            break;
         }
 
         if (reverse) {
-            reverse_string(rd.seq);
+            reverse_string(seq.seq);
         }
 
-        iter = uproc_worditer_create(rd.seq, alpha);
+        iter = uproc_worditer_create(seq.seq, alpha);
         if (!iter) {
             res = -1;
-            goto error;
+            break;
         }
 
         while (res = uproc_worditer_next(iter, &index, &fwd_word, &rev_word),
@@ -152,6 +157,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
             break;
         }
     }
+    uproc_seqiter_destroy(rd);
     if (res) {
         goto error;
     }
