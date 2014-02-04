@@ -229,13 +229,15 @@ int
 uproc_io_close(uproc_io_stream *stream)
 {
     int res = 1;
+    if (!stream) {
+        return 0;
+    }
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
             if (stream->s.gz) {
                 res = gzclose(stream->s.gz);
                 stream->s.gz = NULL;
-                res = res == Z_OK ? 0 : -1;
                 if (res == Z_OK) {
                     res = 0;
                 }
