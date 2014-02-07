@@ -734,6 +734,15 @@ main(int argc, char **argv)
         uproc_io_close(stream);
     }
 
+    if (out_stats) {
+        uproc_io_printf(out_stream, "%zu,", n_seqs - unexplained);
+        uproc_io_printf(out_stream, "%zu,", unexplained);
+        uproc_io_printf(out_stream, "%zu\n", n_seqs);
+    }
+    if (out_counts) {
+        output_counts(counts, use_idmap ? idmap : NULL, out_stream);
+    }
+
     uproc_pc_destroy(protclass);
     uproc_ecurve_destroy(fwd);
     uproc_ecurve_destroy(rev);
@@ -754,15 +763,6 @@ main(int argc, char **argv)
 
     buf_free(&buf[0]);
     buf_free(&buf[1]);
-
-    if (out_stats) {
-        uproc_io_printf(out_stream, "%zu,", n_seqs - unexplained);
-        uproc_io_printf(out_stream, "%zu,", unexplained);
-        uproc_io_printf(out_stream, "%zu\n", n_seqs);
-    }
-    if (out_counts) {
-        output_counts(counts, use_idmap ? idmap : NULL, out_stream);
-    }
 
     return res == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
