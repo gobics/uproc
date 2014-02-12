@@ -52,19 +52,18 @@ prefix_lookup(const struct uproc_ecurve_pfxtable *table,
     /* outside of the "edge" */
     if (ECURVE_ISEDGE(table[key])) {
         /* below the first prefix that has an entry */
-        if (!table[key].first) {
+        if (!table[key].prev) {
             for (tmp = key;
-                 tmp < UPROC_PREFIX_MAX && ECURVE_ISEDGE(table[tmp]);
-                 tmp++)
+                 tmp < UPROC_PREFIX_MAX && ECURVE_ISEDGE(table[tmp]);)
             {
-                ;
+                tmp += table[tmp].next;
             }
             *index = 0;
         }
         /* above the last prefix */
         else {
-            for (tmp = key; tmp > 0 && ECURVE_ISEDGE(table[tmp]); tmp--) {
-                ;
+            for (tmp = key; tmp > 0 && ECURVE_ISEDGE(table[tmp]);) {
+                tmp -= table[tmp].prev;
             }
             *index = table[tmp].first + table[tmp].count - 1;
         }
@@ -74,22 +73,23 @@ prefix_lookup(const struct uproc_ecurve_pfxtable *table,
         return UPROC_ECURVE_OOB;
     }
 
-    *index = table[key].first;
-
     /* inexact match, walk outward to find the closest non-empty neighbour
      * prefixes */
     if (table[key].count == 0) {
         *count = 2;
-        for (tmp = key; tmp > 0 && !table[tmp].count; tmp--) {
-            ;
+        for (tmp = key; tmp > 0 && !table[tmp].count;) {
+            tmp -= table[tmp].prev;
         }
+        *index = table[tmp].first + table[tmp].count - 1;
         *lower_prefix = tmp;
-        for (tmp = key; tmp < UPROC_PREFIX_MAX && !table[tmp].count; tmp++) {
-            ;
+        for (tmp = key; tmp < UPROC_PREFIX_MAX && !table[tmp].count;) {
+            tmp += table[tmp].next;
         }
         *upper_prefix = tmp;
         return UPROC_ECURVE_INEXACT;
     }
+
+    *index = table[key].first;
 
     *count = table[key].count;
     *lower_prefix = *upper_prefix = key;
@@ -277,7 +277,8 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
 
     for (p = dest_last + 1; p < src_first; p++) {
         dest->prefixes[p].count = 0;
-        dest->prefixes[p].first = dest->suffix_count - 1;
+        dest->prefixes[p].prev = dest_last;
+        dest->prefixes[p].next = src_first;
     }
     for (p = src_first; p <= UPROC_PREFIX_MAX; p++) {
         dest->prefixes[p].first = src->prefixes[p].first + dest->suffix_count;

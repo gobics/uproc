@@ -144,6 +144,7 @@ load_plain(uproc_io_stream *stream)
     uproc_prefix p;
     uproc_suffix s;
     size_t suffix_count;
+    uproc_prefix prev_nonempty = 0;
     pfxtab_suffix prev_last;
     char alpha[UPROC_ALPHABET_SIZE + 1];
     res = load_header(stream, alpha, &suffix_count);
@@ -173,12 +174,22 @@ load_plain(uproc_io_stream *stream)
         }
 
         for (; p < prefix; p++) {
-            ecurve->prefixes[p].first = prev_last;
+            uintmax_t dist_prev = p - prev_nonempty,
+                      dist_next = prefix - p;
+            if (dist_prev > PFXTAB_NEIGH_MAX) {
+                dist_prev = PFXTAB_NEIGH_MAX;
+            }
+            if (dist_next > PFXTAB_NEIGH_MAX) {
+                dist_next = PFXTAB_NEIGH_MAX;
+            }
+            ecurve->prefixes[p].prev = prev_last ? dist_prev : 0;
+            ecurve->prefixes[p].next = dist_next;
             ecurve->prefixes[p].count = prev_last ? 0 : ECURVE_EDGE;
         }
         ecurve->prefixes[prefix].first = s;
         ecurve->prefixes[prefix].count = p_suffixes;
-        p++;
+        prev_nonempty = prefix;
+        p = prefix + 1;
 
         for (ps = 0; ps < p_suffixes; ps++, s++) {
             res = load_suffix(stream, ecurve->alphabet, &ecurve->suffixes[s],
@@ -190,7 +201,12 @@ load_plain(uproc_io_stream *stream)
         prev_last = s - 1;
     }
     for (; p < UPROC_PREFIX_MAX + 1; p++) {
-        ecurve->prefixes[p].first = prev_last;
+        uintmax_t dist_prev = p - prev_nonempty;
+        if (dist_prev > PFXTAB_NEIGH_MAX) {
+            dist_prev = PFXTAB_NEIGH_MAX;
+        }
+        ecurve->prefixes[p].prev = dist_prev;
+        ecurve->prefixes[p].next = 0;
         ecurve->prefixes[p].count = ECURVE_EDGE;
     }
     return ecurve;

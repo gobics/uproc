@@ -262,16 +262,36 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
                size_t n_entries)
 {
     size_t i, k;
-    uproc_prefix p, current_prefix, next_prefix;
+    uproc_prefix p, last_prefix, current_prefix, next_prefix;
+    uintmax_t dist_next, dist_prev;
 
+    last_prefix = 0;
     current_prefix = entries[0].word.prefix;
 
     for (p = 0; p < current_prefix; p++) {
-        ecurve->prefixes[p].first = 0;
+        dist_next = current_prefix - p;
+        if (dist_next > PFXTAB_NEIGH_MAX) {
+            dist_next = PFXTAB_NEIGH_MAX;
+        }
+        ecurve->prefixes[p].prev = 0;
+        ecurve->prefixes[p].next = dist_next;
         ecurve->prefixes[p].count = ECURVE_EDGE;
     }
 
     for (i = 0; i < n_entries;) {
+        for (p = last_prefix; p < current_prefix; p++) {
+            dist_prev = p - last_prefix;
+            if (dist_prev > PFXTAB_NEIGH_MAX) {
+                dist_prev = PFXTAB_NEIGH_MAX;
+            }
+            dist_next = current_prefix - p;
+            if (dist_next > PFXTAB_NEIGH_MAX) {
+                dist_next = PFXTAB_NEIGH_MAX;
+            }
+            ecurve->prefixes[p].prev = dist_prev;
+            ecurve->prefixes[p].next = dist_next;
+            ecurve->prefixes[p].count = 0;
+        }
         ecurve->prefixes[current_prefix].first = i;
         for (k = i;
              k < n_entries && entries[k].word.prefix == current_prefix;
@@ -293,12 +313,17 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
             ecurve->prefixes[p].first = k - 1;
             ecurve->prefixes[p].count = ECURVE_EDGE;
         }
+        last_prefix = current_prefix;
         current_prefix = next_prefix;
         i = k;
     }
 
     for (p = current_prefix + 1; p <= UPROC_PREFIX_MAX; p++) {
-        ecurve->prefixes[p].first = n_entries - 1;
+            dist_prev = p - last_prefix;
+            if (dist_prev > PFXTAB_NEIGH_MAX) {
+                dist_prev = PFXTAB_NEIGH_MAX;
+            }
+        ecurve->prefixes[p].prev = n_entries - 1;
         ecurve->prefixes[p].count = ECURVE_EDGE;
     }
 

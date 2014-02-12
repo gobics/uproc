@@ -6,6 +6,9 @@
 typedef uint_least32_t pfxtab_suffix;
 #define PFXTAB_SUFFIX_MAX UINT_LEAST32_MAX
 
+typedef uint_least16_t pfxtab_neigh;
+#define PFXTAB_NEIGH_MAX UINT_LEAST16_MAX
+
 typedef uint_least16_t pfxtab_count;
 #define ECURVE_EDGE ((pfxtab_count) -1)
 #define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
@@ -33,14 +36,23 @@ struct uproc_ecurve_s
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct uproc_ecurve_pfxtable {
-        /** Index of the first associated entry in #suffixes
-         *
-         * If there is no entry for the given prefix, this member contains
-         * `#first + #count - 1` of the last "non-empty" prefix (equal to
-         * `#first - 1` of the next non-empty one). In case of an "edge prefix"
-         * the value is either `0` or `#suffix_count - 1`.
-         */
-        pfxtab_suffix first;
+        union {
+            /** Index of the first associated entry in #suffixes
+             *
+             *
+             * WRONG:
+             * If there is no entry for the given prefix, this member contains
+             * `#first + #count - 1` of the last "non-empty" prefix (equal to
+             * `#first - 1` of the next non-empty one). In case of an "edge
+             * prefix" the value is either `0` or `#suffix_count - 1`.
+             */
+            pfxtab_suffix first;
+
+            /* indicates offset towards the nearest non-empty neighbours */
+            struct {
+                pfxtab_neigh prev, next;
+            };
+        };
 
         /** Number of associated suffixes
          *
