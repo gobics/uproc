@@ -29,3 +29,6 @@ uproc_makedb_SOURCES = makedb/makedb.h makedb/makedb.c makedb/build_ecurves.c \
 uproc_makedb_CPPFLAGS = -I$(top_srcdir)/libuproc/include -I$(top_srcdir)/libuproc
 
 doc_DATA = INSTALL README NEWS AUTHORS COPYING COPYING.LESSER
+
+analyze :
+	$(MAKE) -C libuproc analyze
