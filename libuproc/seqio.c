@@ -87,6 +87,7 @@ uproc_seqiter_create(uproc_io_stream *stream, size_t seq_sz_hint)
         iter->seq = malloc(seq_sz_hint);
         if (!iter->seq) {
             uproc_error(UPROC_ENOMEM);
+            free(iter);
             return NULL;
         }
         iter->seq_sz = iter->seq_sz_hint = seq_sz_hint;

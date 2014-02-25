@@ -61,11 +61,17 @@ uproc_matrix_create(size_t rows, size_t cols, const double *values)
 
     matrix->values = malloc(rows * cols * sizeof *matrix->values);
     if (!matrix->values) {
+        free(matrix);
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
     if (values) {
         memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
+    }
+    else {
+        for (size_t i = 0; i < rows * cols; i++) {
+            matrix->values[i] = 0.0;
+        }
     }
     return matrix;
 }

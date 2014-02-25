@@ -85,6 +85,7 @@ ecurve_map(const char *path)
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
+    *ec = (struct uproc_ecurve_s){ 0 };
 
     ec->mmap_fd = open(path, O_RDONLY);
     if (ec->mmap_fd == -1) {
@@ -147,6 +148,7 @@ error_munmap:
 error_close:
     close(ec->mmap_fd);
 error:
+    free(ec);
     return NULL;
 #else
     (void) path;

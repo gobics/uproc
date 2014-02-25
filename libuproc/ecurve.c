@@ -172,14 +172,18 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
+    *ec = (struct uproc_ecurve_s){ 0 };
+
     ec->alphabet = uproc_alphabet_create(alphabet);
     if (!ec->alphabet) {
+        uproc_ecurve_destroy(ec);
         return NULL;
     }
 
     ec->prefixes = malloc(
         sizeof *ec->prefixes * (UPROC_PREFIX_MAX + 1));
     if (!ec->prefixes) {
+        uproc_ecurve_destroy(ec);
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }

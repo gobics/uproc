@@ -103,16 +103,16 @@ uproc_idmap_loads(uproc_io_stream *stream)
         return NULL;
     }
     if (!uproc_io_gets(buf, sizeof buf, stream)) {
-        return NULL;
+        goto error;
     }
     res = sscanf(buf, "[%llu]\n", &n);
     if (res != 1) {
         uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
-        return NULL;
+        goto error;
     }
     if (n > UPROC_FAMILY_MAX) {
         uproc_error_msg(UPROC_EINVAL, "idmap size too large");
-        return NULL;
+        goto error;
     }
     for (i = 0; i < n; i++) {
         size_t len;
@@ -120,7 +120,7 @@ uproc_idmap_loads(uproc_io_stream *stream)
             if (uproc_io_eof(stream)) {
                 uproc_error_msg(UPROC_EINVAL, "unexpected end of file");
             }
-            return NULL;
+            goto error;
         }
         len = strlen(buf);
         if (len < 1 || buf[len - 1] != '\n') {
@@ -128,16 +128,19 @@ uproc_idmap_loads(uproc_io_stream *stream)
                 UPROC_EINVAL,
                 "line %" UPROC_FAMILY_PRI ": expected newline after ID",
                 i + 2);
-            return NULL;
+            goto error;
         }
         buf[len - 1] = '\0';
         if (uproc_idmap_family(map, buf) != i) {
             uproc_error_msg(UPROC_EINVAL,
                             "line %" UPROC_FAMILY_PRI ": duplicate ID", i + 2);
-            return NULL;
+            goto error;
         }
     }
     return map;
+error:
+    uproc_idmap_destroy(map);
+    return NULL;
 }
 
 
