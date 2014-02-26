@@ -33,10 +33,10 @@
 struct bstnode
 {
     union uproc_bst_key key;
-    void *value;
     struct bstnode *parent;
     struct bstnode *left;
     struct bstnode *right;
+    unsigned char value[];
 };
 
 struct uproc_bst_s
@@ -90,7 +90,7 @@ static struct bstnode *
 bstnode_create(union uproc_bst_key key, const void *value, size_t value_size,
                struct bstnode *parent)
 {
-    struct bstnode *n = malloc(sizeof *n);
+    struct bstnode *n = malloc(sizeof *n + value_size);
 
     if (!n) {
         return NULL;
@@ -99,11 +99,6 @@ bstnode_create(union uproc_bst_key key, const void *value, size_t value_size,
     n->parent = parent;
     n->left = NULL;
     n->right = NULL;
-    n->value = malloc(value_size);
-    if (!n->value) {
-        free(n);
-        return NULL;
-    }
     memcpy(n->value, value, value_size);
     return n;
 }
@@ -117,7 +112,6 @@ bstnode_free(struct bstnode *n, size_t value_size)
     }
     bstnode_free(n->left, value_size);
     bstnode_free(n->right, value_size);
-    free(n->value);
     free(n);
 }
 
@@ -368,7 +362,6 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
     if (callback) {
         callback(del->value);
     }
-    free(del->value);
     free(del);
     t->size--;
     return 0;
