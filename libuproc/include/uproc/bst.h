@@ -128,18 +128,15 @@ int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
 
 /** Remove item
  *
- * Takes a callback function pointer to which the stored pointer will be
- * passed (e.g. `&free`)
+ * \param t     BST instance
+ * \param key   key of the item to remove
+ * \param value _OUT_: removed value
  *
- * \param t         bst instance
- * \param key       key of the item to remove
- * \param callback  callback function or null pointer
- *
- * \retval #UPROC_SUCCESS  item was removed
- * \retval #UPROC_ENOENT  `key` not found in the tree
+ * Returns 0 on success. If the key is not present, returns
+ * ::UPROC_BST_KEY_NOT_FOUND and does not modify the object pointed to by the
+ * second parameter.
  */
-int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
-        uproc_bst_cb_remove callback);
+int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value);
 
 
 /** Create BST iterator */

@@ -312,8 +312,7 @@ uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value)
 }
 
 int
-uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
-                 uproc_bst_cb_remove callback)
+uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
 {
     /* node to remove and its parent */
     struct bstnode *del, *par;
@@ -339,9 +338,7 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
         par->right = bstnode_remove(del);
     }
 
-    if (callback) {
-        callback(del->value);
-    }
+    memcpy(value, del->value, t->value_size);
     free(del);
     t->size--;
     return 0;
