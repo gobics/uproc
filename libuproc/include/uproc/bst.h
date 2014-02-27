@@ -141,23 +141,6 @@ int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
 int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
         uproc_bst_cb_remove callback);
 
-/** In-order iteration
- *
- * Iterate over all nodes, passing key, value and a caller-provided `opaque`
- * pointer to the function pointed to by `callback`. If the callback function
- * does _not_ return #UPROC_SUCCESS, iteration is aborted and that value is
- * returned.
- *
- * \param t         bst instance
- * \param callback  callback function pointer
- * \param opaque    third argument to `callback`
- *
- * \return
- * #UPROC_SUCCESS if the iteration completed successfully, else whatever the
- * callback function returned.
- */
-int uproc_bst_walk(uproc_bst *t, uproc_bst_cb_walk callback,
-                   void *opaque);
 
 /** Create BST iterator */
 uproc_bstiter *uproc_bstiter_create(const uproc_bst *t);

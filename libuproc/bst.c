@@ -115,26 +115,6 @@ bstnode_free(struct bstnode *n, size_t value_size)
     free(n);
 }
 
-/* in-order iteration */
-static int
-bstnode_walk(struct bstnode *n, uproc_bst_cb_walk callback, void *opaque)
-{
-    int res;
-    if (!n) {
-        return 0;
-    }
-    res = bstnode_walk(n->left, callback, opaque);
-    if (res) {
-        return res;
-    }
-    res = callback(n->key, n->value, opaque);
-    if (res) {
-        return res;
-    }
-    res = bstnode_walk(n->right, callback, opaque);
-    return res;
-}
-
 /* find node in tree */
 static struct bstnode *
 bstnode_find(struct uproc_bst_s *t, struct bstnode *n, union uproc_bst_key key)
@@ -365,12 +345,6 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key,
     free(del);
     t->size--;
     return 0;
-}
-
-int
-uproc_bst_walk(uproc_bst *t, uproc_bst_cb_walk callback, void *opaque)
-{
-    return bstnode_walk(t->root, callback, opaque);
 }
 
 uproc_bstiter *
