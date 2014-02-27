@@ -229,7 +229,7 @@ scores_compute(const struct uproc_protclass_s *pc, const char *seq,
     }
 
     while (res = uproc_worditer_next(iter, &index, &fwd_word, &rev_word),
-           res > 0)
+           !res)
     {
         res = scores_add_word(pc, scores, &fwd_word, index, false, pc->fwd,
                               pc->substmat);
@@ -243,7 +243,7 @@ scores_compute(const struct uproc_protclass_s *pc, const char *seq,
         }
     }
     uproc_worditer_destroy(iter);
-    return res;
+    return res == -1 ? -1 : 0;
 }
 
 
@@ -278,7 +278,7 @@ scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
     if (!iter) {
         goto error;
     }
-    while (uproc_bstiter_next(iter, &key, &value) > 0) {
+    while (!uproc_bstiter_next(iter, &key, &value)) {
         uproc_family family = key.uint;
         double score = sc_finalize(&value);
         if (pc->filter &&

@@ -149,7 +149,7 @@ START_TEST(test_worditer)
 
 #define TEST(IDX, FWD, REV) do {                            \
     res = uproc_worditer_next(iter, &index, &fwd, &rev);    \
-    ck_assert_int_eq(res, 1);                               \
+    ck_assert_int_eq(res, 0);                               \
     ck_assert_uint_eq(index, IDX);                          \
     uproc_word_to_string(new, &fwd, alpha);                 \
     ck_assert_str_eq(new, FWD);                             \
@@ -165,7 +165,7 @@ START_TEST(test_worditer)
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
 
     res = uproc_worditer_next(iter, &index, &fwd, &rev);
-    ck_assert_int_eq(res, 0);
+    ck_assert_int_eq(res, 1);
 #undef TEST
 }
 END_TEST

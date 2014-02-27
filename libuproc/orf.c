@@ -284,12 +284,12 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
             {
                 continue;
             }
-            return 1;
+            return 0;
         }
 
         /* iterator exhausted */
         if (iter->frame >= FRAMES) {
-            return 0;
+            return 1;
         }
 
         /* sequence completely processed, yield all ORFs */
@@ -327,8 +327,8 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
     int res = orf_add_codon(                                                \
         &iter->orf[(frame)], &iter->data_sz[(frame)], codon,                \
         iter->codon_scores ? iter->codon_scores[codon] : 0.0);              \
-    if (res) {                                                              \
-        return res;                                                         \
+    if (res == -1) {                                                        \
+        return -1;                                                          \
     }                                                                       \
 } while (0)
 

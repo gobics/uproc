@@ -161,7 +161,7 @@ START_TEST(test_iter)
 
     for (i = 0; i < N_TESTS; i++) {
         res = uproc_bstiter_next(iter, &key, &value);
-        ck_assert_int_eq(res, 1);
+        ck_assert_int_eq(res, 0);
         if (i) {
             ck_assert_uint_gt(key.uint, last_key);
         }
@@ -170,7 +170,7 @@ START_TEST(test_iter)
 
     last_value = value;
     res = uproc_bstiter_next(iter, &key, &value);
-    ck_assert_int_eq(res, 0);
+    ck_assert_int_eq(res, 1);
 
     ck_assert_uint_eq(key.uint, last_key);
     ck_assert_int_eq(value.x, last_value.x);

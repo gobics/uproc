@@ -103,7 +103,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         goto error;
     }
 
-    while ((res = uproc_seqiter_next(rd, &seq)) > 0) {
+    while (res = uproc_seqiter_next(rd, &seq), !res) {
         uproc_worditer *iter;
         struct uproc_word fwd_word = UPROC_WORD_INITIALIZER,
                           rev_word = UPROC_WORD_INITIALIZER;
@@ -127,7 +127,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         }
 
         while (res = uproc_worditer_next(iter, &index, &fwd_word, &rev_word),
-               res > 0) {
+               !res) {
            if (!uproc_word_startswith(&fwd_word, first)) {
                 continue;
             }
@@ -158,7 +158,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         }
     }
     uproc_seqiter_destroy(rd);
-    if (res) {
+    if (res == -1) {
         goto error;
     }
 
@@ -169,7 +169,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         goto error;
     }
     *n_entries = 0;
-    while (uproc_bstiter_next(iter, &tree_key, &family) > 0) {
+    while (!uproc_bstiter_next(iter, &tree_key, &family)) {
         if (family != UPROC_FAMILY_INVALID) {
             *n_entries += 1;
         }
@@ -187,7 +187,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         goto error;
     }
     struct ecurve_entry *entries_insert = *entries;
-    while (uproc_bstiter_next(iter, &tree_key, &family) > 0) {
+    while (!uproc_bstiter_next(iter, &tree_key, &family)) {
         if (family != UPROC_FAMILY_INVALID) {
             entries_insert->word = tree_key.word;
             entries_insert->family = family;
@@ -196,6 +196,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
     }
     uproc_bstiter_destroy(iter);
 
+    res = 0;
 error:
     uproc_bst_destroy(tree);
     return res;

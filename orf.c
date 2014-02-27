@@ -256,7 +256,7 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        while ((res = uproc_seqiter_next(rd, &seq)) > 0) {
+        while (res = uproc_seqiter_next(rd, &seq), !res) {
             uproc_orfiter *oi;
             struct uproc_orf orf;
 
@@ -265,10 +265,14 @@ int main(int argc, char **argv)
             oi = uproc_orfiter_create(
                 seq.seq, thresh_mode == NONE ? NULL : codon_scores, orf_filter,
                 &filter_arg);
-            while (uproc_orfiter_next(oi, &orf) > 0) {
+            while (res = uproc_orfiter_next(oi, &orf), !res) {
                 if (thresh_mode == MAX && orf.score > max_score) {
                     free(max_orf);
                     max_orf = strdup(orf.data);
+                    if (!max_orf) {
+                        res = uproc_error(UPROC_ENOMEM);
+                        break;
+                    }
                 }
                 else {
                     uproc_seqio_write_fasta(uproc_stdout, seq.header, orf.data,
@@ -276,15 +280,21 @@ int main(int argc, char **argv)
                 }
             }
             if (thresh_mode == MAX && max_orf) {
-                uproc_seqio_write_fasta(uproc_stdout, seq.header, max_orf, 0);
+                if (res == 1) {
+                    uproc_seqio_write_fasta(uproc_stdout, seq.header, max_orf,
+                                            0);
+                }
                 free(max_orf);
             }
             uproc_orfiter_destroy(oi);
+            if (res == -1) {
+                break;
+            }
         }
         uproc_seqiter_destroy(rd);
         uproc_io_close(stream);
     }
-    if (res) {
+    if (res == -1) {
         uproc_perror("error reading input");
     }
     uproc_matrix_destroy(orf_thresholds);

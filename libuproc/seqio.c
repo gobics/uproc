@@ -272,7 +272,7 @@ uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq)
 {
     /* the previously yielded sequence was the last one in the file */
     if (iter->line_len == -1) {
-        return 0;
+        return 1;
     }
 
     /* set beginning offset BEFORE any possible reading operation */
@@ -320,7 +320,7 @@ uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq)
 
     seq->header = iter->header;
     seq->seq = iter->seq;
-    return 1;
+    return 0;
 }
 
 

@@ -197,7 +197,7 @@ uproc_worditer_next(uproc_worditer *iter, size_t *index,
         c = iter->sequence[iter->index++];
         if (!c) {
             /* end of sequence reached -> stop iteration */
-            return 0;
+            return 1;
         }
         a = uproc_alphabet_char_to_amino(iter->alphabet, c);
         if (a == -1) {
@@ -212,7 +212,7 @@ uproc_worditer_next(uproc_worditer *iter, size_t *index,
     *index = iter->index - UPROC_WORD_LEN;
     *fwd = iter->fwd;
     *rev = iter->rev;
-    return 1;
+    return 0;
 }
 
 void

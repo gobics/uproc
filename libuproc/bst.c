@@ -398,7 +398,7 @@ uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key, void *value)
     struct bstnode *n = iter->cur;
 
     if (!n) {
-        return 0;
+        return 1;
     }
 
     *key = n->key;
@@ -410,14 +410,14 @@ uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key, void *value)
             n = n->left;
         }
         iter->cur = n;
-        return 1;
+        return 0;
     }
 
     while (n->parent && n == n->parent->right) {
         n = n->parent;
     }
     iter->cur = n->parent;
-    return 1;
+    return 0;
 }
 
 void

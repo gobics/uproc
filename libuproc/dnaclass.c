@@ -101,7 +101,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
         return -1;
     }
 
-    while ((res = uproc_orfiter_next(orf_iter, &orf)) > 0) {
+    while (res = uproc_orfiter_next(orf_iter, &orf), !res) {
         res = uproc_pc_classify(dc->pc, orf.data, &pc_res);
         if (res) {
             goto error;
@@ -127,6 +127,9 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
             }
         }
     }
+    if (res == -1) {
+        goto error;
+    }
 
     for (i = 0; i < results->n; i++) {
         uproc_orf_free(&results->preds[i].orf);
@@ -147,7 +150,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
     if (!max_scores_iter) {
         goto error;
     }
-    for (i = 0; uproc_bstiter_next(max_scores_iter, &key, &value) > 0; i++) {
+    for (i = 0; !uproc_bstiter_next(max_scores_iter, &key, &value); i++) {
         results->preds[i] = value;
     }
     uproc_bstiter_destroy(max_scores_iter);
@@ -163,6 +166,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
         results->n = 1;
     }
 
+    res = 0;
     if (0) {
 error:
         results->n = 0;

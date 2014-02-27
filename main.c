@@ -103,7 +103,7 @@ input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
         size_t header_len;
 
         res = uproc_seqiter_next(rd, &seq);
-        if (res <= 0) {
+        if (res) {
             break;
         }
 
@@ -140,10 +140,15 @@ input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
         free(buf->seq[i].seq);
         buf->seq[i].seq = NULL;
     }
-    if (res >= 0 && buf->n == chunk_size) {
+    if (res == -1) {
+        return -1;
+    }
+
+    if (buf->n == chunk_size) {
         return 1;
     }
-    return res;
+
+    return 0;
 }
 
 bool
@@ -709,7 +714,7 @@ main(int argc, char **argv)
 #pragma omp section
                     {
                         res = input_read(rd, in, chunk_size);
-                        more_input = res > 0 || in->n;
+                        more_input = res == 1 || in->n;
                         if (res < 0) {
                             uproc_perror("error reading input");
                             error = true;
