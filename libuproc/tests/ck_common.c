@@ -1,5 +1,8 @@
 #include <check.h>
+
+#include <limits.h>
 #include <math.h>
+
 #include "uproc.h"
 
 START_TEST(test_prefix)
