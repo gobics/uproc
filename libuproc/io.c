@@ -91,6 +91,7 @@ uproc_io_stdstream_gz(FILE *stream)
             s[i].type = UPROC_IO_GZIP;
             s[i].s.gz = NULL;
             s[i].stdstream = true;
+            s[i].s.gz = gzdopen(i, mode[i]);
         }
         atexit(close_stdstream_gz);
     }
@@ -113,9 +114,6 @@ uproc_io_stdstream_gz(FILE *stream)
     }
     else {
         i = 2;
-    }
-    if (!s[i].s.gz) {
-        s[i].s.gz = gzdopen(i, mode[i]);
     }
     return &s[i];
 }
