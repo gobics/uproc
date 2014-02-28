@@ -33,15 +33,19 @@
 /** Type for nucleotides
  *
  * This type can represent a standard base (A, C, G, T/U) or one of the
- * IUPAC wildcard characters (http://www.bioinformatics.org/sms/iupac.html)
- * except gaps. It is defined as a signed integer, so negative values can be
+ * IUPAC wildcard characters (http://www.bioinformatics.org/sms/iupac.html),
+ * except gaps. Each of the standard bases is represented by a distinct bit,
+ * matching against a wildcard is then a simple bitwise &.
+ *
+ * It is defined as a signed integer, so negative values can be
  * used as return values in case of an error.
  */
 typedef int uproc_nt;
 
 
 /** Nucleotide values */
-enum {
+enum
+{
     /** Adenine */
     UPROC_NT_A = (1 << 0),
 
@@ -54,7 +58,7 @@ enum {
     /** Thymine */
     UPROC_NT_T = (1 << 3),
 
-    /** Uracil */
+    /** Uracil (same value as T) */
     UPROC_NT_U = UPROC_NT_T,
 
     /** Wildcard matching any base */
@@ -97,8 +101,10 @@ typedef unsigned uproc_codon;
 
 /** Append nucleotide to codon
  *
- *  Similar to uproc_word_append():
- *    `append(ACG, T) == CGT`
+ * Cuts off the first NT and appends another:
+ * \code
+ * append(ACG, T) -> CGT
+ * \endcode
  *
  * \param codon     codon to append to
  * \param nt        nucleotide to append
@@ -108,8 +114,10 @@ void uproc_codon_append(uproc_codon *codon, uproc_nt nt);
 
 /** Prepend nucleotide to codon
  *
- * Complementary to the append operation, e.g.
- *   `prepend(ACG, T) == TAC`.
+ * Complementary to the append operation:
+ * \code
+ * prepend(ACG, T) -> TAC
+ * \endcode
  *
  * \param codon     codon to append to
  * \param nt        nucleotide to append
@@ -123,18 +131,25 @@ void uproc_codon_prepend(uproc_codon *codon, uproc_nt nt);
  * \param position  position of the desired nt
  *
  * \return Nucleotide at the given position or 0 if `position` is >=
- * #UPROC_CODON_NTS
+ * ::UPROC_CODON_NTS
  */
 uproc_nt uproc_codon_get_nt(uproc_codon codon, unsigned position);
 
 
 /** Match a codon against a "codon mask"
  *
+ * Example:
+ * \code
+ * match(ATC, NNN) -> true
+ * match(ATC, AYY) -> true
+ * match(ATC, ARY) -> false
+ * \endcode
+ *
  * \param codon     codon to match
  * \param mask      mask to match against
  *
- * \return Whether `codon` matches `mask`.
+ * \return
+ * Whether `codon` matches `mask`.
  */
 bool uproc_codon_match(uproc_codon codon, uproc_codon mask);
-
 #endif
