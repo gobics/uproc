@@ -21,9 +21,9 @@
  * Wrappers for accessing different types IO streams
  *
  * \weakgroup grp_io
- * @{
+ * \{
  * \weakgroup grp_io_io
- * @{
+ * \{
  */
 
 #ifndef UPROC_IO_H
@@ -70,7 +70,7 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 
 /** \defgroup grp_io_io_stdstream Wrapped standard IO streams
- * @{
+ * \{
  */
 
 /** stdin, possibly gzip compressed (if compiled with zlib) */
@@ -83,7 +83,7 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 /** stderr, uncompressed */
 #define uproc_stderr uproc_io_stdstream(stderr)
-/** @} */
+/** \} */
 
 
 #if HAVE_ZLIB_H
@@ -97,7 +97,7 @@ uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 /** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
  *
  * These macros are only available if libuproc was compiled with zlib support.
- * @{
+ * \{
  */
 
 /** stdin, possibly gzip compressed */
@@ -112,7 +112,7 @@ uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 #define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
 #undef uproc_stdin
 #define uproc_stdin uproc_stdin_gz
-/** @} */
+/** \} */
 #endif
 
 /** Open a file
@@ -157,7 +157,7 @@ int uproc_io_eof(uproc_io_stream *stream);
 
 
 /**
- * @}
- * @}
+ * \}
+ * \}
  */
 #endif

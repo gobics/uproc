@@ -21,10 +21,10 @@
  * Operations on amino acid words
  *
  * \weakgroup grp_intern
- * @{
+ * \{
  *
  * \weakgroup grp_intern_word
- * @{
+ * \{
  */
 
 #ifndef UPROC_WORD_H
@@ -156,7 +156,7 @@ int uproc_worditer_next(uproc_worditer *iter, size_t *index,
 void uproc_worditer_destroy(uproc_worditer *iter);
 
 /**
- * @}
- * @}
+ * \}
+ * \}
  */
 #endif

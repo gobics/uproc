@@ -21,10 +21,10 @@
  * Convert between the character and internal representation of amino acids.
  *
  * \weakgroup grp_intern
- * @{
+ * \{
  *
  * \weakgroup grp_intern_alpha
- * @{
+ * \{
  */
 
 #ifndef UPROC_ALPHABET_H
@@ -95,7 +95,7 @@ const char *uproc_alphabet_str(const uproc_alphabet *alpha);
 
 
 /**
- * @}
- * @}
+ * \}
+ * \}
  */
 #endif

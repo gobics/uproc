@@ -21,10 +21,10 @@
  * Operations on tri-nucleotide codons
  *
  * \weakgroup grp_intern
- * @{
+ * \{
  *
  * \weakgroup grp_intern_codon
- * @{
+ * \{
  */
 
 #ifndef UPROC_CODON_H
@@ -160,7 +160,7 @@ bool uproc_codon_match(uproc_codon codon, uproc_codon mask);
 
 
 /**
- * @}
- * @}
+ * \}
+ * \}
  */
 #endif

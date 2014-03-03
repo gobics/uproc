@@ -65,32 +65,39 @@
  */
 
 /**
- * \defgroup grp_clf Classification
- * @{
- *   \defgroup grp_clf_dna DNA classification
- *     dnaclass.h
+ * \defgroup grp_clf Sequence classification
+ * \{
  *   \defgroup grp_clf_prot Protein classification
- *     protclass.h
- * @}
+ *     <!-- protclass.h -->
+ *
+ *   \defgroup grp_clf_orf ORF translation
+ *     <!-- orf.h -->
+ *
+ *   \defgroup grp_clf_dna DNA classification
+ *     <!-- dnaclass.h -->
+ * \}
  *
  *
  * \defgroup grp_io Input/output
- * @{
+ * \{
  *   \defgroup grp_io_io General IO
- *     io.h
+ *     <!-- io.h -->
+ *
  *   \defgroup grp_io_seqio Sequence IO
- *     seqio.h
- * @}
+ *     <!-- seqio.h -->
+ * \}
  *
  * \defgroup grp_intern Lower-level modules
- * @{
+ * \{
  *   \defgroup grp_intern_codon Nucleotides and codons
- *     codon.h
+ *     <!-- codon.h -->
+ *
  *   \defgroup grp_intern_alpha Amino acid translation alphabets
- *     alphabet.h
+ *     <!-- alphabet.h -->
+ *
  *   \defgroup grp_intern_word Amino acid words
- *     word.h
- * @}
+ *     <!-- word.h -->
+ * \}
  *
  */
 
