@@ -1,5 +1,5 @@
 # must correspond to HTML_OUTPUT in doxyfile.in!
-html = libuproc-$(PACKAGE_VERSION)
+html = libuproc
 
 docpkg = $(html).tar.gz
 
