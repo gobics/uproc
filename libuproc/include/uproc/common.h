@@ -20,16 +20,6 @@
  *
  * Common definitions
  *
- * \addtogroup grp_intern Lower-level modules
- * @{
- * \addtogroup grp_intern_codon Nucleotides and codons
- * \addtogroup grp_intern_word Amino acid words
- * @}
- * \addtogroup grp_io Input/output
- * @{
- *   \addtogroup grp_io_io General IO
- *   \addtogroup grp_io_seqio Sequence IO
- * @}
  */
 
 #ifndef UPROC_COMMON_H

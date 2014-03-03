@@ -25,7 +25,6 @@
  *
  * \weakgroup grp_intern_codon
  * @{
- *
  */
 
 #ifndef UPROC_CODON_H
@@ -160,6 +159,8 @@ uproc_nt uproc_codon_get_nt(uproc_codon codon, unsigned position);
 bool uproc_codon_match(uproc_codon codon, uproc_codon mask);
 
 
-/** @} */
-/** @} */
+/**
+ * @}
+ * @}
+ */
 #endif

@@ -64,6 +64,36 @@
  * behave correctly if used in conjunction with other threading implementations.
  */
 
+/**
+ * \defgroup grp_clf Classification
+ * @{
+ *   \defgroup grp_clf_dna DNA classification
+ *     dnaclass.h
+ *   \defgroup grp_clf_prot Protein classification
+ *     protclass.h
+ * @}
+ *
+ *
+ * \defgroup grp_io Input/output
+ * @{
+ *   \defgroup grp_io_io General IO
+ *     io.h
+ *   \defgroup grp_io_seqio Sequence IO
+ *     seqio.h
+ * @}
+ *
+ * \defgroup grp_intern Lower-level modules
+ * @{
+ *   \defgroup grp_intern_codon Nucleotides and codons
+ *     codon.h
+ *   \defgroup grp_intern_alpha Amino acid translation alphabets
+ *     alphabet.h
+ *   \defgroup grp_intern_word Amino acid words
+ *     word.h
+ * @}
+ *
+ */
+
 /** \file uproc.h
  *
  * Includes all other headers.

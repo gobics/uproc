@@ -1,8 +1,4 @@
-/** \file uproc/protclass.h
- *
- * Classify protein sequences
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -20,6 +16,15 @@
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file uproc/protclass.h
+ *
+ * Classify protein sequences
+ *
+ * \weakgroup grp_clf
+ * @{
+ * \weakgroup grp_clf_prot
+ * @{
+ */
 #ifndef UPROC_PROTCLASS_H
 #define UPROC_PROTCLASS_H
 
@@ -69,4 +74,10 @@ void uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
                         uproc_pc_trace_cb *cb, void *cb_arg);
 
 void uproc_pc_results_free(struct uproc_pc_results *results);
+
+
+/**
+ * @}
+ * @}
+ */
 #endif

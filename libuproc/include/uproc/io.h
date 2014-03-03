@@ -1,8 +1,4 @@
-/** \file uproc/io.h
- *
- * Wrappers for accessing different IO streams
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -20,12 +16,22 @@
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file uproc/io.h
+ *
+ * Wrappers for accessing different types IO streams
+ *
+ * \weakgroup grp_io
+ * @{
+ * \weakgroup grp_io_io
+ * @{
+ */
+
 #ifndef UPROC_IO_H
 #define UPROC_IO_H
 
-
 #include <stdio.h>
 #include <stdarg.h>
+
 
 /** Underlying stream type */
 enum uproc_io_type
@@ -36,32 +42,95 @@ enum uproc_io_type
     UPROC_IO_GZIP,
 };
 
+
+/** Third argument to uproc_io_seek()
+ *
+ * These correspond to SEEK_SET and SEEK_CUR of stdio.h. SEEK_END is missing
+ * because gz streams don't support it.
+ */
 enum uproc_io_seek_whence
 {
+    /** Set the cursor to an absolute position */
     UPROC_IO_SEEK_SET,
+
+    /** Set the new position relative to the current one */
     UPROC_IO_SEEK_CUR,
 };
 
 
+/** Opaque type for IO streams */
 typedef struct uproc_io_stream uproc_io_stream;
 
+
+/** Wrap standard input streams
+ *
+ * Called by the \ref grp_io_io_stdstream macros.
+ */
 uproc_io_stream *uproc_io_stdstream(FILE *stream);
+
+
+/** \defgroup grp_io_io_stdstream Wrapped standard IO streams
+ * @{
+ */
+
+/** stdin, possibly gzip compressed (if compiled with zlib) */
 #define uproc_stdin uproc_io_stdstream(stdin)
+
+
+/** stdout, uncompressed */
 #define uproc_stdout uproc_io_stdstream(stdout)
+
+
+/** stderr, uncompressed */
 #define uproc_stderr uproc_io_stdstream(stderr)
+/** @} */
+
 
 #if HAVE_ZLIB_H
+
+/** Wraps gz input streams
+ *
+ * Called by the \ref grp_io_io_stdstream_gz macros.
+ */
 uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
+
+/** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
+ *
+ * These macros are only available if libuproc was compiled with zlib support.
+ * @{
+ */
+
+/** stdin, possibly gzip compressed */
 #define uproc_stdin_gz uproc_io_stdstream_gz(stdin)
+
+
+/** stdout, gzip compressed */
 #define uproc_stdout_gz uproc_io_stdstream_gz(stdout)
+
+
+/** stderr, gzip compressed */
 #define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
 #undef uproc_stdin
 #define uproc_stdin uproc_stdin_gz
+/** @} */
 #endif
 
+/** Open a file
+ *
+ * Opens the file whose name is constructed by formatting \c pathfmt with the
+ * subsequent arguments (using \c sprintf).
+ *
+ * XXX
+ */
 uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
                                const char *pathfmt, ...);
 
+
+/** Open a file using a va_list
+ *
+ * Justl ike ::uproc_io_open, but with a \c va_list instead of a variable
+ * number of arguments.
+ */
 uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
                                 const char *pathfmt, va_list ap);
 
@@ -85,4 +154,10 @@ int uproc_io_seek(uproc_io_stream *stream, long offset,
 long uproc_io_tell(uproc_io_stream *stream);
 
 int uproc_io_eof(uproc_io_stream *stream);
+
+
+/**
+ * @}
+ * @}
+ */
 #endif

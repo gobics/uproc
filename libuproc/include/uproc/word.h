@@ -1,8 +1,4 @@
-/** \file uproc/word.h
- *
- * Manipulate amino acid words
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -18,6 +14,17 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** \file uproc/word.h
+ *
+ * Operations on amino acid words
+ *
+ * \weakgroup grp_intern
+ * @{
+ *
+ * \weakgroup grp_intern_word
+ * @{
  */
 
 #ifndef UPROC_WORD_H
@@ -147,4 +154,9 @@ int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
 
 void uproc_worditer_destroy(uproc_worditer *iter);
+
+/**
+ * @}
+ * @}
+ */
 #endif

@@ -19,6 +19,12 @@
 /** \file uproc/alphabet.h
  *
  * Convert between the character and internal representation of amino acids.
+ *
+ * \weakgroup grp_intern
+ * @{
+ *
+ * \weakgroup grp_intern_alpha
+ * @{
  */
 
 #ifndef UPROC_ALPHABET_H
@@ -86,4 +92,10 @@ int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
  *  passed to uproc_alphabet_create().
  */
 const char *uproc_alphabet_str(const uproc_alphabet *alpha);
+
+
+/**
+ * @}
+ * @}
+ */
 #endif

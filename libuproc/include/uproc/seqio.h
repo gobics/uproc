@@ -19,6 +19,12 @@
 /** \file uproc/seqio.h
  *
  * Sequence input/output
+ *
+ * \weakgroup grp_io
+ * @{
+ *
+ * \weakgroup grp_io_seqio Sequence IO
+ * @{
  */
 
 #ifndef UPROC_FASTA_H
@@ -48,4 +54,9 @@ int uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq);
 
 void uproc_seqio_write_fasta(uproc_io_stream *stream, const char *header,
                              const char *seq, int width);
+
+/**
+ * @}
+ * @}
+ */
 #endif

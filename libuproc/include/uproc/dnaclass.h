@@ -1,8 +1,4 @@
-/** \file uproc/dnaclass.h
- *
- * Classify DNA/RNA sequences
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -18,6 +14,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** \file uproc/dnaclass.h
+ *
+ * Classify DNA/RNA sequences
+ *
+ * \weakgroup grp_clf
+ * @{
+ * \weakgroup grp_clf_dna
+ * @{
  */
 
 #ifndef UPROC_DNACLASS_H
@@ -63,4 +69,9 @@ int uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
                       struct uproc_dc_results *results);
 
 void uproc_dc_results_free(struct uproc_dc_results *results);
+
+/**
+ * @}
+ * @}
+ */
 #endif
