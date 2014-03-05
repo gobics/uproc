@@ -135,7 +135,7 @@ enum uproc_dnaclass_mode
 uproc_dnaclass *uproc_dnaclass_create(enum uproc_dnaclass_mode mode,
                                       const uproc_protclass *pc,
                                       const uproc_matrix *codon_scores,
-                                      uproc_orf_filter *orf_filter,
+                                      uproc_orffilter *orf_filter,
                                       void *orf_filter_arg);
 
 

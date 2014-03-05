@@ -57,7 +57,7 @@ struct uproc_orfiter_s
     void *filter_arg;
 
     /** Pointer to filter function */
-    uproc_orf_filter *filter;
+    uproc_orffilter *filter;
 
     /** current position in the DNA/RNA sequence */
     const char *pos;
@@ -197,7 +197,7 @@ uproc_orfiter *
 uproc_orfiter_create(
     const char *seq,
     const double codon_scores[static UPROC_BINARY_CODON_COUNT],
-    uproc_orf_filter *filter, void *filter_arg)
+    uproc_orffilter *filter, void *filter_arg)
 {
     unsigned i;
     struct uproc_orfiter_s *iter = malloc(sizeof *iter);

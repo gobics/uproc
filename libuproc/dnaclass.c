@@ -40,13 +40,13 @@ struct uproc_dnaclass_s
     enum uproc_dnaclass_mode mode;
     const uproc_protclass *pc;
     double codon_scores[UPROC_BINARY_CODON_COUNT];
-    uproc_orf_filter *orf_filter;
+    uproc_orffilter *orf_filter;
     void *orf_filter_arg;
 };
 
 uproc_dnaclass *
 uproc_dnaclass_create(enum uproc_dnaclass_mode mode, const uproc_protclass *pc,
-                      const uproc_matrix *codon_scores, uproc_orf_filter *orf_filter,
+                      const uproc_matrix *codon_scores, uproc_orffilter *orf_filter,
                       void *orf_filter_arg)
 {
     struct uproc_dnaclass_s *dc;

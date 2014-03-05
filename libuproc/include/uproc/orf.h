@@ -91,8 +91,8 @@ int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
  * content and finally a user-supplied "opaque" pointer as arguments and return
  * whether the ORF is accepted or not.
  */
-typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t,
-                              double, void*);
+typedef bool uproc_orffilter(const struct uproc_orf*, const char *, size_t,
+                             double, void*);
 
 /** Prepare codon score table */
 void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
@@ -114,7 +114,7 @@ typedef struct uproc_orfiter_s uproc_orfiter;
 uproc_orfiter *uproc_orfiter_create(
     const char *seq,
     const double *codon_scores,
-    uproc_orf_filter *filter, void *filter_arg);
+    uproc_orffilter *filter, void *filter_arg);
 
 /** Free memory of an ORF iterator */
 void uproc_orfiter_destroy(uproc_orfiter *iter);
