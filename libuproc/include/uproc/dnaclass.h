@@ -104,18 +104,19 @@ int uproc_dnaresults_copy(struct uproc_dnaresults *dest,
 /** \} */
 
 
-/** DNA/RNA sequence classifier object
- *
+/**
  * \defgroup obj_dnaclass object uproc_dnaclass
  * Follows the \ref subsec_opaque
  * \{
  */
+
+/** DNA/RNA sequence classifier object */
 typedef struct uproc_dnaclass_s uproc_dnaclass;
 
 
 /** Classification mode
  *
- * Determines which results uproc_dc_create() produces.
+ * Determines which results ::uproc_dnaclass_classify produces.
  */
 enum uproc_dnaclass_mode
 {
@@ -129,8 +130,7 @@ enum uproc_dnaclass_mode
 
 /** Create new DNA classifier
  *
- * \param mode              Which results to produce (see
- *                          ::uproc_dnaclass_mode)
+ * \param mode              Which results to produce
  * \param pc                ::uproc_protclass to use for classifying ORFs
  * \param codon_scores      Codon scoring matrix (or NULL)
  * \param orf_filter        ORF filtering function (see orf.h)
