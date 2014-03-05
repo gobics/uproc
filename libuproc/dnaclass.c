@@ -23,6 +23,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 
@@ -178,12 +179,46 @@ error:
 }
 
 void
+uproc_dc_results_init(struct uproc_dc_results *results)
+{
+    *results = (struct uproc_dc_results) UPROC_DC_RESULTS_INITIALIZER;
+}
+
+void
 uproc_dc_results_free(struct uproc_dc_results *results)
 {
     for (size_t i = 0; i < results->n; i++) {
-        free(results->preds[i].orf.data);
+        uproc_orf_free(&results->preds[i].orf);
     }
     results->n = 0;
     free(results->preds);
     results->preds = NULL;
+}
+
+int
+uproc_dc_results_copy(struct uproc_dc_results *dest,
+                      const struct uproc_dc_results *src)
+{
+    struct uproc_dc_pred *p = NULL;
+    if (src->n) {
+        p = malloc(sizeof *p * src->n);
+        if (!p) {
+            uproc_error(UPROC_ENOMEM);
+            return -1;
+        }
+        memcpy(p, src->preds, sizeof *p * src->n);
+        for (size_t i = 0; i < src->n; i++) {
+            int res = uproc_orf_copy(&p[i].orf, &src->preds[i].orf);
+            if (res) {
+                for (size_t k = 0; k < i; k++) {
+                    uproc_orf_free(&p[i].orf);
+                }
+                free(p);
+                return -1;
+            }
+        }
+    }
+    *dest = *src;
+    dest->preds = p;
+    return 0;
 }

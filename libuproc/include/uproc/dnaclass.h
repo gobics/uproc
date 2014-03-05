@@ -78,8 +78,21 @@ struct uproc_dc_results
 };
 
 
-/** Initializer for ::uproc_dc_results objects */
+/** Initializer for ::uproc_dc_results structs */
 #define UPROC_DC_RESULTS_INITIALIZER { NULL, 0, 0 }
+
+
+/** Initialize a ::uproc_dc_results struct */
+void uproc_dc_results_init(struct uproc_dc_results *results);
+
+
+/** Free allocated pointers of ::uproc_dc_results struct */
+void uproc_dc_results_free(struct uproc_dc_results *results);
+
+
+/** Deep-copy a ::uproc_dc_results struct */
+int uproc_dc_results_copy(struct uproc_dc_results *dest,
+                          const struct uproc_dc_results *src);
 
 
 /** \struct uproc_dnaclass
@@ -138,8 +151,6 @@ void uproc_dc_destroy(uproc_dnaclass *dc);
  */
 int uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
                       struct uproc_dc_results *results);
-
-void uproc_dc_results_free(struct uproc_dc_results *results);
 
 /**
  * \}
