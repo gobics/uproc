@@ -127,7 +127,7 @@ input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
         }
 
         res = dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz,
-                      seq.seq, strlen(seq.seq));
+                      seq.data, strlen(seq.data));
         if (res) {
             break;
         }

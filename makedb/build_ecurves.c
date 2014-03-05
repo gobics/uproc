@@ -117,10 +117,10 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         }
 
         if (reverse) {
-            reverse_string(seq.seq);
+            reverse_string(seq.data);
         }
 
-        iter = uproc_worditer_create(seq.seq, alpha);
+        iter = uproc_worditer_create(seq.data, alpha);
         if (!iter) {
             res = -1;
             break;

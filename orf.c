@@ -262,9 +262,10 @@ int main(int argc, char **argv)
 
             char *max_orf = NULL;
             double max_score = -INFINITY;
-            oi = uproc_orfiter_create(
-                seq.seq, thresh_mode == NONE ? NULL : codon_scores, orf_filter,
-                &filter_arg);
+            oi = uproc_orfiter_create(seq.data,
+                                      thresh_mode == NONE ? NULL : codon_scores,
+                                      orf_filter,
+                                      &filter_arg);
             while (res = uproc_orfiter_next(oi, &orf), !res) {
                 if (thresh_mode == MAX && orf.score > max_score) {
                     free(max_orf);

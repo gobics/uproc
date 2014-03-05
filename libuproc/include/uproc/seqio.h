@@ -36,10 +36,23 @@
 
 #include "uproc/io.h"
 
+/** DNA/RNA or protein sequence */
 struct uproc_sequence
 {
+    /** Sequence identifier */
     char *header;
-    char *seq;
+
+    /** Sequence data */
+    char *data;
+
+    /** Position in the file
+     *
+     * Starting position of the sequence (including header) in the file from it
+     * was read. Using ::uproc_io_seek to this position <em> before creating an
+     * iterator </em> will cause iteration to start with this particular
+     * sequence (this is used by the python library to implement "lazy"
+     * sequence objects).
+     */
     long offset;
 };
 

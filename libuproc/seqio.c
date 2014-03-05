@@ -56,13 +56,13 @@ struct uproc_seqiter_s
     long offset;
 
     /* header and sequence data */
-    char *header, *seq;
+    char *header, *data;
+
     /* their string lengths */
-
     size_t header_len, seq_len;
-    /* their buffer sizes */
 
-    size_t header_sz, seq_sz, seq_sz_hint;
+    /* their buffer sizes */
+    size_t header_sz, data_sz, seq_sz_hint;
 
     enum { UNINITIALIZED, FASTA, FASTQ } format;
 };
@@ -84,13 +84,13 @@ uproc_seqiter_create(uproc_io_stream *stream, size_t seq_sz_hint)
     };
 
     if (seq_sz_hint) {
-        iter->seq = malloc(seq_sz_hint);
-        if (!iter->seq) {
+        iter->data = malloc(seq_sz_hint);
+        if (!iter->data) {
             uproc_error(UPROC_ENOMEM);
             free(iter);
             return NULL;
         }
-        iter->seq_sz = iter->seq_sz_hint = seq_sz_hint;
+        iter->data_sz = iter->seq_sz_hint = seq_sz_hint;
     }
     return iter;
 }
@@ -104,7 +104,7 @@ uproc_seqiter_destroy(uproc_seqiter *iter)
     }
     free(iter->line);
     free(iter->header);
-    free(iter->seq);
+    free(iter->data);
     free(iter);
 }
 
@@ -137,15 +137,15 @@ iter_realloc_header(struct uproc_seqiter_s *iter, size_t sz)
 
 
 static int
-iter_realloc_seq(struct uproc_seqiter_s *iter, size_t sz)
+iter_realloc_data(struct uproc_seqiter_s *iter, size_t sz)
 {
-    if (iter->seq_sz < sz) {
-        void *tmp = realloc(iter->seq, sz);
+    if (iter->data_sz < sz) {
+        void *tmp = realloc(iter->data, sz);
         if (!tmp) {
             return uproc_error(UPROC_ENOMEM);
         }
-        iter->seq = tmp;
-        iter->seq_sz = sz;
+        iter->data = tmp;
+        iter->data_sz = sz;
     }
     return 0;
 }
@@ -192,18 +192,18 @@ read_fasta(struct uproc_seqiter_s *iter)
          iter_getline(iter))
     {
         len = iter->line_len;
-        if (iter_realloc_seq(iter, total_len + len)) {
+        if (iter_realloc_data(iter, total_len + len)) {
             return -1;
         }
         if (iter->line[len - 1] == '\n') {
             len--;
         }
-        memcpy(iter->seq + total_len, iter->line, len);
+        memcpy(iter->data + total_len, iter->line, len);
         total_len += len;
-        iter->seq[total_len] = '\0';
+        iter->data[total_len] = '\0';
     }
     iter->seq_len = total_len;
-    assert(iter->seq_len == strlen(iter->seq));
+    assert(iter->seq_len == strlen(iter->data));
 
     return 0;
 }
@@ -237,11 +237,11 @@ read_fastq(struct uproc_seqiter_s *iter)
                               iter->line_no);
     }
     len = iter->line_len - 1;
-    if (iter_realloc_seq(iter, len)) {
+    if (iter_realloc_data(iter, len)) {
         return -1;
     }
-    memcpy(iter->seq, iter->line, len);
-    iter->seq[len] = '\0';
+    memcpy(iter->data, iter->line, len);
+    iter->data[len] = '\0';
     iter->seq_len = len;
 
     /* skip the '+' line that repeats the header */
@@ -319,7 +319,7 @@ uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq)
     }
 
     seq->header = iter->header;
-    seq->seq = iter->seq;
+    seq->data = iter->data;
     return 0;
 }
 
@@ -353,15 +353,15 @@ uproc_sequence_free(struct uproc_sequence *seq)
 {
     free(seq->header);
     seq->header = NULL;
-    free(seq->seq);
-    seq->seq = NULL;
+    free(seq->data);
+    seq->data = NULL;
 }
 
 int
 uproc_sequence_copy(struct uproc_sequence *dest, const struct uproc_sequence *src)
 {
     char *h = strdup(src->header);
-    char *d = strdup(src->seq);
+    char *d = strdup(src->data);
     if (!h || !d) {
         free(h);
         free(d);
@@ -369,6 +369,6 @@ uproc_sequence_copy(struct uproc_sequence *dest, const struct uproc_sequence *sr
     }
     *dest = *src;
     dest->header = h;
-    dest->seq = d;
+    dest->data = d;
     return 0;
 }
