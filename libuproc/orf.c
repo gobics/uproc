@@ -152,9 +152,16 @@ gc_content(const char *seq, size_t *len, double *gc)
 }
 
 void
+uproc_orf_init(struct uproc_orf *orf)
+{
+    *orf = (struct uproc_orf) UPROC_ORF_INITIALIZER;
+}
+
+void
 uproc_orf_free(struct uproc_orf *orf)
 {
     free(orf->data);
+    orf->data = NULL;
 }
 
 int
