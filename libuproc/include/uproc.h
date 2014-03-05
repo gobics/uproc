@@ -25,7 +25,7 @@
  * These are the types defined by libuproc and they usually follow the
  * conventions described below.
  *
- * \subsection subsec_opaque Opaque object types
+ * \subsection subsec_opaque Opaque object type conventions
  *
  * Opaque object types are usually defined as forward declarations to structs
  * hidden in the implementation (to ease API compatibility across different
@@ -55,14 +55,14 @@
  * (and will NOT result in a nullpointer dereference).
  *
  *
- * \subsubsection subsec_opaque_iter Iterator objects
+ * \subsubsection subsec_opaque_iter Iterator object conventions
  *
  * Certain objects are \e iterators (the ones whose OBJECT part ends in
  * "iter").  These have a function \c uproc_OBJECT_next that returns 0 if an
  * item was produced, 1 if the iterator is exhausted or -1 on error.
  *
  *
- * \subsection subsec_struct Struct types
+ * \subsection subsec_struct Struct type conventions
  *
  * \subsubsection subsec_struct_init Initialization
  *
