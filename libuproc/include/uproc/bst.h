@@ -107,10 +107,6 @@ enum
 };
 
 
-
-
-
-
 /** Initialize an empty binary search tree
  *
  * \param key_type      key type
