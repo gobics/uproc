@@ -54,7 +54,7 @@ struct buffer
     } seq[MAX_CHUNK_SIZE];
 
 #if MAIN_DNA
-    struct uproc_dc_results results[MAX_CHUNK_SIZE];
+    struct uproc_dnaresults results[MAX_CHUNK_SIZE];
 #else
     struct uproc_pc_results results[MAX_CHUNK_SIZE];
 #endif
@@ -68,7 +68,7 @@ buf_free(struct buffer *buf) {
         free(buf->seq[i].header);
         free(buf->seq[i].seq);
 #if MAIN_DNA
-        uproc_dc_results_free(&buf->results[i]);
+        uproc_dnaresults_free(&buf->results[i]);
 #else
         uproc_pc_results_free(&buf->results[i]);
 #endif
@@ -211,7 +211,7 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
         }
         for (j = 0; j < buf->results[i].n; j++) {
 #if MAIN_DNA
-            struct uproc_dc_pred *pred;
+            struct uproc_dnapred *pred;
 #else
             struct uproc_pc_pred *pred;
 #endif
@@ -438,7 +438,7 @@ main(int argc, char **argv)
 
 #if MAIN_DNA
     uproc_dnaclass *dnaclass;
-    enum uproc_dc_mode dc_mode = UPROC_DC_ALL;
+    enum uproc_dnaclass_mode dc_mode = UPROC_DNACLASS_ALL;
     uproc_matrix *codon_scores = NULL, *orf_thresholds = NULL;
     int orf_thresh_num = 2;
     bool short_read_mode = false;
@@ -623,11 +623,11 @@ main(int argc, char **argv)
 #if MAIN_DNA
     if (short_read_mode) {
         pc_mode = UPROC_PC_MAX;
-        dc_mode = UPROC_DC_MAX;
+        dc_mode = UPROC_DNACLASS_MAX;
     }
     else {
         pc_mode = UPROC_PC_ALL;
-        dc_mode = UPROC_DC_ALL;
+        dc_mode = UPROC_DNACLASS_ALL;
     }
 #endif
     protclass = uproc_pc_create(pc_mode, fwd, rev, substmat, prot_filter,
@@ -650,12 +650,12 @@ main(int argc, char **argv)
             fprintf(stderr, "failed to load ORF thresholds\n");
             return EXIT_FAILURE;
         }
-        dnaclass = uproc_dc_create(dc_mode, protclass, codon_scores,
-                                   orf_filter, orf_thresholds);
+        dnaclass = uproc_dnaclass_create(dc_mode, protclass, codon_scores,
+                                         orf_filter, orf_thresholds);
     }
     else {
-        dnaclass = uproc_dc_create(dc_mode, protclass, NULL, orf_filter,
-                                   NULL);
+        dnaclass = uproc_dnaclass_create(dc_mode, protclass, NULL, orf_filter,
+                                         NULL);
     }
 #endif
 
@@ -692,8 +692,8 @@ main(int argc, char **argv)
 #pragma omp for schedule(dynamic) nowait
                 for (i = 0; i < (long long)out->n; i++) {
 #if MAIN_DNA
-                    res = uproc_dc_classify(dnaclass, out->seq[i].seq,
-                                            &out->results[i]);
+                    res = uproc_dnaclass_classify(dnaclass, out->seq[i].seq,
+                                                  &out->results[i]);
 #else
                     res = uproc_pc_classify(protclass, out->seq[i].seq,
                                             &out->results[i]);
@@ -757,7 +757,7 @@ main(int argc, char **argv)
         uproc_matrix_destroy(prot_thresholds);
     }
 #if MAIN_DNA
-    uproc_dc_destroy(dnaclass);
+    uproc_dnaclass_destroy(dnaclass);
     if (codon_scores) {
         uproc_matrix_destroy(codon_scores);
     }

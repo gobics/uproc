@@ -37,7 +37,7 @@
 
 struct uproc_dnaclass_s
 {
-    enum uproc_dc_mode mode;
+    enum uproc_dnaclass_mode mode;
     const uproc_protclass *pc;
     double codon_scores[UPROC_BINARY_CODON_COUNT];
     uproc_orf_filter *orf_filter;
@@ -45,9 +45,9 @@ struct uproc_dnaclass_s
 };
 
 uproc_dnaclass *
-uproc_dc_create(enum uproc_dc_mode mode, const uproc_protclass *pc,
-                const uproc_matrix *codon_scores, uproc_orf_filter *orf_filter,
-                void *orf_filter_arg)
+uproc_dnaclass_create(enum uproc_dnaclass_mode mode, const uproc_protclass *pc,
+                      const uproc_matrix *codon_scores, uproc_orf_filter *orf_filter,
+                      void *orf_filter_arg)
 {
     struct uproc_dnaclass_s *dc;
     if (!pc) {
@@ -72,14 +72,14 @@ uproc_dc_create(enum uproc_dc_mode mode, const uproc_protclass *pc,
 }
 
 void
-uproc_dc_destroy(uproc_dnaclass *dc)
+uproc_dnaclass_destroy(uproc_dnaclass *dc)
 {
     free(dc);
 }
 
 int
-uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
-                  struct uproc_dc_results *results)
+uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
+                  struct uproc_dnaresults *results)
 {
     int res;
     size_t i;
@@ -88,7 +88,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
     uproc_bst *max_scores;
     uproc_bstiter *max_scores_iter;
     union uproc_bst_key key;
-    struct uproc_dc_pred value;
+    struct uproc_dnapred value;
     struct uproc_pc_results pc_res = { NULL, 0, 0 };
 
     max_scores = uproc_bst_create(UPROC_BST_UINT, sizeof value);
@@ -156,7 +156,7 @@ uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
     }
     uproc_bstiter_destroy(max_scores_iter);
 
-    if (dc->mode == UPROC_DC_MAX && results->n > 0) {
+    if (dc->mode == UPROC_DNACLASS_MAX && results->n > 0) {
         size_t imax = 0;
         for (i = 1; i < results->n; i++) {
             if (results->preds[i].score > results->preds[imax].score) {
@@ -179,13 +179,13 @@ error:
 }
 
 void
-uproc_dc_results_init(struct uproc_dc_results *results)
+uproc_dnaresults_init(struct uproc_dnaresults *results)
 {
-    *results = (struct uproc_dc_results) UPROC_DC_RESULTS_INITIALIZER;
+    *results = (struct uproc_dnaresults) UPROC_DNARESULTS_INITIALIZER;
 }
 
 void
-uproc_dc_results_free(struct uproc_dc_results *results)
+uproc_dnaresults_free(struct uproc_dnaresults *results)
 {
     for (size_t i = 0; i < results->n; i++) {
         uproc_orf_free(&results->preds[i].orf);
@@ -196,10 +196,10 @@ uproc_dc_results_free(struct uproc_dc_results *results)
 }
 
 int
-uproc_dc_results_copy(struct uproc_dc_results *dest,
-                      const struct uproc_dc_results *src)
+uproc_dnaresults_copy(struct uproc_dnaresults *dest,
+                      const struct uproc_dnaresults *src)
 {
-    struct uproc_dc_pred *p = NULL;
+    struct uproc_dnapred *p = NULL;
     if (src->n) {
         p = malloc(sizeof *p * src->n);
         if (!p) {

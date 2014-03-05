@@ -26,7 +26,22 @@
  * \weakgroup grp_clf_dna
  *
  * \details
- * See uproc_dc_classify() for a brief example.
+ * Example usage:
+ * \code
+ * struct uproc_dnaresults results = UPROC_DNARESULTS_INITIALIZER;
+ * uproc_dnaclass *dc = uproc_dc_create(...);
+ * if (!dc) {
+ *     // handle error
+ * }
+ * for (int i = 0; i < n; i++) {
+ *     int res = uproc_dc_classify(dc, seqs[i], &results);
+ *     if (res) {
+ *         // handle error
+ *     }
+ *     // do something with the results
+ * }
+ * uproc_dnaresults_free(&results);
+ * \endcode
  *
  * Related modules:
  * \li \ref grp_clf_prot
@@ -43,24 +58,14 @@
 #include "uproc/matrix.h"
 
 
-/** Classification mode
+/** DNA classification results
  *
- * Determines which results uproc_dc_create() produces.
+* \defgroup struct_uproc_dnaresults struct uproc_dnaresults
+* \{
  */
-enum uproc_dc_mode
+struct uproc_dnaresults
 {
-    /** Only the result with the maximum score */
-    UPROC_DC_ALL,
-
-    /** All results (unordered) */
-    UPROC_DC_MAX,
-};
-
-
-/** DNA classification results */
-struct uproc_dc_results
-{
-    struct uproc_dc_pred
+    struct uproc_dnapred
     {
         /** Predicted family */
         uproc_family family;
@@ -78,79 +83,80 @@ struct uproc_dc_results
 };
 
 
-/** Initializer for ::uproc_dc_results structs */
-#define UPROC_DC_RESULTS_INITIALIZER { NULL, 0, 0 }
+/** Initializer for ::uproc_dnaresults structs */
+#define UPROC_DNARESULTS_INITIALIZER { NULL, 0, 0 }
 
 
-/** Initialize a ::uproc_dc_results struct */
-void uproc_dc_results_init(struct uproc_dc_results *results);
+/** Initialize a ::uproc_dnaresults struct */
+void uproc_dnaresults_init(struct uproc_dnaresults *results);
 
 
-/** Free allocated pointers of ::uproc_dc_results struct */
-void uproc_dc_results_free(struct uproc_dc_results *results);
+/** Free allocated pointers of ::uproc_dnaresults struct */
+void uproc_dnaresults_free(struct uproc_dnaresults *results);
 
 
-/** Deep-copy a ::uproc_dc_results struct */
-int uproc_dc_results_copy(struct uproc_dc_results *dest,
-                          const struct uproc_dc_results *src);
+/** Deep-copy a ::uproc_dnaresults struct */
+int uproc_dnaresults_copy(struct uproc_dnaresults *dest,
+                          const struct uproc_dnaresults *src);
+/** \} */
 
 
-/** \struct uproc_dnaclass
+/** DNA/RNA sequence classifier object
  *
- * Opaque DNA/RNA sequence classifier object
+ * \defgroup obj_uproc_dnaclass object uproc_dnaclass
+ * \{
  */
 typedef struct uproc_dnaclass_s uproc_dnaclass;
 
 
+/** Classification mode
+ *
+ * Determines which results uproc_dc_create() produces.
+ */
+enum uproc_dnaclass_mode
+{
+    /** Only the result with the maximum score */
+    UPROC_DNACLASS_ALL,
+
+    /** All results (unordered) */
+    UPROC_DNACLASS_MAX,
+};
+
+
 /** Create new DNA classifier
  *
- * \param mode              Which results to produce (see ::uproc_dc_mode)
+ * \param mode              Which results to produce (see
+ *                          ::uproc_dnaclass_mode)
  * \param pc                ::uproc_protclass to use for classifying ORFs
  * \param codon_scores      Codon scoring matrix (or NULL)
  * \param orf_filter        ORF filtering function (see orf.h)
  * \param orf_filter_arg    Additional argument to \c orf_filter
  */
-uproc_dnaclass *uproc_dc_create(enum uproc_dc_mode mode,
-                                const uproc_protclass *pc,
-                                const uproc_matrix *codon_scores,
-                                uproc_orf_filter *orf_filter,
-                                void *orf_filter_arg);
+uproc_dnaclass *uproc_dnaclass_create(enum uproc_dnaclass_mode mode,
+                                      const uproc_protclass *pc,
+                                      const uproc_matrix *codon_scores,
+                                      uproc_orf_filter *orf_filter,
+                                      void *orf_filter_arg);
 
 
 /** Destroy DNA classifier */
-void uproc_dc_destroy(uproc_dnaclass *dc);
+void uproc_dnaclass_destroy(uproc_dnaclass *dc);
 
 
 /** Classify DNA sequence
  *
- * \c results should be a pointer to a struct ::uproc_dc_results which has
- * been initialized to zero values (using ::UPROC_DC_RESULTS_INITIALIZER or
+ * \c results should be a pointer to a struct ::uproc_dnaresults which has
+ * been initialized to zero values (using ::UPROC_DNARESULTS_INITIALIZER or
  * with static storage duration) or which has already been used. It will
  * automatically be resized if needed.
- *
- * Example:
- * \code
- * struct uproc_dc_results results = UPROC_DC_RESULTS_INITIALIZER;
- * uproc_dnaclass *dc = uproc_dc_create(...);
- * if (!dc) {
- *     // handle error
- * }
- * for (int i = 0; i < n; i++) {
- *     int res = uproc_dc_classify(dc, seqs[i], &results);
- *     if (res) {
- *         // handle error
- *     }
- *     // do something with the results
- * }
- * uproc_dc_results_free(&results);
- * \endcode
  *
  * \param dc        DNA classifier
  * \param seq       sequence to classify
  * \param results   _OUT_: classification results
  */
-int uproc_dc_classify(const uproc_dnaclass *dc, const char *seq,
-                      struct uproc_dc_results *results);
+int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
+                            struct uproc_dnaresults *results);
+/** \} */
 
 /**
  * \}
