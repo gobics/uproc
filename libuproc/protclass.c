@@ -32,16 +32,16 @@
 
 struct uproc_protclass_s
 {
-    enum uproc_pc_mode mode;
+    enum uproc_protclass_mode mode;
     const uproc_substmat *substmat;
     const uproc_ecurve *fwd;
     const uproc_ecurve *rev;
-    uproc_pc_filter *filter;
+    uproc_protfilter *filter;
     void *filter_arg;
     struct uproc_protclass_trace
     {
         uproc_family family;
-        uproc_pc_trace_cb *cb;
+        uproc_protclass_trace_cb *cb;
         void *cb_arg;
     } trace;
 };
@@ -253,7 +253,7 @@ scores_compute(const struct uproc_protclass_s *pc, const char *seq,
 
 static int
 scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
-                uproc_bst *score_tree, struct uproc_pc_results *results)
+                uproc_bst *score_tree, struct uproc_protresults *results)
 {
     int res = 0;
     uproc_bstiter *iter;
@@ -291,7 +291,7 @@ scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
     }
     uproc_bstiter_destroy(iter);
 
-    if (pc->mode == UPROC_PC_MAX && results->n > 0) {
+    if (pc->mode == UPROC_PROTCLASS_MAX && results->n > 0) {
         size_t imax = 0;
         for (size_t i = 1; i < results->n; i++) {
             if (results->preds[i].score > results->preds[imax].score) {
@@ -312,9 +312,9 @@ error:
  **********************/
 
 uproc_protclass *
-uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
-                const uproc_ecurve *rev, const uproc_substmat *substmat,
-                uproc_pc_filter *filter, void *filter_arg)
+uproc_protclass_create(enum uproc_protclass_mode mode, const uproc_ecurve *fwd,
+                       const uproc_ecurve *rev, const uproc_substmat *substmat,
+                       uproc_protfilter *filter, void *filter_arg)
 {
     struct uproc_protclass_s *pc;
     if (!(fwd || rev)) {
@@ -344,14 +344,14 @@ uproc_pc_create(enum uproc_pc_mode mode, const uproc_ecurve *fwd,
 }
 
 void
-uproc_pc_destroy(uproc_protclass *pc)
+uproc_protclass_destroy(uproc_protclass *pc)
 {
     free(pc);
 }
 
 static int
 classify(const struct uproc_protclass_s *pc, const char *seq,
-         struct uproc_pc_results *results)
+         struct uproc_protresults *results)
 {
     int res;
     uproc_bst *scores;
@@ -372,8 +372,8 @@ error:
 }
 
 int
-uproc_pc_classify(const uproc_protclass *pc, const char *seq,
-                  struct uproc_pc_results *results)
+uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
+                         struct uproc_protresults *results)
 {
     int res;
     size_t i, imax = 0;
@@ -381,7 +381,7 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
     if (res || !results->n) {
         return res;
     }
-    if (pc->mode == UPROC_PC_MAX) {
+    if (pc->mode == UPROC_PROTCLASS_MAX) {
         for (i = 1; i < results->n; i++) {
             if (results->preds[i].score > results->preds[imax].score) {
                 imax = i;
@@ -394,8 +394,8 @@ uproc_pc_classify(const uproc_protclass *pc, const char *seq,
 }
 
 void
-uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                   uproc_pc_trace_cb *cb, void *cb_arg)
+uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
+                          uproc_protclass_trace_cb *cb, void *cb_arg)
 {
     pc->trace.family = family;
     pc->trace.cb = cb;
@@ -403,9 +403,33 @@ uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
 }
 
 void
-uproc_pc_results_free(struct uproc_pc_results *results)
+uproc_protresults_init(struct uproc_protresults *results)
+{
+    *results = (struct uproc_protresults) UPROC_PROTRESULTS_INITIALIZER;
+}
+
+void
+uproc_protresults_free(struct uproc_protresults *results)
 {
     results->n = 0;
     free(results->preds);
     results->preds = NULL;
+}
+
+int
+uproc_protresults_copy(struct uproc_protresults *dest,
+                       const struct uproc_protresults *src)
+{
+    struct uproc_protpred *p = NULL;
+    if (src->n) {
+        p = malloc(sizeof *p * src->n);
+        if (!p) {
+            uproc_error(UPROC_ENOMEM);
+            return -1;
+        }
+        memcpy(p, src->preds, sizeof *p * src->n);
+    }
+    *dest = *src;
+    dest->preds = p;
+    return 0;
 }

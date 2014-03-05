@@ -97,7 +97,7 @@ randseq(char *buf, size_t len, const uproc_alphabet *alpha,
 
 static void
 append(double **dest, size_t *dest_n, size_t *dest_sz,
-       struct uproc_pc_pred *src, size_t n)
+       struct uproc_protpred *src, size_t n)
 {
     double *d = *dest;
     if (!d) {
@@ -284,11 +284,11 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             unsigned long i, seq_count;
             size_t seq_len;
             uproc_protclass *pc;
-            struct uproc_pc_results results;
+            struct uproc_protresults results;
             results.preds = NULL;
             results.n = results.sz = 0;
-            pc = uproc_pc_create(UPROC_PC_ALL, fwd, rev, substmat,
-                                 prot_filter, NULL);
+            pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, fwd, rev, substmat,
+                                        prot_filter, NULL);
 
             all_preds_n = 0;
             seq_len = 1 << power;
@@ -303,7 +303,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                     }
                 }
                 randseq(seq, seq_len, alpha, aa_probs);
-                uproc_pc_classify(pc, seq, &results);
+                uproc_protclass_classify(pc, seq, &results);
                 append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
                         results.n);
             }

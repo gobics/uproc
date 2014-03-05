@@ -18,12 +18,12 @@
 
 /** \file uproc/protclass.h
  *
- * Classify protein sequences
  *
  * \weakgroup grp_clf
- * @{
+ * \{
  * \weakgroup grp_clf_prot
- * @{
+ *
+ * \{
  */
 #ifndef UPROC_PROTCLASS_H
 #define UPROC_PROTCLASS_H
@@ -33,17 +33,17 @@
 #include "uproc/ecurve.h"
 #include "uproc/substmat.h"
 
-typedef bool uproc_pc_filter(const char*, size_t, uproc_family, double, void*);
+typedef bool uproc_protfilter(const char*, size_t, uproc_family, double, void*);
 
-enum uproc_pc_mode
+enum uproc_protclass_mode
 {
-    UPROC_PC_ALL,
-    UPROC_PC_MAX,
+    UPROC_PROTCLASS_ALL,
+    UPROC_PROTCLASS_MAX,
 };
 
-struct uproc_pc_results
+struct uproc_protresults
 {
-    struct uproc_pc_pred
+    struct uproc_protpred
     {
         uproc_family family;
         double score;
@@ -51,33 +51,37 @@ struct uproc_pc_results
     size_t n, sz;
 };
 
-#define UPROC_PC_RESULTS_INITIALIZER { NULL, 0, 0 }
+#define UPROC_PROTRESULTS_INITIALIZER { NULL, 0, 0 }
 
 typedef struct uproc_protclass_s uproc_protclass;
 
-uproc_protclass *uproc_pc_create(enum uproc_pc_mode mode,
-                                 const uproc_ecurve *fwd,
-                                 const uproc_ecurve *rev,
-                                 const uproc_substmat *substmat,
-                                 uproc_pc_filter *filter, void *filter_arg);
+uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
+                                        const uproc_ecurve *fwd,
+                                        const uproc_ecurve *rev,
+                                        const uproc_substmat *substmat,
+                                        uproc_protfilter *filter,
+                                        void *filter_arg);
 
-void uproc_pc_destroy(uproc_protclass *pc);
+void uproc_protclass_destroy(uproc_protclass *pc);
 
-int uproc_pc_classify(const uproc_protclass *pc, const char *seq,
-                      struct uproc_pc_results *results);
+int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
+                             struct uproc_protresults *results);
 
-typedef void uproc_pc_trace_cb(const char *pfx, const char *sfx, size_t index,
-                               bool reverse, const double *scores,
-                               void *opaque);
+typedef void uproc_protclass_trace_cb(const char *pfx, const char *sfx,
+                                      size_t index, bool reverse,
+                                      const double *scores, void *opaque);
 
-void uproc_pc_set_trace(uproc_protclass *pc, uproc_family family,
-                        uproc_pc_trace_cb *cb, void *cb_arg);
+void uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
+                               uproc_protclass_trace_cb *cb, void *cb_arg);
 
-void uproc_pc_results_free(struct uproc_pc_results *results);
+void uproc_protresults_init(struct uproc_protresults *results);
 
+void uproc_protresults_free(struct uproc_protresults *results);
 
+int uproc_protresults_copy(struct uproc_protresults *dest,
+                          const struct uproc_protresults *src);
 /**
- * @}
- * @}
+ * \}
+ * \}
  */
 #endif

@@ -89,7 +89,7 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
     uproc_bstiter *max_scores_iter;
     union uproc_bst_key key;
     struct uproc_dnapred value;
-    struct uproc_pc_results pc_res = { NULL, 0, 0 };
+    struct uproc_protresults pc_res = { NULL, 0, 0 };
 
     max_scores = uproc_bst_create(UPROC_BST_UINT, sizeof value);
     if (!max_scores) {
@@ -103,7 +103,7 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
     }
 
     while (res = uproc_orfiter_next(orf_iter, &orf), !res) {
-        res = uproc_pc_classify(dc->pc, orf.data, &pc_res);
+        res = uproc_protclass_classify(dc->pc, orf.data, &pc_res);
         if (res) {
             goto error;
         }
@@ -172,7 +172,7 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
 error:
         results->n = 0;
     }
-    uproc_pc_results_free(&pc_res);
+    uproc_protresults_free(&pc_res);
     uproc_bst_destroy(max_scores);
     uproc_orfiter_destroy(orf_iter);
     return res;

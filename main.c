@@ -56,7 +56,7 @@ struct buffer
 #if MAIN_DNA
     struct uproc_dnaresults results[MAX_CHUNK_SIZE];
 #else
-    struct uproc_pc_results results[MAX_CHUNK_SIZE];
+    struct uproc_protresults results[MAX_CHUNK_SIZE];
 #endif
 
     size_t n;
@@ -70,7 +70,7 @@ buf_free(struct buffer *buf) {
 #if MAIN_DNA
         uproc_dnaresults_free(&buf->results[i]);
 #else
-        uproc_pc_results_free(&buf->results[i]);
+        uproc_protresults_free(&buf->results[i]);
 #endif
     }
 }
@@ -213,7 +213,7 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
 #if MAIN_DNA
             struct uproc_dnapred *pred;
 #else
-            struct uproc_pc_pred *pred;
+            struct uproc_protpred *pred;
 #endif
             pred = &buf->results[i].preds[j];
             if (pr_stream) {
@@ -431,7 +431,7 @@ main(int argc, char **argv)
     uproc_substmat *substmat;
 
     uproc_protclass *protclass;
-    enum uproc_pc_mode pc_mode = UPROC_PC_ALL;
+    enum uproc_protclass_mode pc_mode = UPROC_PROTCLASS_ALL;
     uproc_matrix *prot_thresholds = NULL;
     int prot_thresh_num = 3;
 
@@ -622,16 +622,16 @@ main(int argc, char **argv)
 
 #if MAIN_DNA
     if (short_read_mode) {
-        pc_mode = UPROC_PC_MAX;
+        pc_mode = UPROC_PROTCLASS_MAX;
         dc_mode = UPROC_DNACLASS_MAX;
     }
     else {
-        pc_mode = UPROC_PC_ALL;
+        pc_mode = UPROC_PROTCLASS_ALL;
         dc_mode = UPROC_DNACLASS_ALL;
     }
 #endif
-    protclass = uproc_pc_create(pc_mode, fwd, rev, substmat, prot_filter,
-                                prot_thresholds);
+    protclass = uproc_protclass_create(pc_mode, fwd, rev, substmat, prot_filter,
+                                       prot_thresholds);
     if (!protclass) {
         uproc_perror("");
         return EXIT_FAILURE;
@@ -695,8 +695,8 @@ main(int argc, char **argv)
                     res = uproc_dnaclass_classify(dnaclass, out->seq[i].seq,
                                                   &out->results[i]);
 #else
-                    res = uproc_pc_classify(protclass, out->seq[i].seq,
-                                            &out->results[i]);
+                    res = uproc_protclass_classify(protclass, out->seq[i].seq,
+                                                   &out->results[i]);
 #endif
                     if (res < 0) {
                         uproc_perror("error");
@@ -748,7 +748,7 @@ main(int argc, char **argv)
         output_counts(counts, use_idmap ? idmap : NULL, out_stream);
     }
 
-    uproc_pc_destroy(protclass);
+    uproc_protclass_destroy(protclass);
     uproc_ecurve_destroy(fwd);
     uproc_ecurve_destroy(rev);
     uproc_idmap_destroy(idmap);
