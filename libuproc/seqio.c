@@ -340,3 +340,35 @@ uproc_seqio_write_fasta(uproc_io_stream *stream, const char *header,
         uproc_io_printf(stream, "%s\n", seq);
     }
 }
+
+
+void
+uproc_sequence_init(struct uproc_sequence *seq)
+{
+    *seq = (struct uproc_sequence) UPROC_SEQUENCE_INITIALIZER;
+}
+
+void
+uproc_sequence_free(struct uproc_sequence *seq)
+{
+    free(seq->header);
+    seq->header = NULL;
+    free(seq->seq);
+    seq->seq = NULL;
+}
+
+int
+uproc_sequence_copy(struct uproc_sequence *dest, const struct uproc_sequence *src)
+{
+    char *h = strdup(src->header);
+    char *d = strdup(src->seq);
+    if (!h || !d) {
+        free(h);
+        free(d);
+        return uproc_error(UPROC_ENOMEM);
+    }
+    *dest = *src;
+    dest->header = h;
+    dest->seq = d;
+    return 0;
+}

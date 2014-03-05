@@ -43,6 +43,24 @@ struct uproc_sequence
     long offset;
 };
 
+
+/** Initializer for ::uproc_sequence structs */
+#define UPROC_SEQUENCE_INITIALIZER { NULL, NULL, 0 }
+
+
+/** Initialize a ::uproc_sequence struct */
+void uproc_sequence_init(struct uproc_sequence *seq);
+
+
+/** Free allocated pointers of a ::uproc_sequence struct */
+void uproc_sequence_destroy(struct uproc_sequence *seq);
+
+
+/** Deep-copy a ::uproc_sequence struct */
+int uproc_sequence_copy(struct uproc_sequence *dest,
+                        const struct uproc_sequence *src);
+
+
 typedef struct uproc_seqiter_s uproc_seqiter;
 
 uproc_seqiter *uproc_seqiter_create(uproc_io_stream *stream,
