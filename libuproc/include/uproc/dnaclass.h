@@ -60,7 +60,7 @@
 
 /** DNA classification results
  *
-* \defgroup struct_uproc_dnaresults struct uproc_dnaresults
+* \defgroup struct_dnaresults struct uproc_dnaresults
 * \{
  */
 struct uproc_dnaresults
@@ -103,7 +103,7 @@ int uproc_dnaresults_copy(struct uproc_dnaresults *dest,
 
 /** DNA/RNA sequence classifier object
  *
- * \defgroup obj_uproc_dnaclass object uproc_dnaclass
+ * \defgroup obj_dnaclass object uproc_dnaclass
  * \{
  */
 typedef struct uproc_dnaclass_s uproc_dnaclass;

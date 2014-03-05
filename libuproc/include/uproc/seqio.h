@@ -36,6 +36,11 @@
 
 #include "uproc/io.h"
 
+
+/** \defgroup struct_sequence struct uproc_sequence
+ * \{
+ */
+
 /** DNA/RNA or protein sequence */
 struct uproc_sequence
 {
@@ -72,7 +77,14 @@ void uproc_sequence_destroy(struct uproc_sequence *seq);
 /** Deep-copy a ::uproc_sequence struct */
 int uproc_sequence_copy(struct uproc_sequence *dest,
                         const struct uproc_sequence *src);
+/** \} */
 
+
+/** Sequence file iterator
+ *
+ * \defgroup obj_seqiter object uproc_seqiter
+ * \{
+ */
 
 typedef struct uproc_seqiter_s uproc_seqiter;
 
@@ -82,6 +94,7 @@ uproc_seqiter *uproc_seqiter_create(uproc_io_stream *stream,
 void uproc_seqiter_destroy(uproc_seqiter *iter);
 
 int uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq);
+/** \} */
 
 void uproc_seqio_write_fasta(uproc_io_stream *stream, const char *header,
                              const char *seq, int width);

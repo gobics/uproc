@@ -48,6 +48,12 @@
  *
  *  uproc_bst_destroy(t);
  * \endcode
+ *
+ *
+ * \weakgroup grp_intern
+ * \{
+ * \weakgroup grp_intern_bst
+ * \{
  */
 
 #ifndef UPROC_BST_H
@@ -59,6 +65,13 @@
 #include "uproc/common.h"
 #include "uproc/word.h"
 
+
+/** \defgroup obj_bst object uproc_bst
+ * \{
+ */
+
+/** Opaque type for binary search trees */
+typedef struct uproc_bst_s uproc_bst;
 
 /** BST key type */
 union uproc_bst_key
@@ -94,12 +107,8 @@ enum
 };
 
 
-/** Opaque type for binary search trees */
-typedef struct uproc_bst_s uproc_bst;
 
 
-/** BST in-order iterator */
-typedef struct uproc_bstiter_s uproc_bstiter;
 
 
 /** Initialize an empty binary search tree
@@ -175,6 +184,15 @@ int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
  */
 int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value);
 
+/** \} */
+
+
+/** \defgroup obj_bstiter object uproc_bstiter
+ * \{
+ */
+
+/** BST in-order iterator */
+typedef struct uproc_bstiter_s uproc_bstiter;
 
 /** Create BST in-order iterator
  *
@@ -207,4 +225,11 @@ int uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key,
 
 /** Destroy BST iterator */
 void uproc_bstiter_destroy(uproc_bstiter *iter);
+
+/** \} */
+
+/**
+ * \}
+ * \}
+ */
 #endif

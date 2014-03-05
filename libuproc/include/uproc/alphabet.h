@@ -33,6 +33,10 @@
 #include "uproc/common.h"
 
 
+/** \defgroup obj_alphabet object uproc_alphabet
+ * \{
+ */
+
 /** Alphabet type
  *
  * An object of this type is required to translate between characters and the
@@ -92,6 +96,8 @@ int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
  *  passed to uproc_alphabet_create().
  */
 const char *uproc_alphabet_str(const uproc_alphabet *alpha);
+
+/** \} */
 
 
 /**

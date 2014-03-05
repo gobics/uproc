@@ -27,11 +27,12 @@
  *
  * \subsection subsec_opaque Opaque object types
  *
- * Opaque object types are defined as forward declarations to structs hidden in
- * the implementation (to ease API compatibility across different versions):
+ * Opaque object types are usually defined as forward declarations to structs
+ * hidden in the implementation (to ease API compatibility across different
+ * versions):
  *
  * \code
- * typedef struct uproc_OBJECT_s uproc_OBJECT;
+ * typedef ... uproc_OBJECT;
  * \endcode
  *
  * \subsubsection subsec_opaque_create Creation
@@ -130,6 +131,9 @@
  *
  *   \defgroup grp_intern_word Amino acid words
  *     <!-- word.h -->
+ *
+ *   \defgroup grp_intern_bst Binary search tree
+ *     <!-- bst.h -->
  * \}
  *
  */

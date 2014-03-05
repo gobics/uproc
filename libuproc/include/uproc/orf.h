@@ -1,8 +1,4 @@
-/** \file uproc/orf.h
- *
- * Translate DNA/RNA to protein sequence
- *
- * Copyright 2014 Peter Meinicke, Robin Martinjak
+/* Copyright 2014 Peter Meinicke, Robin Martinjak
  *
  * This file is part of libuproc.
  *
@@ -20,21 +16,40 @@
  * along with libuproc.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file uproc/orf.h
+ *
+ * \ref grp_clf_orf
+ *
+ * \weakgroup grp_clf
+ * \{
+ * \weakgroup grp_clf_orf
+ * \{
+ */
+
 #ifndef UPROC_ORF_H
 #define UPROC_ORF_H
-
 
 #include "uproc/common.h"
 #include "uproc/io.h"
 #include "uproc/matrix.h"
 
+
 /** Number of possible frames (forward and reverse) */
 #define UPROC_ORF_FRAMES 6
 
-/** Character to separate the results of uproc_orf_chained() */
-#define UPROC_ORF_SEPARATOR '*'
 
-/** ORF */
+/** \defgroup struct_orf struct uproc_orf
+ * \{
+ */
+
+/** Open reading frame
+ *
+ * The (partial) result of translating DNA into protein. An ORF extracted by
+ * ::uproc_orfiter_next ends after one of the three stop codons (TAA, TAG, TGA)
+ * and starts either at the beginning of the sequence or after the stop codon
+ * that terminated the previous ORF.
+ *
+ */
 struct uproc_orf
 {
     /** Derived amino acid sequence as string */
@@ -53,9 +68,22 @@ struct uproc_orf
     unsigned frame;
 };
 
+
+/** Initializer macro */
+#define UPROC_ORF_INITIALIZER { NULL, 0, 0, 0.0, 0 }
+
+
+/** Initializer function */
+void uproc_orf_init(struct uproc_orf *orf);
+
+
+/** Freeing function */
 void uproc_orf_free(struct uproc_orf *orf);
 
+/** Deep-copy function */
 int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
+/** \} */
+
 
 /** ORF filter function
  *
@@ -66,11 +94,15 @@ int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
 typedef bool uproc_orf_filter(const struct uproc_orf*, const char *, size_t,
                               double, void*);
 
-/** Iterates over a DNA/RNA sequence and yield all possible ORFs */
-typedef struct uproc_orfiter_s uproc_orfiter;
-
 /** Prepare codon score table */
 void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
+
+/** \defgroup obj_orfiter object uproc_orfiter
+ * \{
+ */
+
+/** Iterates over a DNA/RNA sequence and yield all possible ORFs */
+typedef struct uproc_orfiter_s uproc_orfiter;
 
 /** Initialize ORF iterator
  *
@@ -101,5 +133,10 @@ void uproc_orfiter_destroy(uproc_orfiter *iter);
  * \retval other            an error occured
  */
 int uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next);
+/** \} */
 
+/**
+ * \{
+ * \{
+ */
 #endif

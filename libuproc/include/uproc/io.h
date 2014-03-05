@@ -33,6 +33,16 @@
 #include <stdarg.h>
 
 
+/** \defgroup obj_io_stream object uproc_io_stream
+ * \{
+ */
+
+/** Opaque type for IO streams
+ *
+ */
+typedef struct uproc_io_stream uproc_io_stream;
+
+
 /** Underlying stream type */
 enum uproc_io_type
 {
@@ -57,70 +67,10 @@ enum uproc_io_seek_whence
     UPROC_IO_SEEK_CUR,
 };
 
-
-/** Opaque type for IO streams */
-typedef struct uproc_io_stream uproc_io_stream;
-
-
-/** Wrap standard input streams
- *
- * Called by the \ref grp_io_io_stdstream macros.
- */
-uproc_io_stream *uproc_io_stdstream(FILE *stream);
-
-
-/** \defgroup grp_io_io_stdstream Wrapped standard IO streams
- * \{
- */
-
-/** stdin, possibly gzip compressed (if compiled with zlib) */
-#define uproc_stdin uproc_io_stdstream(stdin)
-
-
-/** stdout, uncompressed */
-#define uproc_stdout uproc_io_stdstream(stdout)
-
-
-/** stderr, uncompressed */
-#define uproc_stderr uproc_io_stdstream(stderr)
-/** \} */
-
-
-#if HAVE_ZLIB_H
-
-/** Wraps gz input streams
- *
- * Called by the \ref grp_io_io_stdstream_gz macros.
- */
-uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
-
-/** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
- *
- * These macros are only available if libuproc was compiled with zlib support.
- * \{
- */
-
-/** stdin, possibly gzip compressed */
-#define uproc_stdin_gz uproc_io_stdstream_gz(stdin)
-
-
-/** stdout, gzip compressed */
-#define uproc_stdout_gz uproc_io_stdstream_gz(stdout)
-
-
-/** stderr, gzip compressed */
-#define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
-#undef uproc_stdin
-#define uproc_stdin uproc_stdin_gz
-/** \} */
-#endif
-
 /** Open a file
  *
  * Opens the file whose name is constructed by formatting \c pathfmt with the
  * subsequent arguments (using \c sprintf).
- *
- * XXX
  */
 uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
                                const char *pathfmt, ...);
@@ -154,6 +104,60 @@ int uproc_io_seek(uproc_io_stream *stream, long offset,
 long uproc_io_tell(uproc_io_stream *stream);
 
 int uproc_io_eof(uproc_io_stream *stream);
+/** \} */
+
+
+/** \defgroup grp_io_io_stdstream Wrapped standard IO streams
+ * \{
+ */
+
+/** Wrap standard input streams
+ *
+ * Called by the \ref grp_io_io_stdstream macros.
+ */
+uproc_io_stream *uproc_io_stdstream(FILE *stream);
+
+
+/** stdin, possibly gzip compressed (if compiled with zlib) */
+#define uproc_stdin uproc_io_stdstream(stdin)
+
+
+/** stdout, uncompressed */
+#define uproc_stdout uproc_io_stdstream(stdout)
+
+
+/** stderr, uncompressed */
+#define uproc_stderr uproc_io_stdstream(stderr)
+/** \} */
+
+
+#if HAVE_ZLIB_H
+/** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
+ *
+ * These macros are only available if libuproc was compiled with zlib support.
+ * \{
+ */
+
+/** Wraps gz input streams
+ *
+ * Called by the \ref grp_io_io_stdstream_gz macros.
+ */
+uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
+
+/** stdin, possibly gzip compressed */
+#define uproc_stdin_gz uproc_io_stdstream_gz(stdin)
+
+
+/** stdout, gzip compressed */
+#define uproc_stdout_gz uproc_io_stdstream_gz(stdout)
+
+
+/** stderr, gzip compressed */
+#define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
+#undef uproc_stdin
+#define uproc_stdin uproc_stdin_gz
+/** \} */
+#endif
 
 
 /**

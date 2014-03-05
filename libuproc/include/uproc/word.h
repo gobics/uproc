@@ -34,6 +34,10 @@
 #include <stdbool.h>
 #include "uproc/alphabet.h"
 
+/** \defgroup struct_word struct uproc_word
+ * \{
+ */
+
 /** Amino acid word */
 struct uproc_word
 {
@@ -123,6 +127,12 @@ bool uproc_word_equal(const struct uproc_word *w1,
  * \return  -1, 0 or 1 if `w1` is less than, equal to, or greater than `w2`.
  */
 int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
+/** \} */
+
+
+/** \defgroup obj_worditer object uproc_worditer
+ * \{
+ */
 
 /** Initialize an iterator over a sequence
  *
@@ -154,6 +164,7 @@ int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
 
 void uproc_worditer_destroy(uproc_worditer *iter);
+/** \} */
 
 /**
  * \}
