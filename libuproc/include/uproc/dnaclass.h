@@ -58,10 +58,13 @@
 #include "uproc/matrix.h"
 
 
+ /** \defgroup struct_dnaresults struct uproc_dnaresults
+ * Follows the \ref subsec_struct
+ * \{
+ */
+
 /** DNA classification results
  *
-* \defgroup struct_dnaresults struct uproc_dnaresults
-* \{
  */
 struct uproc_dnaresults
 {
@@ -104,6 +107,7 @@ int uproc_dnaresults_copy(struct uproc_dnaresults *dest,
 /** DNA/RNA sequence classifier object
  *
  * \defgroup obj_dnaclass object uproc_dnaclass
+ * Follows the \ref subsec_opaque
  * \{
  */
 typedef struct uproc_dnaclass_s uproc_dnaclass;
