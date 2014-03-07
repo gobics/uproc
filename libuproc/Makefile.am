@@ -24,6 +24,7 @@ libuproc_la_SOURCES = alphabet.c \
 					error.c \
 					idmap.c \
 					io.c \
+					list.c \
 					matrix.c \
 					orf.c \
 					protclass.c \

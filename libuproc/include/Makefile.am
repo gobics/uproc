@@ -8,6 +8,7 @@ nobase_include_HEADERS = uproc.h \
 	uproc/error.h \
 	uproc/idmap.h \
 	uproc/io.h \
+	uproc/list.h \
 	uproc/matrix.h \
 	uproc/orf.h \
 	uproc/protclass.h \

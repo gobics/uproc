@@ -132,6 +132,9 @@
  *   \defgroup grp_intern_word Amino acid words
  *     <!-- word.h -->
  *
+ *   \defgroup grp_intern_list List
+ *     <!-- list.h -->
+ *
  *   \defgroup grp_intern_bst Binary search tree
  *     <!-- bst.h -->
  * \}
@@ -152,6 +155,7 @@
 #include <uproc/error.h>
 #include <uproc/idmap.h>
 #include <uproc/io.h>
+#include <uproc/list.h>
 #include <uproc/orf.h>
 #include <uproc/substmat.h>
 #include <uproc/seqio.h>
