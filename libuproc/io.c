@@ -144,6 +144,15 @@ gzvprintf(gzFile file, const char *format, va_list va)
     return n;
 }
 #endif
+#else
+uproc_io_stream *
+uproc_io_stdstream_gz(FILE *stream) {
+    if (stream == stdin) {
+        return uproc_io_stdstream(stdin);
+    }
+    uproc_error_msg(UPROC_ENOTSUP, "gzip compression not available");
+    return NULL;
+}
 #endif
 
 static uproc_io_stream *

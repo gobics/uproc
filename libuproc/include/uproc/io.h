@@ -118,8 +118,8 @@ int uproc_io_eof(uproc_io_stream *stream);
 uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 
-/** stdin, possibly gzip compressed (if compiled with zlib) */
-#define uproc_stdin uproc_io_stdstream(stdin)
+/** stdin, possibly gzip compressed */
+#define uproc_stdin uproc_io_stdstream_gz(stdin)
 
 
 /** stdout, uncompressed */
@@ -131,7 +131,6 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
 /** \} */
 
 
-#if HAVE_ZLIB_H
 /** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
  *
  * These macros are only available if libuproc was compiled with zlib support.
@@ -144,9 +143,6 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
  */
 uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 
-/** stdin, possibly gzip compressed */
-#define uproc_stdin_gz uproc_io_stdstream_gz(stdin)
-
 
 /** stdout, gzip compressed */
 #define uproc_stdout_gz uproc_io_stdstream_gz(stdout)
@@ -154,10 +150,7 @@ uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 
 /** stderr, gzip compressed */
 #define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
-#undef uproc_stdin
-#define uproc_stdin uproc_stdin_gz
 /** \} */
-#endif
 
 
 /**
