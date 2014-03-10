@@ -37,34 +37,31 @@
 
 /** Protein classification results
  *
-* \defgroup struct_protresults struct uproc_protresults
+* \defgroup struct_protresult struct uproc_protresult
 * \{
  */
-struct uproc_protresults
+struct uproc_protresult
 {
-    struct uproc_protpred
-    {
-        uproc_family family;
-        double score;
-    } *preds;
-    size_t n, sz;
+    uproc_family family;
+    double score;
 };
 
-/** Initializer for ::uproc_protresults structs */
-#define UPROC_PROTRESULTS_INITIALIZER { NULL, 0, 0 }
+
+/** Initializer for ::uproc_protresult structs */
+#define UPROC_PROTRESULT_INITIALIZER { 0, 0 }
 
 
-/** Initialize a ::uproc_protresults struct */
-void uproc_protresults_init(struct uproc_protresults *results);
+/** Initialize a ::uproc_protresult struct */
+void uproc_protresult_init(struct uproc_protresult *results);
 
 
-/** Free allocated pointers of ::uproc_protresults struct */
-void uproc_protresults_free(struct uproc_protresults *results);
+/** Free allocated pointers of ::uproc_protresult struct */
+void uproc_protresult_free(struct uproc_protresult *results);
 
 
-/** Deep-copy a ::uproc_protresults struct */
-int uproc_protresults_copy(struct uproc_protresults *dest,
-                           const struct uproc_protresults *src);
+/** Deep-copy a ::uproc_protresult struct */
+int uproc_protresult_copy(struct uproc_protresult *dest,
+                          const struct uproc_protresult *src);
 
 
 
@@ -111,7 +108,7 @@ uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
 void uproc_protclass_destroy(uproc_protclass *pc);
 
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
-                             struct uproc_protresults *results);
+                             uproc_list **results);
 
 typedef void uproc_protclass_trace_cb(const char *pfx, const char *sfx,
                                       size_t index, bool reverse,

@@ -28,6 +28,7 @@
 #include "uproc/common.h"
 #include "uproc/error.h"
 #include "uproc/bst.h"
+#include "uproc/list.h"
 #include "uproc/protclass.h"
 
 struct uproc_protclass_s
@@ -253,30 +254,18 @@ scores_compute(const struct uproc_protclass_s *pc, const char *seq,
 
 static int
 scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
-                uproc_bst *score_tree, struct uproc_protresults *results)
+                uproc_bst *score_tree, uproc_list *results)
 {
     int res = 0;
     uproc_bstiter *iter;
     union uproc_bst_key key;
     struct sc value;
     size_t seq_len = strlen(seq);
+    struct uproc_protresult pred, pred_max = { .score = -INFINITY };
 
-    results->n = uproc_bst_size(score_tree);
-    if (results->n > results->sz) {
-        void *tmp;
-        tmp = realloc(results->preds, results->n * sizeof *results->preds);
-        if (!tmp) {
-            res = uproc_error(UPROC_ENOMEM);
-            goto error;
-        }
-        results->preds = tmp;
-        results->sz = results->n;
-    }
-
-    results->n = 0;
     iter = uproc_bstiter_create(score_tree);
     if (!iter) {
-        goto error;
+        return -1;
     }
     while (!uproc_bstiter_next(iter, &key, &value)) {
         uproc_family family = key.uint;
@@ -285,24 +274,26 @@ scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
             !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
             continue;
         }
-        results->preds[results->n].score = score;
-        results->preds[results->n].family = family;
-        results->n++;
-    }
-    uproc_bstiter_destroy(iter);
-
-    if (pc->mode == UPROC_PROTCLASS_MAX && results->n > 0) {
-        size_t imax = 0;
-        for (size_t i = 1; i < results->n; i++) {
-            if (results->preds[i].score > results->preds[imax].score) {
-                imax = i;
+        pred.score = score;
+        pred.family = family;
+        if (pc->mode == UPROC_PROTCLASS_MAX) {
+            if (!uproc_list_size(results)) {
+                pred_max = pred;
+                res = uproc_list_append(results, &pred);
+                if (res) {
+                    break;
+                }
+            }
+            else if (pred.score > pred_max.score) {
+                pred_max = pred;
+                uproc_list_set(results, 0, &pred_max);
             }
         }
-        results->preds[0] = results->preds[imax];
-        results->n = 1;
+        else {
+            uproc_list_append(results, &pred);
+        }
     }
-    res = 0;
-error:
+    uproc_bstiter_destroy(iter);
     return res;
 }
 
@@ -349,12 +340,32 @@ uproc_protclass_destroy(uproc_protclass *pc)
     free(pc);
 }
 
-static int
-classify(const struct uproc_protclass_s *pc, const char *seq,
-         struct uproc_protresults *results)
+
+static void
+map_list_protresult_free(void *value, void *opaque)
+{
+    (void) opaque;
+    uproc_protresult_free(value);
+}
+
+
+int
+uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
+                         uproc_list **results)
 {
     int res;
     uproc_bst *scores;
+
+    if (!*results) {
+        *results = uproc_list_create(sizeof (struct uproc_protresult));
+        if (!*results) {
+            return -1;
+        }
+    }
+    else {
+        uproc_list_map(*results, map_list_protresult_free, NULL);
+        uproc_list_clear(*results);
+    }
 
     scores = uproc_bst_create(UPROC_BST_UINT, sizeof (struct sc));
     if (!scores) {
@@ -362,35 +373,12 @@ classify(const struct uproc_protclass_s *pc, const char *seq,
     }
     res = scores_compute(pc, seq, scores);
     if (res || uproc_bst_isempty(scores)) {
-        results->n = 0;
         goto error;
     }
-    res = scores_finalize(pc, seq, scores, results);
+    res = scores_finalize(pc, seq, scores, *results);
 error:
     uproc_bst_destroy(scores);
     return res;
-}
-
-int
-uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
-                         struct uproc_protresults *results)
-{
-    int res;
-    size_t i, imax = 0;
-    res = classify(pc, seq, results);
-    if (res || !results->n) {
-        return res;
-    }
-    if (pc->mode == UPROC_PROTCLASS_MAX) {
-        for (i = 1; i < results->n; i++) {
-            if (results->preds[i].score > results->preds[imax].score) {
-                imax = i;
-            }
-        }
-        results->preds[0] = results->preds[imax];
-        results->n = 1;
-    }
-    return 0;
 }
 
 void
@@ -403,33 +391,21 @@ uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
 }
 
 void
-uproc_protresults_init(struct uproc_protresults *results)
+uproc_protresult_init(struct uproc_protresult *results)
 {
-    *results = (struct uproc_protresults) UPROC_PROTRESULTS_INITIALIZER;
+    *results = (struct uproc_protresult) UPROC_PROTRESULT_INITIALIZER;
 }
 
 void
-uproc_protresults_free(struct uproc_protresults *results)
+uproc_protresult_free(struct uproc_protresult *results)
 {
-    results->n = 0;
-    free(results->preds);
-    results->preds = NULL;
+    (void) results;
 }
 
 int
-uproc_protresults_copy(struct uproc_protresults *dest,
-                       const struct uproc_protresults *src)
+uproc_protresult_copy(struct uproc_protresult *dest,
+                      const struct uproc_protresult *src)
 {
-    struct uproc_protpred *p = NULL;
-    if (src->n) {
-        p = malloc(sizeof *p * src->n);
-        if (!p) {
-            uproc_error(UPROC_ENOMEM);
-            return -1;
-        }
-        memcpy(p, src->preds, sizeof *p * src->n);
-    }
     *dest = *src;
-    dest->preds = p;
     return 0;
 }

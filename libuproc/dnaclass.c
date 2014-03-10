@@ -31,6 +31,7 @@
 #include "uproc/codon.h"
 #include "uproc/error.h"
 #include "uproc/bst.h"
+#include "uproc/list.h"
 #include "uproc/dnaclass.h"
 #include "uproc/protclass.h"
 #include "uproc/orf.h"
@@ -77,9 +78,27 @@ uproc_dnaclass_destroy(uproc_dnaclass *dc)
     free(dc);
 }
 
+
+static void
+map_list_dnaresult_free(void *value, void *opaque)
+{
+    (void) opaque;
+    uproc_dnaresult_free(value);
+}
+
+
+static void
+map_bst_dnaresult_free(union uproc_bst_key key, void *value, void *opaque)
+{
+    (void) key;
+    (void) opaque;
+    uproc_dnaresult_free(value);
+}
+
+
 int
 uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
-                  struct uproc_dnaresults *results)
+                        uproc_list **results)
 {
     int res;
     size_t i;
@@ -88,40 +107,53 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
     uproc_bst *max_scores;
     uproc_bstiter *max_scores_iter;
     union uproc_bst_key key;
-    struct uproc_dnapred value;
-    struct uproc_protresults pc_res = { NULL, 0, 0 };
+    uproc_list *pc_results = NULL;
 
-    max_scores = uproc_bst_create(UPROC_BST_UINT, sizeof value);
-    if (!max_scores) {
-        return -1;
+    struct uproc_dnaresult
+        pred = UPROC_DNARESULT_INITIALIZER,
+        pred_max = UPROC_DNARESULT_INITIALIZER;
+
+    if (!*results) {
+        *results = uproc_list_create(sizeof pred);
+        if (!*results) {
+            return -1;
+        }
+    }
+    else {
+        uproc_list_map(*results, map_list_dnaresult_free, NULL);
+        uproc_list_clear(*results);
     }
 
+    max_scores = uproc_bst_create(UPROC_BST_UINT, sizeof pred);
     orf_iter = uproc_orfiter_create(seq, dc->codon_scores, dc->orf_filter,
                                     dc->orf_filter_arg);
-    if (!orf_iter) {
-        return -1;
+
+    if (!max_scores || !orf_iter) {
+        res = -1;
+        goto error;
     }
 
     while (res = uproc_orfiter_next(orf_iter, &orf), !res) {
-        res = uproc_protclass_classify(dc->pc, orf.data, &pc_res);
+        res = uproc_protclass_classify(dc->pc, orf.data, &pc_results);
         if (res) {
             goto error;
         }
-        for (i = 0; i < pc_res.n; i++) {
-            double score = pc_res.preds[i].score;
-            key.uint = pc_res.preds[i].family;
-            value.score = -INFINITY;
-            value.orf.data = NULL;
-            (void) uproc_bst_get(max_scores, key, &value);
-            if (score > value.score) {
-                uproc_orf_free(&value.orf);
-                value.family = pc_res.preds[i].family;
-                value.score = score;
-                res = uproc_orf_copy(&value.orf, &orf);
+        for (size_t n = uproc_list_size(pc_results), i = 0; i < n; i++) {
+            struct uproc_protresult pp;
+            (void) uproc_list_get(pc_results, i, &pp);
+            key.uint = pp.family;
+            uproc_dnaresult_init(&pred);
+            pred.score = -INFINITY;
+            (void) uproc_bst_get(max_scores, key, &pred);
+            if (pp.score > pred.score) {
+                uproc_dnaresult_free(&pred);
+                pred.family = pp.family;
+                pred.score = pp.score;
+                res = uproc_orf_copy(&pred.orf, &orf);
                 if (res) {
                     goto error;
                 }
-                res = uproc_bst_update(max_scores, key, &value);
+                res = uproc_bst_update(max_scores, key, &pred);
                 if (res) {
                     goto error;
                 }
@@ -132,93 +164,65 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
         goto error;
     }
 
-    for (i = 0; i < results->n; i++) {
-        uproc_orf_free(&results->preds[i].orf);
-    }
-
-    results->n = uproc_bst_size(max_scores);
-    if (results->n > results->sz) {
-        void *tmp;
-        tmp = realloc(results->preds, results->n * sizeof *results->preds);
-        if (!tmp) {
-            res = uproc_error(UPROC_ENOMEM);
-            goto error;
-        }
-        results->preds = tmp;
-        results->sz = results->n;
-    }
     max_scores_iter = uproc_bstiter_create(max_scores);
     if (!max_scores_iter) {
         goto error;
     }
-    for (i = 0; !uproc_bstiter_next(max_scores_iter, &key, &value); i++) {
-        results->preds[i] = value;
+    for (i = 0; !uproc_bstiter_next(max_scores_iter, &key, &pred); i++) {
+        if (dc->mode == UPROC_DNACLASS_MAX) {
+            if (!uproc_list_size(*results)) {
+                pred_max = pred;
+                res = uproc_list_append(*results, &pred);
+                if (res) {
+                    break;
+                }
+            }
+            else if (pred.score > pred_max.score) {
+                uproc_dnaresult_free(&pred_max);
+                pred_max = pred;
+                uproc_list_set(*results, 0, &pred_max);
+            }
+            else {
+                uproc_dnaresult_free(&pred);
+            }
+        }
+        else {
+            res = uproc_list_append(*results, &pred);
+            if (res) {
+                goto error;
+            }
+        }
     }
     uproc_bstiter_destroy(max_scores_iter);
 
-    if (dc->mode == UPROC_DNACLASS_MAX && results->n > 0) {
-        size_t imax = 0;
-        for (i = 1; i < results->n; i++) {
-            if (results->preds[i].score > results->preds[imax].score) {
-                imax = i;
-            }
-        }
-        results->preds[0] = results->preds[imax];
-        results->n = 1;
-    }
-
     res = 0;
+
     if (0) {
 error:
-        results->n = 0;
+        uproc_bst_map(max_scores, map_bst_dnaresult_free, NULL);
     }
-    uproc_protresults_free(&pc_res);
+    uproc_list_destroy(pc_results);
     uproc_bst_destroy(max_scores);
     uproc_orfiter_destroy(orf_iter);
     return res;
 }
 
 void
-uproc_dnaresults_init(struct uproc_dnaresults *results)
+uproc_dnaresult_init(struct uproc_dnaresult *result)
 {
-    *results = (struct uproc_dnaresults) UPROC_DNARESULTS_INITIALIZER;
+    *result = (struct uproc_dnaresult) UPROC_DNARESULT_INITIALIZER;
 }
 
 void
-uproc_dnaresults_free(struct uproc_dnaresults *results)
+uproc_dnaresult_free(struct uproc_dnaresult *result)
 {
-    for (size_t i = 0; i < results->n; i++) {
-        uproc_orf_free(&results->preds[i].orf);
-    }
-    results->n = 0;
-    free(results->preds);
-    results->preds = NULL;
+    uproc_orf_free(&result->orf);
 }
 
 int
-uproc_dnaresults_copy(struct uproc_dnaresults *dest,
-                      const struct uproc_dnaresults *src)
+uproc_dnaresult_copy(struct uproc_dnaresult *dest,
+                      const struct uproc_dnaresult *src)
 {
-    struct uproc_dnapred *p = NULL;
-    if (src->n) {
-        p = malloc(sizeof *p * src->n);
-        if (!p) {
-            uproc_error(UPROC_ENOMEM);
-            return -1;
-        }
-        memcpy(p, src->preds, sizeof *p * src->n);
-        for (size_t i = 0; i < src->n; i++) {
-            int res = uproc_orf_copy(&p[i].orf, &src->preds[i].orf);
-            if (res) {
-                for (size_t k = 0; k < i; k++) {
-                    uproc_orf_free(&p[i].orf);
-                }
-                free(p);
-                return -1;
-            }
-        }
-    }
     *dest = *src;
-    dest->preds = p;
-    return 0;
+    return uproc_orf_copy(&dest->orf, &src->orf);
 }

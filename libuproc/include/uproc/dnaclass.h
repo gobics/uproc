@@ -28,19 +28,23 @@
  * \details
  * Example usage:
  * \code
- * struct uproc_dnaresults results = UPROC_DNARESULTS_INITIALIZER;
+ * uproc_list *results = NULL;
  * uproc_dnaclass *dc = uproc_dc_create(...);
  * if (!dc) {
  *     // handle error
  * }
  * for (int i = 0; i < n; i++) {
- *     int res = uproc_dc_classify(dc, seqs[i], &results);
- *     if (res) {
+ *     size_t j, n_results;
+ *     struct uproc_dnaresult res;
+ *     if (uproc_dc_classify(dc, seqs[i], &results)) {
  *         // handle error
  *     }
- *     // do something with the results
+ *     n_results = uproc_list_size(results);
+ *     for (j = 0; j < n_results; j++) {
+ *         (void) uproc_list_get(results, j, &res);
+ *          // do something with the result
+ *     }
  * }
- * uproc_dnaresults_free(&results);
  * \endcode
  *
  * Related modules:
@@ -58,49 +62,42 @@
 #include "uproc/matrix.h"
 
 
- /** \defgroup struct_dnaresults struct uproc_dnaresults
+ /** \defgroup struct_dnaresult struct uproc_dnaresult
  * Follows the \ref subsec_struct
  * \{
  */
 
-/** DNA classification results
+/** DNA classification result
  *
  */
-struct uproc_dnaresults
+struct uproc_dnaresult
 {
-    struct uproc_dnapred
-    {
-        /** Predicted family */
-        uproc_family family;
-        /** Prediction score */
-        double score;
+    /** Predicted family */
+    uproc_family family;
 
-        /** ORF from which the prediction was made */
-        struct uproc_orf orf;
-    } *preds;
-    /** Number of results */
-    size_t n;
+    /** Prediction score */
+    double score;
 
-    /** Allocated size of \c preds */
-    size_t sz;
+    /** ORF from which the prediction was made */
+    struct uproc_orf orf;
 };
 
 
-/** Initializer for ::uproc_dnaresults structs */
-#define UPROC_DNARESULTS_INITIALIZER { NULL, 0, 0 }
+/** Initializer for ::uproc_dnaresult structs */
+#define UPROC_DNARESULT_INITIALIZER { 0, 0, UPROC_ORF_INITIALIZER }
 
 
-/** Initialize a ::uproc_dnaresults struct */
-void uproc_dnaresults_init(struct uproc_dnaresults *results);
+/** Initialize a ::uproc_dnaresult struct */
+void uproc_dnaresult_init(struct uproc_dnaresult *result);
 
 
-/** Free allocated pointers of ::uproc_dnaresults struct */
-void uproc_dnaresults_free(struct uproc_dnaresults *results);
+/** Free allocated pointers of ::uproc_dnaresult struct */
+void uproc_dnaresult_free(struct uproc_dnaresult *result);
 
 
-/** Deep-copy a ::uproc_dnaresults struct */
-int uproc_dnaresults_copy(struct uproc_dnaresults *dest,
-                          const struct uproc_dnaresults *src);
+/** Deep-copy a ::uproc_dnaresult struct */
+int uproc_dnaresult_copy(struct uproc_dnaresult *dest,
+                         const struct uproc_dnaresult *src);
 /** \} */
 
 
@@ -149,17 +146,19 @@ void uproc_dnaclass_destroy(uproc_dnaclass *dc);
 
 /** Classify DNA sequence
  *
- * \c results should be a pointer to a struct ::uproc_dnaresults which has
- * been initialized to zero values (using ::UPROC_DNARESULTS_INITIALIZER or
- * with static storage duration) or which has already been used. It will
- * automatically be resized if needed.
+ * \c results should be a pointer to a \c (::uproc_list *) that is either NULL
+ * (in which case a new list is created) or which has which has already been
+ * used with this function.
+ * The list will contain items of type \ref struct_dnaresult. If \c *results is
+ * not NULL, all its elements will be passed to ::uproc_dnaresult_free.
+ *
  *
  * \param dc        DNA classifier
  * \param seq       sequence to classify
  * \param results   _OUT_: classification results
  */
 int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
-                            struct uproc_dnaresults *results);
+                            uproc_list **results);
 /** \} */
 
 /**

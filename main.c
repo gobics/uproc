@@ -53,25 +53,29 @@ struct buffer
         size_t seq_sz;
     } seq[MAX_CHUNK_SIZE];
 
-#if MAIN_DNA
-    struct uproc_dnaresults results[MAX_CHUNK_SIZE];
-#else
-    struct uproc_protresults results[MAX_CHUNK_SIZE];
-#endif
-
+    uproc_list *results[MAX_CHUNK_SIZE];
     size_t n;
 } buf[2];
+
+static void
+map_list_dnaresult_free(void *value, void *opaque)
+{
+    (void) opaque;
+    struct uproc_dnaresult *p = value;
+    uproc_dnaresult_free(value);
+}
 
 void
 buf_free(struct buffer *buf) {
     for (size_t i = 0; i < MAX_CHUNK_SIZE; i++) {
         free(buf->seq[i].header);
         free(buf->seq[i].seq);
+        if (buf->results[i]) {
 #if MAIN_DNA
-        uproc_dnaresults_free(&buf->results[i]);
-#else
-        uproc_protresults_free(&buf->results[i]);
+            uproc_list_map(buf->results[i], map_list_dnaresult_free, NULL);
 #endif
+            uproc_list_destroy(buf->results[i]);
+        }
     }
 }
 
@@ -195,6 +199,7 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
     return orf->score >= uproc_matrix_get(thresh, r, c);
 }
 
+
 void
 output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
        uproc_idmap *idmap, uproc_io_stream *pr_stream,
@@ -203,41 +208,45 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
     size_t i, j;
     *n_seqs += buf->n;
     for (i = 0; i < buf->n; i++) {
-        if (!buf->results[i].n) {
-            if (unexplained) {
-                *unexplained += 1;
-            }
+        uproc_list *results = buf->results[i];
+        if (!uproc_list_size(results)) {
+            *unexplained += 1;
             continue;
         }
-        for (j = 0; j < buf->results[i].n; j++) {
+
+        if (pr_stream) {
+            continue;
+        }
+
 #if MAIN_DNA
-            struct uproc_dnapred *pred;
+        struct uproc_dnaresult result;
 #else
-            struct uproc_protpred *pred;
+        struct uproc_protresult result;
 #endif
-            pred = &buf->results[i].preds[j];
-            if (pr_stream) {
-                uproc_io_printf(pr_stream, "%zu,%s,%zu", i + pr_seq_offset + 1,
-                                buf->seq[i].header, strlen(buf->seq[i].seq));
+        size_t n_results = uproc_list_size(results);
+        for (j = 0; j < n_results; j++) {
+            uproc_list_get(results, j, &result);
+            counts[result.family] += 1;
+            if (!pr_stream) {
+                continue;
+            }
+            uproc_io_printf(pr_stream, "%zu,%s,%zu", i + pr_seq_offset + 1,
+                            buf->seq[i].header, strlen(buf->seq[i].seq));
 #if MAIN_DNA
-                uproc_io_printf(pr_stream, ",%u,%zu,%zu",
-                                pred->orf.frame + 1, pred->orf.start + 1,
-                                pred->orf.length);
+            uproc_io_printf(pr_stream, ",%u,%zu,%zu",
+                            result.orf.frame + 1, result.orf.start + 1,
+                            result.orf.length);
 #endif
-                if (idmap) {
-                    uproc_io_printf(pr_stream, ",%s",
-                                    uproc_idmap_str(idmap, pred->family));
-                }
-                else {
-                    uproc_io_printf(pr_stream, ",%" UPROC_FAMILY_PRI,
-                                    pred->family);
-                }
-                uproc_io_printf(pr_stream, ",%1.3f", pred->score);
-                uproc_io_printf(pr_stream, "\n");
+            if (idmap) {
+                uproc_io_printf(pr_stream, ",%s",
+                                uproc_idmap_str(idmap, result.family));
             }
-            if (counts) {
-                counts[pred->family] += 1;
+            else {
+                uproc_io_printf(pr_stream, ",%" UPROC_FAMILY_PRI,
+                                result.family);
             }
+            uproc_io_printf(pr_stream, ",%1.3f", result.score);
+            uproc_io_printf(pr_stream, "\n");
         }
     }
 }
@@ -726,8 +735,8 @@ main(int argc, char **argv)
                             output(out, (i_chunk - 1) * chunk_size, &n_seqs,
                                    use_idmap ? idmap : NULL,
                                    out_preds ? out_stream : NULL,
-                                   out_counts ? counts : NULL,
-                                   out_stats ? &unexplained : NULL);
+                                   counts,
+                                   &unexplained);
                         }
                     }
                 }

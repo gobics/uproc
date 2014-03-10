@@ -96,9 +96,10 @@ randseq(char *buf, size_t len, const uproc_alphabet *alpha,
 }
 
 static void
-append(double **dest, size_t *dest_n, size_t *dest_sz,
-       struct uproc_protpred *src, size_t n)
+append(double **dest, size_t *dest_n, size_t *dest_sz, uproc_list *src)
 {
+    struct uproc_protresult result;
+    size_t n = uproc_list_size(src);
     double *d = *dest;
     if (!d) {
         *dest_sz = 1000000;
@@ -111,7 +112,8 @@ append(double **dest, size_t *dest_n, size_t *dest_sz,
         d = xrealloc(d, *dest_sz * sizeof *d);
     }
     for (size_t i = 0; i < n; i++) {
-        d[*dest_n + i] = src[i].score;
+        uproc_list_get(src, i, &result);
+        d[*dest_n + i] = result.score;
     }
     *dest = d;
     *dest_n += n;
@@ -284,9 +286,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             unsigned long i, seq_count;
             size_t seq_len;
             uproc_protclass *pc;
-            struct uproc_protresults results;
-            results.preds = NULL;
-            results.n = results.sz = 0;
+            uproc_list *results = NULL;
             pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, fwd, rev, substmat,
                                         prot_filter, NULL);
 
@@ -304,8 +304,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                 }
                 randseq(seq, seq_len, alpha, aa_probs);
                 uproc_protclass_classify(pc, seq, &results);
-                append(&all_preds, &all_preds_n, &all_preds_sz, results.preds,
-                        results.n);
+                append(&all_preds, &all_preds_n, &all_preds_sz, results);
             }
             qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);
 
@@ -315,7 +314,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000,
                     all_preds_n - 1)];
             free(all_preds);
-            free(results.preds);
+            uproc_list_destroy(results);
         }
     }
     progress(NULL, 100.0);
