@@ -27,6 +27,7 @@ uproc_makedb_SOURCES = makedb/makedb.h makedb/makedb.c makedb/build_ecurves.c \
 					makedb/calib.c  makedb/progress.c \
 					uproc_opt.h
 uproc_makedb_CPPFLAGS = -I$(top_srcdir)/libuproc/include -I$(top_srcdir)/libuproc
+uproc_makedb_CFLAGS = $(OPENMP_CFLAGS)
 
 doc_DATA = INSTALL README NEWS AUTHORS COPYING COPYING.LESSER
 
