@@ -151,16 +151,17 @@
 #include <uproc/bst.h>
 #include <uproc/codon.h>
 #include <uproc/common.h>
+#include <uproc/dnaclass.h>
 #include <uproc/ecurve.h>
 #include <uproc/error.h>
 #include <uproc/idmap.h>
 #include <uproc/io.h>
 #include <uproc/list.h>
+#include <uproc/matrix.h>
 #include <uproc/orf.h>
+#include <uproc/protclass.h>
 #include <uproc/substmat.h>
 #include <uproc/seqio.h>
 #include <uproc/word.h>
 
-#include <uproc/protclass.h>
-#include <uproc/dnaclass.h>
 #endif

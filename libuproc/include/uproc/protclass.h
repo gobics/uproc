@@ -33,6 +33,7 @@
 #include "uproc/common.h"
 #include "uproc/ecurve.h"
 #include "uproc/substmat.h"
+#include "uproc/list.h"
 
 
 /** Protein classification results
