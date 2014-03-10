@@ -123,6 +123,9 @@
  *
  * \defgroup grp_intern Lower-level modules
  * \{
+ *   \defgroup grp_intern_common Common definitions
+ *     <!-- common.h -->
+ *
  *   \defgroup grp_intern_codon Nucleotides and codons
  *     <!-- codon.h -->
  *
