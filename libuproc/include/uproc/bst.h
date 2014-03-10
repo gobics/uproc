@@ -180,6 +180,20 @@ int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
  */
 int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value);
 
+/** Apply function to all items
+ *
+ * The first two arguments passed to \c func are the key and a pointer to the
+ * value of an item in the tree. The pointed-to value is not a copy, so
+ * modifying it will also affect the stored value.
+ * The third argument to \c func is the user-supplied \c opaque pointer.
+ *
+ * \param t         BST instance
+ * \param func      function to call
+ * \param opaque    second argument to \c function
+ */
+void uproc_bst_map(const uproc_bst *t,
+                   void(*func)(union uproc_bst_key, void *, void *),
+                   void *opaque);
 /** \} */
 
 

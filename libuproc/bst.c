@@ -202,6 +202,18 @@ bstnode_remove(struct bstnode *n)
     return p;
 }
 
+static void
+bstnode_map(struct bstnode *n,
+            void(*func)(union uproc_bst_key, void *, void *), void *opaque)
+{
+    if (!n) {
+        return;
+    }
+    bstnode_map(n->left, func, opaque);
+    func(n->key, n->value, opaque);
+    bstnode_map(n->right, func, opaque);
+}
+
 uproc_bst *
 uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size)
 {
@@ -342,6 +354,13 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
     free(del);
     t->size--;
     return 0;
+}
+
+void
+uproc_bst_map(const uproc_bst *t,
+              void(*func)(union uproc_bst_key, void *, void *), void *opaque)
+{
+    bstnode_map(t->root, func, opaque);
 }
 
 uproc_bstiter *
