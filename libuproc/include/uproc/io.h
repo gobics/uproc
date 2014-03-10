@@ -78,7 +78,7 @@ uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
 
 /** Open a file using a va_list
  *
- * Justl ike ::uproc_io_open, but with a \c va_list instead of a variable
+ * Just like ::uproc_io_open, but with a \c va_list instead of a variable
  * number of arguments.
  */
 uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
