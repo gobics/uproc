@@ -269,16 +269,6 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
     last_prefix = 0;
     current_prefix = entries[0].word.prefix;
 
-    for (p = 0; p < current_prefix; p++) {
-        dist_next = current_prefix - p;
-        if (dist_next > PFXTAB_NEIGH_MAX) {
-            dist_next = PFXTAB_NEIGH_MAX;
-        }
-        ecurve->prefixes[p].prev = 0;
-        ecurve->prefixes[p].next = dist_next;
-        ecurve->prefixes[p].count = ECURVE_EDGE;
-    }
-
     for (i = 0; i < n_entries;) {
         for (p = last_prefix; p < current_prefix; p++) {
             dist_prev = p - last_prefix;
@@ -289,9 +279,9 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
             if (dist_next > PFXTAB_NEIGH_MAX) {
                 dist_next = PFXTAB_NEIGH_MAX;
             }
-            ecurve->prefixes[p].prev = dist_prev;
+            ecurve->prefixes[p].prev = last_prefix ? dist_prev : 0;
             ecurve->prefixes[p].next = dist_next;
-            ecurve->prefixes[p].count = 0;
+            ecurve->prefixes[p].count = last_prefix ? 0 : ECURVE_EDGE;
         }
         ecurve->prefixes[current_prefix].first = i;
         for (k = i;
@@ -369,8 +359,11 @@ build_ecurve(const char *infile,
         }
 
         n_entries = filter_singletons(entries, n_entries);
+        if (!n_entries) {
+            continue;
+        }
 
-        if (!first) {
+        if (!*ecurve) {
             *ecurve = uproc_ecurve_create(alphabet, n_entries);
             if (!*ecurve) {
                 goto error;
