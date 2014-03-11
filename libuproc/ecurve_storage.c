@@ -296,6 +296,7 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
 }
 
 
+#if !HAVE_MMAP
 static uproc_ecurve *
 load_binary(uproc_io_stream *stream)
 {
@@ -394,6 +395,7 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
     }
     return 0;
 }
+#endif
 
 uproc_ecurve *
 uproc_ecurve_loads(enum uproc_ecurve_format format, uproc_io_stream *stream)
