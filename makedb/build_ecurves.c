@@ -411,7 +411,7 @@ build_and_store(const char *infile, const char *outdir, const char *alphabet,
         return res;
     }
     fprintf(stderr, "Storing %s/%s.ecurve...", outdir, reverse ? "rev" : "fwd");
-    res = uproc_ecurve_store(ecurve, UPROC_STORAGE_BINARY, UPROC_IO_GZIP,
+    res = uproc_ecurve_store(ecurve, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
                              "%s/%s.ecurve", outdir, reverse ? "rev" : "fwd");
     uproc_ecurve_destroy(ecurve);
     fprintf(stderr, " Done.");

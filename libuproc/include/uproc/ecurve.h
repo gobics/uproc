@@ -37,10 +37,10 @@
 enum uproc_ecurve_format
 {
     /** Portable plain text file */
-    UPROC_STORAGE_PLAIN,
+    UPROC_ECURVE_PLAIN,
 
     /** Machine-dependent binary format */
-    UPROC_STORAGE_BINARY,
+    UPROC_ECURVE_BINARY,
 };
 
 
@@ -140,7 +140,7 @@ uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
  * the data in the file using the given format.
  *
  * If libecurve is compiled on a system that supports mmap(), calling this
- * function with ::UPROC_STORAGE_BINARY as the \c format argument is equivalent
+ * function with ::UPROC_ECURVE_BINARY as the \c format argument is equivalent
  * to using ::uproc_ecurve_mmap.
  *
  * \param format    format to use, see ::uproc_ecurve_format
@@ -177,7 +177,7 @@ int uproc_ecurve_stores(const uproc_ecurve *ecurve,
  * Stores an ::uproc_ecurve object to a file using the given format.
  *
  * If libecurve is compiled on a system that supports mmap(), calling this
- * function with ::UPROC_STORAGE_BINARY as the \c format argument is equivalent
+ * function with ::UPROC_ECURVE_BINARY as the \c format argument is equivalent
  * to using ::uproc_ecurve_mmap_store.
  *
  * \param ecurve    pointer to ecurve to store
