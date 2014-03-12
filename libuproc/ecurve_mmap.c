@@ -89,12 +89,12 @@ ecurve_map(const char *path)
 
     ec->mmap_fd = open(path, O_RDONLY);
     if (ec->mmap_fd == -1) {
-        uproc_error(UPROC_ERRNO);
+        uproc_error_msg(UPROC_ERRNO, "failed to open %s", path);
         goto error;
     }
 
     if (fstat(ec->mmap_fd, &st) == -1) {
-        uproc_error(UPROC_ERRNO);
+        uproc_error_msg(UPROC_ERRNO, "stat failed");
         goto error_close;
     }
     ec->mmap_size = st.st_size;
@@ -103,7 +103,7 @@ ecurve_map(const char *path)
                         ec->mmap_fd, 0);
 
     if (ec->mmap_ptr == MAP_FAILED) {
-        uproc_error(UPROC_ERRNO);
+        uproc_error_msg(UPROC_ERRNO, "mmap failed");
         goto error_close;
     }
 
@@ -216,17 +216,17 @@ mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
 
     fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
-        return uproc_error(UPROC_ERRNO);
+        return uproc_error_msg(UPROC_ERRNO, "failed to open %s", path);
     }
 
     if (posix_fallocate(fd, 0, size)) {
-        res = uproc_error(UPROC_ERRNO);
+        res = uproc_error_msg(UPROC_ERRNO, "failed to allocate space");
         goto error_close;
     }
 
     region = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, 0);
     if (region == MAP_FAILED) {
-        res = uproc_error(UPROC_ERRNO);
+        res = uproc_error_msg(UPROC_ERRNO, "mmap failed");
         goto error_close;
     }
 
