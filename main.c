@@ -44,6 +44,16 @@
 
 #define MAX_CHUNK_SIZE (1 << 10)
 
+static void
+error_handler(enum uproc_error_code num, const char *msg, const char *loc)
+{
+    (void) num;
+    (void) msg;
+    (void) loc;
+    uproc_perror("");
+    exit(EXIT_FAILURE);
+}
+
 struct buffer
 {
     struct {
@@ -86,7 +96,7 @@ dup_str(char **dest, size_t *dest_sz, const char *src, size_t len)
     if (len > *dest_sz) {
         char *tmp = realloc(*dest, len);
         if (!tmp) {
-            return -1;
+            return uproc_error(UPROC_ENOMEM);
         }
         *dest = tmp;
         *dest_sz = len;
@@ -124,17 +134,8 @@ input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
             header_len = strlen(p1);
         }
 
-        res = dup_str(&buf->seq[i].header, &buf->seq[i].header_sz,
-                      p1, header_len);
-        if (res) {
-            break;
-        }
-
-        res = dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz,
-                      seq.data, strlen(seq.data));
-        if (res) {
-            break;
-        }
+        dup_str(&buf->seq[i].header, &buf->seq[i].header_sz, p1, header_len);
+        dup_str(&buf->seq[i].seq, &buf->seq[i].seq_sz, seq.data, strlen(seq.data));
     }
     buf->n = i;
 
@@ -144,14 +145,9 @@ input_read(uproc_seqiter *rd, struct buffer *buf, size_t chunk_size)
         free(buf->seq[i].seq);
         buf->seq[i].seq = NULL;
     }
-    if (res == -1) {
-        return -1;
-    }
-
     if (buf->n == chunk_size) {
         return 1;
     }
-
     return 0;
 }
 
@@ -432,7 +428,7 @@ main(int argc, char **argv)
     int res = -1;
     long long i;
     size_t i_chunk = 0, i_buf = 0, n_seqs = 0;
-    bool error = false, more_input;
+    bool more_input;
 
     uproc_ecurve *fwd, *rev;
     uproc_idmap *idmap = NULL;
@@ -498,6 +494,8 @@ main(int argc, char **argv)
 #define long_opts NULL
 #endif
 
+    uproc_error_set_handler(error_handler);
+
     while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
     {
         switch (opt) {
@@ -518,10 +516,6 @@ main(int argc, char **argv)
                 break;
             case 'o':
                 out_stream = uproc_io_open("w", UPROC_IO_STDIO, "%s", optarg);
-                if (!out_stream) {
-                    uproc_perror("can't open output file");
-                    return EXIT_FAILURE;
-                }
                 break;
             case 'n':
                 use_idmap = false;
@@ -531,8 +525,7 @@ main(int argc, char **argv)
                     int tmp = 42;
                     (void) parse_int(optarg, &tmp);
                     if (tmp != 0 && tmp != 2 && tmp != 3) {
-                        fprintf(
-                            stderr, "protein threshold must be 0, 2 or 3\n");
+                        fprintf(stderr, "-P argument must be 0, 2 or 3\n");
                         return EXIT_FAILURE;
                     }
                     prot_thresh_num = tmp;
@@ -587,25 +580,12 @@ main(int argc, char **argv)
 
     fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
                             "%s/fwd.ecurve", argv[optind + DBDIR]);
-    if (!fwd) {
-        fprintf(stderr, "failed to load forward ecurve\n");
-        return EXIT_FAILURE;
-    }
-
     rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
                             "%s/rev.ecurve", argv[optind + DBDIR]);
-    if (!rev) {
-        fprintf(stderr, "failed to load reverse ecurve\n");
-        return EXIT_FAILURE;
-    }
 
     if (use_idmap) {
         idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap",
                                  argv[optind + DBDIR]);
-        if (!idmap) {
-            fprintf(stderr, "failed to load idmap\n");
-            return EXIT_FAILURE;
-        }
     }
 
     if (prot_thresh_num) {
@@ -613,21 +593,10 @@ main(int argc, char **argv)
                                             "%s/prot_thresh_e%d",
                                             argv[optind + DBDIR],
                                             prot_thresh_num);
-        if (!prot_thresholds) {
-            fprintf(stderr, "failed to load protein thresholds\n");
-            return EXIT_FAILURE;
-        }
-    }
-    else {
-        prot_thresholds = NULL;
     }
 
     const char *model_dir = argv[optind + MODELDIR];
     substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", model_dir);
-    if (!substmat) {
-        fprintf(stderr, "failed to load protein thresholds\n");
-        return EXIT_FAILURE;
-    }
 
 #if MAIN_DNA
     if (short_read_mode) {
@@ -641,24 +610,12 @@ main(int argc, char **argv)
 #endif
     protclass = uproc_protclass_create(pc_mode, fwd, rev, substmat, prot_filter,
                                        prot_thresholds);
-    if (!protclass) {
-        uproc_perror("");
-        return EXIT_FAILURE;
-    }
 #if MAIN_DNA
     if (!short_read_mode && orf_thresh_num != 0) {
         orf_thresholds = uproc_matrix_load(UPROC_IO_GZIP, "%s/orf_thresh_e%d",
                                            model_dir, orf_thresh_num);
-        if (!orf_thresholds) {
-            fprintf(stderr, "failed to load ORF thresholds\n");
-            return EXIT_FAILURE;
-        }
         codon_scores = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores",
                                          model_dir);
-        if (!codon_scores) {
-            fprintf(stderr, "failed to load ORF thresholds\n");
-            return EXIT_FAILURE;
-        }
         dnaclass = uproc_dnaclass_create(dc_mode, protclass, codon_scores,
                                          orf_filter, orf_thresholds);
     }
@@ -680,18 +637,9 @@ main(int argc, char **argv)
         }
         else {
             stream = uproc_io_open("r", UPROC_IO_GZIP, argv[optind + INFILES]);
-            if (!stream) {
-                fprintf(stderr, "error opening %s: ", argv[optind + INFILES]);
-                perror("");
-                return EXIT_FAILURE;
-            }
         }
 
         rd = uproc_seqiter_create(stream, 8192);
-        if (!rd) {
-            uproc_perror("");
-            return EXIT_FAILURE;
-        }
 
         do {
             in = &buf[!i_buf];
@@ -707,14 +655,7 @@ main(int argc, char **argv)
                     res = uproc_protclass_classify(protclass, out->seq[i].seq,
                                                    &out->results[i]);
 #endif
-                    if (res < 0) {
-                        uproc_perror("error");
-                        error = true;
-                    }
                 }
-            }
-            if (error) {
-                break;
             }
 #pragma omp parallel private(res) shared(more_input)
             {
@@ -724,10 +665,6 @@ main(int argc, char **argv)
                     {
                         res = input_read(rd, in, chunk_size);
                         more_input = res == 1 || in->n;
-                        if (res < 0) {
-                            uproc_perror("error reading input");
-                            error = true;
-                        }
                     }
 #pragma omp section
                     {
@@ -743,7 +680,7 @@ main(int argc, char **argv)
             }
             i_chunk += 1;
             i_buf ^= 1;
-        } while (!error && more_input);
+        } while (more_input);
         uproc_seqiter_destroy(rd);
         uproc_io_close(stream);
     }
@@ -762,17 +699,11 @@ main(int argc, char **argv)
     uproc_ecurve_destroy(rev);
     uproc_idmap_destroy(idmap);
     uproc_substmat_destroy(substmat);
-    if (prot_thresholds) {
-        uproc_matrix_destroy(prot_thresholds);
-    }
+    uproc_matrix_destroy(prot_thresholds);
 #if MAIN_DNA
     uproc_dnaclass_destroy(dnaclass);
-    if (codon_scores) {
-        uproc_matrix_destroy(codon_scores);
-    }
-    if (orf_thresholds) {
-        uproc_matrix_destroy(orf_thresholds);
-    }
+    uproc_matrix_destroy(codon_scores);
+    uproc_matrix_destroy(orf_thresholds);
 #endif
 
     buf_free(&buf[0]);
