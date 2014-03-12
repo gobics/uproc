@@ -88,7 +88,7 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
  * \retval  -1  else
  */
 #define uproc_error_msg(num, ...) \
-    uproc_error_(num, __func__, __FILE__, __LINE__, __VA_ARGS__)
+    uproc_error_((num), __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 
 /* Get pointer to thread-local uproc_errno */
@@ -96,7 +96,7 @@ int *uproc_error_errno_(void);
 
 
 /** Set ::uproc_errno with a standard message */
-#define uproc_error(num) uproc_error_msg(num, NULL)
+#define uproc_error(num) uproc_error_msg((num), NULL)
 
 
 /** \c errno -like error indicator
