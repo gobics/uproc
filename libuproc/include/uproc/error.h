@@ -71,19 +71,21 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
 
 
 /** Set ::uproc_errno with a custom message
+ * \hideinitializer
  *
  * Example:
  * \code
  * void *foo = malloc(sz);
  * if (!foo) {
- *     uproc_error_msg(UPROC_EINVAL, "can't allocate foo with size %zu", sz);
- *     return -1;
+ *     return uproc_error_msg(UPROC_EINVAL,
+ *                            "can't allocate foo with size %zu", sz);
  *  }
  * \endcode
- * \hideinitializer
  * \param num   error code
  * \param ...   printf-style format string and corresponding arguments
  *
+ * \retval  0   if \c num is ::UPROC_SUCCESS
+ * \retval  -1  else
  */
 #define uproc_error_msg(num, ...) \
     uproc_error_(num, __func__, __FILE__, __LINE__, __VA_ARGS__)
@@ -97,9 +99,9 @@ int *uproc_error_errno_(void);
 #define uproc_error(num) uproc_error_msg(num, NULL)
 
 
-/** `errno`-like error indicator
+/** \c errno -like error indicator
  *
- * Like the original `errno`, evaluates to an (assignable) lvalue of type int,
+ * Like the original \c errno, evaluates to an (assignable) lvalue of type int,
  * used as an error indicator. This should usually be one of the values of
  * ::uproc_error_code.
  */
@@ -112,8 +114,8 @@ const char *uproc_error_errmsg_(void);
 
 /** Error message
  *
- * Evaluates to a `const char*` containing a description of the last occured
- * error.
+ * Evaluates to a <tt>const char*</tt> containing a description of the last
+ * occured error.
  */
 #define uproc_errmsg (uproc_error_errmsg_())
 
