@@ -35,6 +35,9 @@ static char error_loc[256], error_msg[256];
 #pragma omp threadprivate(error_num, error_loc, error_msg)
 #endif
 
+static uproc_error_handler *error_handler;
+
+
 static const char *error_strs[] =
 {
     [UPROC_SUCCESS] = "success",
@@ -61,7 +64,13 @@ uproc_error_(enum uproc_error_code num, const char *func, const char *file,
         error_msg[0] = '\0';
     }
     va_end(ap);
-    return num == UPROC_SUCCESS ? 0 : -1;
+    if (num == UPROC_SUCCESS) {
+        return 0;
+    }
+    if (error_handler) {
+        error_handler(num, error_msg, error_loc);
+    }
+    return -1;
 }
 
 int *
@@ -104,4 +113,10 @@ const char *
 uproc_error_errloc_(void)
 {
     return error_loc;
+}
+
+void
+uproc_error_set_handler(uproc_error_handler *handler)
+{
+    error_handler = handler;
 }

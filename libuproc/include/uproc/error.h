@@ -136,4 +136,32 @@ const char *uproc_error_errloc_(void);
  * \param ...   format string arguments
  */
 void uproc_perror(const char *fmt, ...);
+
+
+/** Error handler type
+ *
+ * \param num   error code
+ * \param msg   error message
+ * \param loc   source file and line
+ */
+typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
+                                 const char *loc);
+
+
+/** Set error handler
+ *
+ * Set an error handler to be called every time libuproc encounters an error.
+ *
+ * A simple error handler that just prints the message and exits the program
+ * could look like this:
+ *
+ * \code
+ * void handler(enum uproc_error_code num, const char *msg, const char *loc)
+ * {
+ *     uproc_perror("");
+ *     exit(EXIT_FAILURE);
+ * }
+ * \endcode
+ */
+void uproc_error_set_handler(uproc_error_handler *);
 #endif
