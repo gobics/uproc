@@ -121,6 +121,9 @@
  *     <!-- seqio.h -->
  * \}
  *
+ * \defgroup grp_error Error handling
+ *   <!-- error.h -->
+ *
  * \defgroup grp_intern Lower-level modules
  * \{
  *   \defgroup grp_intern_common Common definitions

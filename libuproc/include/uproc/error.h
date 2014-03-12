@@ -22,6 +22,9 @@
  *
  * This module provides functions and macros to retrieve information about
  * errors that may have occured.
+ *
+ * \weakgroup grp_error
+ * \{
  */
 
 #ifndef UPROC_ERROR_H
@@ -164,4 +167,8 @@ typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
  * \endcode
  */
 void uproc_error_set_handler(uproc_error_handler *);
+
+/**
+ * \}
+ */
 #endif
