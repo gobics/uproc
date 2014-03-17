@@ -35,7 +35,7 @@ void uproc_idmap_destroy(uproc_idmap *map);
 
 uproc_family uproc_idmap_family(uproc_idmap *map, const char *s);
 
-const char *uproc_idmap_str(const uproc_idmap *map, uproc_family family);
+char *uproc_idmap_str(const uproc_idmap *map, uproc_family family);
 
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);
 

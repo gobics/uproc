@@ -83,7 +83,7 @@ uproc_idmap_family(uproc_idmap *map, const char *s)
     return i;
 }
 
-const char *
+char *
 uproc_idmap_str(const uproc_idmap *map, uproc_family family)
 {
     return map->s[family];
