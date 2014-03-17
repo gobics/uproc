@@ -18,6 +18,8 @@
 
 /** \file uproc/orf.h
  *
+ * Module: \ref grp_clf_orf
+ *
  * \ref grp_clf_orf
  *
  * \weakgroup grp_clf
@@ -39,6 +41,9 @@
 
 
 /** \defgroup struct_orf struct uproc_orf
+ * \details
+ * See also
+ * \li \ref subsec_struct
  * \{
  */
 
@@ -94,49 +99,72 @@ int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
 typedef bool uproc_orffilter(const struct uproc_orf*, const char *, size_t,
                              double, void*);
 
-/** Prepare codon score table */
+
+/** Prepare codon score table
+ *
+ * Turns a ::uproc_matrix of size <tt>::UPROC_CODON_COUNT x 1</tt> into a
+ * double array suitable for uproc_orfiter_create(). The score of a codon
+ * containing wildcards is the mean value of all codons that match it. Stop
+ * codons don't get a score (it is ignored anyway)
+ *
+ * If \c score_matrix is NULL, all entries of \c scores are set to 0.
+ *
+ * (This is a quite costly operation, so doing this once instead of every time
+ * a ::uproc_orfiter is created can save a lot of time.)
+ *
+ * \param scores        _OUT_: scores for all possible binary codons
+ *                      (must be a pointer into an array of at least
+ *                      ::UPROC_BINARY_CODON_COUNT elements)
+ * \param score_matrix  codon scores, size <tt>::UPROC_CODON_COUNT x 1</tt>
+ */
 void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
 
+
 /** \defgroup obj_orfiter object uproc_orfiter
+ *
+ * \details
+ * See also:
+ *
+ * \li \ref subsec_opaque
+ * \li \ref subsec_opaque_iter
  * \{
  */
 
 /** Iterates over a DNA/RNA sequence and yield all possible ORFs */
 typedef struct uproc_orfiter_s uproc_orfiter;
 
-/** Initialize ORF iterator
+/** Create orfiter object
  *
- * \param iter          _OUT_: iterator object
  * \param seq           sequence to iterate over
  * \param codon_scores  codon scores, must be a pointer to the first element of
- *                      an array of size #UPROC_BINARY_CODON_COUNT
+ *                      an array of size ::UPROC_BINARY_CODON_COUNT (see also
+ *                      uproc_orf_codonscores())
+ * \param filter        filter function
+ * \param filter_arg    additional argument to \c filter
+ *
  */
 uproc_orfiter *uproc_orfiter_create(
     const char *seq,
     const double *codon_scores,
     uproc_orffilter *filter, void *filter_arg);
 
-/** Free memory of an ORF iterator */
+/** Destroy orfiter object */
 void uproc_orfiter_destroy(uproc_orfiter *iter);
 
-/** Obtain the next ORF from an iterator
+
+/** Obtain the next ORF
  *
- * A _shallow_ copy of the next ORF will be stored in `*orf`.
- * Don't free() any members and don't use it after calling
- * uproc_orfiter_destroy().
+ * A _shallow_ copy of the next ORF will be stored in \c *orf, if you need to
+ * store a copy, use uproc_orf_copy().
  *
- * \param iter  ORF iterator
+ * \param iter  orfiter instance
  * \param next  _OUT_: read ORF
- *
- * \retval #UPROC_ITER_YIELD   an ORF was read successfully
- * \retval #UPROC_ITER_STOP    the end of the sequence was reached
- * \retval other            an error occured
  */
 int uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next);
 /** \} */
 
 /**
- * \{
- * \{
+ * \}
+ * \}
  */
 #endif
