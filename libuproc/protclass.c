@@ -203,7 +203,7 @@ scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
                                   dist);
     trace(pc, lower_family, &lower_nb, index, dist, reverse);
     res = scores_add(scores, lower_family, index, dist, reverse);
-    if (res || uproc_word_equal(&lower_nb, &upper_nb)) {
+    if (res || !uproc_word_cmp(&lower_nb, &upper_nb)) {
         return res;
     }
     uproc_substmat_align_suffixes(substmat, word->suffix, upper_nb.suffix,

@@ -113,12 +113,6 @@ void uproc_word_prepend(struct uproc_word *word, uproc_amino amino);
 /** Compare first amino acid of a word */
 bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
 
-/** Test for equality
- *
- * \return `true` if the words are equal or `false` if not.
- */
-bool uproc_word_equal(const struct uproc_word *w1,
-                      const struct uproc_word *w2);
 
 /** Compare words
  *

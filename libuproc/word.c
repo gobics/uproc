@@ -144,12 +144,6 @@ uproc_word_startswith(const struct uproc_word *word, uproc_amino amino)
     return first == amino;
 }
 
-bool
-uproc_word_equal(const struct uproc_word *w1, const struct uproc_word *w2)
-{
-    return w1->prefix == w2->prefix && w1->suffix == w2->suffix;
-}
-
 int
 uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2)
 {
