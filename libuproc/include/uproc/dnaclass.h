@@ -67,9 +67,7 @@
  * \{
  */
 
-/** DNA classification result
- *
- */
+/** DNA classification result */
 struct uproc_dnaresult
 {
     /** Predicted family */
