@@ -18,8 +18,13 @@
 
 /** \file uproc/bst.h
  *
- * Binary search tree
+ * Module: \ref grp_datastructs_bst
  *
+ * \weakgroup grp_datastructs
+ * \{
+ * \weakgroup grp_datastructs_bst
+ *
+ * \details
  * The tree is not self-balancing, so don't use it for bigger data sets that
  * might be inserted in order.
  *
@@ -49,10 +54,6 @@
  *  uproc_bst_destroy(t);
  * \endcode
  *
- *
- * \weakgroup grp_datastructs
- * \{
- * \weakgroup grp_datastructs_bst
  * \{
  */
 

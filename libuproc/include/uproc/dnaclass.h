@@ -18,7 +18,7 @@
 
 /** \file uproc/dnaclass.h
  *
- * \ref grp_clf_dna
+ * Module: \ref grp_clf_dna
  *
  * \weakgroup grp_clf
  * \{

@@ -18,11 +18,15 @@
 
 /** \file uproc/io.h
  *
- * Wrappers for accessing different types IO streams
+ * Module: \ref grp_io_io
  *
  * \weakgroup grp_io
  * \{
  * \weakgroup grp_io_io
+ *
+ * \details
+ * Wrappers for transparent access to different types of IO streams
+ *
  * \{
  */
 

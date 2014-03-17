@@ -18,8 +18,13 @@
 
 /** \file uproc/ecurve.h
  *
- * Look up protein sequences in an "Evolutionary Curve"
+ * Module: \ref grp_datastructs_ecurve
  *
+ * \weakgroup grp_datastructs
+ * \{
+ *
+ * \weakgroup grp_datastructs_ecurve
+ * \{
  */
 
 #ifndef UPROC_ECURVE_H
@@ -31,6 +36,14 @@
 #include "uproc/alphabet.h"
 #include "uproc/io.h"
 #include "uproc/word.h"
+
+
+/** \defgroup object_ecurve object uproc_ecurve
+ * \{
+ */
+
+/** Evolutionary Curve object */
+typedef struct uproc_ecurve_s uproc_ecurve;
 
 
 /** Storage format */
@@ -58,11 +71,7 @@ enum
 };
 
 
-/** Opaque type for ecurves */
-typedef struct uproc_ecurve_s uproc_ecurve;
-
-
-/** Create an empty ecurve object
+/** Create ecurve object
  *
  * \param alphabet      string to initialize the ecurve's alphabet
  *                      (see uproc_alphabet_init())
@@ -70,7 +79,8 @@ typedef struct uproc_ecurve_s uproc_ecurve;
  */
 uproc_ecurve *uproc_ecurve_create(const char *alphabet, size_t suffix_count);
 
-/** Free memory of an ecurve object
+
+/** Destroy ecurve object
  *
  * \param ecurve    ecurve to destroy
  */
@@ -134,6 +144,7 @@ uproc_alphabet *uproc_ecurve_alphabet(const uproc_ecurve *ecurve);
 uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
                                  uproc_io_stream *stream);
 
+
 /** Load ecurve from file
  *
  * Opens a file for reading, allocates a new ::uproc_ecurve object and parses
@@ -151,6 +162,7 @@ uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
 uproc_ecurve *uproc_ecurve_load(enum uproc_ecurve_format format,
                                 enum uproc_io_type iotype,
                                 const char *pathfmt, ...);
+
 
 /** Load ecurve from file
  *
@@ -247,4 +259,10 @@ int uproc_ecurve_mmap_store(const uproc_ecurve *ecurve,
  */
 int uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
                              va_list ap);
+/** \} */
+
+/**
+ * \}
+ * \}
+ */
 #endif

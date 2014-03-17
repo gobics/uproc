@@ -18,12 +18,14 @@
 
 /** \file uproc/error.h
  *
- * Error handling facilities.
- *
- * This module provides functions and macros to retrieve information about
- * errors that may have occured.
+ * Module: \ref grp_error
  *
  * \weakgroup grp_error
+ *
+ * \details
+ * This module provides functions and macros to report errors and retrieve
+ * information about errors that have occured.
+ *
  * \{
  */
 

@@ -18,7 +18,7 @@
 
 /** \file uproc/codon.h
  *
- * Operations on tri-nucleotide codons
+ * Module: \ref grp_intern_codon
  *
  * \weakgroup grp_intern
  * \{

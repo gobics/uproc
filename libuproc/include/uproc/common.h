@@ -18,7 +18,7 @@
 
 /** \file uproc/common.h
  *
- * Common definitions
+ * Module: \ref grp_intern_common
  *
  * \weakgroup grp_intern
  * \{

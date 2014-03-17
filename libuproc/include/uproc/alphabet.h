@@ -18,7 +18,7 @@
 
 /** \file uproc/alphabet.h
  *
- * Convert between the character and internal representation of amino acids.
+ * Module: \ref grp_intern_alpha
  *
  * \weakgroup grp_intern
  * \{

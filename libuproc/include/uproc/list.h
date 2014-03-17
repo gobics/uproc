@@ -18,13 +18,15 @@
 
 /** \file uproc/list.h
  *
- * Generic list container
- *
- * Implemented as a growing array list.
+ * Module: \ref grp_datastructs_list
  *
  * \weakgroup grp_datastructs
  * \{
  * \weakgroup grp_datastructs_list
+ *
+ * \details
+ * Generic list container implemented as a growing array.
+ *
  * \{
  */
 

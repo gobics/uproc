@@ -17,7 +17,8 @@
  */
 
 /** \file uproc/idmap.h
- * Map string identifier to protein family number
+ *
+ * Module: \ref grp_datastructs_idmap
  *
  * \weakgroup grp_datastructs
  * \{
@@ -35,6 +36,8 @@
 /** \defgroup obj_idmap object uproc_idmap
  * \{
  */
+
+/** Map between protein family name and its numeric identifier */
 typedef struct uproc_idmap_s uproc_idmap;
 
 

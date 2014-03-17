@@ -18,6 +18,7 @@
 
 /** \file uproc/protclass.h
  *
+ * Module: \ref grp_clf_prot
  *
  * \weakgroup grp_clf
  * \{

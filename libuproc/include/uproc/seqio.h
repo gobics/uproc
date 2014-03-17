@@ -18,7 +18,7 @@
 
 /** \file uproc/seqio.h
  *
- * Sequence input/output
+ * Module: \ref grp_io_seqio
  *
  * \weakgroup grp_io
  * \{
