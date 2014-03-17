@@ -135,6 +135,9 @@
  *   \defgroup grp_datastructs_matrix 2D double matrix
  *     <!-- matrix.h -->
  *
+ *   \defgroup grp_datastructs_substmat Amino acid substitution matrix
+ *     <!-- substmat.h -->
+ *
  *   \defgroup grp_datastructs_idmap ID map
  *     <!-- idmap.h -->
  * \}
