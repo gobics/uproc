@@ -114,6 +114,7 @@ typedef uint_least16_t uproc_family;
 #define UPROC_FAMILY_MAX (UINT_LEAST16_MAX - 1)
 
 
+/** Denotes an invalid protein family */
 #define UPROC_FAMILY_INVALID (UINT_LEAST16_MAX)
 
 
