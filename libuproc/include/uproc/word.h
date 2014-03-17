@@ -18,7 +18,7 @@
 
 /** \file uproc/word.h
  *
- * Operations on amino acid words
+ * Module: \ref grp_intern_word
  *
  * \weakgroup grp_intern
  * \{
@@ -48,67 +48,64 @@ struct uproc_word
     uproc_suffix suffix;
 };
 
-/** Initializer to be used for all `struct uproc_word` objects */
+
+/** Initializer to be used for all ::uproc_word structs */
 #define UPROC_WORD_INITIALIZER { 0, 0 }
 
-/** Iterator over all words in an amino acid sequence */
-typedef struct uproc_worditer_s uproc_worditer;
 
 /** Transform a string to amino acid word
  *
- * Translates the first `#UPROC_WORD_LEN` characters of the given string to a
+ * Translates the first ::UPROC_WORD_LEN characters of the given string to a
  * word object. Failure occurs if the string ends or an invalid character is
  * encountered.
  *
- * \param word  _OUT_: amino acid word
- * \param str   string representation
- * \param alpha alphabet to use for translation
- *
- * \retval #UPROC_SUCCESS  the string was translated successfully
- * \retval #UPROC_FAILURE  the string was too short or contained an invalid
- *                         character
+ * \param word      _OUT_: amino acid word
+ * \param str       string representation
+ * \param alpha     alphabet to use for translation
  */
 int uproc_word_from_string(struct uproc_word *word, const char *str,
                            const uproc_alphabet *alpha);
 
+
 /** Build string corresponding to amino acid word
  *
  * Translates an amino acid word back to a string. The string will be
- * null-terminated, thus `str` should point to a buffer of at least
- * `#UPROC_WORD_LEN + 1` bytes.
+ * null-terminated, thus \c str should point to a buffer of at least
+ * <tt>::UPROC_WORD_LEN + 1</tt> bytes.
  *
- * \param str   buffer to store the string in
- * \param word  amino acid word
- * \param alpha alphabet to use for translation
- *
- * \retval #UPROC_SUCCESS  the word was translated successfully
- * \retval #UPROC_FAILURE  the word contained an invalid amino acid
+ * \param str       buffer to store the string in
+ * \param word      amino acid word
+ * \param alpha     alphabet to use for translation
  */
 int uproc_word_to_string(char *str, const struct uproc_word *word,
                          const uproc_alphabet *alpha);
 
+
 /** Append amino acid
  *
- * The leftmost amino acid of `word` is removed, for example
- *   `append(ANERD, S) == NERDS`
- * (in case of a word length of 5).
+ * The leftmost amino acid of \c word is removed, for example (in case of a
+ * word length of 5):
+ *   \code append(ANERD, S) == NERDS \endcode
  *
- * NOTE: It will _not_ be verified whether `amino` is a valid amino acid
+ * <em> \b NOTE: It will not be verified whether \c amino represents a valid
+ * amino acid.</em>
  *
- * \param word  word to append to
- * \param amino amino acid to append
+ * \param word      word to append to
+ * \param amino     amino acid to append
  */
 void uproc_word_append(struct uproc_word *word, uproc_amino amino);
 
+
 /** Prepend amino acid
  *
- * Complementary to the append operation, e.g.
- *   `prepend(NERDS, A) == ANERD`.
+ * Complement to the append operation, e.g.
+ *   \code prepend(NERDS, A) == ANERD \endcode
  *
- * \param word  word to prepend to
- * \param amino amino acid to prepend
+ * \param word      word to prepend to
+ * \param amino     amino acid to prepend
  */
 void uproc_word_prepend(struct uproc_word *word, uproc_amino amino);
+
 
 /** Compare first amino acid of a word */
 bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
@@ -118,7 +115,7 @@ bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
  *
  * Comparison is done lexcographically (prefix first, suffix second).
  *
- * \return  -1, 0 or 1 if `w1` is less than, equal to, or greater than `w2`.
+ * \return  -1, 0 or 1 if \c w1 is less than, equal to, or greater than \c w2.
  */
 int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
 /** \} */
@@ -128,35 +125,59 @@ int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
  * \{
  */
 
-/** Initialize an iterator over a sequence
+/** Iterator over all words in an amino acid sequence
+ *
+ * Produces all consecutive amino acid words of length ::UPROC_WORD_LEN found
+ * in a sequence. If a character is encountered that is not an amino acid, the
+ * next word will start after that character.
+ *
+ * Example:
+ *
+ * For a word length of 5, the sequence
+ *
+ * \code
+ * ANERDSP!FQQRAR
+ * \endcode
+ *
+ * contains the (forward) words:
+ * \code
+ * ADERD
+ * NERDS
+ * ERDSP
+ * FQQRA
+ * QQRAR
+ * \endcode
+ */
+typedef struct uproc_worditer_s uproc_worditer;
+
+
+/** Create worditer object
  *
  * The iterator may not be used after the lifetime of the objects pointed to
- * by `seq` and `alpha` has ended (only the pointer value is stored).
+ * by \c seq and \c alpha has ended (only the pointer value is stored).
  *
- * \param iter  _OUT_: initialized iterator
- * \param seq   sequence to iterate
- * \param alpha translation alphabet
+ * \param seq       sequence to iterate
+ * \param alpha     translation alphabet
  */
 uproc_worditer *uproc_worditer_create(const char *seq,
                                       const uproc_alphabet *alpha);
 
+
 /** Obtain the next word(s) from a word iterator
  *
- * Invalid characters are not simply skipped, instead the first complete after
- * such character is returned next.
+ * Invalid characters are not simply skipped, instead the first complete word
+ * after such character is returned next.
  *
- * \param iter  iterator
- * \param index _OUT_: starting index of the current "forward" word
- * \param fwd   _OUT_: read word in order as it appeared
- * \param rev   _OUT_: read word in reversed order
- *
- * \retval 1    a pair of words was read
- * \retval 0    the iterator is exhausted (i.e. the end of the sequence was
- *              reached, no words were read)
+ * \param iter      iterator
+ * \param index     _OUT_: starting index of the current "forward" word
+ * \param fwd       _OUT_: read word in order as it appeared
+ * \param rev       _OUT_: read word in reversed order
  */
 int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
 
+
+/** Destroy worditer object */
 void uproc_worditer_destroy(uproc_worditer *iter);
 /** \} */
 
