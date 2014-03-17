@@ -35,6 +35,9 @@
 #include <stdarg.h>
 #include "uproc/io.h"
 
+/** \defgroup obj_matrix object uproc_matrix
+ * \{
+ */
 
 /** Matrix object
  *
@@ -122,6 +125,7 @@ int uproc_matrix_store(const uproc_matrix *matrix, enum uproc_io_type iotype,
  */
 int uproc_matrix_storev(const uproc_matrix *matrix, enum uproc_io_type iotype,
                         const char *pathfmt, va_list ap);
+/** \} */
 
 /**
  * \}
