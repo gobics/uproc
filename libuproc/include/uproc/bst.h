@@ -50,9 +50,9 @@
  * \endcode
  *
  *
- * \weakgroup grp_intern
+ * \weakgroup grp_datastructs
  * \{
- * \weakgroup grp_intern_bst
+ * \weakgroup grp_datastructs_bst
  * \{
  */
 

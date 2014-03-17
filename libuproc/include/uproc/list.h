@@ -22,9 +22,9 @@
  *
  * Implemented as a growing array list.
  *
- * \weakgroup grp_intern
+ * \weakgroup grp_datastructs
  * \{
- * \weakgroup grp_intern_list
+ * \weakgroup grp_datastructs_list
  * \{
  */
 

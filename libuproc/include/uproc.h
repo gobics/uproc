@@ -124,6 +124,18 @@
  * \defgroup grp_error Error handling
  *   <!-- error.h -->
  *
+ * \defgroup grp_datastructs Data structures
+ * \{
+ *   \defgroup grp_datastructs_list List
+ *     <!-- list.h -->
+ *
+ *   \defgroup grp_datastructs_bst Binary search tree
+ *     <!-- bst.h -->
+ *
+ *   \defgroup grp_datastructs_matrix 2D double matrix
+ *     <!-- matrix.h -->
+ * \}
+ *
  * \defgroup grp_intern Lower-level modules
  * \{
  *   \defgroup grp_intern_common Common definitions
@@ -137,12 +149,6 @@
  *
  *   \defgroup grp_intern_word Amino acid words
  *     <!-- word.h -->
- *
- *   \defgroup grp_intern_list List
- *     <!-- list.h -->
- *
- *   \defgroup grp_intern_bst Binary search tree
- *     <!-- bst.h -->
  * \}
  *
  */

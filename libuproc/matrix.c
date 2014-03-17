@@ -32,6 +32,12 @@
 #include "uproc/common.h"
 #include "uproc/io.h"
 
+/** printf() format for matrix file header */
+#define MATRIX_HEADER_PRI "[%zu, %zu]\n"
+
+/** scanf() format for matrix file header */
+#define MATRIX_HEADER_SCN "[%zu , %zu]"
+
 /** Matrix */
 struct uproc_matrix_s
 {
@@ -48,8 +54,17 @@ struct uproc_matrix_s
 uproc_matrix *
 uproc_matrix_create(size_t rows, size_t cols, const double *values)
 {
-    struct uproc_matrix_s *matrix = malloc(sizeof *matrix);
+    struct uproc_matrix_s *matrix;
+
+    /* unlikely, but nevertheless... */
+    if (SIZE_MAX / cols <= rows) {
+        uproc_error_msg(UPROC_EINVAL, "matrix too large");
+        return NULL;
+    }
+
+    matrix = malloc(sizeof *matrix);
     if (!matrix) {
+        uproc_error(UPROC_ENOMEM);
         return NULL;
     }
     if (rows == 1) {
@@ -115,7 +130,7 @@ uproc_matrix_loads(uproc_io_stream *stream)
     char buf[1024];
 
     if (!uproc_io_gets(buf, sizeof buf, stream) ||
-        sscanf(buf, UPROC_MATRIX_HEADER_SCN, &rows, &cols) != 2)
+        sscanf(buf, MATRIX_HEADER_SCN, &rows, &cols) != 2)
     {
         uproc_error_msg(UPROC_EINVAL, "invalid matrix header");
         return NULL;
@@ -170,7 +185,7 @@ uproc_matrix_stores(const uproc_matrix *matrix, uproc_io_stream *stream)
     int res;
     size_t i, k, rows, cols;
     uproc_matrix_dimensions(matrix, &rows, &cols);
-    res = uproc_io_printf(stream, UPROC_MATRIX_HEADER_PRI, rows, cols);
+    res = uproc_io_printf(stream, MATRIX_HEADER_PRI, rows, cols);
     if (res < 0) {
         return -1;
     }
