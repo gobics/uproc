@@ -134,6 +134,9 @@
  *
  *   \defgroup grp_datastructs_matrix 2D double matrix
  *     <!-- matrix.h -->
+ *
+ *   \defgroup grp_datastructs_idmap ID map
+ *     <!-- idmap.h -->
  * \}
  *
  * \defgroup grp_intern Lower-level modules
