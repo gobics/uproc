@@ -36,14 +36,17 @@
 #include "uproc/list.h"
 
 
-/** Protein classification results
- *
-* \defgroup struct_protresult struct uproc_protresult
-* \{
+/** \defgroup struct_protresult struct uproc_protresult
+ * \{
  */
+
+/** Protein classification result */
 struct uproc_protresult
 {
+    /** Predicted family */
     uproc_family family;
+
+    /** Prediction score */
     double score;
 };
 
@@ -63,6 +66,7 @@ void uproc_protresult_free(struct uproc_protresult *results);
 /** Deep-copy a ::uproc_protresult struct */
 int uproc_protresult_copy(struct uproc_protresult *dest,
                           const struct uproc_protresult *src);
+/** \} */
 
 
 
