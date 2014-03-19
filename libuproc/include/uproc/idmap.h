@@ -34,10 +34,17 @@
 
 
 /** \defgroup obj_idmap object uproc_idmap
+ *
+ * Map between protein family name and its numeric identifier
+ *
  * \{
  */
 
-/** Map between protein family name and its numeric identifier */
+/** \struct uproc_idmap
+ * \copybrief obj_idmap
+ *
+ * See \ref obj_idmap for details.
+ */
 typedef struct uproc_idmap_s uproc_idmap;
 
 

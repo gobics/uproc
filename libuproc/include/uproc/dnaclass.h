@@ -63,11 +63,13 @@
 
 
  /** \defgroup struct_dnaresult struct uproc_dnaresult
- * Follows the \ref subsec_struct
- * \{
- */
+  *
+  * DNA classification result
+  *
+  * \{
+  */
 
-/** DNA classification result */
+/** \copybrief struct_dnaresult */
 struct uproc_dnaresult
 {
     /** Predicted family */
@@ -99,13 +101,32 @@ int uproc_dnaresult_copy(struct uproc_dnaresult *dest,
 /** \} */
 
 
-/**
- * \defgroup obj_dnaclass object uproc_dnaclass
- * Follows the \ref subsec_opaque
+/** \defgroup obj_dnaclass object uproc_dnaclass
+ *
+ * DNA/RNA sequence classifier
+ *
+ * An object of this type is used to classify DNA/RNA sequences. The result is
+ * a \ref grp_datastructs_list of ::uproc_dnaresult objects. It does so in the
+ * following way:
+ *
+ * \li A ::uproc_orfiter instance using the parameters that were passed to
+ * uproc_dnaclass_create() is used to extract all relevant ORFs.
+ *
+ * \li Every ORF is classified with uproc_protclass_classify().
+ *
+ * \li For each protein family, the result of the best-scoring ORF is reported.
+ *
+ * \li If the ::UPROC_DNACLASS_MAX mode is used, only the protein family with
+ * the highest score is retained in the result list.
+ *
  * \{
  */
 
-/** DNA/RNA sequence classifier object */
+/** \struct uproc_dnaclass
+ * \copybrief obj_dnaclass
+ *
+ * See \ref obj_dnaclass for details.
+ */
 typedef struct uproc_dnaclass_s uproc_dnaclass;
 
 
@@ -128,7 +149,7 @@ enum uproc_dnaclass_mode
  * \param mode              Which results to produce
  * \param pc                ::uproc_protclass to use for classifying ORFs
  * \param codon_scores      Codon scoring matrix (or NULL)
- * \param orf_filter        ORF filtering function (see orf.h)
+ * \param orf_filter        ORF filtering function
  * \param orf_filter_arg    Additional argument to \c orf_filter
  */
 uproc_dnaclass *uproc_dnaclass_create(enum uproc_dnaclass_mode mode,
@@ -148,8 +169,8 @@ void uproc_dnaclass_destroy(uproc_dnaclass *dc);
  * (in which case a new list is created) or which has which has already been
  * used with this function.
  * The list will contain items of type \ref struct_dnaresult. If \c *results is
- * not NULL, all its elements will be passed to ::uproc_dnaresult_free.
- *
+ * not NULL, all its elements will be passed to ::uproc_dnaresult_free at the
+ * beginning.
  *
  * \param dc        DNA classifier
  * \param seq       sequence to classify

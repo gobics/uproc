@@ -38,7 +38,16 @@
 
 
 /** \defgroup obj_list object uproc_list
+ *
+ * List of homogenous items (also known as "vector" or "arraylist")
+ *
  * \{
+ */
+
+/** \struct uproc_list
+ * \copybrief obj_list
+ *
+ * See \ref obj_list for details.
  */
 typedef struct uproc_list_s uproc_list;
 
@@ -74,7 +83,8 @@ int uproc_list_get(const uproc_list *list, size_t index, void *value);
  * \param buf   buffer to copy into
  * \param sz    size of \c dest in bytes
  *
- * \retval  The number of copied bytes, or how many bytes would have been
+ * \return
+ * the number of copied bytes, or how many bytes would have been
  * copied, if this number exceeds \c sz.
  */
 size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz);
@@ -111,7 +121,6 @@ size_t uproc_list_size(const uproc_list *list);
  */
 void uproc_list_map(const uproc_list *list, void(*func)(void *, void *),
                     void *opaque);
-
 /** \} */
 
 

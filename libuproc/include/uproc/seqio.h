@@ -38,10 +38,13 @@
 
 
 /** \defgroup struct_sequence struct uproc_sequence
+ *
+ * DNA/RNA or protein sequence
+ *
  * \{
  */
 
-/** DNA/RNA or protein sequence */
+/** \copybrief struct_sequence */
 struct uproc_sequence
 {
     /** Sequence identifier */

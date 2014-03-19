@@ -35,10 +35,13 @@
 #include "uproc/alphabet.h"
 
 /** \defgroup struct_word struct uproc_word
+ *
+ * Amino acid word
+ *
  * \{
  */
 
-/** Amino acid word */
+/** \copybrief struct_word */
 struct uproc_word
 {
     /** First few amino acids */

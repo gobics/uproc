@@ -38,11 +38,16 @@
 
 
 /** \defgroup obj_io_stream object uproc_io_stream
+ *
+ * Wrapped I/O stream
+ *
  * \{
  */
 
-/** Opaque type for IO streams
+/** \struct uproc_io_stream
+ * \copybrief obj_io_stream
  *
+ * See \ref obj_io_stream for details.
  */
 typedef struct uproc_io_stream uproc_io_stream;
 

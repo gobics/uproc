@@ -24,13 +24,31 @@
  * \{
  * \weakgroup grp_datastructs_bst
  *
+ * \{
+ */
+
+#ifndef UPROC_BST_H
+#define UPROC_BST_H
+
+#include <stdlib.h>
+#include <stdint.h>
+
+#include "uproc/common.h"
+#include "uproc/word.h"
+
+
+/** \defgroup obj_bst object uproc_bst
+ *
+ * Binary search tree
+ *
  * \details
  * The tree is not self-balancing, so don't use it for bigger data sets that
  * might be inserted in order.
  *
- * The keys are of type union ::uproc_bst_key, which member the tree instance used is
- * chosen via the first argument to ::uproc_bst_create. Values are stored by copying
- * the number of bytes given as the second argument to ::uproc_bst_create.
+ * The keys are of type union ::uproc_bst_key, which member the tree instance
+ * used is chosen via the first argument to uproc_bst_create(). Values are
+ * stored by copying the number of bytes given as the second argument to
+ * uproc_bst_create().
  *
  * Example:
  *
@@ -57,30 +75,20 @@
  * \{
  */
 
-#ifndef UPROC_BST_H
-#define UPROC_BST_H
-
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "uproc/common.h"
-#include "uproc/word.h"
-
-
-/** \defgroup obj_bst object uproc_bst
- * \{
+/** \struct uproc_bst
+ * \copybrief obj_bst
+ *
+ * See \ref obj_bst for details.
  */
-
-/** Opaque type for binary search trees */
 typedef struct uproc_bst_s uproc_bst;
 
-/** BST key type */
+/** The BST key type */
 union uproc_bst_key
 {
     /** Unsigned integer */
     uintmax_t uint;
 
-    /** Amino acid word */
+    /** \copybrief struct_word */
     struct uproc_word word;
 };
 
@@ -199,10 +207,17 @@ void uproc_bst_map(const uproc_bst *t,
 
 
 /** \defgroup obj_bstiter object uproc_bstiter
+ *
+ * BST in-order iterator
+ *
  * \{
  */
 
-/** BST in-order iterator */
+/** \struct uproc_bstiter
+ * \copybrief obj_bstiter
+ *
+ * See \ref obj_bstiter for details.
+ */
 typedef struct uproc_bstiter_s uproc_bstiter;
 
 /** Create BST in-order iterator

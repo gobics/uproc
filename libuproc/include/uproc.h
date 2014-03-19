@@ -25,7 +25,7 @@
  * These are the types defined by libuproc and they usually follow the
  * conventions described below.
  *
- * \subsection subsec_opaque Opaque object type conventions
+ * \subsection subsec_opaque Opaque object types
  *
  * Opaque object types are usually defined as forward declarations to structs
  * hidden in the implementation (to ease API compatibility across different
@@ -55,14 +55,14 @@
  * (and will NOT result in a nullpointer dereference).
  *
  *
- * \subsubsection subsec_opaque_iter Iterator object conventions
+ * \subsubsection subsec_opaque_iter Iterator object types
  *
  * Certain objects are \e iterators (the ones whose OBJECT part ends in
  * "iter").  These have a function \c uproc_OBJECT_next that returns 0 if an
  * item was produced, 1 if the iterator is exhausted or -1 on error.
  *
  *
- * \subsection subsec_struct Struct type conventions
+ * \subsection subsec_struct Struct types
  *
  * \subsubsection subsec_struct_init Initialization
  *
@@ -90,9 +90,9 @@
  *
  * Except for the following, all parts of the library are reentrant:
  *
- * When using either of ::uproc_stdin, ::uproc_stdin_gz, ::uproc_stdout_gz or
- * ::uproc_stderr_gz for the first time, all of them are initialized. A race
- * condition would result in a (minor) memory leak.
+ * When using either of ::uproc_stdin, ::uproc_stdout_gz or ::uproc_stderr_gz
+ * for the first time, all of them are initialized. A race condition would
+ * result in a (minor) memory leak.
  *
  * The \ref sec_error mechanisms are only tested with OpenMP and might not
  * behave correctly if used in conjunction with other threading implementations.

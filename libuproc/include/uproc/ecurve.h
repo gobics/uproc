@@ -38,11 +38,18 @@
 #include "uproc/word.h"
 
 
-/** \defgroup object_ecurve object uproc_ecurve
+/** \defgroup obj_ecurve object uproc_ecurve
+ *
+ * Evolutionary Curve
+ *
  * \{
  */
 
-/** Evolutionary Curve object */
+/** \struct uproc_ecurve
+ * \copybrief obj_ecurve
+ *
+ * See \ref obj_ecurve for details.
+ */
 typedef struct uproc_ecurve_s uproc_ecurve;
 
 
@@ -190,7 +197,7 @@ int uproc_ecurve_stores(const uproc_ecurve *ecurve,
  *
  * If libecurve is compiled on a system that supports mmap(), calling this
  * function with ::UPROC_ECURVE_BINARY as the \c format argument is equivalent
- * to using ::uproc_ecurve_mmap_store.
+ * to using uproc_ecurve_mmap_store().
  *
  * \param ecurve    pointer to ecurve to store
  * \param format    format to use, see ::uproc_ecurve_format
@@ -216,7 +223,7 @@ int uproc_ecurve_storev(const uproc_ecurve *ecurve,
 
 /** Map a file to an ecurve
  *
- * The file must have been created by `uproc_ecurve_mmap_store()`, preferably
+ * The file must have been created by uproc_ecurve_mmap_store(), preferably
  * on the same machine.
  *
  * \param pathfmt   printf format string for file path
@@ -235,14 +242,14 @@ uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap);
 
 /** Release mapping and close the underlying file descriptor
  *
- * \param ecurve    ecurve mapped with `uproc_mmap_map()`
+ * \param ecurve    ecurve mapped with uproc_mmap_map()
  */
 void uproc_ecurve_munmap(uproc_ecurve *ecurve);
 
 
-/** Store ecurve in a format suitable for ::uproc_ecurve_mmap
+/** Store ecurve in a format suitable for uproc_ecurve_mmap()
  *
- * Identical to ::uproc_ecurve_store with ::UPROC_ECURVE
+ * Identical to ::uproc_ecurve_store with ::UPROC_ECURVE_BINARY
  *
  * \param ecurve    ecurve to store
  * \param pathfmt   printf format string for file path
