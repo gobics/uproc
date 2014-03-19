@@ -280,13 +280,24 @@ uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
             src->suffix_count * sizeof *src->families);
 
     for (p = dest_last + 1; p < src_first; p++) {
+        uintmax_t dist_prev, dist_next;
+        dist_prev = p - dest_last;
+        if (dist_prev > PFXTAB_NEIGH_MAX) {
+            dist_prev = PFXTAB_NEIGH_MAX;
+        }
+        dist_next = src_first - p;
+        if (dist_next > PFXTAB_NEIGH_MAX) {
+            dist_next = PFXTAB_NEIGH_MAX;
+        }
         dest->prefixes[p].count = 0;
-        dest->prefixes[p].prev = dest_last;
-        dest->prefixes[p].next = src_first;
+        dest->prefixes[p].prev = dist_prev;
+        dest->prefixes[p].next = dist_next;
     }
     for (p = src_first; p <= UPROC_PREFIX_MAX; p++) {
-        dest->prefixes[p].first = src->prefixes[p].first + dest->suffix_count;
-        dest->prefixes[p].count = src->prefixes[p].count;
+        dest->prefixes[p] = src->prefixes[p];
+        if (src->prefixes[p].count && !ECURVE_ISEDGE(src->prefixes[p])) {
+            dest->prefixes[p].first += dest->suffix_count;
+        }
     }
     dest->suffix_count = new_suffix_count;
 

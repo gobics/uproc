@@ -149,11 +149,11 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
             else if (res == UPROC_BST_KEY_NOT_FOUND) {
                 res = uproc_bst_update(tree, tree_key, &family);
             }
-            if (res < 0) {
+            if (res) {
                 break;
             }
         }
-        if (res) {
+        if (res < 0) {
             break;
         }
     }
@@ -272,6 +272,9 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
     for (i = 0; i < n_entries;) {
         for (p = last_prefix; p < current_prefix; p++) {
             dist_prev = p - last_prefix;
+            if (last_prefix) {
+                dist_prev += 1;
+            }
             if (dist_prev > PFXTAB_NEIGH_MAX) {
                 dist_prev = PFXTAB_NEIGH_MAX;
             }
@@ -283,7 +286,6 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
             ecurve->prefixes[p].next = dist_next;
             ecurve->prefixes[p].count = last_prefix ? 0 : ECURVE_EDGE;
         }
-        ecurve->prefixes[current_prefix].first = i;
         for (k = i;
              k < n_entries && entries[k].word.prefix == current_prefix;
              k++)
@@ -304,17 +306,17 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
             ecurve->prefixes[p].first = k - 1;
             ecurve->prefixes[p].count = ECURVE_EDGE;
         }
-        last_prefix = current_prefix;
+        last_prefix = current_prefix + 1;
         current_prefix = next_prefix;
         i = k;
     }
 
     for (p = current_prefix + 1; p <= UPROC_PREFIX_MAX; p++) {
-            dist_prev = p - last_prefix;
-            if (dist_prev > PFXTAB_NEIGH_MAX) {
-                dist_prev = PFXTAB_NEIGH_MAX;
-            }
-        ecurve->prefixes[p].prev = n_entries - 1;
+        dist_prev = p - current_prefix;
+        if (dist_prev > PFXTAB_NEIGH_MAX) {
+            dist_prev = PFXTAB_NEIGH_MAX;
+        }
+        ecurve->prefixes[p].prev = dist_prev;
         ecurve->prefixes[p].count = ECURVE_EDGE;
     }
 
