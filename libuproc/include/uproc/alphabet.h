@@ -34,16 +34,22 @@
 
 
 /** \defgroup obj_alphabet object uproc_alphabet
- * \{
- */
-
-/** Alphabet type
+ *
+ * Amino acid alphabet
  *
  * An object of this type is required to translate between characters and the
  * internal representation of amino acids. The order of this alphabet is very
  * significant to the results. Each ::uproc_ecurve has an "intrinsic" alphabet
  * and should not be used with a ::uproc_substmat that was derived from a
  * different alphabet.
+ *
+ * \{
+ */
+
+/** \struct uproc_alphabet
+ * \copybrief obj_alphabet
+ *
+ * See \ref obj_alphabet for details.
  */
 typedef struct uproc_alphabet_s uproc_alphabet;
 

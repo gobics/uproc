@@ -41,20 +41,18 @@
 
 
 /** \defgroup struct_orf struct uproc_orf
- * \details
- * See also
- * \li \ref subsec_struct
- * \{
- */
-
-/** Open reading frame
+ *
+ * Open reading frame
  *
  * The (partial) result of translating DNA into protein. An ORF extracted by
  * ::uproc_orfiter_next ends after one of the three stop codons (TAA, TAG, TGA)
  * and starts either at the beginning of the sequence or after the stop codon
  * that terminated the previous ORF.
  *
+ * \{
  */
+
+/** \copybrief struct_orf */
 struct uproc_orf
 {
     /** Derived amino acid sequence as string */
@@ -122,15 +120,16 @@ void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
 
 /** \defgroup obj_orfiter object uproc_orfiter
  *
- * \details
- * See also:
+ * Iterates over a DNA/RNA sequence and yield all possible ORFs
  *
- * \li \ref subsec_opaque
- * \li \ref subsec_opaque_iter
  * \{
  */
 
-/** Iterates over a DNA/RNA sequence and yield all possible ORFs */
+/** \struct uproc_orfiter
+ * \copybrief obj_orfiter
+ *
+ * See \ref obj_orfiter for details.
+ */
 typedef struct uproc_orfiter_s uproc_orfiter;
 
 /** Create orfiter object

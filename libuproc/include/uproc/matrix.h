@@ -36,16 +36,22 @@
 #include "uproc/io.h"
 
 /** \defgroup obj_matrix object uproc_matrix
- * \{
- */
-
-/** Matrix object
+ *
+ * 2D matrix
  *
  * A very basic matrix implementation that is only useful to look up values
  * depending on the two dimensions and storing to or loading from a
  * plain text file. Neither bounds checking nor any algrebraic or arithmetic
  * operations are supported. Trying to retrieve or modify an element that is
  * beyond the bounds results in undefined behaviour.
+ *
+ * \{
+ */
+
+/** \struct uproc_matrix
+ * \copybrief obj_matrix
+ *
+ * See \ref obj_matrix for details.
  */
 typedef struct uproc_matrix_s uproc_matrix;
 

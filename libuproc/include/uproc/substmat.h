@@ -36,15 +36,20 @@
 #include "uproc/alphabet.h"
 
 
-/** \defgroup object_substmat object uproc_substmat
- * \{
- */
-
-/** Array of matrices of amino acid distances
+/** \defgroup obj_substmat object uproc_substmat
+ *
+ * Array of matrices of amino acid distances
  *
  * An array of ::UPROC_SUFFIX_LEN matrices used to obtain pairwise distances of
  * the suffix part of two ::uproc_word instances.
  *
+ * \{
+ */
+
+/** \struct uproc_substmat
+ * \copybrief obj_substmat
+ *
+ * See \ref obj_substmat for details.
  */
 typedef struct uproc_substmat_s uproc_substmat;
 

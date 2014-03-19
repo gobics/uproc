@@ -38,10 +38,11 @@
 
 
 /** \defgroup struct_protresult struct uproc_protresult
+ * Protein classification result
  * \{
  */
 
-/** Protein classification result */
+/** \copybrief struct_protresult */
 struct uproc_protresult
 {
     /** Predicted family */
@@ -72,11 +73,17 @@ int uproc_protresult_copy(struct uproc_protresult *dest,
 
 
 /** \defgroup obj_protclass object uproc_protclass
- * Follows the \ref subsec_opaque
+ *
+ * Protein sequence classifier
+ *
  * \{
  */
 
-/** Protein sequence classifier object */
+/** \struct uproc_protclass
+ * \copybrief obj_protclass
+ *
+ * See \ref obj_protclass for details.
+ */
 typedef struct uproc_protclass_s uproc_protclass;
 
 
@@ -85,7 +92,7 @@ typedef bool uproc_protfilter(const char*, size_t, uproc_family, double, void*);
 
 /** Classification mode
  *
- * Determines which results ::uproc_protclass_classify produces.
+ * Determines which results uproc_protclass_classify() produces.
  */
 enum uproc_protclass_mode
 {
