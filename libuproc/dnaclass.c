@@ -138,7 +138,7 @@ uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
         if (res) {
             goto error;
         }
-        for (size_t n = uproc_list_size(pc_results), i = 0; i < n; i++) {
+        for (long n = uproc_list_size(pc_results), i = 0; i < n; i++) {
             struct uproc_protresult pp;
             (void) uproc_list_get(pc_results, i, &pp);
             key.uint = pp.family;

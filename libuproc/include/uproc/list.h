@@ -71,7 +71,7 @@ void uproc_list_clear(uproc_list *list);
  *
  * Copies the data of the item at \c index into \c *value.
  */
-int uproc_list_get(const uproc_list *list, size_t index, void *value);
+int uproc_list_get(const uproc_list *list, long index, void *value);
 
 
 /** Get all items
@@ -95,7 +95,7 @@ size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz);
  * Stores a copy of \c *value at position \c index, which must be less than the
  * size of the list.
  */
-int uproc_list_set(uproc_list *list, size_t index, const void *value);
+int uproc_list_set(uproc_list *list, long index, const void *value);
 
 
 /** Append item to list
@@ -105,8 +105,23 @@ int uproc_list_set(uproc_list *list, size_t index, const void *value);
 int uproc_list_append(uproc_list *list, const void *value);
 
 
+/** Append array of items
+ *
+ * Appends the \c n elements of \c values to the end of the list.
+ */
+int uproc_list_extend(uproc_list *list, const void *values, long n);
+
+
+/** Add list
+ *
+ * Extends \c dest by the items of \c src. Both lists must be created with the
+ * same \c value_size argument to uproc_list_create().
+ */
+int uproc_list_add(uproc_list *dest, const uproc_list *src);
+
+
 /** Returns the number of items */
-size_t uproc_list_size(const uproc_list *list);
+long uproc_list_size(const uproc_list *list);
 
 
 /** Apply function to all items

@@ -30,15 +30,16 @@
 #include "uproc/list.h"
 
 #define MIN_CAPACITY 32
+#define MAX_SIZE (LONG_MAX)
 
 
 struct uproc_list_s
 {
     /* Number of stored values */
-    size_t size;
+    long size;
 
     /* Allocated size in number of _values_ */
-    size_t capacity;
+    long capacity;
 
     /* Number of bytes one value requires */
     size_t value_size;
@@ -51,7 +52,7 @@ struct uproc_list_s
 /* Reallocate the list data pointer to the given new capacity or at
  * least MIN_CAPACITY. Fails if memory can't be reallocated */
 static int
-list_realloc(struct uproc_list_s *list, size_t n)
+list_realloc(struct uproc_list_s *list, long n)
 {
     unsigned char *tmp;
     if (n < MIN_CAPACITY) {
@@ -68,19 +69,31 @@ list_realloc(struct uproc_list_s *list, size_t n)
 
 
 /* Doubles the capacity of a list. If (value_size * capacity) would exceed
- * SIZE_MAX, use (SIZE_MAX / capacity) instead of doubling.
- * Fails if the size is already (SIZE_MAX / capacity).  */
+ * MAX_SIZE, use (MAX_SIZE / value_size) instead of doubling.
+ * Fails if the size is already (MAX_SIZE / value_size).  */
 static int
-list_grow(struct uproc_list_s *list)
+list_grow(struct uproc_list_s *list, long n)
 {
-    size_t cap_new, cap_max = SIZE_MAX / list->value_size;
+    long cap_req, cap_new, cap_max;
 
-    if (list->capacity == cap_max) {
+    cap_req = list->size + n;
+    if (cap_req < list->capacity) {
+        return 0;
+    }
+
+    cap_max = MAX_SIZE / list->value_size;
+    if (list->capacity == cap_max || cap_req > cap_max) {
         return uproc_error_msg(UPROC_EINVAL, "list too big");
     }
-    cap_new = list->capacity * 2;
-    if (cap_new > cap_max) {
+
+    if (cap_max / 2 > list->capacity) {
+        cap_new = list->capacity * 2;
+    }
+    else {
         cap_new = cap_max;
+    }
+    if (cap_new < cap_req) {
+        cap_new = cap_req;
     }
     return list_realloc(list, cap_new);
 }
@@ -131,13 +144,17 @@ uproc_list_clear(uproc_list *list)
 
 
 int
-uproc_list_get(const uproc_list *list, size_t index, void *value)
+uproc_list_get(const uproc_list *list, long index, void *value)
 {
-    if (index >= list->size) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "list index %zu out of range", index);
+    long idx = index;
+    if (idx < 0) {
+        idx += list->size;
     }
-    memcpy(value, list->data + index * list->value_size, list->value_size);
+    if (idx < 0 || idx >= list->size) {
+        return uproc_error_msg(
+            UPROC_EINVAL, "list index %ld out of range", index);
+    }
+    memcpy(value, list->data + idx * list->value_size, list->value_size);
     return 0;
 }
 
@@ -155,13 +172,17 @@ uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
 
 
 int
-uproc_list_set(uproc_list *list, size_t index, const void *value)
+uproc_list_set(uproc_list *list, long index, const void *value)
 {
-    if (index >= list->size) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "list index %zu out of range", index);
+    long idx = index;
+    if (idx < 0) {
+        idx += list->size;
     }
-    memcpy(list->data + index * list->value_size, value, list->value_size);
+    if (idx < 0 || idx >= list->size) {
+        return uproc_error_msg(
+            UPROC_EINVAL, "list index %ld out of range", index);
+    }
+    memcpy(list->data + idx * list->value_size, value, list->value_size);
     return 0;
 }
 
@@ -169,23 +190,48 @@ uproc_list_set(uproc_list *list, size_t index, const void *value)
 int
 uproc_list_append(uproc_list *list, const void *value)
 {
-    int res;
-    if (list->size == list->capacity) {
-        res = list_grow(list);
-        if (res) {
-            return res;
-        }
-    }
-    list->size++;
-    res = uproc_list_set(list, list->size - 1, value);
+    int res = list_grow(list, 1);
     if (res) {
         return res;
     }
+    list->size++;
+    return uproc_list_set(list, list->size - 1, value);
+}
+
+
+int
+uproc_list_extend(uproc_list *list, const void *values, long n)
+{
+    int res;
+    if (n < 0) {
+        return uproc_error_msg(UPROC_EINVAL, "negative number of items");
+    }
+    if (n > (LONG_MAX - list->size)) {
+        return uproc_error_msg(UPROC_EINVAL, "list too big");
+    }
+
+    res = list_grow(list, n);
+    if (res) {
+        return res;
+    }
+    memcpy(list->data + list->size * list->value_size, values, n * list->value_size);
+    list->size += n;
     return 0;
 }
 
 
-size_t
+int
+uproc_list_add(uproc_list *dest, const uproc_list *src)
+{
+    if (dest->value_size != src->value_size) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "can't add lists with different value sizes");
+    }
+    return uproc_list_extend(dest, src->data, src->size);
+}
+
+
+long
 uproc_list_size(const uproc_list *list)
 {
     return list->size;
@@ -196,7 +242,7 @@ void
 uproc_list_map(const uproc_list *list, void(*func)(void *, void *),
                void *opaque)
 {
-    for (size_t i = 0; i < list->size; i++) {
+    for (long i = 0; i < list->size; i++) {
         func(list->data + i * list->value_size, opaque);
     }
 }
