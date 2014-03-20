@@ -221,13 +221,13 @@ uproc_list_extend(uproc_list *list, const void *values, long n)
 
 
 int
-uproc_list_add(uproc_list *dest, const uproc_list *src)
+uproc_list_add(uproc_list *list, const uproc_list *src)
 {
-    if (dest->value_size != src->value_size) {
+    if (list->value_size != src->value_size) {
         return uproc_error_msg(UPROC_EINVAL,
                                "can't add lists with different value sizes");
     }
-    return uproc_list_extend(dest, src->data, src->size);
+    return uproc_list_extend(list, src->data, src->size);
 }
 
 

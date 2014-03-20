@@ -112,12 +112,12 @@ int uproc_list_append(uproc_list *list, const void *value);
 int uproc_list_extend(uproc_list *list, const void *values, long n);
 
 
-/** Add list
+/** Append all elements of another list
  *
- * Extends \c dest by the items of \c src. Both lists must be created with the
+ * Extends \c list by the items of \c src. Both lists must be created with the
  * same \c value_size argument to uproc_list_create().
  */
-int uproc_list_add(uproc_list *dest, const uproc_list *src);
+int uproc_list_add(uproc_list *list, const uproc_list *src);
 
 
 /** Returns the number of items */
