@@ -353,13 +353,18 @@ uproc_io_gets(char *s, int size, uproc_io_stream *stream)
 #if HAVE_ZLIB_H
             res = gzgets(stream->s.gz, s, size);
             if (!res) {
-                uproc_error_msg(UPROC_EIO, "failed to read from gz stream");
+                int num;
+                const char *msg = gzerror(stream->s.gz, &num);
+                if (num != Z_OK && num != Z_STREAM_END) {
+                    uproc_error_msg(UPROC_EIO,
+                                    "failed to read from gz stream: %d %s", num, msg);
+                }
             }
             break;
 #endif
         case UPROC_IO_STDIO:
             res = fgets(s, size, stream->s.fp);
-            if (!res) {
+            if (!res && ferror(stream->s.fp)) {
                 uproc_error_msg(UPROC_EIO, "failed to read from stream");
             }
             break;
@@ -377,11 +382,11 @@ uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
     if (stream->type == UPROC_IO_STDIO) {
         ssize_t res = getline(lineptr, n, stream->s.fp);
         if (res == -1) {
-            if (feof(stream->s.fp)) {
-                uproc_error(UPROC_SUCCESS);
+            if (ferror(stream->s.fp)) {
+                uproc_error(UPROC_ERRNO);
             }
             else {
-                uproc_error(UPROC_ERRNO);
+                uproc_error(UPROC_SUCCESS);
             }
         }
         return res;
