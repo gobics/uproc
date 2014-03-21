@@ -210,10 +210,6 @@ output(struct buffer *buf, size_t pr_seq_offset, size_t *n_seqs,
             continue;
         }
 
-        if (pr_stream) {
-            continue;
-        }
-
 #if MAIN_DNA
         struct uproc_dnaresult result;
 #else
