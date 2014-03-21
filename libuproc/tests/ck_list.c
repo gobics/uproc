@@ -98,6 +98,23 @@ START_TEST(test_extend)
 END_TEST
 
 
+START_TEST(test_pop)
+{
+    int i;
+    struct test_data value;
+    for (i = 0; i < 10000; i++) {
+        APPEND(i, '0' + i % 10);
+    }
+    ck_assert_int_eq(uproc_list_size(list), 10000);
+    for (i = 0; i < 10000; i++) {
+        uproc_list_pop(list, &value);
+        ck_assert_int_eq(value.x, 10000 - i - 1);
+    }
+    ck_assert_int_eq(uproc_list_size(list), 0);
+}
+END_TEST
+
+
 START_TEST(test_negative_index)
 {
     int i, res;
@@ -158,6 +175,7 @@ int main(void)
     TCase *tc = tcase_create("list operations");
     tcase_add_test(tc, test_list);
     tcase_add_test(tc, test_extend);
+    tcase_add_test(tc, test_pop);
     tcase_add_test(tc, test_negative_index);
     tcase_add_test(tc, test_map);
     tcase_add_checked_fixture(tc, setup, teardown);

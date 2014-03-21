@@ -231,6 +231,21 @@ uproc_list_add(uproc_list *list, const uproc_list *src)
 }
 
 
+int
+uproc_list_pop(uproc_list *list, void *value)
+{
+    if (list->size < 1) {
+        return uproc_error_msg(UPROC_EINVAL, "pop from empty list");
+    }
+    uproc_list_get(list, list->size - 1, value);
+    list->size--;
+    if (list->size > list->capacity / 4) {
+        return 0;
+    }
+    return list_realloc(list, list->capacity / 2);
+}
+
+
 long
 uproc_list_size(const uproc_list *list)
 {

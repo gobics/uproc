@@ -120,6 +120,10 @@ int uproc_list_extend(uproc_list *list, const void *values, long n);
 int uproc_list_add(uproc_list *list, const uproc_list *src);
 
 
+/** Get and remove the last item */
+int uproc_list_pop(uproc_list *list, void *value);
+
+
 /** Returns the number of items */
 long uproc_list_size(const uproc_list *list);
 
