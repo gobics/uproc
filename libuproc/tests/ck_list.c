@@ -1,4 +1,5 @@
 #include <check.h>
+#include <limits.h>
 #include "uproc.h"
 
 #define TEST(I, V) do { \
@@ -153,7 +154,7 @@ map_func_max(void *data, void *ctx)
 
 START_TEST(test_map)
 {
-    int i, max;
+    int i, max = INT_MIN;
     struct test_data value;
 
     for (i = 0; i < 10000; i++) {
