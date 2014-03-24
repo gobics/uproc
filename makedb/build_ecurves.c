@@ -262,65 +262,39 @@ static int
 insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
                size_t n_entries)
 {
-    size_t i, k;
-    uproc_prefix p, last_prefix, current_prefix, next_prefix;
-    uintmax_t dist_next, dist_prev;
+    int res = 0;
+    size_t i;
+    uproc_prefix current_prefix;
+    uproc_list *suffix_list;
+    struct uproc_ecurve_suffixentry suffix_entry;
 
-    last_prefix = 0;
+    suffix_list = uproc_list_create(sizeof suffix_entry);
+    if (!suffix_list) {
+        return -1;
+    }
+
     current_prefix = entries[0].word.prefix;
 
-    for (i = 0; i < n_entries;) {
-        for (p = last_prefix; p < current_prefix; p++) {
-            dist_prev = p - last_prefix;
-            if (last_prefix) {
-                dist_prev += 1;
+    for (i = 0; i < n_entries; i++) {
+        if (entries[i].word.prefix != current_prefix) {
+            res = uproc_ecurve_add_prefix(ecurve, current_prefix, suffix_list);
+            if (res) {
+                goto error;
             }
-            if (dist_prev > PFXTAB_NEIGH_MAX) {
-                dist_prev = PFXTAB_NEIGH_MAX;
-            }
-            dist_next = current_prefix - p;
-            if (dist_next > PFXTAB_NEIGH_MAX) {
-                dist_next = PFXTAB_NEIGH_MAX;
-            }
-            ecurve->prefixes[p].prev = last_prefix ? dist_prev : 0;
-            ecurve->prefixes[p].next = dist_next;
-            ecurve->prefixes[p].count = last_prefix ? 0 : ECURVE_EDGE;
+            uproc_list_clear(suffix_list);
+            current_prefix = entries[i].word.prefix;
         }
-        for (k = i;
-             k < n_entries && entries[k].word.prefix == current_prefix;
-             k++)
-        {
-            ecurve->suffixes[k] = entries[k].word.suffix;
-            ecurve->families[k] = entries[k].family;
+        suffix_entry.suffix = entries[i].word.suffix;
+        suffix_entry.family = entries[i].family;
+        res = uproc_list_append(suffix_list, &suffix_entry);
+        if (res) {
+            goto error;
         }
-        ecurve->prefixes[current_prefix].first = i;
-        ecurve->prefixes[current_prefix].count = k - i;
-
-        if (k == n_entries) {
-            break;
-        }
-
-        next_prefix = entries[k].word.prefix;
-
-        for (p = current_prefix + 1; p < next_prefix; p++) {
-            ecurve->prefixes[p].first = k - 1;
-            ecurve->prefixes[p].count = ECURVE_EDGE;
-        }
-        last_prefix = current_prefix + 1;
-        current_prefix = next_prefix;
-        i = k;
     }
-
-    for (p = current_prefix + 1; p <= UPROC_PREFIX_MAX; p++) {
-        dist_prev = p - current_prefix;
-        if (dist_prev > PFXTAB_NEIGH_MAX) {
-            dist_prev = PFXTAB_NEIGH_MAX;
-        }
-        ecurve->prefixes[p].prev = dist_prev;
-        ecurve->prefixes[p].count = ECURVE_EDGE;
-    }
-
-    return UPROC_SUCCESS;
+    res = uproc_ecurve_add_prefix(ecurve, current_prefix, suffix_list);
+error:
+    uproc_list_destroy(suffix_list);
+    return res;
 }
 
 
@@ -341,6 +315,11 @@ build_ecurve(const char *infile,
     alpha = uproc_alphabet_create(alphabet);
     if (!alpha) {
         return -1;
+    }
+
+    *ecurve = uproc_ecurve_create(alphabet, 0);
+    if (!*ecurve) {
+        goto error;
     }
 
     progress(reverse ? "rev.ecurve" : "fwd.ecurve", -1.0);
@@ -365,28 +344,12 @@ build_ecurve(const char *infile,
             continue;
         }
 
-        if (!*ecurve) {
-            *ecurve = uproc_ecurve_create(alphabet, n_entries);
-            if (!*ecurve) {
-                goto error;
-            }
-            insert_entries(*ecurve, entries, n_entries);
-        }
-        else {
-            uproc_ecurve *new;
-            new = uproc_ecurve_create(alphabet, n_entries);
-            if (!new) {
-                goto error;
-            }
-
-            insert_entries(new, entries, n_entries);
-            res = uproc_ecurve_append(*ecurve, new);
-            uproc_ecurve_destroy(new);
-            if (res) {
-                goto error;
-            }
+        res = insert_entries(*ecurve, entries, n_entries);
+        if (res) {
+            goto error;
         }
     }
+    uproc_ecurve_finalize(*ecurve);
     progress(NULL, first * 100 / UPROC_ALPHABET_SIZE);
 
     if (0) {

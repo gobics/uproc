@@ -35,6 +35,7 @@
 
 #include "uproc/alphabet.h"
 #include "uproc/io.h"
+#include "uproc/list.h"
 #include "uproc/word.h"
 
 
@@ -51,6 +52,13 @@
  * See \ref obj_ecurve for details.
  */
 typedef struct uproc_ecurve_s uproc_ecurve;
+
+
+struct uproc_ecurve_suffixentry
+{
+    uproc_suffix suffix;
+    uproc_family family;
+};
 
 
 /** Storage format */
@@ -87,24 +95,64 @@ enum
 uproc_ecurve *uproc_ecurve_create(const char *alphabet, size_t suffix_count);
 
 
-/** Destroy ecurve object
- *
- * \param ecurve    ecurve to destroy
- */
+/** Destroy ecurve object */
 void uproc_ecurve_destroy(uproc_ecurve *ecurve);
 
 
-/** Append one partial ecurve to another
+/** Add a prefix entry
  *
- * They may not overlap, i.e. the last non-empty prefix of \c dest needs to be
- * less than the first non-empty prefix of \c src.
+ * Adds the prefix \c pfx and the suffix/family pairs in the \c suffixes list
+ * to the ecurve.
  *
- * \c dest may not be "mmap()ed"
+ * The argument to \c ecurve \em must be an ecurve fulfilling the following
+ * conditions:
+ * \li created with \c 0 as the second argument to uproc_ecurve_create()
+ * \li was extended using this function zero or more times
+ * \li not yet finalized with uproc_ecurve_finalize()
  *
- * \param dest  ecurve to append to
- * \param src   ecurve to append
+ * Because building is done incrementally, the \c pfx argument needs to be
+ * greater than it was in the previous call to this function.
+ *
+ * The \c suffixes argument must be  a \ref grp_datastructs_list with at least
+ * one element of type ::uproc_ecurve_suffixentry.
+ *
+ * \note
+ * If this function is used on an ecurve that does not meet the conditions
+ * above, the result will be a broken ecurve.
+ * \endnote
+ *
+ * Example
+ * \code
+ * int add_entries(uproc_ecurve *ec, uproc_prefix p,
+ *                 uproc_suffix *s, uproc_family *f, int n)
+ * {
+ *     int i, res;
+ *     struct uproc_ecurve_suffixentry e;
+ *     uproc_list *list = uproc_list_create(sizeof e);
+ *     for (i = 0; i < n; i++) {
+ *         e.suffix = s[i];
+ *         e.family = f[i];
+ *         res = uproc_list_append(list, &e);
+ *         if (res) {
+ *             // handle error
+ *         }
+ *     }
+ *     res = uproc_ecurve_add_prefix(ec, p, list);
+ *     uproc_list_destroy(list);
+ *     return res;
+ * }
+ * \endcode
  */
-int uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src);
+int uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx, uproc_list *suffixes);
+
+
+/** Finalize ecurve
+ *
+ * Finalizes an ecurve that was built using uproc_ecurve_add_prefix().
+ * This function \e must be called on a newly-constructed ecurve before it can
+ * be used.
+ */
+int uproc_ecurve_finalize(uproc_ecurve *ecurve);
 
 
 /** Find the closest neighbours of a word in the ecurve

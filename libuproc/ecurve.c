@@ -29,6 +29,7 @@
 #include "uproc/error.h"
 #include "uproc/ecurve.h"
 #include "uproc/word.h"
+#include "uproc/list.h"
 
 #include "ecurve_internal.h"
 
@@ -159,6 +160,41 @@ suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
 }
 
 
+static pfxtab_neigh
+neigh_dist(uproc_prefix a, uproc_prefix b)
+{
+    uintmax_t dist;
+    if (a > b) {
+        dist = a - b;
+    }
+    else {
+        dist = b - a;
+    }
+    return dist < PFXTAB_NEIGH_MAX ? dist : PFXTAB_NEIGH_MAX;
+}
+
+
+static int
+ecurve_realloc(struct uproc_ecurve_s *ec, size_t suffix_count)
+{
+    void *tmp;
+    tmp = realloc(ec->suffixes, sizeof *ec->suffixes * suffix_count);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    ec->suffixes = tmp;
+
+    tmp = realloc(ec->families, sizeof *ec->families * suffix_count);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    ec->families = tmp;
+
+    ec->suffix_count = suffix_count;
+    return 0;
+}
+
+
 uproc_ecurve *
 uproc_ecurve_create(const char *alphabet, size_t suffix_count)
 {
@@ -231,76 +267,74 @@ uproc_ecurve_destroy(uproc_ecurve *ecurve)
 
 
 int
-uproc_ecurve_append(uproc_ecurve *dest, const uproc_ecurve *src)
+uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx, uproc_list *suffixes)
 {
-    void *tmp;
-    size_t new_suffix_count;
-    uproc_prefix dest_last, src_first, p;
+    int res;
+    uproc_prefix p;
+    struct uproc_ecurve_pfxtable *pt;
+    size_t suffix_count, old_suffix_count;
 
-    if (dest->mmap_ptr) {
-        return uproc_error_msg(UPROC_EINVAL, "can't append to mmap()ed ecurve");
-    }
-
-    for (dest_last = UPROC_PREFIX_MAX; dest_last > 0; dest_last--) {
-        if (!ECURVE_ISEDGE(dest->prefixes[dest_last])) {
-            break;
-        }
-    }
-    for (src_first = 0; src_first < UPROC_PREFIX_MAX; src_first++) {
-        if (!ECURVE_ISEDGE(src->prefixes[src_first])) {
-            break;
-        }
-    }
-    /* must not overlap! */
-    if (src_first <= dest_last) {
-        return uproc_error_msg(UPROC_EINVAL, "overlapping ecurves");
+    if (!uproc_list_size(suffixes)) {
+        return uproc_error_msg(UPROC_EINVAL, "empty suffix list");
     }
 
-    new_suffix_count = dest->suffix_count + src->suffix_count;
-    if (new_suffix_count > PFXTAB_SUFFIX_MAX) {
+    if (uproc_list_size(suffixes) >= ECURVE_EDGE) {
         return uproc_error_msg(UPROC_EINVAL, "too many suffixes");
     }
-    tmp = realloc(dest->suffixes, new_suffix_count * sizeof *dest->suffixes);
-    if (!tmp) {
-        return uproc_error(UPROC_ENOMEM);
+
+    if (pfx <= ecurve->last_nonempty && ecurve->suffix_count) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "new prefix must be greater than last nonempty");
     }
-    dest->suffixes = tmp;
 
-    tmp = realloc(dest->families, new_suffix_count * sizeof *dest->families);
-    if (!tmp) {
-        return uproc_error(UPROC_ENOMEM);
-    }
-    dest->families = tmp;
-
-    memcpy(dest->suffixes + dest->suffix_count,
-            src->suffixes,
-            src->suffix_count * sizeof *src->suffixes);
-    memcpy(dest->families + dest->suffix_count,
-            src->families,
-            src->suffix_count * sizeof *src->families);
-
-    for (p = dest_last + 1; p < src_first; p++) {
-        uintmax_t dist_prev, dist_next;
-        dist_prev = p - dest_last;
-        if (dist_prev > PFXTAB_NEIGH_MAX) {
-            dist_prev = PFXTAB_NEIGH_MAX;
+    for (p = ecurve->last_nonempty + !!ecurve->suffix_count; p < pfx; p++) {
+        pt = &ecurve->prefixes[p];
+        /* empty ecurve -> mark leading prefixes as "edge" */
+        if (!ecurve->suffix_count) {
+            pt->prev = 0;
+            pt->next = neigh_dist(p, pfx);
+            pt->count = ECURVE_EDGE;
         }
-        dist_next = src_first - p;
-        if (dist_next > PFXTAB_NEIGH_MAX) {
-            dist_next = PFXTAB_NEIGH_MAX;
-        }
-        dest->prefixes[p].count = 0;
-        dest->prefixes[p].prev = dist_prev;
-        dest->prefixes[p].next = dist_next;
-    }
-    for (p = src_first; p <= UPROC_PREFIX_MAX; p++) {
-        dest->prefixes[p] = src->prefixes[p];
-        if (src->prefixes[p].count && !ECURVE_ISEDGE(src->prefixes[p])) {
-            dest->prefixes[p].first += dest->suffix_count;
+        else {
+            pt->prev = neigh_dist(ecurve->last_nonempty, p);
+            pt->next = neigh_dist(p, pfx);
+            pt->count = 0;
         }
     }
-    dest->suffix_count = new_suffix_count;
 
+    suffix_count = uproc_list_size(suffixes);
+    pt = &ecurve->prefixes[pfx];
+    pt->first = ecurve->suffix_count;
+    pt->count = suffix_count;
+
+    old_suffix_count = ecurve->suffix_count;
+    res = ecurve_realloc(ecurve, ecurve->suffix_count + suffix_count);
+    if (res) {
+        return res;
+    }
+
+    for (size_t i = 0; i < suffix_count; i++) {
+        struct uproc_ecurve_suffixentry entry;
+        uproc_list_get(suffixes, i, &entry);
+        ecurve->suffixes[old_suffix_count + i] = entry.suffix;
+        ecurve->families[old_suffix_count + i] = entry.family;
+    }
+
+    ecurve->last_nonempty = pfx;
+    return 0;
+}
+
+int
+uproc_ecurve_finalize(uproc_ecurve *ecurve)
+{
+    uproc_prefix p;
+    struct uproc_ecurve_pfxtable *pt;
+    for (p = ecurve->last_nonempty + 1; p <= UPROC_PREFIX_MAX; p++) {
+        pt = &ecurve->prefixes[p];
+        pt->prev = neigh_dist(ecurve->last_nonempty, p);
+        pt->next = 0;
+        pt->count = ECURVE_EDGE;
+    }
     return 0;
 }
 

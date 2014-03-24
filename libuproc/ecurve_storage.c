@@ -32,6 +32,7 @@
 #include "uproc/error.h"
 #include "uproc/ecurve.h"
 #include "uproc/io.h"
+#include "uproc/list.h"
 #include "uproc/word.h"
 
 #include "ecurve_internal.h"
@@ -41,12 +42,12 @@
 #define BUFSZ 1024
 #define COMMENT_CHAR '#'
 #define HEADER_PRI \
-    ">> alphabet: %." STR(UPROC_ALPHABET_SIZE) "s, suffixes: %zu\n"
+    ">> alphabet: %." STR(UPROC_ALPHABET_SIZE) "s\n"
 #define HEADER_SCN \
-    ">> alphabet: %"  STR(UPROC_ALPHABET_SIZE) "c, suffixes: %zu"
+    ">> alphabet: %"  STR(UPROC_ALPHABET_SIZE) "c"
 
-#define PREFIX_PRI ">%." STR(UPROC_PREFIX_LEN) "s %zu\n"
-#define PREFIX_SCN ">%"  STR(UPROC_PREFIX_LEN) "c %zu"
+#define PREFIX_PRI ">%." STR(UPROC_PREFIX_LEN) "s\n"
+#define PREFIX_SCN ">%"  STR(UPROC_PREFIX_LEN) "c"
 
 #define SUFFIX_PRI "%." STR(UPROC_SUFFIX_LEN) "s %" UPROC_FAMILY_PRI "\n"
 #define SUFFIX_SCN "%"  STR(UPROC_SUFFIX_LEN) "c %" UPROC_FAMILY_SCN
@@ -63,169 +64,144 @@ read_line(uproc_io_stream *stream, char *line, size_t n)
 }
 
 static int
-load_header(uproc_io_stream *stream, char *alpha, size_t *suffix_count)
+parse_header(const char *line, char *alpha)
 {
-    char line[BUFSZ];
-    int res = read_line(stream, line, sizeof line);
-    if (res) {
-        return res;
-    }
-    res = sscanf(line, HEADER_SCN, alpha, suffix_count);
+    int res;
+    res = sscanf(line, HEADER_SCN, alpha);
     alpha[UPROC_ALPHABET_SIZE] = '\0';
-    if (res != 2) {
+    if (res != 1) {
         return uproc_error_msg(UPROC_EINVAL, "invalid header: \"%s\"", line);
     }
     return 0;
 }
 
 static int
-load_prefix(uproc_io_stream *stream, const uproc_alphabet *alpha,
-            uproc_prefix *prefix, size_t *suffix_count)
+parse_prefix(const char *line, const uproc_alphabet *alpha, uproc_prefix *pfx)
 {
     int res;
-    char line[BUFSZ], word_str[UPROC_WORD_LEN + 1];
+    char tmp[UPROC_WORD_LEN + 1] = "";
     struct uproc_word word = UPROC_WORD_INITIALIZER;
 
-    res = read_line(stream, line, sizeof line);
+    memset(tmp, 'A', sizeof tmp - 1);
+    memcpy(tmp, line, UPROC_PREFIX_LEN);
+    res = uproc_word_from_string(&word, tmp, alpha);
     if (res) {
         return res;
     }
-    res = uproc_word_to_string(word_str, &word, alpha);
-    if (res) {
-        return res;
-    }
-    res = sscanf(line, PREFIX_SCN, word_str, suffix_count);
-    if (res != 2) {
-        return uproc_error_msg(UPROC_EINVAL, "invalid prefix string: \"%s\"",
-                              line);
-    }
-    res = uproc_word_from_string(&word, word_str, alpha);
-    if (res) {
-        return res;
-    }
-    *prefix = word.prefix;
+    *pfx = word.prefix;
     return 0;
+
 }
 
 static int
-load_suffix(uproc_io_stream *stream, const uproc_alphabet *alpha,
-            uproc_suffix *suffix, uproc_family *family)
+parse_suffixentry(const char *line, const uproc_alphabet *alpha,
+             struct uproc_ecurve_suffixentry *entry)
 {
     int res;
-    char line[BUFSZ], word_str[UPROC_WORD_LEN + 1];
+    char tmp[UPROC_WORD_LEN + 1] = "";
     struct uproc_word word = UPROC_WORD_INITIALIZER;
 
-    res = read_line(stream, line, sizeof line);
+    memset(tmp, 'A', sizeof tmp - 1);
+    memcpy(tmp + UPROC_PREFIX_LEN, line, UPROC_SUFFIX_LEN);
+    res = uproc_word_from_string(&word, tmp, alpha);
     if (res) {
         return res;
     }
-    res = uproc_word_to_string(word_str, &word, alpha);
-    if (res) {
-        return res;
+    entry->suffix = word.suffix;
+
+    line += UPROC_SUFFIX_LEN + 1;
+    res = sscanf(line, "%" UPROC_FAMILY_SCN, &entry->family);
+    if (res != 1) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "invalid family identifier: \"%s\"", line);
     }
-    res = sscanf(line, SUFFIX_SCN, &word_str[UPROC_PREFIX_LEN], family);
-    if (res != 2) {
-        return uproc_error_msg(UPROC_EINVAL, "invalid suffix string: \"%s\"",
-                               line);
-    }
-    res = uproc_word_from_string(&word, word_str, alpha);
-    if (res) {
-        return res;
-    }
-    *suffix = word.suffix;
     return 0;
 }
+
 
 static uproc_ecurve *
 load_plain(uproc_io_stream *stream)
 {
-    int res;
-    struct uproc_ecurve_s *ecurve;
-    uproc_prefix p;
-    uproc_suffix s;
-    size_t suffix_count;
-    uproc_prefix prev_nonempty = 0;
-    pfxtab_suffix prev_last;
+    int res = 0;
+    uproc_ecurve *ec = NULL;
+
+    char line[BUFSZ];
     char alpha[UPROC_ALPHABET_SIZE + 1];
-    res = load_header(stream, alpha, &suffix_count);
-    if (res) {
+    uproc_alphabet *ec_alpha;
+
+    uproc_prefix prefix = UPROC_PREFIX_MAX + 1;
+    uproc_list *suffix_list;
+    struct uproc_ecurve_suffixentry suffix_entry;
+
+    suffix_list = uproc_list_create(sizeof suffix_entry);
+    if (!suffix_list) {
         return NULL;
     }
 
-    ecurve = uproc_ecurve_create(alpha, suffix_count);
-    if (!ecurve) {
+    if (read_line(stream, line, sizeof line)) {
+        goto error;
+    }
+    if (parse_header(line, alpha)) {
+        goto error;
+    }
+    ec = uproc_ecurve_create(alpha, 0);
+    if (!ec) {
+        goto error;
         return NULL;
     }
+    ec_alpha = uproc_ecurve_alphabet(ec);
 
-    for (prev_last = 0, s = p = 0; s < suffix_count;) {
-        uproc_prefix prefix = -1;
-        size_t ps, p_suffixes;
-
-        res = load_prefix(stream, ecurve->alphabet, &prefix, &p_suffixes);
-        if (res) {
-            goto error;
-        }
-
-        if (prefix > UPROC_PREFIX_MAX) {
-            uproc_error_msg(UPROC_EINVAL,
-                            "invalid prefix value: %" UPROC_PREFIX_PRI,
-                            prefix);
-            goto error;
-        }
-
-        for (; p < prefix; p++) {
-            uintmax_t dist_prev = p - prev_nonempty,
-                      dist_next = prefix - p;
-            if (dist_prev > PFXTAB_NEIGH_MAX) {
-                dist_prev = PFXTAB_NEIGH_MAX;
+    while (res = read_line(stream, line, sizeof line), !res) {
+        if (line[0] == '>' || line[0] == '.') {
+            if (uproc_list_size(suffix_list)) {
+                res = uproc_ecurve_add_prefix(ec, prefix, suffix_list);
+                if (res) {
+                    goto error;
+                }
+                uproc_list_clear(suffix_list);
             }
-            if (dist_next > PFXTAB_NEIGH_MAX) {
-                dist_next = PFXTAB_NEIGH_MAX;
+            /* the end */
+            if (line[0] == '.') {
+                res = 0;
+                break;
             }
-            ecurve->prefixes[p].prev = prev_last ? dist_prev : 0;
-            ecurve->prefixes[p].next = dist_next;
-            ecurve->prefixes[p].count = prev_last ? 0 : ECURVE_EDGE;
-        }
-        ecurve->prefixes[prefix].first = s;
-        ecurve->prefixes[prefix].count = p_suffixes;
-        prev_nonempty = prefix;
-        p = prefix + 1;
-
-        for (ps = 0; ps < p_suffixes; ps++, s++) {
-            res = load_suffix(stream, ecurve->alphabet, &ecurve->suffixes[s],
-                              &ecurve->families[s]);
+            res = parse_prefix(line + 1, ec_alpha, &prefix);
             if (res) {
                 goto error;
             }
         }
-        prev_last = s - 1;
-    }
-    for (; p < UPROC_PREFIX_MAX + 1; p++) {
-        uintmax_t dist_prev = p - prev_nonempty;
-        if (dist_prev > PFXTAB_NEIGH_MAX) {
-            dist_prev = PFXTAB_NEIGH_MAX;
+        else {
+            res = parse_suffixentry(line, ec_alpha, &suffix_entry);
+            if (res) {
+                goto error;
+            }
+            res = uproc_list_append(suffix_list, &suffix_entry);
+            if (res) {
+                goto error;
+            }
         }
-        ecurve->prefixes[p].prev = dist_prev;
-        ecurve->prefixes[p].next = 0;
-        ecurve->prefixes[p].count = ECURVE_EDGE;
     }
-    return ecurve;
+    uproc_ecurve_finalize(ec);
+    if (res) {
 error:
-    uproc_ecurve_destroy(ecurve);
-    return NULL;
+        uproc_ecurve_destroy(ec);
+        ec = NULL;
+    }
+    uproc_list_destroy(suffix_list);
+    return ec;
 }
 
 static int
-store_header(uproc_io_stream *stream, const char *alpha, size_t suffix_count)
+store_header(uproc_io_stream *stream, const char *alpha)
 {
     int res;
-    res = uproc_io_printf(stream, HEADER_PRI, alpha, suffix_count);
+    res = uproc_io_printf(stream, HEADER_PRI, alpha);
     return (res > 0) ? 0 : -1;
 }
 
 static int
 store_prefix(uproc_io_stream *stream, const uproc_alphabet *alpha,
-             uproc_prefix prefix, size_t suffix_count)
+             uproc_prefix prefix)
 {
     int res;
     char str[UPROC_WORD_LEN + 1];
@@ -236,7 +212,7 @@ store_prefix(uproc_io_stream *stream, const uproc_alphabet *alpha,
         return res;
     }
     str[UPROC_PREFIX_LEN] = '\0';
-    res = uproc_io_printf(stream, PREFIX_PRI, str, suffix_count);
+    res = uproc_io_printf(stream, PREFIX_PRI, str);
     return (res > 0) ? 0 : -1;
 }
 
@@ -262,36 +238,35 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream)
     int res;
     size_t p;
 
-    res = store_header(stream, uproc_alphabet_str(ecurve->alphabet),
-                       ecurve->suffix_count);
+    res = store_header(stream, uproc_alphabet_str(ecurve->alphabet));
 
     if (res) {
         return res;
     }
 
     for (p = 0; p <= UPROC_PREFIX_MAX; p++) {
-        size_t suffix_count = ecurve->prefixes[p].count;
-        size_t offset = ecurve->prefixes[p].first;
-        size_t i;
+        pfxtab_count suffix_count = ecurve->prefixes[p].count;
+        pfxtab_suffix first = ecurve->prefixes[p].first;
 
         if (!suffix_count || ECURVE_ISEDGE(ecurve->prefixes[p])) {
             continue;
         }
 
-        res = store_prefix(stream, ecurve->alphabet, p, suffix_count);
+        res = store_prefix(stream, ecurve->alphabet, p);
         if (res) {
             return res;
         }
 
-        for (i = 0; i < suffix_count; i++) {
+        for (pfxtab_count i = 0; i < suffix_count; i++) {
             res = store_suffix(stream, ecurve->alphabet,
-                               ecurve->suffixes[offset + i],
-                               ecurve->families[offset + i]);
+                               ecurve->suffixes[first + i],
+                               ecurve->families[first + i]);
             if (res) {
                 return res;
             }
         }
     }
+    uproc_io_printf(stream, ".\n");
     return 0;
 }
 

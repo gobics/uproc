@@ -37,18 +37,10 @@ struct uproc_ecurve_s
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct uproc_ecurve_pfxtable {
         union {
-            /** Index of the first associated entry in #suffixes
-             *
-             *
-             * WRONG:
-             * If there is no entry for the given prefix, this member contains
-             * `#first + #count - 1` of the last "non-empty" prefix (equal to
-             * `#first - 1` of the next non-empty one). In case of an "edge
-             * prefix" the value is either `0` or `#suffix_count - 1`.
-             */
+            /** Index of the first associated entry in #suffixes */
             pfxtab_suffix first;
 
-            /* indicates offset towards the nearest non-empty neighbours */
+            /* indicates offsets towards the nearest non-empty neighbours */
             struct {
                 pfxtab_neigh prev, next;
             };
@@ -56,9 +48,10 @@ struct uproc_ecurve_s
 
         /** Number of associated suffixes
          *
-         * A value of `(size_t) -1` indicates an "edge prefix", meaning that
-         * there is no lower (resp. higher) prefix value with an associated
-         * suffix in the ecurve.
+         * A value of `(pfxtab_count) -1` indicates an "edge prefix", meaning
+         * that there is no lower (resp. higher) prefix value with an
+         * associated suffix in the ecurve. This can be checked with
+         * ECURVE_ISEDGE()
          */
         pfxtab_count count;
     }
@@ -70,6 +63,13 @@ struct uproc_ecurve_s
      * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
      */
     *prefixes;
+
+    /** Last non-empty prefix
+     *
+     * Needed by uproc_ecurve_add_prefix().
+     *
+     */
+    uproc_prefix last_nonempty;
 
     /** `mmap()` file descriptor
      *
