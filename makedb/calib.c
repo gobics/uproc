@@ -36,7 +36,7 @@
 #include <uproc.h>
 #include "makedb.h"
 
-#define SEQ_COUNT_MULTIPLIER 10000
+#define SEQ_COUNT_MULTIPLIER 200000
 #define POW_MIN 5
 #define POW_MAX 11
 #define POW_DIFF (POW_MAX - POW_MIN)
