@@ -83,11 +83,25 @@ int uproc_protresult_copy(struct uproc_protresult *dest,
  * \copybrief obj_protclass
  *
  * See \ref obj_protclass for details.
+ *
  */
 typedef struct uproc_protclass_s uproc_protclass;
 
 
-typedef bool uproc_protfilter(const char*, size_t, uproc_family, double, void*);
+/** Protein filter function type
+ *
+ * Used by uproc_protclass_classify() to decide whether a classification should
+ * be added to the results.
+ *
+ * \param seq       classified sequence
+ * \param seq_len   length of the classified sequence
+ * \param family    predicted family
+ * \param score     total score for this family
+ * \param arg       user-supplied argument
+ *
+ */
+typedef bool uproc_protfilter(const char *seq, size_t seq_len,
+                              uproc_family family, double score, void *arg);
 
 
 /** Classification mode
@@ -101,6 +115,7 @@ enum uproc_protclass_mode
     /** All results (unordered) */
     UPROC_PROTCLASS_MAX,
 };
+
 
 /** Create new protein classifier
  *
@@ -118,15 +133,52 @@ uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
                                         uproc_protfilter *filter,
                                         void *filter_arg);
 
+
+/** Destroy protein classifier */
 void uproc_protclass_destroy(uproc_protclass *pc);
 
+
+/** Classify DNA sequence
+ *
+ * \c results should be a pointer to a \c (::uproc_list *) that is either NULL
+ * (in which case a new list is created) or which has which has already been
+ * used with this function.
+ * The list will contain items of type \ref struct_protresult. If \c *results
+ * is not NULL, all its elements will be passed to uproc_protresult_free() in
+ * the beginning.
+ *
+ * \param pc        protein classifier
+ * \param seq       sequence to classify
+ * \param results   _OUT_: classification results
+ */
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
                              uproc_list **results);
 
+
+/** Tracing callback type
+ *
+ * Will be called for every word that was found for the protein family which is
+ * currently being traced.
+ *
+ * \param pfx       matched prefix as string
+ * \param sfx       matched suffix as string
+ * \param index     position in the protein sequence
+ * \param reverse   whether the word was found in the "reverse" ecurve
+ * \param scores    scores of this match (array of size ::UPROC_SUFFIX_LEN)
+ * \param arg       user-supplied argument
+ */
 typedef void uproc_protclass_trace_cb(const char *pfx, const char *sfx,
                                       size_t index, bool reverse,
                                       const double *scores, void *opaque);
 
+
+/** Set trace callback
+ *
+ * \param pc        protein classifier
+ * \param family    family to trace
+ * \param cb        callback function
+ * \param cb_arg    additional argument to \c cb
+ */
 void uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
                                uproc_protclass_trace_cb *cb, void *cb_arg);
 /** \} */
