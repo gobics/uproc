@@ -67,13 +67,14 @@ struct buffer
     size_t n;
 } buf[2];
 
+#if MAIN_DNA
 static void
 map_list_dnaresult_free(void *value, void *opaque)
 {
     (void) opaque;
-    struct uproc_dnaresult *p = value;
     uproc_dnaresult_free(value);
 }
+#endif
 
 void
 buf_free(struct buffer *buf) {
