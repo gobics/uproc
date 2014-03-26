@@ -41,6 +41,7 @@
 #endif
 
 #include <uproc.h>
+#include "files.h"
 
 #define MAX_CHUNK_SIZE (1 << 10)
 
@@ -441,10 +442,10 @@ main(int argc, char **argv)
 #if MAIN_DNA
     uproc_dnaclass *dnaclass;
     enum uproc_dnaclass_mode dc_mode = UPROC_DNACLASS_ALL;
-    uproc_matrix *codon_scores = NULL, *orf_thresholds = NULL;
-    int orf_thresh_num = 2;
     bool short_read_mode = false;
 #endif
+    uproc_matrix *codon_scores = NULL, *orf_thresholds = NULL;
+    int orf_thresh_num = 2;
 
     uproc_io_stream *stream;
     uproc_seqiter *rd;
@@ -575,25 +576,12 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                            "%s/fwd.ecurve", argv[optind + DBDIR]);
-    rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                            "%s/rev.ecurve", argv[optind + DBDIR]);
+    (void)db_load(argv[optind + DBDIR], prot_thresh_num, UPROC_ECURVE_BINARY,
+                  &fwd, &rev, &idmap, &prot_thresholds);
 
-    if (use_idmap) {
-        idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap",
-                                 argv[optind + DBDIR]);
-    }
+    (void)model_load(argv[optind + MODELDIR], orf_thresh_num, &substmat,
+                     &codon_scores, &orf_thresholds);
 
-    if (prot_thresh_num) {
-        prot_thresholds = uproc_matrix_load(UPROC_IO_GZIP,
-                                            "%s/prot_thresh_e%d",
-                                            argv[optind + DBDIR],
-                                            prot_thresh_num);
-    }
-
-    const char *model_dir = argv[optind + MODELDIR];
-    substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", model_dir);
 
 #if MAIN_DNA
     if (short_read_mode) {
@@ -608,18 +596,14 @@ main(int argc, char **argv)
     protclass = uproc_protclass_create(pc_mode, fwd, rev, substmat, prot_filter,
                                        prot_thresholds);
 #if MAIN_DNA
-    if (!short_read_mode && orf_thresh_num != 0) {
-        orf_thresholds = uproc_matrix_load(UPROC_IO_GZIP, "%s/orf_thresh_e%d",
-                                           model_dir, orf_thresh_num);
-        codon_scores = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores",
-                                         model_dir);
-        dnaclass = uproc_dnaclass_create(dc_mode, protclass, codon_scores,
-                                         orf_filter, orf_thresholds);
+    if (short_read_mode) {
+        uproc_matrix_destroy(codon_scores);
+        codon_scores = NULL;
+        uproc_matrix_destroy(orf_thresholds);
+        orf_thresholds = NULL;
     }
-    else {
-        dnaclass = uproc_dnaclass_create(dc_mode, protclass, NULL, orf_filter,
-                                         NULL);
-    }
+    dnaclass = uproc_dnaclass_create(dc_mode, protclass, codon_scores,
+                                     orf_filter, orf_thresholds);
 #endif
 
     /* use stdin if no input file specified */

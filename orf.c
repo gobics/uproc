@@ -31,6 +31,7 @@
 #include <stdbool.h>
 
 #include "uproc.h"
+#include "files.h"
 
 struct orf_filter_arg
 {
@@ -202,24 +203,21 @@ int main(int argc, char **argv)
 
     if (model_dir) {
         uproc_matrix *cs;
-        cs = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores", model_dir);
-        if (!cs) {
-            uproc_perror("can't load model from \"%s\"", model_dir);
+        uproc_substmat *subst;
+        if (thresh_mode != MODEL) {
+            orf_thresh_num = 0;
+        }
+        res = model_load(model_dir, orf_thresh_num, &subst, &cs, &orf_thresholds);
+        if (res) {
+            uproc_perror("error reading model");
             return EXIT_FAILURE;
         }
+        uproc_substmat_destroy(subst);
+
         uproc_orf_codonscores(codon_scores, cs);
         uproc_matrix_destroy(cs);
 
-        if (thresh_mode == MODEL && orf_thresh_num) {
-            orf_thresholds = uproc_matrix_load(UPROC_IO_GZIP,
-                                               "%s/orf_thresh_e%d", model_dir,
-                                               orf_thresh_num);
-            if (!orf_thresholds) {
-                uproc_perror("can't load ORF thresholds");
-                return EXIT_FAILURE;
-            }
-            filter_arg.thresh = orf_thresholds;
-        }
+        filter_arg.thresh = orf_thresholds;
     }
     else if (!model_dir && thresh_mode != NONE) {
         fprintf(stderr, "Error: -O, S or -M used without -m.\n");
