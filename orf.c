@@ -248,7 +248,7 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
         }
-        rd = uproc_seqiter_create(stream, 8192);
+        rd = uproc_seqiter_create(stream);
         if (!rd) {
             uproc_perror("");
             return EXIT_FAILURE;

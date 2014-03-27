@@ -35,6 +35,8 @@
 #include "uproc/io.h"
 #include "uproc/seqio.h"
 
+#define DATA_SIZE_INIT 8192
+
 struct uproc_seqiter_s
 {
     /* associated I/O stream */
@@ -62,14 +64,14 @@ struct uproc_seqiter_s
     size_t header_len, seq_len;
 
     /* their buffer sizes */
-    size_t header_sz, data_sz, seq_sz_hint;
+    size_t header_sz, data_sz;
 
     enum { UNINITIALIZED, FASTA, FASTQ } format;
 };
 
 
 uproc_seqiter *
-uproc_seqiter_create(uproc_io_stream *stream, size_t seq_sz_hint)
+uproc_seqiter_create(uproc_io_stream *stream)
 {
     struct uproc_seqiter_s *iter = malloc(sizeof *iter);
     if (!iter) {
@@ -81,16 +83,14 @@ uproc_seqiter_create(uproc_io_stream *stream, size_t seq_sz_hint)
         .stream = stream,
         .line_no = 1,
         .format = UNINITIALIZED,
+        .data_sz = DATA_SIZE_INIT,
     };
 
-    if (seq_sz_hint) {
-        iter->data = malloc(seq_sz_hint);
-        if (!iter->data) {
-            uproc_error(UPROC_ENOMEM);
-            free(iter);
-            return NULL;
-        }
-        iter->data_sz = iter->seq_sz_hint = seq_sz_hint;
+    iter->data = malloc(DATA_SIZE_INIT);
+    if (!iter->data) {
+        uproc_error(UPROC_ENOMEM);
+        free(iter);
+        return NULL;
     }
     return iter;
 }

@@ -620,7 +620,7 @@ main(int argc, char **argv)
             stream = uproc_io_open("r", UPROC_IO_GZIP, argv[optind + INFILES]);
         }
 
-        rd = uproc_seqiter_create(stream, 8192);
+        rd = uproc_seqiter_create(stream);
 
         do {
             in = &buf[!i_buf];

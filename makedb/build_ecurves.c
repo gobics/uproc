@@ -97,7 +97,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
     if (!tree) {
         return -1;
     }
-    rd = uproc_seqiter_create(stream, 8192);
+    rd = uproc_seqiter_create(stream);
     if (!rd) {
         res = -1;
         goto error;

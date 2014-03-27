@@ -83,16 +83,17 @@ int uproc_sequence_copy(struct uproc_sequence *dest,
 /** \} */
 
 
-/** Sequence file iterator
+/** \defgroup obj_seqiter object uproc_seqiter
  *
- * \defgroup obj_seqiter object uproc_seqiter
+ * FASTA/FASTQ sequence iterator
+ *
  * \{
  */
 
 typedef struct uproc_seqiter_s uproc_seqiter;
 
-uproc_seqiter *uproc_seqiter_create(uproc_io_stream *stream,
-                                    size_t seq_sz_hint);
+/** Create new sequence iterator */
+uproc_seqiter *uproc_seqiter_create(uproc_io_stream *stream);
 
 void uproc_seqiter_destroy(uproc_seqiter *iter);
 
