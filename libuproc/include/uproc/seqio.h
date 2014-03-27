@@ -74,7 +74,7 @@ void uproc_sequence_init(struct uproc_sequence *seq);
 
 
 /** Free allocated pointers of a ::uproc_sequence struct */
-void uproc_sequence_destroy(struct uproc_sequence *seq);
+void uproc_sequence_free(struct uproc_sequence *seq);
 
 
 /** Deep-copy a ::uproc_sequence struct */
