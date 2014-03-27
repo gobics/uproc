@@ -2,9 +2,12 @@ AC_PREREQ(2.62)
 AC_INIT([uproc], [0.4.0-devel], [robin@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
+AX_CHECK_ENABLE_DEBUG([no])
+
 LT_PREREQ([2.2])
 # Build libuproc statically by default
 LT_INIT([disable-shared])
+
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([libuproc/ecurve.c])
@@ -21,7 +24,7 @@ AC_LIBTOOL_WIN32_DLL
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h])
-AC_CHECK_HEADERS([unistd.h zlib.h getopt.h])
+AC_CHECK_HEADERS([unistd.h zlib.h getopt.h time.h])
 
 AC_HEADER_STDBOOL
 AC_C_CONST
@@ -36,6 +39,10 @@ AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long])
 # Checks for libraries
 AC_SEARCH_LIBS([log2], [m])
 AC_SEARCH_LIBS([gzopen], [z])
+
+# Checks for clock_gettime()
+AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_CHECK_FUNCS([clock_gettime])
 
 AC_OPENMP
 

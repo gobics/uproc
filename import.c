@@ -22,14 +22,21 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "uproc_opt.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-#include "uproc.h"
+#include <uproc.h>
+
+#ifdef EXPORT
+#define PROGNAME "uproc-export"
+#else
+#define PROGNAME "uproc-import"
+#endif
+
 
 void
 print_usage(const char *progname)
@@ -151,7 +158,7 @@ int main(int argc, char **argv)
                 print_usage(argv[0]);
                 return EXIT_SUCCESS;
             case 'v':
-                print_version();
+                print_version(PROGNAME);
                 return EXIT_SUCCESS;
 #ifdef EXPORT
             case 'n':

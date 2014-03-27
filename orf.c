@@ -22,16 +22,16 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#define PROGNAME "uproc-orf"
-#include "uproc_opt.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 
-#include "uproc.h"
-#include "files.h"
+#include <uproc.h>
+
+#define PROGNAME "uproc-orf"
 
 struct orf_filter_arg
 {
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
     const char *model_dir = NULL;
 
     double codon_scores[UPROC_BINARY_CODON_COUNT];
-    uproc_matrix *orf_thresholds = NULL;
+    uproc_matrix *orf_thresh = NULL;
 
     enum { NONE, MODEL, VALUE, MAX } thresh_mode = NONE;
     int orf_thresh_num = 2;
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
                 print_usage(argv[0]);
                 return EXIT_SUCCESS;
             case 'v':
-                print_version();
+                print_version(PROGNAME);
                 return EXIT_SUCCESS;
             case 'L':
                 {
@@ -181,12 +181,12 @@ int main(int argc, char **argv)
                                 "-S argument must be a decimal number\n");
                         return EXIT_FAILURE;
                     }
-                    orf_thresholds = uproc_matrix_create(1, 1, &min_score);
-                    if (!orf_thresholds) {
+                    orf_thresh = uproc_matrix_create(1, 1, &min_score);
+                    if (!orf_thresh) {
                         uproc_perror("");
                         return EXIT_FAILURE;
                     }
-                    filter_arg.thresh = orf_thresholds;
+                    filter_arg.thresh = orf_thresh;
                     thresh_mode = VALUE;
                 }
                 break;
@@ -201,23 +201,19 @@ int main(int argc, char **argv)
         }
     }
 
+    struct model model = MODEL_INITIALIZER;
     if (model_dir) {
-        uproc_matrix *cs;
-        uproc_substmat *subst;
         if (thresh_mode != MODEL) {
             orf_thresh_num = 0;
         }
-        res = model_load(model_dir, orf_thresh_num, &subst, &cs, &orf_thresholds);
+        res = model_load(&model, model_dir, orf_thresh_num);
         if (res) {
             uproc_perror("error reading model");
             return EXIT_FAILURE;
         }
-        uproc_substmat_destroy(subst);
+        uproc_orf_codonscores(codon_scores, model.codon_scores);
 
-        uproc_orf_codonscores(codon_scores, cs);
-        uproc_matrix_destroy(cs);
-
-        filter_arg.thresh = orf_thresholds;
+        filter_arg.thresh = model.orf_thresh;
     }
     else if (!model_dir && thresh_mode != NONE) {
         fprintf(stderr, "Error: -O, S or -M used without -m.\n");
@@ -296,6 +292,6 @@ int main(int argc, char **argv)
     if (res == -1) {
         uproc_perror("error reading input");
     }
-    uproc_matrix_destroy(orf_thresholds);
+    model_free(&model);
     return EXIT_SUCCESS;
 }

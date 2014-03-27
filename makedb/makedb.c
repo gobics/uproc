@@ -22,13 +22,14 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#define PROGNAME "uproc-makedb"
-#include "uproc_opt.h"
+#include "common.h"
 
 #include <string.h>
 
 #include <uproc.h>
 #include "makedb.h"
+
+#define PROGNAME "uproc-makedb"
 
 void
 print_usage(const char *progname)
@@ -104,7 +105,7 @@ main(int argc, char **argv)
                 print_usage(argv[0]);
                 return EXIT_SUCCESS;
             case 'v':
-                print_version();
+                print_version(PROGNAME);
                 return EXIT_SUCCESS;
             case 'c':
                 calib_only = true;
