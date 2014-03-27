@@ -30,19 +30,19 @@ libuproc_la_SOURCES = alphabet.c \
 					protclass.c \
 					seqio.c \
 					substmat.c \
-					word.c
+					word.c \
+					codon_tables.h
 
 libuproc_la_LDFLAGS = -no-undefined -version-info 0:0:0
 
 BUILT_SOURCES = codon_tables.h
+EXTRA_DIST = codon_tables.h
 
-noinst_PROGRAMS = gen_ct
-gen_ct_SOURCES = gen_codon_tables.c
+codon_tables.h :
+	cc -o gen_ct$(EXEEXT) gen_codon_tables.c
+	./gen_ct$(EXEEXT) > $@
 
-codon_tables.h : gen_ct$(EXEEXT)
-	./$< > $@
-
-CLEANFILES = codon_tables.h gen_ct$(EXEEXT)
+CLEANFILES = gen_ct$(EXEEXT)
 
 
 analyze_srcs = $(filter %.c,$(libuproc_la_SOURCES))
