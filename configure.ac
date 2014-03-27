@@ -15,9 +15,8 @@ AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AC_C___ATTRIBUTE__
 AC_PROG_INSTALL
-
-# Needed for %zu in printf/sscanf when compiling for Windows
-AC_DEFINE([__USE_MINGW_ANSI_STDIO], [1], [Use mingw stdio])
+AC_PROG_LIBTOOL
+AC_LIBTOOL_WIN32_DLL
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -29,9 +28,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
 AC_FUNC_MMAP
-AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 
 AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long])
