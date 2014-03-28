@@ -49,7 +49,7 @@ AC_ARG_ENABLE([shared],
 AM_CONDITIONAL([SHARED_LIBUPROC], [test "x$enable_shared" = "xyes"])
 
 # Check for Doxygen
-test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen$EXEEXT])
+test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])
 
 AC_CONFIG_FILES([Makefile
