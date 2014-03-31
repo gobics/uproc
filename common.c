@@ -32,7 +32,7 @@ void
 print_version(const char *progname)
 {
     fprintf(stderr,
-        "%s, version " PACKAGE_VERSION "\n"
+        "%s, version " PACKAGE_VERSION " (" GIT_BRANCH "/" GIT_COMMIT ")\n"
         "Copyright 2014 Peter Meinicke, Robin Martinjak\n"
         "License GPLv3+: GNU GPL version 3 or later " /* no line break! */
         "<http://gnu.org/licenses/gpl.html>\n"

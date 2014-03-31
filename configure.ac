@@ -3,6 +3,7 @@ AC_INIT([uproc], [0.4.0-devel], [robin@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
 AX_CHECK_ENABLE_DEBUG([no])
+GIT_INFO
 
 LT_PREREQ([2.2])
 # Build libuproc statically by default
