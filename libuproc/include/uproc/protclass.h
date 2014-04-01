@@ -157,17 +157,22 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
 
 /** Tracing callback type
  *
- * Will be called for every word that was found for the protein family which is
- * currently being traced.
+ * Additionally to the normal classification, it's possible to get information
+ * about every matched word by installing a tracing callback function with
+ * uproc_protclass_trace_cb().
  *
- * \param pfx       matched prefix as string
- * \param sfx       matched suffix as string
+ * This function will be called for every word match that was found in the
+ * ecurves while classifying a protein sequence.
+ *
+ * \param word      the word found in the ecurve
+ * \param family    the corresponding family entry
  * \param index     position in the protein sequence
  * \param reverse   whether the word was found in the "reverse" ecurve
  * \param scores    scores of this match (array of size ::UPROC_SUFFIX_LEN)
  * \param arg       user-supplied argument
  */
-typedef void uproc_protclass_trace_cb(const char *pfx, const char *sfx,
+typedef void uproc_protclass_trace_cb(const struct uproc_word *word,
+                                      uproc_family family,
                                       size_t index, bool reverse,
                                       const double *scores, void *opaque);
 
@@ -175,11 +180,10 @@ typedef void uproc_protclass_trace_cb(const char *pfx, const char *sfx,
 /** Set trace callback
  *
  * \param pc        protein classifier
- * \param family    family to trace
  * \param cb        callback function
  * \param cb_arg    additional argument to \c cb
  */
-void uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
+void uproc_protclass_set_trace(uproc_protclass *pc,
                                uproc_protclass_trace_cb *cb, void *cb_arg);
 /** \} */
 

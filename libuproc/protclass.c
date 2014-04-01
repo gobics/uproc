@@ -41,7 +41,6 @@ struct uproc_protclass_s
     void *filter_arg;
     struct uproc_protclass_trace
     {
-        uproc_family family;
         uproc_protclass_trace_cb *cb;
         void *cb_arg;
     } trace;
@@ -150,36 +149,6 @@ scores_add(uproc_bst *scores, uproc_family family, size_t index,
     return uproc_bst_update(scores, key, &sc);
 }
 
-static void
-trace(const uproc_protclass *pc, uproc_family family,
-      const struct uproc_word *word, size_t index, const double *dist,
-      bool reverse)
-{
-    if (!pc->trace.cb || family != pc->trace.family)
-    {
-        return;
-    }
-    char w[UPROC_WORD_LEN + 1];
-    char p[UPROC_PREFIX_LEN + 1] = "";
-    char s[UPROC_SUFFIX_LEN + 1] = "";
-    double tmp[UPROC_SUFFIX_LEN];
-
-    uproc_word_to_string(w, word, uproc_ecurve_alphabet(pc->fwd));
-    memcpy(tmp, dist, sizeof *dist * UPROC_SUFFIX_LEN);
-
-    if (reverse) {
-        reverse_array(w, UPROC_WORD_LEN, sizeof *w);
-        memcpy(p, w + UPROC_SUFFIX_LEN, UPROC_PREFIX_LEN);
-        memcpy(s, w, UPROC_SUFFIX_LEN);
-        reverse_array(tmp, UPROC_SUFFIX_LEN, sizeof *tmp);
-    }
-    else {
-        memcpy(p, w, UPROC_PREFIX_LEN);
-        memcpy(s, w + UPROC_PREFIX_LEN, UPROC_SUFFIX_LEN);
-    }
-    pc->trace.cb(p, s, index, reverse, tmp, pc->trace.cb_arg);
-}
-
 
 static int
 scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
@@ -201,14 +170,20 @@ scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
                         &upper_family);
     uproc_substmat_align_suffixes(substmat, word->suffix, lower_nb.suffix,
                                   dist);
-    trace(pc, lower_family, &lower_nb, index, dist, reverse);
+    if (pc->trace.cb) {
+        pc->trace.cb(&lower_nb, lower_family, index, reverse, dist,
+                     pc->trace.cb_arg);
+    }
     res = scores_add(scores, lower_family, index, dist, reverse);
     if (res || !uproc_word_cmp(&lower_nb, &upper_nb)) {
         return res;
     }
     uproc_substmat_align_suffixes(substmat, word->suffix, upper_nb.suffix,
                                   dist);
-    trace(pc, upper_family, &upper_nb, index, dist, reverse);
+    if (pc->trace.cb) {
+        pc->trace.cb(&upper_nb, upper_family, index, reverse, dist,
+                     pc->trace.cb_arg);
+    }
     res = scores_add(scores, upper_family, index, dist, reverse);
     return res;
 }
@@ -326,7 +301,6 @@ uproc_protclass_create(enum uproc_protclass_mode mode, const uproc_ecurve *fwd,
         .filter = filter,
         .filter_arg = filter_arg,
         .trace = {
-            .family = UPROC_FAMILY_INVALID,
             .cb = NULL,
             .cb_arg = NULL,
         },
@@ -382,10 +356,9 @@ error:
 }
 
 void
-uproc_protclass_set_trace(uproc_protclass *pc, uproc_family family,
-                          uproc_protclass_trace_cb *cb, void *cb_arg)
+uproc_protclass_set_trace(uproc_protclass *pc, uproc_protclass_trace_cb *cb,
+                          void *cb_arg)
 {
-    pc->trace.family = family;
     pc->trace.cb = cb;
     pc->trace.cb_arg = cb_arg;
 }
