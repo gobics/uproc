@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <uproc.h>
 
@@ -90,6 +91,20 @@ errhandler_bail(enum uproc_error_code num, const char *msg, const char *loc)
     (void)loc;
     uproc_perror("");
     exit(EXIT_FAILURE);
+}
+
+
+void
+trim_header(char *s)
+{
+    char *start = s, *end;
+    while (isspace(*start) || *start == ',') {
+        start++;
+    }
+    end = strpbrk(start, ", \f\n\r\t\v");
+    if (end) {
+        *end = '\0';
+    }
 }
 
 

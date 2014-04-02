@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <ctype.h>
 
 #if _OPENMP
 #include <omp.h>
@@ -119,21 +118,6 @@ buffer_classify(struct buffer *buf, clf *classifier)
 #pragma omp parallel for private(i) shared(buf, classifier) schedule(static)
     for (i = 0; i < buf->n; i++) {
         clf_classify(classifier, buf->seqs[i].data, &buf->results[i]);
-    }
-}
-
-
-/* Trim to the first word containing neither a comma nor any whitespace */
-void
-trim_header(char *s)
-{
-    char *start = s, *end;
-    while (isspace(*start) || *start == ',') {
-        start++;
-    }
-    end = strpbrk(start, ", \f\n\r\t\v");
-    if (end) {
-        *end = '\0';
     }
 }
 

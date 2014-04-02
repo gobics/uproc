@@ -58,6 +58,10 @@ void errhandler_bail(enum uproc_error_code num, const char *msg,
                      const char *loc);
 
 
+/* Trim to the first word containing neither a comma nor any whitespace */
+void trim_header(char *s);
+
+
 /* Struct representing the "database" */
 struct database
 {
