@@ -25,6 +25,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <time.h>
 
 #include <uproc.h>
 #include "makedb.h"
@@ -67,6 +68,25 @@ load_alphabet(const char *modeldir,
     memcpy(alphabet, tmp, UPROC_ALPHABET_SIZE);
     return 0;
 };
+
+
+int
+write_db_info(const char *outdir, const char *infile)
+{
+    uproc_io_stream *stream;
+    time_t now = time(NULL);
+
+    stream = uproc_io_open("w", UPROC_IO_STDIO, "%s/info.txt", outdir);
+    if (!stream) {
+        return -1;
+    }
+    uproc_io_printf(stream, "version:    " PACKAGE_VERSION "\n");
+    uproc_io_printf(stream, "created:    %s", ctime(&now));
+    uproc_io_printf(stream, "input file: %s\n", infile);
+    uproc_io_close(stream);
+    return 0;
+}
+
 
 int
 main(int argc, char **argv)
@@ -144,6 +164,11 @@ main(int argc, char **argv)
         uproc_idmap_destroy(idmap);
         if (res) {
             uproc_perror("error storing idmap");
+            return EXIT_FAILURE;
+        }
+        res = write_db_info(outdir, infile);
+        if (res) {
+            uproc_perror("error writing database info");
             return EXIT_FAILURE;
         }
     }

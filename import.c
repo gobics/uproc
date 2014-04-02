@@ -119,6 +119,33 @@ IMPORT_FUNC(idmap, uproc_idmap, uproc_idmap_loads, uproc_idmap_store,
             uproc_idmap_destroy)
 #endif
 
+int
+db_info(const char *dir, uproc_io_stream *stream)
+{
+    char *line = NULL;
+    size_t sz;
+    uproc_io_stream *in, *out;
+#ifdef EXPORT
+    in = uproc_io_open("r", UPROC_IO_GZIP, "%s/info.txt", dir);
+    /* info.txt is not crucial, so ignore this error */
+    if (!in) {
+        return 0;
+    }
+    out = stream;
+#else
+    in = stream;
+    out = uproc_io_open("w", UPROC_IO_STDIO, "%s/info.txt", dir);
+    if (!out) {
+        return -1;
+    }
+#endif
+    while (uproc_io_getline(&line, &sz, in) != -1) {
+        uproc_io_printf(out, "%s", line);
+    }
+    free(line);
+    return 0;
+}
+
 enum args
 {
     SOURCE,
@@ -211,6 +238,11 @@ int main(int argc, char **argv)
     res = ecurve(dir, "rev.ecurve", stream);
     if (res) {
         uproc_perror("error " IMEX"porting reverse ecurve");
+        return EXIT_FAILURE;
+    }
+    res = db_info(dir, stream);
+    if (res) {
+        uproc_perror("error " IMEX"porting info.txt");
         return EXIT_FAILURE;
     }
     uproc_io_close(stream);
