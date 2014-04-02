@@ -404,16 +404,16 @@ uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
             break;
         }
         len = strlen(buf);
-        if (!*lineptr || *n < total + len) {
-            void *tmp = realloc(*lineptr, total + len);
+        if (!*lineptr || *n < total + len + 1) {
+            void *tmp = realloc(*lineptr, total + len + 1);
             if (!tmp) {
                 uproc_error(UPROC_ENOMEM);
                 return -1;
             }
             *lineptr = tmp;
-            *n = total + len;
+            *n = total + len + 1;
         }
-        memcpy(*lineptr + total, buf, len);
+        memcpy(*lineptr + total, buf, len + 1);
         total += len;
     } while (buf[len - 1] != '\n');
     return total;
