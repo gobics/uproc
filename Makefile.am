@@ -8,6 +8,13 @@ bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf uproc-ma
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 LDADD = $(top_builddir)/libuproc/libuproc.la
 
+if IN_GIT_REPO
+git_tag := $(shell git describe --abbrev=0)
+git_commit := $(shell git rev-list --max-count=1 --abbrev-commit HEAD)
+git_branch := $(shell git rev-parse --abbrev-ref HEAD)
+AM_CPPFLAGS += -DGIT_TAG=\"$(git_tag)\" -DGIT_COMMIT=\"$(git_commit)\" -DGIT_BRANCH=\"$(git_branch)\"
+endif
+
 uproc_dna_SOURCES = main.c common.c common.h
 uproc_dna_CPPFLAGS = $(AM_CPPFLAGS) -DMAIN_DNA=1
 uproc_dna_CFLAGS = $(OPENMP_CFLAGS)
@@ -16,10 +23,10 @@ uproc_prot_SOURCES = main.c common.c common.h
 uproc_prot_CFLAGS = $(OPENMP_CFLAGS)
 
 uproc_import_SOURCES = import.c common.c common.h
-uproc_import_CPPFLAGS = $(AM_CPPFLAGS) -DPROGNAME=\"uproc-import\"
+uproc_import_CPPFLAGS = $(AM_CPPFLAGS)
 
 uproc_export_SOURCES = import.c common.c common.h
-uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1 -DPROGNAME=\"uproc-export\"
+uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1
 
 uproc_orf_SOURCES = orf.c common.c common.h
 

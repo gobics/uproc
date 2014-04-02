@@ -3,7 +3,6 @@ AC_INIT([uproc], [0.4.0-devel], [robin@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
 AX_CHECK_ENABLE_DEBUG([no])
-GIT_INFO
 
 LT_PREREQ([2.2])
 # Build libuproc statically by default
@@ -59,6 +58,10 @@ AM_CONDITIONAL([SHARED_LIBUPROC], [test "x$enable_shared" = "xyes"])
 # Check for Doxygen
 test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])
+
+AC_CHECK_PROGS([GIT], [git])
+AM_CONDITIONAL([IN_GIT_REPO],
+               [test -n "$GIT" && git rev-parse 2>/dev/null && test $(git rev-parse --show-toplevel) = "$PWD"])
 
 AC_CONFIG_FILES([Makefile
                  libuproc/Makefile
