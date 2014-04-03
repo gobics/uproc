@@ -163,6 +163,16 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
 
 
 void
+bst_map_list_destroy(union uproc_bst_key key, void *value, void *opaque)
+{
+    uproc_list **p = value;
+    (void)key;
+    (void)opaque;
+    uproc_list_destroy(*p);
+}
+
+
+void
 classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
 {
     static unsigned long seq_num = 1;
@@ -178,13 +188,14 @@ classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
         uproc_list *matches;
         union uproc_bst_key key = { .uint = result.family };
         if (uproc_bst_remove(match_lists, key, &matches)) {
-            fprintf(stderr, "wat %ju\n", key.uint);
             exit(EXIT_FAILURE);
         }
         output_details(seq_num, seq, result.family, matches);
         uproc_list_destroy(matches);
     }
     uproc_list_destroy(results);
+    uproc_bst_map(match_lists, bst_map_list_destroy, NULL);
+    uproc_bst_destroy(match_lists);
     seq_num++;
 }
 
@@ -245,7 +256,6 @@ enum main_args
 
 int main(int argc, char **argv)
 {
-    int res;
     uproc_error_set_handler(errhandler_bail);
     out_stream = uproc_stdout;
 
@@ -326,10 +336,9 @@ int main(int argc, char **argv)
     for (; optind + INFILES < argc; optind++) {
         uproc_io_stream *stream = open_read(argv[optind + INFILES]);
         classify_file(stream, pc);
-        if (stream != uproc_stdout) {
-            uproc_io_close(stream);
-        }
+        uproc_io_close(stream);
     }
+    uproc_io_close(out_stream);
     uproc_protclass_destroy(pc);
     model_free(&model);
     database_free(&db);
