@@ -146,16 +146,16 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
         }
 
         if (sum != 0.0) {
-            printf("%lu,%s,", seq_num, seq->header);
+            uproc_io_printf(out_stream, "%lu,%s,", seq_num, seq->header);
             if (!idmap) {
-                printf("%" UPROC_FAMILY_PRI ",", family);
+                uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI ",", family);
             }
             else {
-                printf("%s,", uproc_idmap_str(idmap, family));
+                uproc_io_printf(out_stream, "%s,", uproc_idmap_str(idmap, family));
             }
-            printf("%s,", match.word);
-            printf("%s,", match.reverse ? "rev" : "fwd");
-            printf("%zu,%1.5f\n", match.index, sum);
+            uproc_io_printf(out_stream, "%s,", match.word);
+            uproc_io_printf(out_stream, "%s,", match.reverse ? "rev" : "fwd");
+            uproc_io_printf(out_stream, "%zu,%1.5f\n", match.index, sum);
         }
     }
     free(maxes);
