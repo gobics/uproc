@@ -79,8 +79,9 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
  * \code
  * void *foo = malloc(sz);
  * if (!foo) {
- *     return uproc_error_msg(UPROC_EINVAL,
- *                            "can't allocate foo with size %zu", sz);
+ *     return uproc_error_msg(UPROC_ENOMEM,
+ *                            "can't allocate foo with size %lu",
+ *                            (unsigned long)sz);
  *  }
  * \endcode
  * \param num   error code

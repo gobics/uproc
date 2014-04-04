@@ -33,26 +33,27 @@
 #include "uproc/io.h"
 
 /** printf() format for matrix file header */
-#define MATRIX_HEADER_PRI "[%zu, %zu]\n"
+#define MATRIX_HEADER_PRI "[%lu, %lu]\n"
 
 /** scanf() format for matrix file header */
-#define MATRIX_HEADER_SCN "[%zu , %zu]"
+#define MATRIX_HEADER_SCN "[%lu , %lu]"
 
 /** Matrix */
 struct uproc_matrix_s
 {
     /** Number of rows */
-    size_t rows;
+    unsigned long rows;
 
     /** Number of columns */
-    size_t cols;
+    unsigned long cols;
 
     /** Values (as "flat" array) */
     double *values;
 };
 
 uproc_matrix *
-uproc_matrix_create(size_t rows, size_t cols, const double *values)
+uproc_matrix_create(unsigned long rows, unsigned long cols,
+                    const double *values)
 {
     struct uproc_matrix_s *matrix;
 
@@ -84,7 +85,7 @@ uproc_matrix_create(size_t rows, size_t cols, const double *values)
         memcpy(matrix->values, values, rows * cols * sizeof *matrix->values);
     }
     else {
-        for (size_t i = 0; i < rows * cols; i++) {
+        for (unsigned long i = 0; i < rows * cols; i++) {
             matrix->values[i] = 0.0;
         }
     }
@@ -102,20 +103,20 @@ uproc_matrix_destroy(uproc_matrix *matrix)
 }
 
 void
-uproc_matrix_set(uproc_matrix *matrix, size_t row, size_t col,
+uproc_matrix_set(uproc_matrix *matrix, unsigned long row, unsigned long col,
                  double value)
 {
     matrix->values[row * matrix->cols + col] = value;
 }
 
 double
-uproc_matrix_get(const uproc_matrix *matrix, size_t row, size_t col)
+uproc_matrix_get(const uproc_matrix *matrix, unsigned long row, unsigned long col)
 {
     return matrix->values[row * matrix->cols + col];
 }
 
 void
-uproc_matrix_dimensions(const uproc_matrix *matrix, size_t *rows, size_t *cols)
+uproc_matrix_dimensions(const uproc_matrix *matrix, unsigned long *rows, unsigned long *cols)
 {
     *rows = matrix->rows;
     *cols = matrix->cols;
@@ -125,7 +126,7 @@ uproc_matrix *
 uproc_matrix_loads(uproc_io_stream *stream)
 {
     struct uproc_matrix_s *matrix;
-    size_t i, k, rows, cols;
+    unsigned long i, k, rows, cols;
     double val;
     char buf[1024];
 
@@ -183,7 +184,7 @@ int
 uproc_matrix_stores(const uproc_matrix *matrix, uproc_io_stream *stream)
 {
     int res;
-    size_t i, k, rows, cols;
+    unsigned long i, k, rows, cols;
     uproc_matrix_dimensions(matrix, &rows, &cols);
     res = uproc_io_printf(stream, MATRIX_HEADER_PRI, rows, cols);
     if (res < 0) {

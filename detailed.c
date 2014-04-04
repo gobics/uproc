@@ -155,7 +155,7 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
             }
             uproc_io_printf(out_stream, "%s,", match.word);
             uproc_io_printf(out_stream, "%s,", match.reverse ? "rev" : "fwd");
-            uproc_io_printf(out_stream, "%zu,%1.5f\n", match.index, sum);
+            uproc_io_printf(out_stream, "%lu,%1.5f\n", (unsigned long)match.index, sum);
         }
     }
     free(maxes);

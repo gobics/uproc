@@ -43,7 +43,7 @@ bool
 orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
            double seq_gc, void *opaque)
 {
-    size_t r, c, rows, cols;
+    unsigned long r, c, rows, cols;
     struct orf_filter_arg *arg = opaque;
     (void) seq;
     if (orf->length < arg->min_length) {

@@ -52,7 +52,7 @@ struct uproc_seqiter_s
     size_t line_sz;
 
     /* line number */
-    size_t line_no;
+    unsigned long line_no;
 
     /* file offset of the current record */
     long offset;
@@ -158,7 +158,7 @@ read_fasta(struct uproc_seqiter_s *iter)
     /* header needs at least '>', one character, '\n' */
     if (iter->line_len < 3 || iter->line[0] != '>') {
         return uproc_error_msg(UPROC_EINVAL,
-                               "expected fasta header in line %zu",
+                               "expected fasta header in line %lu",
                                iter->line_no);
     }
 
@@ -178,7 +178,7 @@ read_fasta(struct uproc_seqiter_s *iter)
             return -1;
         }
         return uproc_error_msg(UPROC_EINVAL,
-                              "expected line after header (line %zu)",
+                              "expected line after header (line %lu)",
                               iter->line_no);
     }
 
@@ -215,7 +215,7 @@ read_fastq(struct uproc_seqiter_s *iter)
     size_t len;
     if (iter->line_len < 3 || iter->line[0] != '@') {
         return uproc_error_msg(UPROC_EINVAL,
-                               "expected fastq header in line %zu",
+                               "expected fastq header in line %lu",
                                iter->line_no);
     }
     len = iter->line_len - 1;
@@ -233,7 +233,7 @@ read_fastq(struct uproc_seqiter_s *iter)
             return -1;
         }
         return uproc_error_msg(UPROC_EINVAL,
-                              "expected line after header (line %zu)",
+                              "expected line after header (line %lu)",
                               iter->line_no);
     }
     len = iter->line_len - 1;
@@ -249,7 +249,7 @@ read_fastq(struct uproc_seqiter_s *iter)
     if (iter->line_len == -1 || iter->line[0] != '+') {
 
         return uproc_error_msg(UPROC_EINVAL,
-                               "expected line beginning with '+' (line %zu)",
+                               "expected line beginning with '+' (line %lu)",
                                iter->line_no);
     }
 
@@ -257,7 +257,7 @@ read_fastq(struct uproc_seqiter_s *iter)
     iter_getline(iter);
     if (iter->line_len == -1) {
         return uproc_error_msg(UPROC_EINVAL,
-                               "expected \"qualities\" (line %zu)\n",
+                               "expected \"qualities\" (line %lu)\n",
                                iter->line_no);
     }
 

@@ -95,7 +95,7 @@ uproc_idmap_loads(uproc_io_stream *stream)
     int res;
     struct uproc_idmap_s *map;
     uproc_family i;
-    unsigned long long n;
+    unsigned long n;
     char buf[UPROC_FAMILY_MAX + 1];
 
     map = uproc_idmap_create();
@@ -105,7 +105,7 @@ uproc_idmap_loads(uproc_io_stream *stream)
     if (!uproc_io_gets(buf, sizeof buf, stream)) {
         goto error;
     }
-    res = sscanf(buf, "[%llu]\n", &n);
+    res = sscanf(buf, "[%lu]\n", &n);
     if (res != 1) {
         uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
         goto error;

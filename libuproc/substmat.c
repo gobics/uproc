@@ -95,7 +95,7 @@ uproc_substmat_loadv(enum uproc_io_type iotype, const char *pathfmt,
                      va_list ap)
 {
     struct uproc_substmat_s *mat;
-    size_t i, j, k, rows, cols, sz;
+    unsigned long i, j, k, rows, cols, sz, required_sz;
     uproc_matrix *matrix;
 
     mat = uproc_substmat_create();
@@ -111,20 +111,18 @@ uproc_substmat_loadv(enum uproc_io_type iotype, const char *pathfmt,
 
     uproc_matrix_dimensions(matrix, &rows, &cols);
     sz = rows * cols;
-#define SUBSTMAT_TOTAL \
-    (UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE)
-    if (sz != SUBSTMAT_TOTAL) {
-        uproc_error_msg(
-            UPROC_EINVAL,
-            "invalid substitution matrix (%zu elements; expected %zu)", sz,
-            SUBSTMAT_TOTAL);
+    required_sz = UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE;
+    if (sz != required_sz) {
+        uproc_error_msg(UPROC_EINVAL,
+                        "invalid substmat (%lu elements instead of %lu)",
+                        sz, required_sz);
         goto error;
     }
 
     for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
         for (j = 0; j < UPROC_ALPHABET_SIZE; j++) {
             for (k = 0; k < UPROC_ALPHABET_SIZE; k++) {
-                /* treat `matrix` like a vector of length SUBSTMAT_TOTAL
+                /* treat `matrix` like a vector of length SUBSTMAT_REQUIRED
                  * (this assumes uproc_matrix uses a linear representation) */
                 size_t idx;
                 idx = (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;

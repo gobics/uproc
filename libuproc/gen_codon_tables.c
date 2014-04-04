@@ -75,26 +75,26 @@ iupac_string_to_codon(const char *str)
 #define CODON(nt1, nt2, nt3) \
     ((nt1 << 2 * UPROC_NT_BITS) | (nt2 << UPROC_NT_BITS) | nt3)
 
-#define TABLE(T)                                                        \
-void table_ ## T (const char *prefix, const char *fmt, T *v, size_t n)  \
-{                                                                       \
-    size_t i, width = 0;                                                \
-    printf("static " # T " %s[%zu] = {\n", prefix, n);                  \
-                                                                        \
-    width += printf("   ");                                             \
-    for (i = 0; i < n; i++) {                                           \
-        if (width > 70) {                                               \
-            width = printf("\n    ") - 1;                               \
-        }                                                               \
-        else {                                                          \
-            width += printf(" ");                                       \
-        }                                                               \
-        width += printf(fmt, v[i]);                                     \
-        if (i < n) {                                                    \
-            width += printf(",");                                       \
-        }                                                               \
-    }                                                                   \
-    printf("\n};\n");                                                   \
+#define TABLE(T)                                                            \
+void table_ ## T (const char *prefix, const char *fmt, T *v, unsigned n)    \
+{                                                                           \
+    unsigned i, width = 0;                                                  \
+    printf("static " # T " %s[%u] = {\n", prefix, n);                       \
+                                                                            \
+    width += printf("   ");                                                 \
+    for (i = 0; i < n; i++) {                                               \
+        if (width > 70) {                                                   \
+            width = printf("\n    ") - 1;                                   \
+        }                                                                   \
+        else {                                                              \
+            width += printf(" ");                                           \
+        }                                                                   \
+        width += printf(fmt, v[i]);                                         \
+        if (i < n) {                                                        \
+            width += printf(",");                                           \
+        }                                                                   \
+    }                                                                       \
+    printf("\n};\n");                                                       \
 }
 
 TABLE(int)
@@ -109,7 +109,7 @@ void codon_append(uproc_codon *codon, uproc_nt nt)
 void gen_char_to_nt(void)
 {
     int char_to_nt[UCHAR_MAX + 1];
-    size_t i;
+    unsigned i;
 
     for (i = 0; i < UCHAR_MAX + 1; i++) {
         char_to_nt[i] = iupac_char_to_nt(i);
@@ -123,7 +123,7 @@ void gen_codon(void)
     int codon_complement[UPROC_BINARY_CODON_COUNT],
         codon_is_stop[UPROC_BINARY_CODON_COUNT],
         codon_to_char[UPROC_BINARY_CODON_COUNT];
-    size_t i;
+    unsigned i;
     for (i = 0; i < UPROC_BINARY_CODON_COUNT; i++) {
         int k;
         uproc_codon c = 0;

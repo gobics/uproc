@@ -146,15 +146,16 @@ buffer_read(struct buffer *buf, uproc_seqiter *seqit)
 
 void
 print_result(uproc_io_stream *stream,
-             uintmax_t seq_num,
-             const char *header, size_t seq_len,
+             unsigned long seq_num,
+             const char *header, unsigned long seq_len,
              struct clfresult *result,
              uproc_idmap *idmap)
 {
-    uproc_io_printf(stream, "%ju,%s,%zu", seq_num, header, seq_len);
+    uproc_io_printf(stream, "%lu,%s,%lu", seq_num, header, seq_len);
 #if MAIN_DNA
-    uproc_io_printf(stream, ",%u,%zu,%zu", result->orf.frame + 1, result->orf.start + 1,
-                    result->orf.length);
+    uproc_io_printf(stream, ",%u,%lu,%lu", result->orf.frame + 1,
+                    (unsigned long)result->orf.start + 1,
+                    (unsigned long)result->orf.length);
 #endif
     if (idmap) {
         uproc_io_printf(stream, ",%s", uproc_idmap_str(idmap, result->family));
@@ -169,8 +170,8 @@ print_result(uproc_io_stream *stream,
 /* Process (and maybe output) classification results */
 void
 buffer_process(struct buffer *buf,
-               uintmax_t *n_seqs, uintmax_t *n_seqs_unexplained,
-               uintmax_t counts[UPROC_FAMILY_MAX + 1],
+               unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
+               unsigned long counts[UPROC_FAMILY_MAX + 1],
                uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
     for (long long i = 0; i < buf->n; i++) {
@@ -197,8 +198,8 @@ buffer_process(struct buffer *buf,
 
 void
 classify_file_mt(const char *path, clf *classifier,
-                 uintmax_t *n_seqs, uintmax_t *n_seqs_unexplained,
-                 uintmax_t counts[UPROC_FAMILY_MAX + 1],
+                 unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
+                 unsigned long counts[UPROC_FAMILY_MAX + 1],
                  uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
     int more_input;
@@ -236,8 +237,8 @@ classify_file_mt(const char *path, clf *classifier,
 
 void
 classify_file(const char *path, clf *classifier,
-              uintmax_t *n_seqs, uintmax_t *n_seqs_unexplained,
-              uintmax_t counts[UPROC_FAMILY_MAX + 1],
+              unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
+              unsigned long counts[UPROC_FAMILY_MAX + 1],
               uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
 #if _OPENMP
@@ -284,7 +285,7 @@ classify_file(const char *path, clf *classifier,
 struct count
 {
     uproc_family fam;
-    uintmax_t n;
+    unsigned long n;
 };
 
 int
@@ -312,7 +313,7 @@ compare_count(const void *p1, const void *p2)
 
 void
 print_counts(uproc_io_stream *stream,
-        uintmax_t counts[UPROC_FAMILY_MAX + 1], uproc_idmap *idmap)
+        unsigned long counts[UPROC_FAMILY_MAX + 1], uproc_idmap *idmap)
 {
     struct count c[UPROC_FAMILY_MAX + 1];
     uproc_family i, n = 0;
@@ -333,7 +334,7 @@ print_counts(uproc_io_stream *stream,
         else {
             uproc_io_printf(stream, "%" UPROC_FAMILY_PRI, c[i].fam);
         }
-        uproc_io_printf(stream, ",%ju\n", c[i].n);
+        uproc_io_printf(stream, ",%lu\n", c[i].n);
     }
 }
 
@@ -604,8 +605,8 @@ main(int argc, char **argv)
         argv[argc++] = "-";
     }
 
-    uintmax_t n_seqs = 0, n_seqs_unexplained = 0;
-    uintmax_t counts[UPROC_FAMILY_MAX + 1] = { 0 };
+    unsigned long n_seqs = 0, n_seqs_unexplained = 0;
+    unsigned long counts[UPROC_FAMILY_MAX + 1] = { 0 };
 
     for (; optind + INFILES < argc; optind++)
     {
@@ -616,9 +617,9 @@ main(int argc, char **argv)
     }
 
     if (out_stats) {
-        uproc_io_printf(out_stream, "%ju,", n_seqs - n_seqs_unexplained);
-        uproc_io_printf(out_stream, "%ju,", n_seqs_unexplained);
-        uproc_io_printf(out_stream, "%ju\n", n_seqs);
+        uproc_io_printf(out_stream, "%lu,", n_seqs - n_seqs_unexplained);
+        uproc_io_printf(out_stream, "%lu,", n_seqs_unexplained);
+        uproc_io_printf(out_stream, "%lu\n", n_seqs);
     }
     if (out_counts) {
         print_counts(out_stream, counts, idmap);

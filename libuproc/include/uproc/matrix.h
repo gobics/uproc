@@ -67,7 +67,7 @@ typedef struct uproc_matrix_s uproc_matrix;
  * \param cols      number of columns
  * \param values    initial values or NULL
  */
-uproc_matrix *uproc_matrix_create(size_t rows, size_t cols,
+uproc_matrix *uproc_matrix_create(unsigned long rows, unsigned long cols,
                                   const double *values);
 
 
@@ -76,12 +76,13 @@ void uproc_matrix_destroy(uproc_matrix *matrix);
 
 
 /** Set the value of matrix[row, col] */
-void uproc_matrix_set(uproc_matrix *matrix, size_t row, size_t col,
-                      double value);
+void uproc_matrix_set(uproc_matrix *matrix, unsigned long row,
+                      unsigned long col, double value);
 
 
 /** Get the value of matrix[row, col] */
-double uproc_matrix_get(const uproc_matrix *matrix, size_t row, size_t col);
+double uproc_matrix_get(const uproc_matrix *matrix, unsigned long row,
+                        unsigned long col);
 
 /** Obtain matrix dimensions
  *
@@ -89,8 +90,8 @@ double uproc_matrix_get(const uproc_matrix *matrix, size_t row, size_t col);
  * \param rows      _OUT_: number of rows
  * \param cols      _OUT_: number of columns
  */
-void uproc_matrix_dimensions(const uproc_matrix *matrix, size_t *rows,
-                             size_t *cols);
+void uproc_matrix_dimensions(const uproc_matrix *matrix, unsigned long *rows,
+                             unsigned long *cols);
 
 /** Load matrix from stream */
 uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream);

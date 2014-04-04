@@ -61,8 +61,10 @@ parse_int(const char *arg, int *x)
 int
 parse_prot_thresh_level(const char *arg, int *x)
 {
-    int tmp, res;
-    res = parse_int(arg, &tmp);
+    int tmp;
+    if (parse_int(arg, &tmp)) {
+        return -1;
+    }
     if (tmp != 0 && tmp != 2 && tmp != 3) {
         return -1;
     }
@@ -73,8 +75,10 @@ parse_prot_thresh_level(const char *arg, int *x)
 int
 parse_orf_thresh_level(const char *arg, int *x)
 {
-    int tmp, res;
-    res = parse_int(arg, &tmp);
+    int tmp;
+    if (parse_int(arg, &tmp)) {
+        return -1;
+    }
     if (tmp != 0 && tmp != 1 && tmp != 2) {
         return -1;
     }
@@ -225,14 +229,12 @@ prot_filter(const char *seq, size_t len, uproc_family family,
 {
     (void)seq;
     (void)family;
-    static size_t rows, cols;
+    unsigned long rows, cols;
     uproc_matrix *thresh = opaque;
     if (!thresh) {
         return score > UPROC_EPSILON;
     }
-    if (!rows) {
-        uproc_matrix_dimensions(thresh, &rows, &cols);
-    }
+    uproc_matrix_dimensions(thresh, &rows, &cols);
     if (len >= rows) {
         len = rows - 1;
     }
@@ -244,7 +246,7 @@ static bool
 orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
            double seq_gc, void *opaque)
 {
-    size_t r, c, rows, cols;
+    unsigned long r, c, rows, cols;
     uproc_matrix *thresh = opaque;
     (void) seq;
     if (orf->length < 20) {
