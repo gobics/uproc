@@ -39,7 +39,12 @@
 
 /** \defgroup obj_io_stream object uproc_io_stream
  *
- * Wrapped I/O stream
+ * Optionally compressed I/O stream
+ *
+ * Unless noted otherwise, a function called \c uproc_io_NAME() corresponds
+ * directly to its \c stdio.h counterpart called \c fNAME(). Most of the time,
+ * there also exists a similar \c gzNAME() function in \c zlib, but the order
+ * and types of parameters are always adapted from \c stdio.h.
  *
  * \{
  */
@@ -76,9 +81,17 @@ enum uproc_io_seek_whence
     UPROC_IO_SEEK_CUR,
 };
 
+
 /** Open a file
  *
- * Opens the file whose name is constructed by formatting \c pathfmt with the
+ * Corresponds to using
+ *
+ * \li \c fopen() if \c type is ::UPROC_IO_STDIO
+ * \li \c gzopen() if \c type is ::UPROC_IO_GZIP (and libuproc was compiled
+ *     with zlib support)
+ *
+ *
+ * where the file name is constructed by formatting \c pathfmt with the
  * subsequent arguments (using \c sprintf).
  */
 uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
@@ -93,25 +106,47 @@ uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
 uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
                                 const char *pathfmt, va_list ap);
 
+/** Close a file stream */
 int uproc_io_close(uproc_io_stream *stream);
 
+
+/** Formatted output */
 int uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...);
 
+
+/** Read binary data */
 size_t uproc_io_read(void *ptr, size_t size, size_t nmemb,
                      uproc_io_stream *stream);
 
+/** Write binary data */
 size_t uproc_io_write(const void *ptr, size_t size, size_t nmemb,
                       uproc_io_stream *stream);
 
+/** (Partially) read a line
+ *
+ * Corresponds to \c fgets(), \em not \c gets()!
+ */
 char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
 
+
+/** Read an entire line
+ *
+ * Reads a whole line into \c *lineptr, reallocating it if necessary
+ * (works exactly like the POSIX \c getline function).
+ */
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream);
 
+
+/** Set the file position */
 int uproc_io_seek(uproc_io_stream *stream, long offset,
                   enum uproc_io_seek_whence whence);
 
+
+/** Obtain current file position */
 long uproc_io_tell(uproc_io_stream *stream);
 
+
+/** Test end-of-file indicator */
 int uproc_io_eof(uproc_io_stream *stream);
 /** \} */
 
@@ -127,7 +162,9 @@ int uproc_io_eof(uproc_io_stream *stream);
 uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 
-/** stdin, possibly gzip compressed */
+/** stdin, possibly gzip compressed
+ *
+ */
 #define uproc_stdin uproc_io_stdstream_gz(stdin)
 
 
@@ -142,7 +179,14 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 /** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
  *
+ * \note
  * These macros are only available if libuproc was compiled with zlib support.
+ * \c uproc_stdin_gz is not needed, zlib is used by default and can also read
+ * uncompressed data from \c stdin.
+ *
+ * \note
+ * Using one of these macros registers an exit handler using \c atexit().
+ *
  * \{
  */
 
