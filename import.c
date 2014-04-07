@@ -29,6 +29,12 @@
 #include <string.h>
 #include <time.h>
 
+#if HAVE__MKDIR
+#include <direct.h>
+#elif HAVE_MKDIR
+#include <sys/stat.h>
+#endif
+
 #include <uproc.h>
 
 #ifdef EXPORT
@@ -50,7 +56,11 @@ print_usage(const char *progname)
         "Export database from SOURCEDIR to DEST.\n"
 #else
         "USAGE: %s [options] SOURCE DESTDIR\n"
-        "Import database from SOURCE to DESTDIR (which must exist).\n"
+        "Import database from SOURCE to DESTDIR"
+#if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
+        "(which must exist)"
+#endif
+        ".\n"
 #endif
         "\n"
         "GENERAL OPTIONS:\n"
@@ -117,6 +127,17 @@ IMPORT_FUNC(matrix, uproc_matrix, uproc_matrix_loads, uproc_matrix_store,
             uproc_matrix_destroy)
 IMPORT_FUNC(idmap, uproc_idmap, uproc_idmap_loads, uproc_idmap_store,
             uproc_idmap_destroy)
+#endif
+
+#ifndef EXPORT
+void
+create_db_dir(const char *path) {
+#if HAVE__MKDIR
+    _mkdir(path);
+#elif HAVE_MKDIR
+    mkdir(path, 0777);
+#endif
+}
 #endif
 
 int
@@ -212,6 +233,7 @@ int main(int argc, char **argv)
 #else
 #define IMEX "im"
     dir = argv[optind + DEST];
+    create_db_dir(dir);
     file = argv[optind + SOURCE];
     stream = uproc_io_open("r", UPROC_IO_GZIP, "%s", file);
 #endif
