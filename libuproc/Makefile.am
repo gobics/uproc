@@ -22,6 +22,7 @@ libuproc_la_SOURCES = alphabet.c \
 					ecurve_mmap.c \
 					ecurve_storage.c \
 					error.c \
+					features.c \
 					idmap.c \
 					io.c \
 					list.c \

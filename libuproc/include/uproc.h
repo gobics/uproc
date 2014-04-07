@@ -121,8 +121,12 @@
  *     <!-- seqio.h -->
  * \}
  *
+ * \defgroup grp_features Info about compile-time features
+ *   <!-- features.h -->
+ *
  * \defgroup grp_error Error handling
  *   <!-- error.h -->
+ *
  *
  * \defgroup grp_datastructs Data structures
  * \{
@@ -175,6 +179,7 @@
 #include <uproc/dnaclass.h>
 #include <uproc/ecurve.h>
 #include <uproc/error.h>
+#include <uproc/features.h>
 #include <uproc/idmap.h>
 #include <uproc/io.h>
 #include <uproc/list.h>

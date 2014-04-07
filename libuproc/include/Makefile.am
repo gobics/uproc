@@ -6,6 +6,7 @@ nobase_include_HEADERS = uproc.h \
 	uproc/dnaclass.h \
 	uproc/ecurve.h \
 	uproc/error.h \
+	uproc/features.h \
 	uproc/idmap.h \
 	uproc/io.h \
 	uproc/list.h \

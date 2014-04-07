@@ -105,12 +105,13 @@ main(int argc, char **argv)
         ARGC
     };
 
-#define SHORT_OPTS "hvca:"
+#define SHORT_OPTS "hvVca:"
 
 #if HAVE_GETOPT_LONG
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
+        { "libversion", no_argument,        NULL, 'V' },
         { "calib",      no_argument,        NULL, 'c' },
         { 0, 0, 0, 0 }
     };
@@ -126,6 +127,9 @@ main(int argc, char **argv)
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
+                return EXIT_SUCCESS;
+            case 'V':
+                uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
             case 'c':
                 calib_only = true;

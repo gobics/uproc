@@ -118,11 +118,12 @@ int main(int argc, char **argv)
     enum { NONE, MODEL, VALUE, MAX } thresh_mode = NONE;
     int orf_thresh_num = 2;
 
-#define SHORT_OPTS "hvL:m:O:S:M"
+#define SHORT_OPTS "hvVL:m:O:S:M"
 #if HAVE_GETOPT_LONG
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
+        { "libversion", no_argument,        NULL, 'V' },
         { "min-length", required_argument,  NULL, 'L' },
         { "model",      required_argument,  NULL, 'm' },
         { "othresh",    required_argument,  NULL, 'O' },
@@ -141,6 +142,9 @@ int main(int argc, char **argv)
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
+                return EXIT_SUCCESS;
+            case 'V':
+                uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
             case 'L':
                 {

@@ -161,15 +161,16 @@ int main(int argc, char **argv)
 
 #ifdef EXPORT
     enum uproc_io_type iotype = UPROC_IO_GZIP;
-#define SHORT_OPTS "hvn"
+#define SHORT_OPTS "hvVn"
 #else
-#define SHORT_OPTS "hv"
+#define SHORT_OPTS "hvV"
 #endif
 
 #if HAVE_GETOPT_LONG
     struct option long_opts[] = {
         { "help",       no_argument,    NULL, 'h' },
         { "version",    no_argument,    NULL, 'v' },
+        { "libversion", no_argument,    NULL, 'V' },
 #ifdef EXPORT
         { "nocompress", no_argument,    NULL, 'n' },
 #endif
@@ -186,6 +187,9 @@ int main(int argc, char **argv)
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
+                return EXIT_SUCCESS;
+            case 'V':
+                uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
 #ifdef EXPORT
             case 'n':

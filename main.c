@@ -473,7 +473,7 @@ main(int argc, char **argv)
 
     int opt;
 
-#define SHORT_OPTS_PROT "hvpcfo:z:nP:t:"
+#define SHORT_OPTS_PROT "hvVpcfo:z:nP:t:"
 #if MAIN_DNA
 #define SHORT_OPTS SHORT_OPTS_PROT "slO:"
 #else
@@ -484,6 +484,7 @@ main(int argc, char **argv)
     struct option long_opts[] = {
         { "help",       no_argument,        NULL, 'h' },
         { "version",    no_argument,        NULL, 'v' },
+        { "libversion", no_argument,        NULL, 'V' },
         { "preds",      no_argument,        NULL, 'p' },
         { "counts",     no_argument,        NULL, 'c' },
         { "stats",      no_argument,        NULL, 'f' },
@@ -512,6 +513,9 @@ main(int argc, char **argv)
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
+                return EXIT_SUCCESS;
+            case 'V':
+                uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
             case 'p':
                 out_preds = true;
