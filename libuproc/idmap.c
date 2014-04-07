@@ -96,16 +96,17 @@ uproc_idmap_loads(uproc_io_stream *stream)
     struct uproc_idmap_s *map;
     uproc_family i;
     unsigned long n;
-    char buf[UPROC_FAMILY_MAX + 1];
+    char *line = NULL;
+    size_t sz;
 
     map = uproc_idmap_create();
     if (!map) {
         return NULL;
     }
-    if (!uproc_io_gets(buf, sizeof buf, stream)) {
+    if (!uproc_io_getline(&line, &sz, stream)) {
         goto error;
     }
-    res = sscanf(buf, "[%lu]\n", &n);
+    res = sscanf(line, "[%lu]\n", &n);
     if (res != 1) {
         uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
         goto error;
@@ -116,31 +117,35 @@ uproc_idmap_loads(uproc_io_stream *stream)
     }
     for (i = 0; i < n; i++) {
         size_t len;
-        if (!uproc_io_gets(buf, sizeof buf, stream)) {
+        if (!uproc_io_getline(&line, &sz, stream)) {
             if (uproc_io_eof(stream)) {
                 uproc_error_msg(UPROC_EINVAL, "unexpected end of file");
             }
             goto error;
         }
-        len = strlen(buf);
-        if (len < 1 || buf[len - 1] != '\n') {
+        len = strlen(line);
+        if (len < 1 || line[len - 1] != '\n') {
             uproc_error_msg(
                 UPROC_EINVAL,
                 "line %" UPROC_FAMILY_PRI ": expected newline after ID",
                 i + 2);
             goto error;
         }
-        buf[len - 1] = '\0';
-        if (uproc_idmap_family(map, buf) != i) {
+        line[len - 1] = '\0';
+        if (uproc_idmap_family(map, line) != i) {
             uproc_error_msg(UPROC_EINVAL,
                             "line %" UPROC_FAMILY_PRI ": duplicate ID", i + 2);
             goto error;
         }
     }
-    return map;
+
+    if (0) {
 error:
-    uproc_idmap_destroy(map);
-    return NULL;
+        uproc_idmap_destroy(map);
+        map = NULL;
+    }
+    free(line);
+    return map;
 }
 
 
