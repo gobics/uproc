@@ -31,6 +31,8 @@
 
 #include <uproc.h>
 
+#include "ppopts.h"
+
 #define PROGNAME "uproc-orf"
 
 struct orf_filter_arg
@@ -65,42 +67,37 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 }
 
 void
-print_usage(const char *progname)
+make_opts(struct ppopts *o, const char *progname)
 {
-    fprintf(
-        stderr,
-        PROGNAME ", version " PACKAGE_VERSION "\n"
-        "\n"
-        "USAGE: %s [options] [INPUTFILES] \n"
-        "Translate DNA/RNA to protein sequences\n"
-        "INPUTFILES can be zero or more files containing sequences in FASTA\n"
-        "or FASTQ format (FASTQ qualities are ignored).\n"
-        "If no file is specified or the file name is -, sequences\n"
-        "will be read from standard input.\n"
-        "\n"
-        "GENERAL OPTIONS:\n"
-        OPT("-h", "--help      ", "   ") "Print this message and exit.\n"
-        OPT("-v", "--version   ", "   ") "Print version and exit.\n"
-        OPT("-L", "--min-length", "N  ") "Minimum ORF length (Default: 20)\n"
-        OPT("-m", "--model     ", "DIR") "Score ORFs using the model in DIR.\n"
-        "\n"
-        "If -m is omitted, all ORFs with length greater or equal to the\n"
-        "minimum length are output. If -m is used, ORFs are scored using the\n"
-        "according codon scores and can be filtered using the options below.\n"
-        "By default \"-O 2\" is used.\n"
-        "\n"
-        "SCORING OPTIONS:\n"
-        OPT("-O", "--othresh   ", "N  ") "ORF translation threshold level.\n"
-        OPT("-S", "--min-score ", "VAL")
-            "Use fixed threshold of VAL (decimal number).\n"
-        OPT("-M", "--max       ", "   ")
-            "Only output the ORF with the maximum score.\n"
-        ,
-        progname);
+#define O(...) ppopts_add(o, __VA_ARGS__)
+    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o, "USAGE: %s [options] [INPUTFILES]", progname);
+    ppopts_add_text(o,
+        "Translates DNA/RNA to protein sequences. INPUTFILES can be zero or \
+        more files containing sequences in FASTA or FASTQ format (FASTQ \
+        qualities are ignored). If no file is specified or the file name is \
+        -, sequences will be read from standard input.");
 
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help",       "",    "Print this message and exit.");
+    O('v', "version",    "",    "Print version and exit.");
+    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+    O('L', "min-length", "N",   "Minimum ORF length (Default: 20).");
+    O('m', "model",      "DIR", "Score ORFs using the model in DIR.");
+    ppopts_add_text(o,
+        "If -m is omitted, all ORFs with length greater or equal to the "
+        "minimum length are output. If -m is used, ORFs are scored using the "
+        "according codon scores and can be filtered using the options below. "
+        "By default \"-O 2\" is used.");
+
+    ppopts_add_header(o, "SCORING OPTIONS:");
+    O('O', "othresh",   "N",   "ORF translation threshold level (0, 1 or 2).");
+    O('S', "min-score", "VAL", "Use fixed threshold of VAL (decimal number).");
+    O('M', "max",       "",    "Only output the ORF with the maximum score.");
+#undef O
 }
 
-enum args
+enum nonopt_args
 {
     INFILES,
     ARGC,
@@ -108,7 +105,7 @@ enum args
 
 int main(int argc, char **argv)
 {
-    int res = 0, opt;
+    int res = 0;
     struct orf_filter_arg filter_arg = { 20, NULL };
     const char *model_dir = NULL;
 
@@ -118,27 +115,13 @@ int main(int argc, char **argv)
     enum { NONE, MODEL, VALUE, MAX } thresh_mode = NONE;
     int orf_thresh_num = 2;
 
-#define SHORT_OPTS "hvVL:m:O:S:M"
-#if HAVE_GETOPT_LONG
-    struct option long_opts[] = {
-        { "help",       no_argument,        NULL, 'h' },
-        { "version",    no_argument,        NULL, 'v' },
-        { "libversion", no_argument,        NULL, 'V' },
-        { "min-length", required_argument,  NULL, 'L' },
-        { "model",      required_argument,  NULL, 'm' },
-        { "othresh",    required_argument,  NULL, 'O' },
-        { "min-score",  required_argument,  NULL, 'S' },
-        { "max",        no_argument,        NULL, 'M' },
-        { 0, 0, 0, 0 }
-    };
-#else
-#define long_opts NULL
-#endif
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-    {
+    int opt;
+    struct ppopts opts = PPOPTS_INITIALIZER;
+    make_opts(&opts, argv[0]);
+    while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                print_usage(argv[0]);
+                ppopts_print(&opts, stderr, 80, 0);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
@@ -220,12 +203,12 @@ int main(int argc, char **argv)
         filter_arg.thresh = model.orf_thresh;
     }
     else if (!model_dir && thresh_mode != NONE) {
-        fprintf(stderr, "Error: -O, S or -M used without -m.\n");
+        fprintf(stderr, "Error: -O, -S or -M used without -m.\n");
         return EXIT_FAILURE;
     }
 
     if (argc < optind + ARGC - 1) {
-        print_usage(argv[0]);
+        ppopts_print(&opts, stderr, 80, 0);
         return EXIT_FAILURE;
     }
 

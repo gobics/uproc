@@ -33,6 +33,7 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +41,8 @@
 
 #include <uproc.h>
 
-#include "common.h"
+#include "ppopts.h"
+
 
 #define PROGNAME "uproc-detailed"
 #define PROT_THRESH_DEFAULT 3
@@ -215,39 +217,39 @@ classify_file(uproc_io_stream *stream, uproc_protclass *pc)
 
 
 void
-print_usage(const char *progname)
+make_opts(struct ppopts *o, const char *progname)
 {
-    fprintf(
-        stderr,
-        PROGNAME ", version " PACKAGE_VERSION "\n"
-        "\n"
-        "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]\n"
-        "\n"
-        OPT("-h", "--help      ", "") "Print this message and exit.\n"
-        OPT("-v", "--version   ", "") "Print version and exit.\n"
-        "\n"
-        OPT("-n", "--numeric   ", "    ") "\n"
-        "   Print the internal numeric representation of the families instead\n"
-        "   of their names.\n"
-        "\n"
-        OPT("-o", "--output    ", "FILE") "\n"
-        "   Write output to FILE instead of stdout.\n"
-        "\n"
-        OPT("-z", "--zoutput   ", "FILE") "\n"
-        "    Write gzip compressed output to FILE (use \"-\" for stdout).\n"
-        "\n"
-        OPT("-P", "--pthresh   ", "N   ") "\n"
-        "    Protein threshold level. Allowed values:\n"
-        "        0   fixed threshold of 0.0\n"
-        "        2   less restrictive\n"
-        "        3   more restrictive\n"
-        "    Default is " STR(PROT_THRESH_DEFAULT) ".\n"
-        ,
-        progname);
+#define O(...) ppopts_add(o, __VA_ARGS__)
+    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o,
+        "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]", progname);
+
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help",       "",    "Print this message and exit.");
+    O('v', "version",    "",    "Print version and exit.");
+    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+
+    ppopts_add_header(o, "OUTPUT OPTIONS:");
+    O('o', "output", "FILE",
+      "Write output to FILE instead of standard output.");
+    O('z', "zoutput", "FILE",
+      "Write gzipped output to FILE (use - for standard output).");
+    O('n', "numeric", "",
+      "Print the internal numeric representation of the protein families "
+      "instead of their names.");
+
+    ppopts_add_header(o, "PROTEIN CLASSIFICATION OPTIONS:");
+    O('P', "pthresh", "N", "\
+Protein threshold level. Allowed values:\n\
+    0   fixed threshold of 0.0\n\
+    2   less restrictive\n\
+    3   more restrictive\n\
+Default is %d . ", PROT_THRESH_DEFAULT);
+#undef O
 }
 
 
-enum main_args
+enum nonopt_args
 {
     DBDIR, MODELDIR, INFILES,
     ARGC
@@ -262,26 +264,13 @@ int main(int argc, char **argv)
     bool use_idmap = true;
     int prot_thresh_level = PROT_THRESH_DEFAULT;
 
-#define SHORT_OPTS "hvo:z:nP:"
-
-#if HAVE_GETOPT_LONG
-    struct option long_opts[] = {
-        { "help",       no_argument,        NULL, 'h' },
-        { "version",    no_argument,        NULL, 'v' },
-        { "output",     required_argument,  NULL, 'o' },
-        { "zoutput",    required_argument,  NULL, 'z' },
-        { "numeric",    no_argument,        NULL, 'n' },
-        { "pthresh",    required_argument,  NULL, 'P' },
-        { 0, 0, 0, 0 }
-    };
-#endif
-
     int opt;
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-    {
+    struct ppopts opts = PPOPTS_INITIALIZER;
+    make_opts(&opts, argv[0]);
+    while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                print_usage(argv[0]);
+                ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version("uproc-detailed");
@@ -312,7 +301,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < optind + ARGC - 1) {
-        print_usage(argv[0]);
+        ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
         return EXIT_FAILURE;
     }
 

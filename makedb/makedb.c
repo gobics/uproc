@@ -29,26 +29,32 @@
 
 #include <uproc.h>
 #include "makedb.h"
+#include "ppopts.h"
 
 #define PROGNAME "uproc-makedb"
 
 void
-print_usage(const char *progname)
+make_opts(struct ppopts *o, const char *progname)
 {
-    fprintf(
-        stderr,
-        PROGNAME ", version " PACKAGE_VERSION "\n"
-        "\n"
-        "USAGE: %s [options] MODELDIR SOURCEFILE DESTDIR\n"
-        "Build uproc database from the model in MODELDIR and a fasta SOURCEFILE\n"
-        "and store it in DESTDIR (which must exist).\n"
-        "\n"
-        "GENERAL OPTIONS:\n"
-        OPT("-h", "--help    ", "     ") "Print this message and exit.\n"
-        OPT("-v", "--version ", "     ") "Print version and exit.\n"
-        OPT("-c", "--calib   ", "     ") "Only re-calibrate existing DB.\n"
-        ,
-        progname);
+#define O(...) ppopts_add(o, __VA_ARGS__)
+    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o, "USAGE: %s [options] MODELDIR SOURCEFILE DESTDIR",
+                    progname);
+
+    ppopts_add_text(o,
+        "Builds a UProC database from the model in MODELDIR and a FASTA/FASTQ \
+        formatted SOURCEFILE and stores it in DESTDIR"
+#if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
+        " (which must already exist)"
+#endif
+        ".");
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help",       "", "Print this message and exit.");
+    O('v', "version",    "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
+    O('c', "calib",      "",
+      "Re-calibrate existing database (SOURCEFILE will be ignored).");
+#undef O
 }
 
 static int
@@ -98,32 +104,19 @@ main(int argc, char **argv)
          *outdir;
     bool calib_only = false;
 
-    int opt;
-    enum args
+    enum nonopt_args
     {
         MODELDIR, INFILE, OUTDIR,
         ARGC
     };
 
-#define SHORT_OPTS "hvVca:"
-
-#if HAVE_GETOPT_LONG
-    struct option long_opts[] = {
-        { "help",       no_argument,        NULL, 'h' },
-        { "version",    no_argument,        NULL, 'v' },
-        { "libversion", no_argument,        NULL, 'V' },
-        { "calib",      no_argument,        NULL, 'c' },
-        { 0, 0, 0, 0 }
-    };
-#else
-#define long_opts NULL
-#endif
-
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-    {
+    int opt;
+    struct ppopts opts = PPOPTS_INITIALIZER;
+    make_opts(&opts, argv[0]);
+    while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                print_usage(argv[0]);
+                ppopts_print(&opts, stderr, 80, 0);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
@@ -139,7 +132,7 @@ main(int argc, char **argv)
         }
     }
     if (argc < optind + ARGC) {
-        print_usage(argv[0]);
+        ppopts_print(&opts, stderr, 80, 0);
         return EXIT_FAILURE;
     }
     modeldir = argv[optind + MODELDIR];

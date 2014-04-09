@@ -10,19 +10,15 @@
 #define PACKAGE_VERSION "git-" GIT_BRANCH "-" GIT_COMMIT
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #if HAVE_GETOPT_LONG
 #define _GNU_SOURCE
 #include <getopt.h>
-#define OPT(shortopt, longopt, arg) shortopt " " arg "  " longopt " " arg "    "
 #else
 #include <unistd.h>
-#define OPT(shortopt, longopt, arg) shortopt " " arg "    "
-#define getopt_long(argc, argv, shortopts, longopts, longindex) \
-    getopt(argc, argv, shortopts)
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <uproc.h>
 

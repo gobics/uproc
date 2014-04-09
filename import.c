@@ -31,6 +31,8 @@
 
 #include <uproc.h>
 
+#include "ppopts.h"
+
 #ifdef EXPORT
 #define PROGNAME "uproc-export"
 #else
@@ -39,33 +41,34 @@
 
 
 void
-print_usage(const char *progname)
+make_opts(struct ppopts *o, const char *progname)
 {
-    fprintf(
-        stderr,
-        PROGNAME ", version " PACKAGE_VERSION "\n"
-        "\n"
+#define O(...) ppopts_add(o, __VA_ARGS__)
+    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
 #ifdef EXPORT
-        "USAGE: %s [options] SOURCEDIR DEST\n"
-        "Export database from SOURCEDIR to DEST.\n"
+    ppopts_add_text(o, "USAGE: %s [options] SRCDIR DEST", progname);
+    ppopts_add_text(o, "Export database from SRCDIR to DEST.");
 #else
-        "USAGE: %s [options] SOURCE DESTDIR\n"
-        "Import database from SOURCE to DESTDIR"
+    ppopts_add_text(o, "USAGE: %s [options] SRC DESTDIR", progname);
+    ppopts_add_text(o, "Import database from SRC to DESTDIR"
 #if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
-        "(which must exist)"
+        " (which must already exist)"
 #endif
-        ".\n"
+        ".");
 #endif
-        "\n"
-        "GENERAL OPTIONS:\n"
-        OPT("-h", "--help      ", "") "Print this message and exit.\n"
-        OPT("-v", "--version   ", "") "Print version and exit.\n"
+
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help",       "", "Print this message and exit.");
+    O('v', "version",    "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
 #ifdef EXPORT
-        OPT("-n", "--nocompress", "") "Don't store using gzip compression\n"
+    if (uproc_features_zlib()) {
+        O('n', "nocompress", "", "Store without gzip compression.");
+    }
 #endif
-        ,
-        progname);
+#undef O
 }
+
 
 #ifdef EXPORT
 #define EXPORT_FUNC(name, type, load, store, destroy)                       \
@@ -151,7 +154,8 @@ db_info(const char *dir, uproc_io_stream *stream)
     return 0;
 }
 
-enum args
+
+enum nonopt_args
 {
     SOURCE,
     DEST,
@@ -160,35 +164,21 @@ enum args
 
 int main(int argc, char **argv)
 {
-    int res, opt;
+    int res;
     uproc_io_stream *stream;
     const char *dir, *file;
 
 #ifdef EXPORT
     enum uproc_io_type iotype = UPROC_IO_GZIP;
-#define SHORT_OPTS "hvVn"
-#else
-#define SHORT_OPTS "hvV"
 #endif
 
-#if HAVE_GETOPT_LONG
-    struct option long_opts[] = {
-        { "help",       no_argument,    NULL, 'h' },
-        { "version",    no_argument,    NULL, 'v' },
-        { "libversion", no_argument,    NULL, 'V' },
-#ifdef EXPORT
-        { "nocompress", no_argument,    NULL, 'n' },
-#endif
-        { 0, 0, 0, 0 }
-    };
-#else
-#define long_opts NULL
-#endif
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-    {
+    int opt;
+    struct ppopts opts = PPOPTS_INITIALIZER;
+    make_opts(&opts, argv[0]);
+    while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                print_usage(argv[0]);
+                ppopts_print(&opts, stderr, 80, 0);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
@@ -206,7 +196,7 @@ int main(int argc, char **argv)
         }
     }
     if (argc < optind + ARGC) {
-        print_usage(argv[0]);
+        ppopts_print(&opts, stderr, 80, 0);
         return EXIT_FAILURE;
     }
 #ifdef EXPORT

@@ -35,6 +35,8 @@
 
 #include <uproc.h>
 
+#include "ppopts.h"
+
 #if MAIN_DNA
 #define PROGNAME "uproc-dna"
 #else
@@ -339,108 +341,98 @@ print_counts(uproc_io_stream *stream,
 }
 
 void
-print_usage(const char *progname)
+make_opts(struct ppopts *o, const char *progname)
 {
-    const char *s =
-PROGNAME ", version " PACKAGE_VERSION "\n\
-\n\
-USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]\n\
-\n\
-Classify "
+#define O(...) ppopts_add(o, __VA_ARGS__)
+    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o,
+        "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]", progname);
+
+    ppopts_add_text(o,
+        "Classifies %s sequences using the database in DBDIR and the model in "
+        "MODELDIR. INPUTFILES can be zero or more files containing sequences "
+        "in FASTA or FASTQ format (FASTQ qualities are ignored). If no file "
+        "is specified or the file name is - (\"dash\" or \"minus\"), "
+        "sequences will be read from standard input.",
 #if MAIN_DNA
-"DNA/RNA"
+        "DNA/RNA"
 #else
-"protein"
+        "protein"
 #endif
-" sequences using the database in DBDIR and the model in MODELDIR.\n\
-INPUTFILES can be zero or more files containing sequences in FASTA or FASTQ\n\
-format (FASTQ qualities are ignored).\n\
-If no file is specified or the file name is -, sequences will be read from\n\
-standard input.\n\
-\n\
-GENERAL OPTIONS:\n"
-OPT("-h", "--help   ", " ") "\n\
-    Print this message and exit.\n\
-\n"
-OPT("-v", "--version", " ") "\n\
-    Print version and exit.\n\
-\n"
+        );
+
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help",       "",    "Print this message and exit.");
+    O('v', "version",    "",    "Print version and exit.");
+    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+
 #if _OPENMP
-OPT("-t", "--threads", "N") "\n\
-    Maximum number of threads to use (default: " STR(NUM_THREADS_DEFAULT) ").\n"
+    O('t', "threads", "N",
+      "Maximum number of threads to use (default: %d).", NUM_THREADS_DEFAULT);
 #endif
-"\n\n\
-OUTPUT OPTIONS:\n"
-OPT("-p", "--preds", "") "\n\
-    Print all classifications as CSV with the fields:\n\
-        sequence number (starting with 1)\n\
-        sequence header up to the first whitespace\n\
-        sequence length\n"
+
+    ppopts_add_header(o, "OUTPUT FORMAT:");
+    O('p', "preds", "", "\
+Print all classifications as CSV with the fields:\n\
+    sequence number (starting from 1)\n\
+    sequence header up to the first whitespace\n\
+    sequence length\n"
 #if MAIN_DNA
     "\
-        ORF frame number (1-6)\n\
-        ORF index in the DNA sequence (starting from 1)\n\
-        ORF length\n"
+    ORF frame number (1-6)\n\
+    ORF index in the DNA sequence (starting from 1)\n\
+    ORF length\n"
 #endif
     "\
-        predicted protein family\n\
-        classificaton score\n\
-\n"
-OPT("-f", "--stats", "") "\n\
-    Print \"classified,unclassified,total\" numbers of sequences.\n\
-\n"
-OPT("-c", "--counts", "") "\n\
-    Print protein family and number of classifications (if greater than 0)\n\
-    separated by a comma.\n\
-\n"
-"If none of the above is specified, -c is used.\n\
-If multiple of them are specified, they are printed in the order as above.\n\
-\n\n"
-OPT("-o", "--output", "FILE") "\n\
-    Print output to FILE instead of standard output.\n\
-\n"
-OPT("-z", "--zoutput", "FILE") "\n\
-    Write gzip compressed output to FILE (use \"-\" for standard output).\n\
-\n"
-OPT("-n", "--numeric", "") "\n\
-    If used with -p or -c, print the internal numeric representation of\n\
-    the families instead of their names.\n\
-\n\n\
-PROTEIN CLASSIFICATION OPTIONS:\n"
-OPT("-P", "--pthresh", "N") "\n\
-    Protein threshold level. Allowed values:\n\
-        0   fixed threshold of 0.0\n\
-        2   less restrictive\n\
-        3   more restrictive\n\
-    Default is " STR(PROT_THRESH_DEFAULT) ".\n\
-"
+    predicted protein family\n\
+    classificaton score");
+
+    O('f', "stats", "",
+      "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
+    O('c', "counts", "",
+      "Print \"FAMILY,COUNT\" where COUNT is the number of classifications "
+      "for FAMILY");
+    ppopts_add_text(o,
+        "If none of the above is specified, -c is used. If multiple of them "
+        "are specified, they are printed in the same order as above.");
+
+    ppopts_add_header(o, "OUTPUT OPTIONS:");
+    O('o', "output", "FILE",
+      "Write output to FILE instead of standard output.");
+    O('z', "zoutput", "FILE",
+      "Write gzipped output to FILE (use - for standard output).");
+    O('n', "numeric", "",
+      "If used with -p or -c, print the internal numeric representation of "
+      "the protein families instead of their names.");
+
+    ppopts_add_header(o, "PROTEIN CLASSIFICATION OPTIONS:");
+    O('P', "pthresh", "N", "\
+Protein threshold level. Allowed values:\n\
+    0   fixed threshold of 0.0\n\
+    2   less restrictive\n\
+    3   more restrictive\n\
+Default is %d . ", PROT_THRESH_DEFAULT);
 
 #if MAIN_DNA
-"\n\n\
-DNA CLASSIFICATION OPTIONS:\n"
-OPT("-l", "--long", " ") "\n\
-    Use long read mode (default):\n\
-    Only accept certain ORFs (see -O below) and report all protein scores\n\
-    above the threshold (see -P above).\n\
-\n"
-OPT("-s", "--short", " ") "\n\
-    Use short read mode:\n\
-    Accept all ORFs, report only maximum protein score (if above threshold).\n\
-\n"
-OPT("-O", "--othresh", "N") "\n\
-    ORF translation threshold level (only relevant in long read mode).\n\
-    Allowed values:\n\
-        0   accept all ORFs\n\
-        1   less restrictive\n\
-        2   more restrictive\n\
-    Default is " STR(ORF_THRESH_DEFAULT) ".\n\
-"
+    ppopts_add_header(o, "DNA CLASSIFICATION OPTIONS:");
+    O('l', "long", "",
+      "Use long read mode (default): Only accept certain ORFs (see -O below) "
+      "and report all protein scores above the threshold (see -P above).");
+    O('s', "short", " ",
+      "Use short read mode: Accept all ORFs, report only maximum protein "
+      "score (if above threshold).");
+    O('O', "othresh", "N", "\
+ORF translation threshold level (only relevant in long read mode).\n\
+Allowed values:\n\
+    0   accept all ORFs\n\
+    1   less restrictive\n\
+    2   more restrictive\n\
+Default is %d.", ORF_THRESH_DEFAULT);
 #endif
-;
-    fprintf(stderr, s, progname);
+#undef O
 }
 
-enum args
+enum nonopt_args
 {
     DBDIR, MODELDIR, INFILES,
     ARGC
@@ -472,44 +464,12 @@ main(int argc, char **argv)
     bool short_read_mode = false;   // -s
 
     int opt;
-
-#define SHORT_OPTS_PROT "hvVpcfo:z:nP:t:"
-#if MAIN_DNA
-#define SHORT_OPTS SHORT_OPTS_PROT "slO:"
-#else
-#define SHORT_OPTS SHORT_OPTS_PROT
-#endif
-
-#if HAVE_GETOPT_LONG
-    struct option long_opts[] = {
-        { "help",       no_argument,        NULL, 'h' },
-        { "version",    no_argument,        NULL, 'v' },
-        { "libversion", no_argument,        NULL, 'V' },
-        { "preds",      no_argument,        NULL, 'p' },
-        { "counts",     no_argument,        NULL, 'c' },
-        { "stats",      no_argument,        NULL, 'f' },
-        { "output",     required_argument,  NULL, 'o' },
-        { "zoutput",    required_argument,  NULL, 'z' },
-        { "numeric",    no_argument,        NULL, 'n' },
-        { "pthresh",    required_argument,  NULL, 'P' },
-        { "threads",    required_argument,  NULL, 't' },
-#if MAIN_DNA
-        { "short",      no_argument,        NULL, 's' },
-        { "long",       no_argument,        NULL, 'l' },
-        { "othresh",    required_argument,  NULL, 'O' },
-#endif
-        { 0, 0, 0, 0 }
-    };
-#else
-#define long_opts NULL
-#endif
-
-
-    while ((opt = getopt_long(argc, argv, SHORT_OPTS, long_opts, NULL)) != -1)
-    {
+    struct ppopts opts = PPOPTS_INITIALIZER;
+    make_opts(&opts, argv[0]);
+    while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                print_usage(argv[0]);
+                ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
@@ -580,7 +540,7 @@ main(int argc, char **argv)
     }
 
     if (argc < optind + ARGC - 1) {
-        print_usage(argv[0]);
+        ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
         return EXIT_FAILURE;
     }
 
