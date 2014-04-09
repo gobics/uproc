@@ -62,6 +62,10 @@ void errhandler_bail(enum uproc_error_code num, const char *msg,
 void trim_header(char *s);
 
 
+/* Create dir (or fail silently) */
+void make_dir(const char *path);
+
+
 /* Struct representing the "database" */
 struct database
 {

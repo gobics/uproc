@@ -29,12 +29,6 @@
 #include <string.h>
 #include <time.h>
 
-#if HAVE__MKDIR
-#include <direct.h>
-#elif HAVE_MKDIR
-#include <sys/stat.h>
-#endif
-
 #include <uproc.h>
 
 #ifdef EXPORT
@@ -129,16 +123,6 @@ IMPORT_FUNC(idmap, uproc_idmap, uproc_idmap_loads, uproc_idmap_store,
             uproc_idmap_destroy)
 #endif
 
-#ifndef EXPORT
-void
-create_db_dir(const char *path) {
-#if HAVE__MKDIR
-    _mkdir(path);
-#elif HAVE_MKDIR
-    mkdir(path, 0777);
-#endif
-}
-#endif
 
 int
 db_info(const char *dir, uproc_io_stream *stream)
@@ -233,7 +217,7 @@ int main(int argc, char **argv)
 #else
 #define IMEX "im"
     dir = argv[optind + DEST];
-    create_db_dir(dir);
+    make_dir(dir);
     file = argv[optind + SOURCE];
     stream = uproc_io_open("r", UPROC_IO_GZIP, "%s", file);
 #endif

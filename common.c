@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#if HAVE__MKDIR
+#include <direct.h>
+#elif HAVE_MKDIR
+#include <sys/stat.h>
+#endif
+
 #include <uproc.h>
 
 #include "common.h"
@@ -109,6 +115,17 @@ trim_header(char *s)
     if (end) {
         *end = '\0';
     }
+}
+
+
+void
+make_dir(const char *path)
+{
+#if HAVE__MKDIR
+    _mkdir(path);
+#elif HAVE_MKDIR
+    mkdir(path, 0777);
+#endif
 }
 
 
