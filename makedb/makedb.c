@@ -158,6 +158,7 @@ main(int argc, char **argv)
             uproc_perror("");
             return EXIT_FAILURE;
         }
+        make_dir(outdir);
         res = build_ecurves(infile, outdir, alphabet, idmap);
         if (res) {
             uproc_perror("error building ecurves");
