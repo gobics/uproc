@@ -1,7 +1,8 @@
-0.3.2
+1.0.0
 =====
 
-- First official pre-relase version
+- First public release
+- Moved repository to GitHub
 
 
 .. vim: ft=rst
