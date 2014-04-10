@@ -45,21 +45,20 @@ codon_tables.h :
 
 CLEANFILES = gen_ct$(EXEEXT)
 
-
-analyze_srcs = $(filter %.c,$(libuproc_la_SOURCES))
-analyze_plists = $(patsubst %.c,%.plist,$(analyze_srcs))
-
-MOSTLYCLEANFILES = $(analyze_plists)
-
-analyze :
-	$(MAKE) mostlyclean
-	$(MAKE) codon_tables.h
-	$(MAKE) OPENMP_CFLAGS= CC=clang do-analyze
-
-do-analyze : $(analyze_plists)
-
-$(analyze_plists): %.plist: %.c
-	@echo "  CCSA  " $@
-	$(COMPILE) --analyze $< -o $@
-
-.PHONY: analyze
+@ifGNUmake@analyze_srcs = $(filter %.c,$(libuproc_la_SOURCES))
+@ifGNUmake@analyze_plists = $(patsubst %.c,%.plist,$(analyze_srcs))
+@ifGNUmake@
+@ifGNUmake@MOSTLYCLEANFILES = $(analyze_plists)
+@ifGNUmake@
+@ifGNUmake@analyze :
+@ifGNUmake@	$(MAKE) mostlyclean
+@ifGNUmake@	$(MAKE) codon_tables.h
+@ifGNUmake@	$(MAKE) OPENMP_CFLAGS= CC=clang do-analyze
+@ifGNUmake@
+@ifGNUmake@do-analyze : $(analyze_plists)
+@ifGNUmake@
+@ifGNUmake@$(analyze_plists): %.plist: %.c
+@ifGNUmake@	@echo "  CCSA  " $@
+@ifGNUmake@	$(COMPILE) --analyze $< -o $@
+@ifGNUmake@
+@ifGNUmake@.PHONY: analyze

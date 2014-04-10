@@ -2,6 +2,7 @@ AC_PREREQ(2.62)
 AC_INIT([uproc], [0.4.0-devel], [robin@gobics.de])
 AM_INIT_AUTOMAKE([foreign])
 
+AX_CHECK_GNU_MAKE
 AX_CHECK_ENABLE_DEBUG([no])
 
 LT_PREREQ([2.2])
