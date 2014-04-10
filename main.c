@@ -418,7 +418,7 @@ Default is %d . ", PROT_THRESH_DEFAULT);
     O('l', "long", "",
       "Use long read mode (default): Only accept certain ORFs (see -O below) "
       "and report all protein scores above the threshold (see -P above).");
-    O('s', "short", " ",
+    O('s', "short", "",
       "Use short read mode: Accept all ORFs, report only maximum protein "
       "score (if above threshold).");
     O('O', "othresh", "N", "\
