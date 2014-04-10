@@ -1,6 +1,8 @@
 AC_PREREQ(2.62)
-AC_INIT([uproc], [0.4.0-devel], [robin@gobics.de])
-AM_INIT_AUTOMAKE([foreign])
+AC_INIT([uproc], [1.0.0], [uproc@gobics.de])
+
+# GNU make specific constructs are covered by AX_CHECK_GNU_MAKE, so don't warn about them
+AM_INIT_AUTOMAKE([foreign check-news -Wall -Wno-portability])
 
 AX_CHECK_GNU_MAKE
 AX_CHECK_ENABLE_DEBUG([no])
