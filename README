@@ -1,12 +1,13 @@
-##############################
-UProC Version 0.3.2 2014-01-20
-##############################
+#####################################
+UProC Version 1.0.0 2014-04-10 README
+#####################################
 
-.. This document is formatted using reStructuredText_. You can either view it
-   as plain text or use the python ``docutils`` package to render it to a
-   prettier format, e.g. HTML.
+.. This document is formatted using reStructuredText
+   (http://docutils.sourceforge.net/rst.html). You can either view it as plain
+   text or use the python ``docutils`` package to render it to a prettier
+   format, e.g. HTML. A HTML version is also available at
+   http://uproc.gobics.de
 
-.. _reStructuredText: http://docutils.sourceforge.net/rst.html
 
 .. contents::
 .. sectnum::
@@ -17,13 +18,16 @@ General Notes
 =============
 
 Contact
--------
+=======
 
-Please send bug reports, suggestions or questions to robin@gobics.de
+Please send bug reports, suggestions or questions to uproc@gobics.de or create
+an issue at `UProC on GitHub`_.
+
+.. _`UProC on GitHub`: https://github.com/gobics/uproc
 
 
 Version numbering
------------------
+=================
 
 UProC uses `semantic versioning`_. This means that the version number has the
 format ``MAJOR.MINOR.PATCH`` and an increment in one of the parts has the
@@ -42,70 +46,105 @@ backwards-compatible. See the `semantic versioning`_ homepage for details.
 
 
 License
--------
+=======
 
-The code for the UProC executables is available under the GNU GPL (see the
+The code for the UProC executables is available under the `GNU GPLv3`_ (see the
 ``COPYING`` file). However, most of the functionality is separated into a
-library called ``libuproc``, using the GNU LGPL (see the ``COPYING.LESSER``
-file). By default, the executables are built statically, you have to pass
-``--enable-shared`` to the configure script if you want to build ``libuproc``
-as a shared library (see the `Installation from source`_ section below).
+library called `libuproc`, using the `GNU LGPLv3`_ (see the ``COPYING.LESSER``
+file).
+
+.. _`GNU GPLv3`: https://www.gnu.org/licenses/gpl.html
+.. _`GNU LGPLv3`: https://www.gnu.org/licenses/lgpl.html
 
 
 ============
 Installation
 ============
 
-Prerequisites
--------------
+Obtaining UProC
+===============
+
+Please visit the `UProC downloads`_ page to make sure you're using the latest
+release. If you are interested in contributing, please get a clone of `UProC on
+GitHub`_ and base your work off the ``devel`` branch.
+
+.. _`UProC downloads`: http://uproc.gobics.de/downloads.html
+
+
+Binary packages
+===============
+
+We currently offer binary packages for Windows XP and later, for 32 bit (i686)
+and 64 bit (x86-64, also known as amd64) architectures. To install, just
+download and extract the corresponding zip file. Currently there is no
+graphical user interface, you need to run UProC from a PowerShell or
+``cmd.exe``.
+
+Please note that UProC is primarily developed for (and works best on) unix
+systems.
+
+
+
+Installation from source package
+================================
 
 UProC uses the `GNU Autotools`_, so installation should work on any system that
 has a POSIX compatible ``/bin/sh``, ``make`` and a C99 compiler.
 
 For additional features, UProC has the following **optional** dependencies:
 
-zlib
-    On-the-fly ``gzip`` (de-)compression of files. This is probably already
-    installed on your computer, but you need to make sure that the development
-    headers are also available.
+zlib (highly recommended)
+    Used for On-the-fly ``gzip`` (de-)compression of files. This is probably
+    already installed on your computer, but you need to make sure that the
+    development headers are also available.
 
 OpenMP
     UProC uses OpenMP for parallelization, if the compiler suports it. The
     configure script automatically detects whether this is the case.
 
+Doxygen (for developers, version 1.8.0 or later recommended)
+    If Doxygen is available, it wil be used to generate the the API
+    documentation of `libuproc` (which is also available at the `UPRoC
+    homepage`_.
+
 
 .. _`GNU Autotools`: http://www.gnu.org/software/automake/manual
+.. _`UProC homepage`: http://uproc.gobics.de
 
-
-Installation from source
-------------------------
 
 To install UProC from a source tarball, simply extract it and run the
-commands::
+commands ::
 
         ./configure
         make
-        make install
+        make install  # requires appropriate privileges in PREFIX (see below)
 
 By default, the executables are built in a way that you can omit the ``make
-install`` step and just run them from wherever you wish.
+install`` step and just run them from wherever you wish or copy them to a
+desired location (it is recommended to utilize the ``--prefix`` option
+mentioned below, though).
 
 You can pass the following options (and more) to the ``configure`` script:
 
---prefix=PREFIX     Install all files below ``PREFIX`` (see the ``INSTALL``
-                    file for details).
+--prefix=PREFIX     Install all files below ``PREFIX`` (see the `Installation
+                    Names` section the ``INSTALL`` file for details).
 
 --disable-openmp    Do not use OpenMP (i.e. disable multi-threading). This will
                     usually cause longer running times. You probably don't want
                     this.
 
---enable-shared     Build and install ``libuproc`` as shared library. This will
-                    also install the header files and, if ``doxygen`` is
-                    installed, API reference.
+--disable-shared    Link all execututables statically and do not build and
+                    install `libuproc` as a shared library.
+
+See the ``INSTALL`` file for a more detailed description of the installation
+process for projects using `GNU Autotools`_.
 
 
-See the ``INSTALL`` file for a more detailed generic description of the
-installation process.
+Installation from Git
+=====================
+
+On a fresh clone of the git repo, run ``autoreconf -i`` to generate the
+``configure`` script and then follow the instructions in the previous section.
 
 
 ===================
@@ -117,28 +156,28 @@ categories, usually available as two distinct directories in the file system.
 
 
 Database
---------
+========
 
 The database consists of files representing a set of known protein subsequences
 that map to given families, e.g. extracted from PFAM.
 
 There are two ways to obtain a database:
 
-1.  You can download a database from http://no-url-yet and import it with the
-    `uproc-import` program.
-2.  Alternatively, you can create your own database with the `uproc-makedb`
+1.  You can download a database from the `UProC downloads`_ page and import it
+    with the ``uproc-import`` program.
+2.  Alternatively, you can create your own database with the ``uproc-makedb``
     program.
 
-Detailed instructions for these programs can be found by passing the `-h`
+Detailed instructions for these programs can be found by passing the ``-h``
 option when running them.
 
 
 Model
------
+=====
 
 The model consists of files containing certain parameters that are not tied to
-a particular database. You can download the newest model files from
-http://no-url-yet.
+a particular database. You can download the newest model files at `UProC
+downloads`_.
 
 
 =============
@@ -166,7 +205,7 @@ UProC consists of the following command-line programs:
 ``uproc-makedb``
     Create a new database.
 
-You can pass the ``-h`` argument to find out how they are used.
+You can pass the ``-h`` option to find out how they are used.
 
 
 .. vim: ft=rst
