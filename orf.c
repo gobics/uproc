@@ -286,6 +286,7 @@ int main(int argc, char **argv)
         uproc_seqiter_destroy(rd);
         uproc_io_close(stream);
     }
+    uproc_io_close(out_stream);
     if (res == -1) {
         uproc_perror("error reading input");
     }
