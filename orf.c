@@ -232,20 +232,15 @@ int main(int argc, char **argv)
     }
 
     for (; optind + INFILES < argc; optind++) {
-        struct uproc_io_stream *stream;
         uproc_seqiter *rd;
         struct uproc_sequence seq;
-        if (!strcmp(argv[optind + INFILES], "-")) {
-            stream = uproc_stdin;
+        struct uproc_io_stream *stream = open_read(argv[optind + INFILES]);
+        if (!stream) {
+            fprintf(stderr, "error opening %s: ", argv[optind + INFILES]);
+            perror("");
+            return EXIT_FAILURE;
         }
-        else {
-            stream = open_read(argv[optind + INFILES]);
-            if (!stream) {
-                fprintf(stderr, "error opening %s: ", argv[optind + INFILES]);
-                perror("");
-                return EXIT_FAILURE;
-            }
-        }
+
         rd = uproc_seqiter_create(stream);
         if (!rd) {
             uproc_perror("");
