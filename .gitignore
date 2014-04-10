@@ -28,22 +28,22 @@ Makefile.in
 /uproc-orf
 /uproc-import
 /uproc-export
-
-/makedb/uproc-makedb
+/uproc-makedb
+/uproc-detailed
 
 /libuproc/codon_tables.h
 /libuproc/gen_ct
-/libuproc/libuproc.la
 
 /libuproc/docs/doxyfile
 /libuproc/docs/doxywarn.txt
 /libuproc/docs/doxygen.stamp
+/libuproc/docs/libuproc
+/libuproc/docs/libuproc.tar.gz
 
 /libuproc/tests/ck_*
 !/libuproc/tests/ck_*.c
 /libuproc/tests/*.trs
 /libuproc/tests/*.log
-/libuproc/tests/test-suite.log
 /test-driver
 
 /uproc-*.*.*.tar.gz
