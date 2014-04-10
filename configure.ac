@@ -6,9 +6,7 @@ AX_CHECK_GNU_MAKE
 AX_CHECK_ENABLE_DEBUG([no])
 
 LT_PREREQ([2.2])
-# Build libuproc statically by default
-LT_INIT([disable-shared])
-
+LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([libuproc/ecurve.c])
