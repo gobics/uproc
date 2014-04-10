@@ -204,11 +204,10 @@ ppopts_print(struct ppopts *o, FILE *stream, int wrap, int flags)
 int
 ppopts_getopt(struct ppopts *o, int argc, char * const argv[])
 {
-    size_t pos;
     int i, k;
     char shortopts[PPOPTS_OPTS_MAX * 2 + 1];
 #if HAVE_GETOPT_LONG
-    struct option longopts[PPOPTS_OPTS_MAX + 1] = { 0 };
+    struct option longopts[PPOPTS_OPTS_MAX + 1];
 #endif
 
     for (i = 0, k = 0; i < o->n; i++) {
@@ -223,13 +222,16 @@ ppopts_getopt(struct ppopts *o, int argc, char * const argv[])
         }
         strcat(shortopts, so);
 #if HAVE_GETOPT_LONG
-        longopts[k].name = opt->longopt;
-        longopts[k].has_arg = *opt->argname ? required_argument : no_argument;
-        longopts[k].flag = NULL;
-        longopts[k].val = opt->shortopt;
+        longopts[k] = (struct option){
+            .name = opt->longopt,
+            .has_arg = *opt->argname ? required_argument : no_argument,
+            .flag = NULL,
+            .val = opt->shortopt,
+        };
 #endif
         k++;
     }
+    longopts[k] = (struct option){ 0, 0, 0, 0 };
 #if HAVE_GETOPT_LONG
     return getopt_long(argc, argv, shortopts, longopts, NULL);
 #else
