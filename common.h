@@ -5,14 +5,6 @@
 #include <config.h>
 #endif
 
-#ifdef GIT_COMMIT
-#undef PACKAGE_VERSION
-#define PACKAGE_VERSION "git-" GIT_BRANCH "-" GIT_COMMIT
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-
 #if HAVE_GETOPT_LONG
 #define _GNU_SOURCE
 #include <getopt.h>

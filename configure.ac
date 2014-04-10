@@ -60,9 +60,8 @@ AM_CONDITIONAL([SHARED_LIBUPROC], [test "x$enable_shared" = "xyes"])
 test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])
 
-AC_CHECK_PROGS([GIT], [git])
-AM_CONDITIONAL([IN_GIT_REPO],
-               [test -n "$GIT" && git rev-parse 2>/dev/null && test $(git rev-parse --show-toplevel) = "$PWD"])
+# define UPROC_VERSION
+UPROC_GIT_VERSION
 
 AC_CONFIG_FILES([Makefile
                  libuproc/Makefile

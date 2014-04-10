@@ -37,7 +37,7 @@ void
 make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
-    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
     ppopts_add_text(o, "USAGE: %s [options] MODELDIR SOURCEFILE DESTDIR",
                     progname);
 
@@ -86,7 +86,7 @@ write_db_info(const char *outdir, const char *infile)
     if (!stream) {
         return -1;
     }
-    uproc_io_printf(stream, "version:    " PACKAGE_VERSION "\n");
+    uproc_io_printf(stream, "version:    " UPROC_VERSION "\n");
     uproc_io_printf(stream, "created:    %s", ctime(&now));
     uproc_io_printf(stream, "input file: %s\n", infile);
     uproc_io_close(stream);

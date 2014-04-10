@@ -8,12 +8,6 @@ bin_PROGRAMS = uproc-dna uproc-prot uproc-detailed uproc-import uproc-export upr
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 LDADD = $(top_builddir)/libuproc/libuproc.la
 
-if IN_GIT_REPO
-git_tag := $(shell git describe --abbrev=0)
-git_commit := $(shell git rev-list --max-count=1 --abbrev-commit HEAD)
-git_branch := $(shell git rev-parse --abbrev-ref HEAD)
-AM_CPPFLAGS += -DGIT_TAG=\"$(git_tag)\" -DGIT_COMMIT=\"$(git_commit)\" -DGIT_BRANCH=\"$(git_branch)\"
-endif
 
 common_sources = common.c common.h ppopts.c ppopts.h
 
@@ -38,7 +32,7 @@ uproc_makedb_SOURCES = makedb/makedb.h makedb/makedb.c makedb/build_ecurves.c \
 					makedb/calib.c  makedb/progress.c \
 					$(common_sources)
 
-uproc_makedb_CPPFLAGS = -I$(top_srcdir)/libuproc/include -I$(top_srcdir)/libuproc
+uproc_makedb_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libuproc/include -I$(top_srcdir)/libuproc
 uproc_makedb_CFLAGS = $(OPENMP_CFLAGS)
 
 doc_DATA = INSTALL README NEWS AUTHORS COPYING COPYING.LESSER

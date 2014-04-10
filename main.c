@@ -344,7 +344,7 @@ void
 make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
-    ppopts_add_text(o, PROGNAME ", version " PACKAGE_VERSION);
+    ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
     ppopts_add_text(o,
         "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]", progname);
 
