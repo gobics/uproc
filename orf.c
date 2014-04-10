@@ -82,6 +82,14 @@ make_opts(struct ppopts *o, const char *progname)
     O('h', "help",       "",    "Print this message and exit.");
     O('v', "version",    "",    "Print version and exit.");
     O('V', "libversion", "",    "Print libuproc version/features and exit.");
+
+    ppopts_add_header(o, "OUTPUT OPTIONS:");
+    O('o', "output", "FILE",
+      "Write output to FILE instead of standard output.");
+    O('z', "zoutput", "FILE",
+      "Write gzipped output to FILE (use - for standard output).");
+
+    ppopts_add_header(o, "FILTERING OPTIONS:");
     O('L', "min-length", "N",   "Minimum ORF length (Default: 20).");
     O('m', "model",      "DIR", "Score ORFs using the model in DIR.");
     ppopts_add_text(o,
@@ -90,7 +98,6 @@ make_opts(struct ppopts *o, const char *progname)
         "according codon scores and can be filtered using the options below. "
         "By default \"-O 2\" is used.");
 
-    ppopts_add_header(o, "SCORING OPTIONS:");
     O('O', "othresh",   "N",   "ORF translation threshold level (0, 1 or 2).");
     O('S', "min-score", "VAL", "Use fixed threshold of VAL (decimal number).");
     O('M', "max",       "",    "Only output the ORF with the maximum score.");
@@ -114,6 +121,8 @@ int main(int argc, char **argv)
 
     enum { NONE, MODEL, VALUE, MAX } thresh_mode = NONE;
     int orf_thresh_num = 2;
+
+    uproc_io_stream *out_stream = uproc_stdout;
 
     int opt;
     struct ppopts opts = PPOPTS_INITIALIZER;
@@ -139,6 +148,12 @@ int main(int argc, char **argv)
                     }
                     filter_arg.min_length = tmp;
                 }
+                break;
+            case 'o':
+                out_stream = open_write(optarg, UPROC_IO_STDIO);
+                break;
+            case 'z':
+                out_stream = open_write(optarg, UPROC_IO_GZIP);
                 break;
             case 'm':
                 if (thresh_mode == NONE) {
@@ -257,13 +272,13 @@ int main(int argc, char **argv)
                     }
                 }
                 else {
-                    uproc_seqio_write_fasta(uproc_stdout, seq.header, orf.data,
+                    uproc_seqio_write_fasta(out_stream, seq.header, orf.data,
                                             0);
                 }
             }
             if (thresh_mode == MAX && max_orf) {
                 if (res == 1) {
-                    uproc_seqio_write_fasta(uproc_stdout, seq.header, max_orf,
+                    uproc_seqio_write_fasta(out_stream, seq.header, max_orf,
                                             0);
                 }
                 free(max_orf);
