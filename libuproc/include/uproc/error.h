@@ -130,7 +130,8 @@ const char *uproc_error_errloc_(void);
 /** Error location
  *
  * Evaluates to a `const char*` containing the location (source file, function
- * and line number) from where ::uproc_error_ was called the last time.
+ * and line number) from where uproc_error() or uproc_error_msg() was called
+ * the last time.
  */
 #define uproc_errloc (uproc_error_errloc_())
 

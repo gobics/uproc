@@ -54,9 +54,17 @@
 typedef struct uproc_ecurve_s uproc_ecurve;
 
 
+/** Pair of suffix and family
+ *
+ * uproc_ecurve_add_prefix() expects a \ref grp_datastructs_list  of these as
+ * its \c suffixes argument.
+ */
 struct uproc_ecurve_suffixentry
 {
+    /** Suffix */
     uproc_suffix suffix;
+
+    /** Protein family */
     uproc_family family;
 };
 
@@ -119,7 +127,6 @@ void uproc_ecurve_destroy(uproc_ecurve *ecurve);
  * \note
  * If this function is used on an ecurve that does not meet the conditions
  * above, the result will be a broken ecurve.
- * \endnote
  *
  * Example
  * \code
@@ -143,7 +150,8 @@ void uproc_ecurve_destroy(uproc_ecurve *ecurve);
  * }
  * \endcode
  */
-int uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx, uproc_list *suffixes);
+int uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx,
+                            uproc_list *suffixes);
 
 
 /** Finalize ecurve
