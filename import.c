@@ -134,6 +134,7 @@ db_info(const char *dir, uproc_io_stream *stream)
     size_t sz;
     uproc_io_stream *in, *out;
 #ifdef EXPORT
+    fprintf(stderr, "exporting %s/info.txt\n", dir);
     in = uproc_io_open("r", UPROC_IO_GZIP, "%s/info.txt", dir);
     /* info.txt is not crucial, so ignore this error */
     if (!in) {
@@ -141,6 +142,7 @@ db_info(const char *dir, uproc_io_stream *stream)
     }
     out = stream;
 #else
+    fprintf(stderr, "importing %s/info.txt\n", dir);
     in = stream;
     out = uproc_io_open("w", UPROC_IO_STDIO, "%s/info.txt", dir);
     if (!out) {
