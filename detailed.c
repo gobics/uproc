@@ -276,10 +276,10 @@ int main(int argc, char **argv)
                 print_version("uproc-detailed");
                 return EXIT_SUCCESS;
             case 'o':
-                out_stream = uproc_io_open("w", UPROC_IO_STDIO, "%s", optarg);
+                out_stream = open_write(optarg, UPROC_IO_STDIO);
                 break;
             case 'z':
-                out_stream = uproc_io_open("w", UPROC_IO_GZIP, "%s", optarg);
+                out_stream = open_write(optarg, UPROC_IO_GZIP);
                 break;
             case 'n':
                 use_idmap = false;

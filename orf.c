@@ -239,7 +239,7 @@ int main(int argc, char **argv)
             stream = uproc_stdin;
         }
         else {
-            stream = uproc_io_open("r", UPROC_IO_GZIP, argv[optind + INFILES]);
+            stream = open_read(argv[optind + INFILES]);
             if (!stream) {
                 fprintf(stderr, "error opening %s: ", argv[optind + INFILES]);
                 perror("");
