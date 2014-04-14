@@ -368,23 +368,24 @@ void timeit_print(timeit *t, const char *s)
 #endif
 
 void
-progress(const char *new_label, double percent)
+progress(uproc_io_stream *stream, const char *new_label, double percent)
 {
     static const char *label;
+    static double last_percent;
+    char bar[PROGRESS_WIDTH + 1] = "";
     unsigned i, p = percent / 100 * PROGRESS_WIDTH;
     if (new_label) {
         label = new_label;
     }
-    if (percent < 0.0) {
+    if (percent < 0.0 || (!new_label && percent == last_percent)) {
         return;
     }
-    fprintf(stderr, "\r%s: [", label);
     for (i = 0; i < PROGRESS_WIDTH; i++) {
-        fputc(i < p ? '#' : ' ', stderr);
+        bar[i] = i < p ? '#' : ' ';
     }
-    fputs("] ", stderr);
-    fprintf(stderr, "%.1f%%", percent);
+    uproc_io_printf(stream, "\r%s: [%s] %5.1f%%", label, bar, percent);
     if (percent >= 100.0) {
-        fputc('\n', stderr);
+        uproc_io_printf(stream, "\n");
     }
+    last_percent = percent;
 }
