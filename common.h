@@ -132,5 +132,5 @@ typedef int timeit;
 #endif
 
 
-void progress(const char *new_label, double percent);
+void progress(uproc_io_stream *stream, const char *new_label, double percent);
 #endif
