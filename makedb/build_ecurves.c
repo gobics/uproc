@@ -29,7 +29,7 @@
 #include <ctype.h>
 
 #include <uproc.h>
-#include "ecurve_internal.h"
+#include "common.h"
 #include "makedb.h"
 
 unsigned long filtered_counts[UPROC_FAMILY_MAX] = { 0 };

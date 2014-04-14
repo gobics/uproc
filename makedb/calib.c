@@ -34,6 +34,7 @@
 #endif
 
 #include <uproc.h>
+#include "common.h"
 #include "makedb.h"
 
 #define SEQ_COUNT_MULTIPLIER 200000
