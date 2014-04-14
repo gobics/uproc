@@ -34,7 +34,7 @@ libuproc_la_SOURCES = alphabet.c \
 					word.c \
 					codon_tables.h
 
-libuproc_la_LDFLAGS = -no-undefined -version-info 0:0:0
+libuproc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
 BUILT_SOURCES = codon_tables.h
 EXTRA_DIST = codon_tables.h
