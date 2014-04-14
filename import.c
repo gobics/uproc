@@ -205,13 +205,13 @@ int main(int argc, char **argv)
 #define IMEX "ex"
     dir = argv[optind + SOURCE];
     file = argv[optind + DEST];
-    stream = uproc_io_open("w", iotype, "%s", file);
+    stream = open_write(file, iotype);
 #else
 #define IMEX "im"
     dir = argv[optind + DEST];
     make_dir(dir);
     file = argv[optind + SOURCE];
-    stream = uproc_io_open("r", UPROC_IO_GZIP, "%s", file);
+    stream = open_read(file);
 #endif
     if (!stream) {
         uproc_perror("error opening %s", file);
