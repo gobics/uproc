@@ -70,6 +70,16 @@ make_opts(struct ppopts *o, const char *progname)
 }
 
 
+void
+progress_cb(double p)
+{
+    progress(uproc_stderr, NULL, p);
+}
+
+#ifdef EXPORT
+#else
+#endif
+
 #ifdef EXPORT
 #define EXPORT_FUNC(name, type, load, store, destroy)                       \
 int                                                                         \
@@ -87,11 +97,23 @@ name(const char *dir, const char *name, uproc_io_stream *stream)            \
     return res;                                                             \
 }
 
-#define ECURVE_LOAD(iotype, fmt, dir, name) \
-    uproc_ecurve_load(UPROC_ECURVE_BINARY, iotype, fmt, dir, name)
-#define ECURVE_STORES(ptr, stream) \
-    uproc_ecurve_stores(ptr, UPROC_ECURVE_PLAIN, stream)
-EXPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOAD, ECURVE_STORES,
+uproc_ecurve *
+wrap_load(enum uproc_io_type iotype, const char *fmt, const char *dir,
+          const char *name)
+{
+    progress(uproc_stderr, "Loading", -1);
+    return uproc_ecurve_loadp(UPROC_ECURVE_BINARY, iotype, progress_cb,
+                              fmt, dir, name);
+}
+
+int
+wrap_store(uproc_ecurve *ec, uproc_io_stream *stream)
+{
+    progress(uproc_stderr, "Storing", -1);
+    return uproc_ecurve_storeps(ec, UPROC_ECURVE_PLAIN, progress_cb, stream);
+}
+
+EXPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store,
             uproc_ecurve_destroy)
 EXPORT_FUNC(matrix, uproc_matrix, uproc_matrix_load, uproc_matrix_stores,
             uproc_matrix_destroy)
@@ -114,11 +136,23 @@ name(const char *dir, const char *name, uproc_io_stream *stream)            \
     return res;                                                             \
 }
 
-#define ECURVE_LOADS(stream) \
-    uproc_ecurve_loads(UPROC_ECURVE_PLAIN, stream)
-#define ECURVE_STORE(ptr, iotype, fmt, dir, name) \
-    uproc_ecurve_store(ptr, UPROC_ECURVE_BINARY, iotype, fmt, dir, name)
-IMPORT_FUNC(ecurve, uproc_ecurve, ECURVE_LOADS, ECURVE_STORE,
+uproc_ecurve *
+wrap_load(uproc_io_stream *stream)
+{
+    progress(uproc_stderr, "Loading", -1);
+    return uproc_ecurve_loadps(UPROC_ECURVE_PLAIN, progress_cb, stream);
+}
+
+int
+wrap_store(uproc_ecurve *ec, enum uproc_io_type iotype, const char *fmt,
+           const char *dir, const char *name)
+{
+    progress(uproc_stderr, "Storing", -1);
+    return uproc_ecurve_storep(ec, UPROC_ECURVE_BINARY, iotype, progress_cb,
+                               fmt, dir, name);
+}
+
+IMPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store,
             uproc_ecurve_destroy)
 IMPORT_FUNC(matrix, uproc_matrix, uproc_matrix_loads, uproc_matrix_store,
             uproc_matrix_destroy)
