@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#define PROGRESS_WIDTH 40
 
 uproc_io_stream *
 open_read(const char *path)
@@ -366,3 +367,25 @@ void timeit_print(timeit *t, const char *s)
     fprintf(stderr, "%.5f\n", t->total);
 }
 #endif
+
+void
+progress(const char *new_label, double percent)
+{
+    static const char *label;
+    unsigned i, p = percent / 100 * PROGRESS_WIDTH;
+    if (new_label) {
+        label = new_label;
+    }
+    if (percent < 0.0) {
+        return;
+    }
+    fprintf(stderr, "\r%s: [", label);
+    for (i = 0; i < PROGRESS_WIDTH; i++) {
+        fputc(i < p ? '#' : ' ', stderr);
+    }
+    fputs("] ", stderr);
+    fprintf(stderr, "%.1f%%", percent);
+    if (percent >= 100.0) {
+        fputc('\n', stderr);
+    }
+}

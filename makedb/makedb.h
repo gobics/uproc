@@ -9,7 +9,4 @@ int build_ecurves(const char *infile, const char *outdir, const char *alphabet,
 
 /* from calib.c */
 int calib(const char *alphabet, const char *dbdir, const char *modeldir);
-
-/* from progress.c */
-void progress(const char *label, double percent);
 #endif

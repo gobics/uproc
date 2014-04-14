@@ -131,4 +131,6 @@ typedef int timeit;
 #define timeit_print(...) ((void)0)
 #endif
 
+
+void progress(const char *new_label, double percent);
 #endif
