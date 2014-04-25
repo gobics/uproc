@@ -205,7 +205,7 @@ int
 ppopts_getopt(struct ppopts *o, int argc, char * const argv[])
 {
     int i, k;
-    char shortopts[PPOPTS_OPTS_MAX * 2 + 1];
+    char shortopts[PPOPTS_OPTS_MAX * 2 + 1] = "";
 #if HAVE_GETOPT_LONG
     struct option longopts[PPOPTS_OPTS_MAX + 1];
 #endif
