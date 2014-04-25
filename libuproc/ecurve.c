@@ -190,6 +190,12 @@ ecurve_realloc(struct uproc_ecurve_s *ec, size_t suffix_count)
     }
     ec->families = tmp;
 
+    tmp = realloc(ec->tax, sizeof *ec->tax * suffix_count);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    ec->tax = tmp;
+
     ec->suffix_count = suffix_count;
     return 0;
 }
@@ -227,7 +233,8 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
     if (suffix_count) {
         ec->suffixes = malloc(sizeof *ec->suffixes * suffix_count);
         ec->families = malloc(sizeof *ec->families * suffix_count);
-        if (!ec->suffixes || !ec->families) {
+        ec->tax = malloc(sizeof *ec->tax * suffix_count);
+        if (!ec->suffixes || !ec->families || !ec->tax) {
             uproc_ecurve_destroy(ec);
             uproc_error(UPROC_ENOMEM);
             return NULL;
@@ -236,6 +243,7 @@ uproc_ecurve_create(const char *alphabet, size_t suffix_count)
     else {
         ec->suffixes = NULL;
         ec->families = NULL;
+        ec->tax = NULL;
     }
     ec->suffix_count = suffix_count;
 
@@ -318,6 +326,7 @@ uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx, uproc_list *suff
         uproc_list_get(suffixes, i, &entry);
         ecurve->suffixes[old_suffix_count + i] = entry.suffix;
         ecurve->families[old_suffix_count + i] = entry.family;
+        ecurve->tax[old_suffix_count + i] = entry.tax;
     }
 
     ecurve->last_nonempty = pfx;
@@ -344,8 +353,10 @@ uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                     const struct uproc_word *word,
                     struct uproc_word *lower_neighbour,
                     uproc_family *lower_class,
+                    uproc_tax *lower_tax,
                     struct uproc_word *upper_neighbour,
-                    uproc_family *upper_class)
+                    uproc_family *upper_class,
+                    uproc_tax *upper_tax)
 {
     int res;
     uproc_prefix p_lower, p_upper;
@@ -375,9 +386,12 @@ uproc_ecurve_lookup(const uproc_ecurve *ecurve,
     lower_neighbour->prefix = p_lower;
     lower_neighbour->suffix = ecurve->suffixes[lower];
     *lower_class = ecurve->families[lower];
+    *lower_tax = ecurve->tax[lower];
+
     upper_neighbour->prefix = p_upper;
     upper_neighbour->suffix = ecurve->suffixes[upper];
     *upper_class = ecurve->families[upper];
+    *upper_tax = ecurve->tax[upper];
 
     return res;
 }

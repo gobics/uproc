@@ -34,6 +34,9 @@ struct uproc_ecurve_s
      */
     uproc_family *families;
 
+    /** NEW NEW NEW NEW NEW! Taxonomic ID */
+    uproc_tax *tax;
+
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct uproc_ecurve_pfxtable {
         union {

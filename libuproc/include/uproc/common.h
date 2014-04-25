@@ -125,6 +125,14 @@ typedef uint_least16_t uproc_family;
 /** scanf() format for #uproc_family */
 #define UPROC_FAMILY_SCN SCNu16
 
+
+/** Taxonomic ID */
+typedef uint_least32_t uproc_tax;
+
+
+#define UPROC_TAX_PRI PRIuLEAST32
+#define UPROC_TAX_SCN SCNuLEAST32
+
 /**
  * \}
  * \}

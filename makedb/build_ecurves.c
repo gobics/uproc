@@ -286,6 +286,7 @@ insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
         }
         suffix_entry.suffix = entries[i].word.suffix;
         suffix_entry.family = entries[i].family;
+        suffix_entry.tax = i; // XXX: placeholder value
         res = uproc_list_append(suffix_list, &suffix_entry);
         if (res) {
             goto error;

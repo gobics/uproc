@@ -166,6 +166,7 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
  *
  * \param word      the word found in the ecurve
  * \param family    the corresponding family entry
+ * \param tax       and the taxonomic identifier
  * \param index     position in the protein sequence
  * \param reverse   whether the word was found in the "reverse" ecurve
  * \param scores    scores of this match (array of size ::UPROC_SUFFIX_LEN)
@@ -173,6 +174,7 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
  */
 typedef void uproc_protclass_trace_cb(const struct uproc_word *word,
                                       uproc_family family,
+                                      uproc_tax tax,
                                       size_t index, bool reverse,
                                       const double *scores, void *opaque);
 

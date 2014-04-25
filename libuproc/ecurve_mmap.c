@@ -46,16 +46,18 @@ struct mmap_header
     size_t suffix_count;
 };
 
-static const uint64_t magic_number = 0xd2eadfUL;
+static const uint64_t magic_number = 0x50d2eadfUL;
 
 #define SIZE_HEADER (sizeof (struct mmap_header))
 #define SIZE_PREFIXES \
     ((UPROC_PREFIX_MAX + 1) * sizeof (struct uproc_ecurve_pfxtable))
 #define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (uproc_suffix))
 #define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (uproc_family))
+#define SIZE_TAX(suffix_count) ((suffix_count) * sizeof (uproc_tax))
 #define SIZE_TOTAL(suffix_count) \
     (SIZE_HEADER + SIZE_PREFIXES + SIZE_SUFFIXES(suffix_count) + \
-     SIZE_CLASSES(suffix_count) + (3 * sizeof magic_number))
+     SIZE_CLASSES(suffix_count) + SIZE_TAX(suffix_count) + \
+     (3 * sizeof magic_number))
 
 #define OFFSET_PREFIXES (SIZE_HEADER)
 #define OFFSET_MAGIC1 (OFFSET_PREFIXES + SIZE_PREFIXES)
@@ -64,6 +66,7 @@ static const uint64_t magic_number = 0xd2eadfUL;
 #define OFFSET_CLASSES(suffix_count) (OFFSET_MAGIC2(suffix_count) + (sizeof magic_number))
 #define OFFSET_MAGIC3(suffix_count) \
     (OFFSET_CLASSES(suffix_count) + SIZE_CLASSES(suffix_count))
+#define OFFSET_TAX(suffix_count) (OFFSET_MAGIC3(suffix_count) + (sizeof magic_number))
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -133,6 +136,8 @@ ecurve_map(const char *path)
    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
    ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
+   ec->tax =      (void *)(ec->mmap_ptr + OFFSET_TAX(ec->suffix_count));
+
    uint64_t *m1, *m2, *m3;
    m1 = (void*)(ec->mmap_ptr + OFFSET_MAGIC1);
    m2 = (void*)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
@@ -243,6 +248,8 @@ mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
     memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->families,
            SIZE_CLASSES(ecurve->suffix_count));
     memcpy(region + OFFSET_MAGIC3(ecurve->suffix_count), &magic_number, sizeof magic_number);
+    memcpy(region + OFFSET_TAX(ecurve->suffix_count), ecurve->tax,
+           SIZE_TAX(ecurve->suffix_count));
 
     munmap(region, size);
     close(fd);

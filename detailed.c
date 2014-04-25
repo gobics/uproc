@@ -56,6 +56,7 @@ uproc_io_stream *out_stream;
 struct match
 {
     uproc_family family;
+    uproc_tax tax;
     size_t index;
     bool reverse;
     char word[UPROC_WORD_LEN + 1];
@@ -95,14 +96,14 @@ column_maxes(uproc_list *matches, double *maxes, size_t sz)
 
 /** "collec" matches into a list */
 void
-trace_cb(const struct uproc_word *word, uproc_family family, size_t index,
-         bool reverse, const double *scores, void *opaque)
+trace_cb(const struct uproc_word *word, uproc_family family, uproc_tax tax,
+         size_t index, bool reverse, const double *scores, void *opaque)
 {
     int res;
     uproc_bst *t = opaque;
     uproc_list *list = NULL;
     union uproc_bst_key key;
-    struct match match = { .family = family, .index = index, .reverse = reverse };
+    struct match match = { .family = family, .tax = tax, .index = index, .reverse = reverse };
     memcpy(match.scores, scores, sizeof match.scores);
     uproc_word_to_string(match.word, word, alpha);
 
@@ -156,6 +157,7 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
             else {
                 uproc_io_printf(out_stream, "%s,", uproc_idmap_str(idmap, family));
             }
+            uproc_io_printf(out_stream, "%" UPROC_TAX_PRI ",", match.tax);
             uproc_io_printf(out_stream, "%s,", match.word);
             uproc_io_printf(out_stream, "%s,", match.reverse ? "rev" : "fwd");
             uproc_io_printf(out_stream, "%lu,%1.5f\n", (unsigned long)match.index, sum);

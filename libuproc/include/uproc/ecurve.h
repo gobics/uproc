@@ -66,6 +66,9 @@ struct uproc_ecurve_suffixentry
 
     /** Protein family */
     uproc_family family;
+
+    /** Taxonomic ID */
+    uproc_tax tax;
 };
 
 
@@ -191,8 +194,10 @@ int uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                         const struct uproc_word *word,
                         struct uproc_word *lower_neighbour,
                         uproc_family *lower_class,
+                        uproc_tax *lower_tax,
                         struct uproc_word *upper_neighbour,
-                        uproc_family *upper_class);
+                        uproc_family *upper_class,
+                        uproc_tax *upper_tax);
 
 
 /** Return the internal alphabet */
