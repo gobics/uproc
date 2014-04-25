@@ -132,9 +132,6 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
     struct match match;
     for (long i = 0, n = uproc_list_size(matches); i < n; i++) {
         uproc_list_get(matches, i, &match);
-        if (!match.reverse) {
-            match.index += UPROC_PREFIX_LEN;
-        }
 
         /* calculate sum of this matches scores which "contributed" to the
          * total classification score. this is the sum of all scores that are
@@ -142,7 +139,11 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
         double sum = 0.0;
         for (size_t k = 0; k < UPROC_SUFFIX_LEN; k++) {
             double s = match.scores[k];
-            if (isfinite(s) && s == maxes[k + match.index]) {
+            size_t index = match.index;
+            if (!match.reverse) {
+                index += UPROC_PREFIX_LEN;
+            }
+            if (isfinite(s) && s == maxes[k + index]) {
                 sum += match.scores[k];
             }
         }
