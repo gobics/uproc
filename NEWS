@@ -1,3 +1,10 @@
+1.0.1
+=====
+
+- Fix: strcat to uninitialized char array in ppopts_getoppt()
+- Fix: uproc-detailed prints incorrect index for forward matches
+
+
 1.0.0
 =====
 
