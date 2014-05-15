@@ -110,7 +110,7 @@ int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
                        bool short_read_mode);
 
 
-#if !defined(NDEBUG) && HAVE_CLOCK_GETTIME
+#if defined(TIMEIT) && HAVE_CLOCK_GETTIME
 #include <time.h>
 typedef struct {
     int running;

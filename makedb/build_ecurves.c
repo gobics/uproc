@@ -153,6 +153,7 @@ extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
                 break;
             }
         }
+        uproc_worditer_destroy(iter);
         if (res < 0) {
             break;
         }

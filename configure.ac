@@ -1,11 +1,10 @@
 AC_PREREQ(2.62)
-AC_INIT([uproc], [1.0.1], [uproc@gobics.de])
+AC_INIT([uproc], [1.0.2], [uproc@gobics.de])
 
 # GNU make specific constructs are covered by AX_CHECK_GNU_MAKE, so don't warn about them
 AM_INIT_AUTOMAKE([foreign check-news -Wall -Wno-portability])
 
 AX_CHECK_GNU_MAKE
-AX_CHECK_ENABLE_DEBUG([no])
 
 LT_PREREQ([2.2])
 LT_INIT

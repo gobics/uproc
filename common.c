@@ -336,7 +336,7 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
 }
 
 
-#if !defined(NDEBUG) && HAVE_CLOCK_GETTIME
+#if defined(TIMEIT) && HAVE_CLOCK_GETTIME
 void timeit_start(timeit *t)
 {
     if (t->running) {
