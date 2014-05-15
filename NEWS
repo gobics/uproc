@@ -1,3 +1,11 @@
+1.0.2
+=====
+
+- Fix: AX_CHECK_ENABLE_DEBUG would cause compilation without optimizations
+- Fix: One critical and some minor memory leaks in uproc-makedb
+- Fix: -V / --libversion would always report mmap() was present
+
+
 1.0.1
 =====
 
