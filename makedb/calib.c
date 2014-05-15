@@ -315,6 +315,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
                     all_preds_n - 1)];
             free(all_preds);
             uproc_list_destroy(results);
+            uproc_protclass_destroy(pc);
         }
     }
     progress(NULL, 100.0);
@@ -325,6 +326,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     }
     uproc_alphabet_destroy(alpha);
     uproc_substmat_destroy(substmat);
+    uproc_matrix_destroy(aa_probs);
     uproc_ecurve_destroy(fwd);
     uproc_ecurve_destroy(rev);
     return res;

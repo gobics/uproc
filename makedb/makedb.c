@@ -70,6 +70,7 @@ load_alphabet(const char *modeldir,
     if (!uproc_io_gets(tmp, sizeof tmp, stream)) {
         return -1;
     }
+    uproc_io_close(stream);
     alphabet[UPROC_ALPHABET_SIZE] = '\0';
     memcpy(alphabet, tmp, UPROC_ALPHABET_SIZE);
     return 0;
