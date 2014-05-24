@@ -22,6 +22,10 @@ struct uproc_ecurve_s
     /** Number of suffixes */
     size_t suffix_count;
 
+    /** While building: number of elements `#suffixes` and `#families` are
+     * allocated to hold */
+    size_t suffix_alloc;
+
     /** Table of suffixes
      *
      * Will be allocated to hold `#suffix_count` objects
