@@ -305,6 +305,9 @@ load_binary(uproc_io_stream *stream, void (*progress)(double))
         uproc_error(UPROC_ERRNO);
         return NULL;
     }
+    if (progress) {
+        progress(0.1);
+    }
 
     ecurve = uproc_ecurve_create(alpha, suffix_count);
     if (!ecurve) {
@@ -316,10 +319,16 @@ load_binary(uproc_io_stream *stream, void (*progress)(double))
     if (sz != suffix_count) {
         goto error;
     }
+    if (progress) {
+        progress(25.0);
+    }
     sz = uproc_io_read(ecurve->families, sizeof *ecurve->families,
                        suffix_count, stream);
     if (sz != suffix_count) {
         goto error;
+    }
+    if (progress) {
+        progress(50.0);
     }
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
@@ -334,7 +343,7 @@ load_binary(uproc_io_stream *stream, void (*progress)(double))
             goto error;
         }
         if (progress) {
-            progress(100.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 100.0 / UPROC_PREFIX_MAX * i);
         }
     }
     if (progress) {
@@ -357,11 +366,13 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream,
     if (sz != UPROC_ALPHABET_SIZE) {
         return uproc_error(UPROC_ERRNO);
     }
-
     sz = uproc_io_write(&ecurve->suffix_count, sizeof ecurve->suffix_count, 1,
                         stream);
     if (sz != 1) {
         return uproc_error(UPROC_ERRNO);
+    }
+    if (progress) {
+        progress(0.1);
     }
 
     sz = uproc_io_write(ecurve->suffixes, sizeof *ecurve->suffixes,
@@ -369,10 +380,16 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream,
     if (sz != ecurve->suffix_count) {
         return uproc_error(UPROC_ERRNO);
     }
+    if (progress) {
+        progress(25.0);
+    }
     sz = uproc_io_write(ecurve->families, sizeof *ecurve->families,
                         ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         return uproc_error(UPROC_ERRNO);
+    }
+    if (progress) {
+        progress(50.0);
     }
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
@@ -387,7 +404,7 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream,
             return uproc_error(UPROC_ERRNO);
         }
         if (progress) {
-            progress(100.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 100.0 / UPROC_PREFIX_MAX * i);
         }
     }
     if (progress) {
