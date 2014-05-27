@@ -343,7 +343,7 @@ load_binary(uproc_io_stream *stream, void (*progress)(double))
             goto error;
         }
         if (progress) {
-            progress(50.0 + 100.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i);
         }
     }
     if (progress) {
@@ -404,7 +404,7 @@ store_binary(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream,
             return uproc_error(UPROC_ERRNO);
         }
         if (progress) {
-            progress(50.0 + 100.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i);
         }
     }
     if (progress) {
