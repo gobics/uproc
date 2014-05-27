@@ -378,7 +378,7 @@ progress(uproc_io_stream *stream, const char *new_label, double percent)
     if (new_label) {
         label = new_label;
     }
-    if (percent < 0.0 || (!new_label && percent == last_percent)) {
+    if (percent < 0.0 || (!new_label && fabs(percent - last_percent) < 0.05)) {
         return;
     }
     for (i = 0; i < PROGRESS_WIDTH; i++) {
