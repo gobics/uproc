@@ -219,7 +219,7 @@ mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
         return uproc_error_msg(UPROC_ERRNO, "failed to open %s", path);
     }
 
-    if (posix_fallocate(fd, 0, size)) {
+    if (ftruncate(fd, size)) {
         res = uproc_error_msg(UPROC_ERRNO, "failed to allocate space");
         goto error_close;
     }
