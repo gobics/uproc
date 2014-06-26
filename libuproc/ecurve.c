@@ -160,7 +160,7 @@ suffix_lookup(const uproc_suffix *search, size_t n, uproc_suffix key,
 }
 
 
-static pfxtab_neigh
+static inline pfxtab_neigh
 neigh_dist(uproc_prefix a, uproc_prefix b)
 {
     uintmax_t dist;
@@ -174,28 +174,43 @@ neigh_dist(uproc_prefix a, uproc_prefix b)
 }
 
 
-static int
+static inline int
 ecurve_realloc(struct uproc_ecurve_s *ec, size_t suffix_count)
 {
     void *tmp;
-    tmp = realloc(ec->suffixes, sizeof *ec->suffixes * suffix_count);
+    size_t alloc;
+    if (suffix_count < ec->suffix_alloc) {
+        ec->suffix_count = suffix_count;
+        return 0;
+    }
+
+    alloc = ec->suffix_alloc;
+    if (!alloc) {
+        alloc = 1 << 16;
+    }
+    while (alloc < suffix_count)  {
+        alloc = ec->suffix_alloc * 2;
+    }
+
+    tmp = realloc(ec->suffixes, sizeof *ec->suffixes * alloc);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
     ec->suffixes = tmp;
 
-    tmp = realloc(ec->families, sizeof *ec->families * suffix_count);
+    tmp = realloc(ec->families, sizeof *ec->families * alloc);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
     ec->families = tmp;
 
-    tmp = realloc(ec->tax, sizeof *ec->tax * suffix_count);
+    tmp = realloc(ec->tax, sizeof *ec->tax * alloc);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
     ec->tax = tmp;
 
+    ec->suffix_alloc = alloc;
     ec->suffix_count = suffix_count;
     return 0;
 }
@@ -344,6 +359,20 @@ uproc_ecurve_finalize(uproc_ecurve *ecurve)
         pt->next = 0;
         pt->count = ECURVE_EDGE;
     }
+    void *tmp;
+    tmp = realloc(ecurve->suffixes,
+                  sizeof *ecurve->suffixes * ecurve->suffix_count);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    ecurve->suffixes = tmp;
+
+    tmp = realloc(ecurve->families,
+                  sizeof *ecurve->families * ecurve->suffix_count);
+    if (!tmp) {
+        return uproc_error(UPROC_ENOMEM);
+    }
+    ecurve->families = tmp;
     return 0;
 }
 

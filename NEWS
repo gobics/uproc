@@ -1,17 +1,34 @@
+1.1.1
+=====
+
+- Fix: Wouldn't compile on systems without ``posix_fallocate()``
+
+1.1.0
+=====
+
+- New: Allow ``-`` as file name in ``uproc-import`` and ``uproc-export`` as
+  shortcut for stdin/stdout
+- New: ``uproc-import`` and ``uproc-export`` show progress while
+  loading and storing ecurves
+- Fix: performance issues on some platforms
+- New in `libuproc`: ``uproc_ecurve_(load|store)p[sv]?``, report the current
+  progress to a callback function while loading or storing ecurves
+
+
 1.0.2
 =====
 
 - Fix: AX_CHECK_ENABLE_DEBUG would cause compilation without optimizations
-- Fix: One critical and some minor memory leaks in uproc-makedb
-- Fix: -V / --libversion would always report mmap() was present
-- Fix: Wrong ORF filtering in uproc-dna short read mode
+- Fix: One critical and some minor memory leaks in ``uproc-makedb``
+- Fix: ``-V`` / ``--libversion`` would always report ``mmap()`` was present
+- Fix: Wrong ORF filtering in ``uproc-dna`` short read mode
 
 
 1.0.1
 =====
 
-- Fix: strcat to uninitialized char array in ppopts_getoppt()
-- Fix: uproc-detailed prints incorrect index for forward matches
+- Fix: strcat to uninitialized char array in ``ppopts_getopt()``
+- Fix: ``uproc-detailed`` prints incorrect index for forward matches
 
 
 1.0.0

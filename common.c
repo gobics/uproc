@@ -34,7 +34,7 @@
 
 #include "common.h"
 
-#define PROGRESS_WIDTH 40
+#define PROGRESS_WIDTH 20
 
 uproc_io_stream *
 open_read(const char *path)
@@ -373,15 +373,18 @@ progress(uproc_io_stream *stream, const char *new_label, double percent)
 {
     static const char *label;
     static double last_percent;
-    char bar[PROGRESS_WIDTH + 1] = "";
-    unsigned i, p = percent / 100 * PROGRESS_WIDTH;
     if (new_label) {
+        last_percent = -1.0;
         label = new_label;
     }
-    if (percent < 0.0 || (!new_label && percent == last_percent)) {
+    if (percent < 0.0 || last_percent >= 100.0 ||
+        (!new_label && fabs(percent - last_percent) < 0.05 &&
+         percent < 100.0)) {
         return;
     }
-    for (i = 0; i < PROGRESS_WIDTH; i++) {
+    char bar[PROGRESS_WIDTH + 1] = "";
+    int p = percent / 100.0 * PROGRESS_WIDTH;
+    for (int i = 0; i < PROGRESS_WIDTH; i++) {
         bar[i] = i < p ? '#' : ' ';
     }
     uproc_io_printf(stream, "\r%s: [%s] %5.1f%%", label, bar, percent);
