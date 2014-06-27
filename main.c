@@ -273,7 +273,10 @@ classify_file(const char *path, clf *classifier,
             struct clfresult result;
             uproc_list_get(results, i, &result);
             counts[result.family] += 1;
-            print_result(out_preds, *n_seqs, seq.header, strlen(seq.data), &result, idmap);
+            if (out_preds) {
+                print_result(out_preds, *n_seqs, seq.header, strlen(seq.data),
+                             &result, idmap);
+            }
         }
         timeit_stop(&t_out);
 
