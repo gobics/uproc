@@ -2,6 +2,7 @@
 =====
 
 - Fix: Wouldn't compile on systems without ``posix_fallocate()``
+- Fix: Using -p in single-threaded mode leads to crash
 
 1.1.0
 =====
