@@ -1,3 +1,10 @@
+1.1.2
+=====
+
+- Only default to the mmap database format by default on GNU/Linux. Can be
+  controlled by passing ``--enable-mmap`` or ``--disable-mmap`` to
+  ``./configure``.
+
 1.1.1
 =====
 

@@ -1,5 +1,5 @@
 #####################################
-UProC Version 1.1.1 2014-06-26 README
+UProC Version 1.1.2 2014-07-27 README
 #####################################
 
 .. This document is formatted using reStructuredText
@@ -64,11 +64,11 @@ Installation
 Obtaining UProC
 ===============
 
-Please visit the `UProC downloads`_ page to make sure you're using the latest
+Please visit the `UProC homepage`_ to make sure you're using the latest
 release. If you are interested in contributing, please get a clone of `UProC on
 GitHub`_ and base your work off the ``devel`` branch.
 
-.. _`UProC downloads`: http://uproc.gobics.de/downloads.html
+.. _`UProC homepage`: http://uproc.gobics.de
 
 
 Binary packages
@@ -80,9 +80,8 @@ download and extract the corresponding zip file. Currently there is no
 graphical user interface, you need to run UProC from a PowerShell or
 ``cmd.exe``.
 
-Please note that UProC is primarily developed for (and works best on) unix
-systems.
-
+Please note that UProC is primarily developed for (and works best on)
+GNU/Linux.
 
 
 Installation from source package
@@ -109,7 +108,6 @@ Doxygen (for developers, version 1.8.0 or later recommended)
 
 
 .. _`GNU Autotools`: http://www.gnu.org/software/automake/manual
-.. _`UProC homepage`: http://uproc.gobics.de
 
 
 To install UProC from a source tarball, simply extract it and run the
@@ -135,6 +133,14 @@ You can pass the following options (and more) to the ``configure`` script:
 
 --disable-shared    Link all execututables statically and do not build and
                     install `libuproc` as a shared library.
+
+--enable-mmap       Enable the ``mmap`` database format. This is enabled by
+                    default only on GNU/Linux, as it can have a negative impact
+                    on the performance on other OSes (we experienced this while
+                    running UProC on OSX 10) if the database is stored on a
+                    HDD. If you have an SSD, enabling this feature can reduce
+                    startup time significantly.
+
 
 See the ``INSTALL`` file for a more detailed description of the installation
 process for projects using `GNU Autotools`_.
@@ -163,8 +169,8 @@ that map to given families, e.g. extracted from PFAM.
 
 There are two ways to obtain a database:
 
-1.  You can download a database from the `UProC downloads`_ page and import it
-    with the ``uproc-import`` program.
+1.  You can download a database from the `UProC homepage`_ and import it with
+    the ``uproc-import`` program.
 2.  Alternatively, you can create your own database with the ``uproc-makedb``
     program.
 
@@ -176,8 +182,8 @@ Model
 =====
 
 The model consists of files containing certain parameters that are not tied to
-a particular database. You can download the newest model files at `UProC
-downloads`_.
+a particular database. You can download the newest model files from the `UProC
+homepage`_.
 
 
 =============

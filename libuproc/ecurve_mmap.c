@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -75,7 +75,7 @@ static const uint64_t magic_number = 0xd2eadfUL;
 static uproc_ecurve *
 ecurve_map(const char *path)
 {
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     struct stat st;
     struct mmap_header *header;
     char alphabet_str[UPROC_ALPHABET_SIZE + 1];
@@ -195,7 +195,7 @@ uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
 void
 uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)
 {
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
     close(ecurve->mmap_fd);
 #else
@@ -206,7 +206,7 @@ uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)
 static int
 mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
 {
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     int fd, res = 0;
     size_t size;
     char *region;

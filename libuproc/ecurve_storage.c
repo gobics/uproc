@@ -284,7 +284,7 @@ store_plain(const struct uproc_ecurve_s *ecurve, uproc_io_stream *stream,
 }
 
 
-#if !HAVE_MMAP
+#if !(HAVE_MMAP && USE_MMAP)
 static uproc_ecurve *
 load_binary(uproc_io_stream *stream, void (*progress)(double))
 {
@@ -427,8 +427,8 @@ uproc_ecurve_loadps(enum uproc_ecurve_format format, void (*progress)(double),
                     uproc_io_stream *stream)
 {
     if (format == UPROC_ECURVE_BINARY) {
-#if HAVE_MMAP
-        /* if HAVE_MMAP is defined, uproc_mmap_map is called instead */
+#if HAVE_MMAP && USE_MMAP
+        /* if mmap is enabled and, uproc_mmap_map is * called instead */
         uproc_error_msg(UPROC_EINVAL, "can't load mmap format from stream");
         return NULL;
 #else
@@ -463,7 +463,7 @@ uproc_ecurve_loadpv(enum uproc_ecurve_format format,
 
     va_copy(aq, ap);
 
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     if (format == UPROC_ECURVE_BINARY) {
         ec = uproc_ecurve_mmapv(pathfmt, aq);
         if (ec && progress) {
@@ -525,7 +525,7 @@ uproc_ecurve_storeps(const uproc_ecurve *ecurve,
                     uproc_io_stream *stream)
 {
     if (format == UPROC_ECURVE_BINARY) {
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
         return uproc_error_msg(UPROC_EINVAL,
                                "can't store mmap format to stream");
 #else
@@ -562,7 +562,7 @@ uproc_ecurve_storepv(const uproc_ecurve *ecurve,
 
     va_copy(aq, ap);
 
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     if (format == UPROC_ECURVE_BINARY) {
         res = uproc_ecurve_mmap_storev(ecurve, pathfmt, aq);
         va_end(aq);

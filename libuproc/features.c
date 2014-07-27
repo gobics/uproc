@@ -65,7 +65,7 @@ uproc_features_zlib_version(void)
 bool
 uproc_features_mmap(void)
 {
-#if HAVE_MMAP
+#if HAVE_MMAP && USE_MMAP
     return true;
 #else
     return false;

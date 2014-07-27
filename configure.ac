@@ -1,5 +1,5 @@
 AC_PREREQ(2.62)
-AC_INIT([uproc], [1.1.1], [uproc@gobics.de])
+AC_INIT([uproc], [1.1.2], [uproc@gobics.de])
 
 # GNU make specific constructs are covered by AX_CHECK_GNU_MAKE, so don't warn about them
 AM_INIT_AUTOMAKE([foreign check-news -Wall -Wno-portability])
@@ -55,6 +55,34 @@ AC_ARG_ENABLE([shared],
               AS_HELP_STRING([--enable-shared],
                              [Build (and install) libuproc.so and header files]))
 AM_CONDITIONAL([SHARED_LIBUPROC], [test "x$enable_shared" = "xyes"])
+
+# Check if the mmap database format should be used.
+# Using mmap has the advantage that the database doesn't have to be "parsed",
+# which can save a lot of time if UProC is run several consecutive times,
+# and the memory can be shared between multiple processes.
+# While this works great on Linux, on OSX and possibly other operating systems,
+# random access on a mmaped file residing on a HDD causes serious performance
+# issues. On an SSD this seems not to be the case, so we let users decide to
+# enable this feature.
+AC_CANONICAL_HOST
+case $host_os in
+	linux*)
+		enable_mmap_default=yes
+		;;
+	*)
+		enable_mmap_default=no
+		;;
+esac
+
+AC_ARG_ENABLE([mmap],
+			  AS_HELP_STRING([--enable-mmap],
+							 [Use the mmap database format [default=yes only on GNU/Linux]]),
+			  [],
+			  [enable_mmap=$enable_mmap_default])
+
+if test "x$enable_mmap" = "xyes"; then
+AC_DEFINE([USE_MMAP], [1], [Define to 1 if you want to use the mmap database format])
+fi
 
 # Check for Doxygen
 test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen])
