@@ -148,117 +148,6 @@ make_dir(const char *path)
 }
 
 
-int
-database_load(struct database *db, const char *path, int prot_thresh_level,
-              enum uproc_ecurve_format format)
-{
-    db->fwd = db->rev = NULL;
-    db->idmap = NULL;
-    db->prot_thresh = NULL;
-
-    switch (prot_thresh_level) {
-        case 2:
-        case 3:
-            db->prot_thresh = uproc_matrix_load(
-                UPROC_IO_GZIP, "%s/prot_thresh_e%d", path, prot_thresh_level);
-            if (!db->prot_thresh) {
-                goto error;
-            }
-            break;
-
-        case 0:
-            break;
-
-        default:
-            uproc_error_msg(
-                UPROC_EINVAL, "protein threshold level must be 0, 2, or 3");
-            goto error;
-    }
-
-    db->idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
-    if (!db->idmap) {
-        goto error;
-    }
-    db->fwd = uproc_ecurve_load(format, UPROC_IO_GZIP, "%s/fwd.ecurve", path);
-    if (!db->fwd) {
-        goto error;
-    }
-    db->rev = uproc_ecurve_load(format, UPROC_IO_GZIP, "%s/rev.ecurve", path);
-    if (!db->rev) {
-        goto error;
-    }
-
-    return 0;
-error:
-    database_free(db);
-    return -1;
-}
-
-
-void
-database_free(struct database *db)
-{
-    uproc_ecurve_destroy(db->fwd);
-    uproc_ecurve_destroy(db->rev);
-    uproc_idmap_destroy(db->idmap);
-    uproc_matrix_destroy(db->prot_thresh);
-    *db = (struct database)DATABASE_INITIALIZER;
-}
-
-
-int
-model_load(struct model *m, const char *path, int orf_thresh_level)
-{
-    m->substmat = NULL;
-    m->codon_scores = m->orf_thresh = NULL;
-
-    m->substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", path);
-    if (!m->substmat) {
-        goto error;
-    }
-
-    m->codon_scores = uproc_matrix_load(UPROC_IO_GZIP, "%s/codon_scores",
-                                      path);
-    if (!m->codon_scores) {
-        goto error;
-    }
-
-    switch (orf_thresh_level) {
-        case 1:
-        case 2:
-            m->orf_thresh = uproc_matrix_load(UPROC_IO_GZIP, "%s/orf_thresh_e%d",
-                                            path, orf_thresh_level);
-            if (!m->orf_thresh) {
-                goto error;
-            }
-            break;
-
-        case 0:
-            break;
-
-        default:
-            uproc_error_msg(
-                UPROC_EINVAL, "ORF threshold level must be 0, 1, or 2");
-            goto error;
-    }
-
-    return 0;
-error:
-    model_free(m);
-    return -1;
-}
-
-
-void
-model_free(struct model *m)
-{
-    uproc_substmat_destroy(m->substmat);
-    uproc_matrix_destroy(m->codon_scores);
-    uproc_matrix_destroy(m->orf_thresh);
-    *m = (struct model)MODEL_INITIALIZER;
-}
-
-
 static bool
 prot_filter(const char *seq, size_t len, uproc_family family,
             double score, void *opaque)
@@ -306,9 +195,18 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
 
 int
 create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
-                   const struct database *db, const struct model *model,
+                   uproc_database *db, uproc_model *model,
                    bool short_read_mode)
 {
+	if( ! db ){
+		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+		return -1;
+	}	
+	if( ! model ){
+		uproc_error_msg(UPROC_EINVAL, "model parameter must not be NULL");
+		return -1;
+	}	
+
     enum uproc_protclass_mode pc_mode = UPROC_PROTCLASS_ALL;
     enum uproc_dnaclass_mode dc_mode = UPROC_DNACLASS_ALL;
 
@@ -316,8 +214,14 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
         pc_mode = UPROC_PROTCLASS_MAX;
         dc_mode = UPROC_DNACLASS_MAX;
     }
-    *pc = uproc_protclass_create(pc_mode, db->fwd, db->rev, model->substmat,
-                                 prot_filter, db->prot_thresh);
+    *pc = uproc_protclass_create(
+				pc_mode, 
+				uproc_database_ecurve_forward(db), 
+				uproc_database_ecurve_reverse(db), 
+				uproc_model_substitution_matrix(model),
+				prot_filter, 
+				uproc_database_protein_threshold(db)
+			);
     if (!*pc) {
         return -1;
     }
@@ -326,8 +230,12 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
         return 0;
     }
 
-    *dc = uproc_dnaclass_create(dc_mode, *pc, model->codon_scores, orf_filter,
-                                short_read_mode ? NULL : model->orf_thresh);
+    *dc = uproc_dnaclass_create(
+				dc_mode, 
+				*pc, 
+				uproc_model_codon_scores(model), 
+				orf_filter,
+				short_read_mode ? NULL : uproc_model_orf_threshold(model));
 
     if (!*dc) {
         uproc_protclass_destroy(*pc);

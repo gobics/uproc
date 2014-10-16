@@ -32,7 +32,11 @@ libuproc_la_SOURCES = alphabet.c \
 					seqio.c \
 					substmat.c \
 					word.c \
-					codon_tables.h
+					codon_tables.h \
+					database.c \
+					database_internal.h \
+					model.c \
+					model_internal.h
 
 libuproc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 

@@ -547,25 +547,26 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct model model;
-    model_load(&model, argv[optind + MODELDIR], orf_thresh_level);
+    uproc_model *model = uproc_model_load(argv[optind + MODELDIR], orf_thresh_level);
+	if( ! model )
+		return EXIT_FAILURE;
 
-    struct database db;
-    database_load(&db, argv[optind + DBDIR], prot_thresh_level,
-                  UPROC_ECURVE_BINARY);
+    uproc_database *db = uproc_database_load(argv[optind + DBDIR], prot_thresh_level, UPROC_ECURVE_BINARY);
+	if( ! db)
+		return EXIT_FAILURE;
 
     uproc_protclass *pc;
     uproc_dnaclass *dc;
     clf *classifier;
 
-    create_classifiers(&pc, &dc, &db, &model, short_read_mode);
+    create_classifiers(&pc, &dc, db, model, short_read_mode);
 #if MAIN_DNA
     classifier = dc;
 #else
     classifier = pc;
 #endif
 
-    uproc_idmap *idmap = out_numeric ? NULL : db.idmap;
+    uproc_idmap *idmap = out_numeric ? NULL : uproc_database_idmap(db);
 
     /* use stdin if no input file specified */
     if (argc < optind + ARGC) {
@@ -596,8 +597,8 @@ main(int argc, char **argv)
 
     uproc_protclass_destroy(pc);
     uproc_dnaclass_destroy(dc);
-    model_free(&model);
-    database_free(&db);
+    uproc_model_destroy(model);
+    uproc_database_destroy(db);
     buffer_free(&buf[0]);
     buffer_free(&buf[1]);
 

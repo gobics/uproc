@@ -306,18 +306,25 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct database db;
-    struct model model;
-    model_load(&model, argv[optind + MODELDIR], 0);
-    database_load(&db, argv[optind + DBDIR], prot_thresh_level,
+    uproc_database *db;
+    uproc_model *model;
+    model = uproc_model_load(argv[optind + MODELDIR], 0);
+	if( ! model )
+		return EXIT_FAILURE;
+
+    db = uproc_database_load(argv[optind + DBDIR], prot_thresh_level,
                   UPROC_ECURVE_BINARY);
+	if( ! db){
+		uproc_model_destroy(model);
+		return EXIT_FAILURE;
+	}
 
     if (use_idmap) {
-        idmap = db.idmap;
+        idmap = uproc_database_idmap(db);
     }
-    alpha = uproc_ecurve_alphabet(db.fwd);
+    alpha = uproc_ecurve_alphabet(uproc_database_ecurve_forward(db));
     uproc_protclass *pc;
-    create_classifiers(&pc, NULL, &db, &model, false);
+    create_classifiers(&pc, NULL, db, model, false);
 
     if (argc < optind + ARGC) {
         argv[argc++] = "-";
@@ -330,7 +337,7 @@ int main(int argc, char **argv)
     }
     uproc_io_close(out_stream);
     uproc_protclass_destroy(pc);
-    model_free(&model);
-    database_free(&db);
+    uproc_model_destroy(model);
+    uproc_database_destroy(db);
     return EXIT_SUCCESS;
 }

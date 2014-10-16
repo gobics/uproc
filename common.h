@@ -71,42 +71,12 @@ void trim_header(char *s);
 /* Create dir (or fail silently) */
 void make_dir(const char *path);
 
-
-/* Struct representing the "database" */
-struct database
-{
-    uproc_ecurve *fwd, *rev;
-    uproc_idmap *idmap;
-    uproc_matrix *prot_thresh;
-};
-
-#define DATABASE_INITIALIZER { 0, 0, 0, 0 }
-
-int database_load(struct database *db, const char *path, int prot_thresh_level,
-                  enum uproc_ecurve_format format);
-void database_free(struct database *db);
-
-
-/* Struct representing the "model" */
-struct model
-{
-    uproc_substmat *substmat;
-    uproc_matrix *codon_scores, *orf_thresh;
-};
-
-#define MODEL_INITIALIZER { 0, 0, 0 }
-
-/* Load model */
-int model_load(struct model *m, const char *path, int orf_thresh_level);
-
-void model_free(struct model *m);
-
 /* Create classifiers
  *
  * `dc` may be NULL if no DNA classifier is needed
  * */
 int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
-                       const struct database *db, const struct model *model,
+                       uproc_database *db, uproc_model *model,
                        bool short_read_mode);
 
 

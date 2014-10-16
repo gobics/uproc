@@ -203,19 +203,18 @@ int main(int argc, char **argv)
         }
     }
 
-    struct model model = MODEL_INITIALIZER;
+    uproc_model *model = NULL;
     if (model_dir) {
         if (thresh_mode != MODEL) {
             orf_thresh_num = 0;
         }
-        res = model_load(&model, model_dir, orf_thresh_num);
-        if (res) {
-            uproc_perror("error reading model");
+        model = uproc_model_load(model_dir, orf_thresh_num);
+        if (!model) {
             return EXIT_FAILURE;
         }
-        uproc_orf_codonscores(codon_scores, model.codon_scores);
+        uproc_orf_codonscores(codon_scores, uproc_model_codon_scores(model));
 
-        filter_arg.thresh = model.orf_thresh;
+        filter_arg.thresh = uproc_model_orf_threshold(model);
     }
     else if (!model_dir && thresh_mode != NONE) {
         fprintf(stderr, "Error: -O, -S or -M used without -m.\n");
@@ -290,6 +289,7 @@ int main(int argc, char **argv)
     if (res == -1) {
         uproc_perror("error reading input");
     }
-    model_free(&model);
+	if( model )
+	    uproc_model_destroy(model);
     return EXIT_SUCCESS;
 }
