@@ -82,7 +82,7 @@ column_maxes(uproc_list *matches, double *maxes, size_t sz)
 
         for (size_t k = 0; k < sz; k++) {
         /* check if requested column is in the range */
-            if (k >= match.index && k <= match.index + UPROC_SUFFIX_LEN) {
+            if (k >= match.index && k < match.index + UPROC_SUFFIX_LEN) {
                 size_t idx = k - match.index;
                 if (match.scores[idx] > maxes[k]) {
                     maxes[k] = match.scores[idx];
