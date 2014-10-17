@@ -6,7 +6,6 @@
 #define UPROC_FAMILY_MAX 100
 #include "../idmap.c"
 
-
 uproc_idmap *map;
 
 void setup(void)
@@ -100,7 +99,6 @@ START_TEST(test_load_invalid)
     ck_assert_ptr_eq(map, NULL);
     ck_assert_int_eq(uproc_errno, UPROC_ERRNO);
     ck_assert_int_eq(errno, ENOENT);
-
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "invalid_header.idmap");
     ck_assert_ptr_eq(map, NULL);

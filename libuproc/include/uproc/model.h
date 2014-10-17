@@ -27,7 +27,6 @@
  * \{
  */
 
-
 #ifndef UPROC_MODEL_H
 #define UPROC_MODEL_H
 
@@ -51,19 +50,22 @@
 typedef struct uproc_model_s uproc_model;
 
 /**
-  * Loads all required data of a UProC model from files in the given directory and returns a corresponding object. 
+  * Loads all required data of a UProC model from files in the given directory
+  *and returns a corresponding object.
   *
-  * \param path an existing directory containing the UProC model files. 
-  * \param orf_thres_level the ORF detection threshold to be used. Note that the corresponding file "orf_thresh_e%d" has to exist in the directory.
-  * 
+  * \param path an existing directory containing the UProC model files.
+  * \param orf_thres_level the ORF detection threshold to be used. Note that the
+  *corresponding file "orf_thresh_e%d" has to exist in the directory.
+  *
   * \returns the model object on success or %NULL on error
   */
 uproc_model *uproc_model_load(const char *path, int orf_thresh_level);
 
 /**
-  * Returns the substitution matrix of the model. Note that the returned object will
+  * Returns the substitution matrix of the model. Note that the returned object
+  *will
   * become invalid when the model is destroyed.
-  * 
+  *
   * \see uproc_model_destroy
   *
   * \param model the model
@@ -74,7 +76,7 @@ uproc_substmat *uproc_model_substitution_matrix(uproc_model *model);
 /**
   * Returns the codon scores of the model. Note that the returned object will
   * become invalid when the model is destroyed.
-  * 
+  *
   * \see uproc_model_destroy
   *
   * \param model the model.
@@ -83,9 +85,10 @@ uproc_substmat *uproc_model_substitution_matrix(uproc_model *model);
 uproc_matrix *uproc_model_codon_scores(uproc_model *model);
 
 /**
-  * Returns the ORF threshold matrix of the model. Note that the returned object will
+  * Returns the ORF threshold matrix of the model. Note that the returned object
+  *will
   * become invalid when the model is destroyed.
-  * 
+  *
   * \see uproc_model_destroy
   *
   * \param model the model
@@ -100,4 +103,3 @@ uproc_matrix *uproc_model_orf_threshold(uproc_model *model);
 void uproc_model_destroy(uproc_model *model);
 
 #endif
-

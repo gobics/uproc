@@ -11,6 +11,9 @@ struct uproc_model_s
     uproc_matrix *codon_scores, *orf_thresh;
 };
 
-#define UPROC_MODEL_INITIALIZER { 0, 0, 0 }
+#define UPROC_MODEL_INITIALIZER \
+    {                           \
+        0, 0, 0                 \
+    }
 
 #endif

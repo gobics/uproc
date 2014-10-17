@@ -29,16 +29,16 @@
 
 #include "database_internal.h"
 
-uproc_database * 
-uproc_database_load(const char *path, int prot_thresh_level,
-              enum uproc_ecurve_format format)
+uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
+                                    enum uproc_ecurve_format format)
 {
-	uproc_database *db = malloc(sizeof(uproc_database));
-	if( ! db ){
-		uproc_error_msg(UPROC_ENOMEM, "can not allocate memory for database object");
-		return NULL;
-	}
-	
+    uproc_database *db = malloc(sizeof(uproc_database));
+    if (!db) {
+        uproc_error_msg(UPROC_ENOMEM,
+                        "can not allocate memory for database object");
+        return NULL;
+    }
+
     switch (prot_thresh_level) {
         case 2:
         case 3:
@@ -53,8 +53,8 @@ uproc_database_load(const char *path, int prot_thresh_level,
             break;
 
         default:
-            uproc_error_msg(
-                UPROC_EINVAL, "protein threshold level must be 0, 2, or 3");
+            uproc_error_msg(UPROC_EINVAL,
+                            "protein threshold level must be 0, 2, or 3");
             goto error;
     }
 
@@ -77,59 +77,62 @@ error:
     return NULL;
 }
 
+void uproc_database_destroy(uproc_database *db)
+{
+    if (!db) {
+        return;
+    }
 
-void uproc_database_destroy(uproc_database *db){
-	if( ! db ){
-		return;
-	}	
-	
-	if( db->idmap ){
-		uproc_idmap_destroy(db->idmap);
-		db->idmap = NULL;
-	}
-	if( db->fwd ){
-		uproc_ecurve_destroy(db->fwd);
-		db->fwd = NULL;
-	}
-	if( db->rev ){
-		uproc_ecurve_destroy(db->rev);
-		db->rev = NULL;
-	}
-	if( db->prot_thresh ){
-		uproc_matrix_destroy(db->prot_thresh);
-		db->prot_thresh = NULL;
-	}
+    if (db->idmap) {
+        uproc_idmap_destroy(db->idmap);
+        db->idmap = NULL;
+    }
+    if (db->fwd) {
+        uproc_ecurve_destroy(db->fwd);
+        db->fwd = NULL;
+    }
+    if (db->rev) {
+        uproc_ecurve_destroy(db->rev);
+        db->rev = NULL;
+    }
+    if (db->prot_thresh) {
+        uproc_matrix_destroy(db->prot_thresh);
+        db->prot_thresh = NULL;
+    }
 
-	free(db);
-}
-	
-uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db){
-	if( ! db ){
-		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-		return NULL;
-	}	
-	return db->fwd;
-}
-	
-uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db){
-	if( ! db ){
-		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-		return NULL;
-	}	
-	return db->rev;
-}
-uproc_idmap  *uproc_database_idmap(uproc_database *db){
-	if( ! db ){
-		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-		return NULL;
-	}	
-	return db->idmap;
-}
-uproc_matrix *uproc_database_protein_threshold(uproc_database *db){
-	if( ! db ){
-		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-		return NULL;
-	}	
-	return db->prot_thresh;
+    free(db);
 }
 
+uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return NULL;
+    }
+    return db->fwd;
+}
+
+uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return NULL;
+    }
+    return db->rev;
+}
+uproc_idmap *uproc_database_idmap(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return NULL;
+    }
+    return db->idmap;
+}
+uproc_matrix *uproc_database_protein_threshold(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return NULL;
+    }
+    return db->prot_thresh;
+}

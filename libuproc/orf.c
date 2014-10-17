@@ -84,8 +84,7 @@ struct uproc_orfiter_s
     bool yield[UPROC_ORF_FRAMES];
 };
 
-static void
-reverse_str(char *s)
+static void reverse_str(char *s)
 {
     char tmp, *p;
     size_t len = strlen(s);
@@ -101,8 +100,7 @@ reverse_str(char *s)
     }
 }
 
-static uproc_codon
-scoreindex_to_codon(int idx)
+static uproc_codon scoreindex_to_codon(int idx)
 {
     unsigned i = 3;
     uproc_codon c = 0;
@@ -113,8 +111,8 @@ scoreindex_to_codon(int idx)
     return c;
 }
 
-static int
-orf_add_codon(struct uproc_orf *o, size_t *sz, uproc_codon c, double score)
+static int orf_add_codon(struct uproc_orf *o, size_t *sz, uproc_codon c,
+                         double score)
 {
     if (!o->length && CODON_TO_CHAR(c) == 'X') {
         return 0;
@@ -133,14 +131,12 @@ orf_add_codon(struct uproc_orf *o, size_t *sz, uproc_codon c, double score)
     return 0;
 }
 
-static void
-gc_content(const char *seq, size_t *len, double *gc)
+static void gc_content(const char *seq, size_t *len, double *gc)
 {
     static double gc_map[UCHAR_MAX + 1] = {
-        ['G'] = 1,    ['C'] = 1,
-        ['R'] = .5,   ['Y'] = .5,   ['S'] = 1,    ['K'] = .5,   ['M'] = .5,
-        ['B'] = .667, ['D'] = .333, ['H'] = .333, ['V'] = .667,
-        ['N'] = .25,
+            ['G'] = 1,    ['C'] = 1,    ['R'] = .5,   ['Y'] = .5,
+            ['S'] = 1,    ['K'] = .5,   ['M'] = .5,   ['B'] = .667,
+            ['D'] = .333, ['H'] = .333, ['V'] = .667, ['N'] = .25,
     };
     size_t i;
     double count = 0.0;
@@ -151,21 +147,18 @@ gc_content(const char *seq, size_t *len, double *gc)
     *len = i;
 }
 
-void
-uproc_orf_init(struct uproc_orf *orf)
+void uproc_orf_init(struct uproc_orf *orf)
 {
-    *orf = (struct uproc_orf) UPROC_ORF_INITIALIZER;
+    *orf = (struct uproc_orf)UPROC_ORF_INITIALIZER;
 }
 
-void
-uproc_orf_free(struct uproc_orf *orf)
+void uproc_orf_free(struct uproc_orf *orf)
 {
     free(orf->data);
     orf->data = NULL;
 }
 
-int
-uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src)
+int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src)
 {
     char *d = strdup(src->data);
     if (!d) {
@@ -176,9 +169,8 @@ uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src)
     return 0;
 }
 
-void
-uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
-                      const uproc_matrix *score_matrix)
+void uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
+                           const uproc_matrix *score_matrix)
 {
     uproc_codon c1, c2;
     for (c1 = 0; c1 < UPROC_BINARY_CODON_COUNT; c1++) {
@@ -193,17 +185,14 @@ uproc_orf_codonscores(double scores[static UPROC_BINARY_CODON_COUNT],
                 }
             }
             scores[c1] = count ? sum / count : 0.0;
-        }
-        else {
+        } else {
             scores[c1] = 0.0;
         }
     }
 }
 
-uproc_orfiter *
-uproc_orfiter_create(
-    const char *seq,
-    const double codon_scores[static UPROC_BINARY_CODON_COUNT],
+uproc_orfiter *uproc_orfiter_create(
+    const char *seq, const double codon_scores[static UPROC_BINARY_CODON_COUNT],
     uproc_orffilter *filter, void *filter_arg)
 {
     unsigned i;
@@ -212,11 +201,8 @@ uproc_orfiter_create(
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
-    *iter = (struct uproc_orfiter_s) {
-            .seq = seq,
-            .pos = seq,
-            .filter = filter,
-            .filter_arg = filter_arg,
+    *iter = (struct uproc_orfiter_s){
+        .seq = seq, .pos = seq, .filter = filter, .filter_arg = filter_arg,
     };
     gc_content(seq, &iter->seq_len, &iter->seq_gc);
 
@@ -238,8 +224,7 @@ uproc_orfiter_create(
     return iter;
 }
 
-void
-uproc_orfiter_destroy(uproc_orfiter *iter)
+void uproc_orfiter_destroy(uproc_orfiter *iter)
 {
     if (!iter) {
         return;
@@ -251,8 +236,7 @@ uproc_orfiter_destroy(uproc_orfiter *iter)
     free(iter);
 }
 
-int
-uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
+int uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
 {
     unsigned i;
     uproc_nt nt;
@@ -286,9 +270,9 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
                 reverse_str(next->data);
             }
 
-            if (iter->filter && !iter->filter(next, iter->seq, iter->seq_len,
-                                              iter->seq_gc, iter->filter_arg))
-            {
+            if (iter->filter &&
+                !iter->filter(next, iter->seq, iter->seq_len, iter->seq_gc,
+                              iter->filter_arg)) {
                 continue;
             }
             return 0;
@@ -330,32 +314,30 @@ uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next)
                 continue;
             }
 
-#define ADD_CODON(codon, frame) do {                                        \
-    int res = orf_add_codon(                                                \
-        &iter->orf[(frame)], &iter->data_sz[(frame)], codon,                \
-        iter->codon_scores ? iter->codon_scores[codon] : 0.0);              \
-    if (res == -1) {                                                        \
-        return -1;                                                          \
-    }                                                                       \
-} while (0)
+#define ADD_CODON(codon, frame)                                    \
+    do {                                                           \
+        int res = orf_add_codon(                                   \
+            &iter->orf[(frame)], &iter->data_sz[(frame)], codon,   \
+            iter->codon_scores ? iter->codon_scores[codon] : 0.0); \
+        if (res == -1) {                                           \
+            return -1;                                             \
+        }                                                          \
+    } while (0)
 
             c_fwd = iter->codon[iter->frame];
             if (CODON_IS_STOP(c_fwd)) {
                 iter->yield[iter->frame] = true;
-            }
-            else {
+            } else {
                 ADD_CODON(c_fwd, iter->frame);
             }
 
             c_rev = CODON_COMPLEMENT(c_fwd);
             if (CODON_IS_STOP(c_rev)) {
                 iter->yield[iter->frame + FRAMES] = true;
-            }
-            else {
+            } else {
                 ADD_CODON(c_rev, iter->frame + FRAMES);
             }
-        }
-        else {
+        } else {
             /* guess last nt for the next frame */
             unsigned frame = (iter->nt_count + 1) % FRAMES;
             c_fwd = iter->codon[frame];

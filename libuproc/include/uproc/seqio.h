@@ -36,7 +36,6 @@
 
 #include "uproc/io.h"
 
-
 /** \defgroup struct_sequence struct uproc_sequence
  *
  * DNA/RNA or protein sequence
@@ -64,24 +63,22 @@ struct uproc_sequence
     long offset;
 };
 
-
 /** Initializer for ::uproc_sequence structs */
-#define UPROC_SEQUENCE_INITIALIZER { NULL, NULL, 0 }
-
+#define UPROC_SEQUENCE_INITIALIZER \
+    {                              \
+        NULL, NULL, 0              \
+    }
 
 /** Initialize a ::uproc_sequence struct */
 void uproc_sequence_init(struct uproc_sequence *seq);
 
-
 /** Free allocated pointers of a ::uproc_sequence struct */
 void uproc_sequence_free(struct uproc_sequence *seq);
-
 
 /** Deep-copy a ::uproc_sequence struct */
 int uproc_sequence_copy(struct uproc_sequence *dest,
                         const struct uproc_sequence *src);
 /** \} */
-
 
 /** \defgroup obj_seqiter object uproc_seqiter
  *

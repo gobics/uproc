@@ -48,10 +48,9 @@
 
 #define OUT_PREFIX_DEFAULT "prot_thresh_e"
 
-#define ELEMENTS_OF(x) (sizeof (x) / sizeof (x)[0])
+#define ELEMENTS_OF(x) (sizeof(x) / sizeof(x)[0])
 
-static void *
-xrealloc(void *ptr, size_t sz)
+static void *xrealloc(void *ptr, size_t sz)
 {
     ptr = realloc(ptr, sz);
     if (!ptr) {
@@ -62,8 +61,7 @@ xrealloc(void *ptr, size_t sz)
 }
 #define xmalloc(sz) xrealloc(NULL, sz)
 
-static int
-choice(const uproc_matrix *p, size_t n)
+static int choice(const uproc_matrix *p, size_t n)
 {
     double sum, c;
     unsigned i;
@@ -71,17 +69,15 @@ choice(const uproc_matrix *p, size_t n)
     for (sum = 0, i = 0; sum < c && i < n; ++i) {
         if (p) {
             sum += uproc_matrix_get(p, 0, i);
-        }
-        else {
+        } else {
             sum += 1.0 / n;
         }
     }
     return i - 1;
 }
 
-static void
-randseq(char *buf, size_t len, const uproc_alphabet *alpha,
-        const uproc_matrix *probs)
+static void randseq(char *buf, size_t len, const uproc_alphabet *alpha,
+                    const uproc_matrix *probs)
 {
     size_t i;
     static bool rand_seeded = false;
@@ -96,8 +92,8 @@ randseq(char *buf, size_t len, const uproc_alphabet *alpha,
     buf[i] = '\0';
 }
 
-static void
-append(double **dest, size_t *dest_n, size_t *dest_sz, uproc_list *src)
+static void append(double **dest, size_t *dest_n, size_t *dest_sz,
+                   uproc_list *src)
 {
     struct uproc_protresult result;
     size_t n = uproc_list_size(src);
@@ -120,10 +116,9 @@ append(double **dest, size_t *dest_n, size_t *dest_sz, uproc_list *src)
     *dest_n += n;
 }
 
-static int
-double_cmp(const void *p1, const void *p2)
+static int double_cmp(const void *p1, const void *p2)
 {
-    double delta = *(const double *)p1 - *(const double*)p2;
+    double delta = *(const double *)p1 - *(const double *)p2;
     if (fabs(delta) < UPROC_EPSILON) {
         return 0;
     }
@@ -131,28 +126,26 @@ double_cmp(const void *p1, const void *p2)
     return delta < 0.0 ? 1 : -1;
 }
 
-
-static int
-csinterp(const double *xa, const double *ya, int m, const double *x, double *y,
-         int n)
+static int csinterp(const double *xa, const double *ya, int m, const double *x,
+                    double *y, int n)
 {
     int i, low, high, mid;
     double h, b, a, u[m], ya2[m];
 
-    ya2[0] = ya2[m-1] = u[0] = 0.0;
+    ya2[0] = ya2[m - 1] = u[0] = 0.0;
 
     for (i = 1; i < m - 1; i++) {
-        a = (xa[i] - xa[i-1]) / (xa[i+1] - xa[i-1]);
-        b = a * ya2[i-1] + 2.0;
+        a = (xa[i] - xa[i - 1]) / (xa[i + 1] - xa[i - 1]);
+        b = a * ya2[i - 1] + 2.0;
         ya2[i] = (a - 1.0) / b;
-        u[i] = (ya[i+1] - ya[i]) / (xa[i+1] - xa[i]) - (ya[i] - ya[i-1]) /
-            (xa[i] - xa[i-1]);
-        u[i] = (6.0 * u[i] / (xa[i+1] - xa[i-1]) - a * u[i-1]) / b;
+        u[i] = (ya[i + 1] - ya[i]) / (xa[i + 1] - xa[i]) -
+               (ya[i] - ya[i - 1]) / (xa[i] - xa[i - 1]);
+        u[i] = (6.0 * u[i] / (xa[i + 1] - xa[i - 1]) - a * u[i - 1]) / b;
     }
 
     for (i = m - 1; i > 0; i--) {
-        ya2[i-1] *= ya2[i];
-        ya2[i-1] += u[i-1];
+        ya2[i - 1] *= ya2[i];
+        ya2[i - 1] += u[i - 1];
     }
 
     low = 0;
@@ -168,8 +161,7 @@ csinterp(const double *xa, const double *ya, int m, const double *x, double *y,
             mid = (high + low) / 2;
             if (xa[mid] > x[i]) {
                 high = mid;
-            }
-            else {
+            } else {
                 low = mid;
             }
         }
@@ -181,22 +173,19 @@ csinterp(const double *xa, const double *ya, int m, const double *x, double *y,
 
         a = (xa[high] - x[i]) / h;
         b = (x[i] - xa[low]) / h;
-        y[i] = a * ya[low]
-            + b * ya[high]
-            + ((a*a*a - a) * ya2[low] + (b*b*b - b) * ya2[high])
-            * (h*h) / 6.0;
+        y[i] = a * ya[low] + b * ya[high] +
+               ((a * a * a - a) * ya2[low] + (b * b * b - b) * ya2[high]) *
+                   (h * h) / 6.0;
     }
     return 0;
 }
 
-static int
-store_interpolated(double thresh[static POW_DIFF + 1],
-                   const char *dbdir, const char *name)
+static int store_interpolated(double thresh[static POW_DIFF + 1],
+                              const char *dbdir, const char *name)
 {
     int res;
     size_t i;
-    double xa[POW_DIFF + 1],
-           x[INTERP_MAX], y[INTERP_MAX];
+    double xa[POW_DIFF + 1], x[INTERP_MAX], y[INTERP_MAX];
     for (i = 0; i < ELEMENTS_OF(xa); i++) {
         xa[i] = i;
     }
@@ -215,20 +204,19 @@ store_interpolated(double thresh[static POW_DIFF + 1],
     if (!thresh_interp) {
         return -1;
     }
-    res = uproc_matrix_store(thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir,
-                             name);
+    res =
+        uproc_matrix_store(thresh_interp, UPROC_IO_STDIO, "%s/%s", dbdir, name);
     uproc_matrix_destroy(thresh_interp);
     return res;
 }
 
-static bool
-prot_filter(const char *seq, size_t len, uproc_family family, double score,
-            void *opaque)
+static bool prot_filter(const char *seq, size_t len, uproc_family family,
+                        double score, void *opaque)
 {
-    (void) seq;
-    (void) len;
-    (void) family;
-    (void) opaque;
+    (void)seq;
+    (void)len;
+    (void)family;
+    (void)opaque;
     return score > UPROC_EPSILON;
 }
 
@@ -239,8 +227,7 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     uproc_matrix *aa_probs;
     uproc_substmat *substmat;
     uproc_ecurve *fwd, *rev;
-    double thresh2[POW_DIFF + 1],
-           thresh3[POW_DIFF + 1];
+    double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
     substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", modeldir);
     if (!substmat) {
@@ -257,13 +244,13 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
         return -1;
     }
 
-    fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                            "%s/fwd.ecurve", dbdir);
+    fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, "%s/fwd.ecurve",
+                            dbdir);
     if (!fwd) {
         return -1;
     }
-    rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                            "%s/rev.ecurve", dbdir);
+    rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, "%s/rev.ecurve",
+                            dbdir);
     if (!rev) {
         uproc_ecurve_destroy(fwd);
         return -1;
@@ -275,7 +262,8 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
     double perc = 0.0;
     int power;
     progress(uproc_stderr, "calibrating", perc);
-#pragma omp parallel private(res, power) shared(fwd, rev, substmat, alpha, aa_probs, perc)
+#pragma omp parallel private(res, power) shared(fwd, rev, substmat, alpha, \
+                                                aa_probs, perc)
     {
 #pragma omp for
         for (power = POW_MIN; power <= POW_MAX; power++) {
@@ -310,10 +298,10 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             qsort(all_preds, all_preds_n, sizeof *all_preds, &double_cmp);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-            thresh2[power - POW_MIN] = all_preds[MIN(seq_count / 100,
-                    all_preds_n - 1)];
-            thresh3[power - POW_MIN] = all_preds[MIN(seq_count / 1000,
-                    all_preds_n - 1)];
+            thresh2[power - POW_MIN] =
+                all_preds[MIN(seq_count / 100, all_preds_n - 1)];
+            thresh3[power - POW_MIN] =
+                all_preds[MIN(seq_count / 1000, all_preds_n - 1)];
             free(all_preds);
             uproc_list_destroy(results);
             uproc_protclass_destroy(pc);

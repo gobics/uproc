@@ -41,13 +41,12 @@ struct orf_filter_arg
     uproc_matrix *thresh;
 };
 
-bool
-orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
-           double seq_gc, void *opaque)
+bool orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
+                double seq_gc, void *opaque)
 {
     unsigned long r, c, rows, cols;
     struct orf_filter_arg *arg = opaque;
-    (void) seq;
+    (void)seq;
     if (orf->length < arg->min_length) {
         return false;
     }
@@ -66,22 +65,22 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
     return orf->score >= uproc_matrix_get(arg->thresh, r, c);
 }
 
-void
-make_opts(struct ppopts *o, const char *progname)
+void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
     ppopts_add_text(o, "USAGE: %s [options] [INPUTFILES]", progname);
-    ppopts_add_text(o,
+    ppopts_add_text(
+        o,
         "Translates DNA/RNA to protein sequences. INPUTFILES can be zero or \
         more files containing sequences in FASTA or FASTQ format (FASTQ \
         qualities are ignored). If no file is specified or the file name is \
         -, sequences will be read from standard input.");
 
     ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help",       "",    "Print this message and exit.");
-    O('v', "version",    "",    "Print version and exit.");
-    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
 
     ppopts_add_header(o, "OUTPUT OPTIONS:");
     O('o', "output", "FILE",
@@ -90,22 +89,22 @@ make_opts(struct ppopts *o, const char *progname)
       "Write gzipped output to FILE (use - for standard output).");
 
     ppopts_add_header(o, "FILTERING OPTIONS:");
-    O('L', "min-length", "N",   "Minimum ORF length (Default: 20).");
-    O('m', "model",      "DIR", "Score ORFs using the model in DIR.");
-    ppopts_add_text(o,
+    O('L', "min-length", "N", "Minimum ORF length (Default: 20).");
+    O('m', "model", "DIR", "Score ORFs using the model in DIR.");
+    ppopts_add_text(
+        o,
         "If -m is omitted, all ORFs with length greater or equal to the "
         "minimum length are output. If -m is used, ORFs are scored using the "
         "according codon scores and can be filtered using the options below. "
         "By default \"-O 2\" is used.");
 
-    O('O', "othresh",   "N",   "ORF translation threshold level (0, 1 or 2).");
+    O('O', "othresh", "N", "ORF translation threshold level (0, 1 or 2).");
     O('S', "min-score", "VAL", "Use fixed threshold of VAL (decimal number).");
-    O('M', "max",       "",    "Only output the ORF with the maximum score.");
+    O('M', "max", "", "Only output the ORF with the maximum score.");
 #undef O
 }
 
-enum nonopt_args
-{
+enum nonopt_args {
     INFILES,
     ARGC,
 };
@@ -113,7 +112,7 @@ enum nonopt_args
 int main(int argc, char **argv)
 {
     int res = 0;
-    struct orf_filter_arg filter_arg = { 20, NULL };
+    struct orf_filter_arg filter_arg = {20, NULL};
     const char *model_dir = NULL;
 
     double codon_scores[UPROC_BINARY_CODON_COUNT];
@@ -138,17 +137,15 @@ int main(int argc, char **argv)
             case 'V':
                 uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
-            case 'L':
-                {
-                    int res, tmp;
-                    res = parse_int(optarg, &tmp);
-                    if (res || tmp <= 0) {
-                        fprintf(stderr, "-L requires a positive integer\n");
-                        return EXIT_FAILURE;
-                    }
-                    filter_arg.min_length = tmp;
+            case 'L': {
+                int res, tmp;
+                res = parse_int(optarg, &tmp);
+                if (res || tmp <= 0) {
+                    fprintf(stderr, "-L requires a positive integer\n");
+                    return EXIT_FAILURE;
                 }
-                break;
+                filter_arg.min_length = tmp;
+            } break;
             case 'o':
                 out_stream = open_write(optarg, UPROC_IO_STDIO);
                 break;
@@ -161,42 +158,35 @@ int main(int argc, char **argv)
                 }
                 model_dir = optarg;
                 break;
-            case 'O':
-                {
-                    int tmp = 42;
-                    (void) parse_int(optarg, &tmp);
-                    if (tmp != 0 && tmp != 1 && tmp != 2) {
-                        fprintf(stderr, "-O argument must be 0, 1 or 2\n");
-                        return EXIT_FAILURE;
-                    }
-                    orf_thresh_num = tmp;
-                    thresh_mode = MODEL;
+            case 'O': {
+                int tmp = 42;
+                (void)parse_int(optarg, &tmp);
+                if (tmp != 0 && tmp != 1 && tmp != 2) {
+                    fprintf(stderr, "-O argument must be 0, 1 or 2\n");
+                    return EXIT_FAILURE;
                 }
-                break;
-            case 'S':
-                {
-                    double min_score;
-                    char *endptr;
-                    min_score = strtod(optarg, &endptr);
-                    if (!*optarg || *endptr) {
-                        fprintf(stderr,
-                                "-S argument must be a decimal number\n");
-                        return EXIT_FAILURE;
-                    }
-                    orf_thresh = uproc_matrix_create(1, 1, &min_score);
-                    if (!orf_thresh) {
-                        uproc_perror("");
-                        return EXIT_FAILURE;
-                    }
-                    filter_arg.thresh = orf_thresh;
-                    thresh_mode = VALUE;
+                orf_thresh_num = tmp;
+                thresh_mode = MODEL;
+            } break;
+            case 'S': {
+                double min_score;
+                char *endptr;
+                min_score = strtod(optarg, &endptr);
+                if (!*optarg || *endptr) {
+                    fprintf(stderr, "-S argument must be a decimal number\n");
+                    return EXIT_FAILURE;
                 }
-                break;
-            case 'M':
-                {
-                    thresh_mode = MAX;
+                orf_thresh = uproc_matrix_create(1, 1, &min_score);
+                if (!orf_thresh) {
+                    uproc_perror("");
+                    return EXIT_FAILURE;
                 }
-                break;
+                filter_arg.thresh = orf_thresh;
+                thresh_mode = VALUE;
+            } break;
+            case 'M': {
+                thresh_mode = MAX;
+            } break;
 
             case '?':
                 return EXIT_FAILURE;
@@ -215,8 +205,7 @@ int main(int argc, char **argv)
         uproc_orf_codonscores(codon_scores, uproc_model_codon_scores(model));
 
         filter_arg.thresh = uproc_model_orf_threshold(model);
-    }
-    else if (!model_dir && thresh_mode != NONE) {
+    } else if (!model_dir && thresh_mode != NONE) {
         fprintf(stderr, "Error: -O, -S or -M used without -m.\n");
         return EXIT_FAILURE;
     }
@@ -254,8 +243,7 @@ int main(int argc, char **argv)
             double max_score = -INFINITY;
             oi = uproc_orfiter_create(seq.data,
                                       thresh_mode == NONE ? NULL : codon_scores,
-                                      orf_filter,
-                                      &filter_arg);
+                                      orf_filter, &filter_arg);
             while (res = uproc_orfiter_next(oi, &orf), !res) {
                 if (thresh_mode == MAX && orf.score > max_score) {
                     free(max_orf);
@@ -264,16 +252,14 @@ int main(int argc, char **argv)
                         res = uproc_error(UPROC_ENOMEM);
                         break;
                     }
-                }
-                else {
+                } else {
                     uproc_seqio_write_fasta(out_stream, seq.header, orf.data,
                                             0);
                 }
             }
             if (thresh_mode == MAX && max_orf) {
                 if (res == 1) {
-                    uproc_seqio_write_fasta(out_stream, seq.header, max_orf,
-                                            0);
+                    uproc_seqio_write_fasta(out_stream, seq.header, max_orf, 0);
                 }
                 free(max_orf);
             }
@@ -289,7 +275,7 @@ int main(int argc, char **argv)
     if (res == -1) {
         uproc_perror("error reading input");
     }
-	if( model )
-	    uproc_model_destroy(model);
+    if (model)
+        uproc_model_destroy(model);
     return EXIT_SUCCESS;
 }

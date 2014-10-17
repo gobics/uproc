@@ -13,18 +13,17 @@ START_TEST(test_prefix)
 
     ck_assert_msg(~(uproc_prefix)0 > 0, "uproc_prefix is unsigned");
 
-    ck_assert_msg(
-        ~(uproc_prefix)0 > UPROC_PREFIX_MAX,
-        "uproc_prefix large enough (can store UPROC_PREFIX_MAX + 1)");
+    ck_assert_msg(~(uproc_prefix)0 > UPROC_PREFIX_MAX,
+                  "uproc_prefix large enough (can store UPROC_PREFIX_MAX + 1)");
 }
 END_TEST
 
 START_TEST(test_suffix)
 {
     ck_assert_msg(~(uproc_suffix)0 > 0, "uproc_suffix is unsigned");
-    ck_assert_msg(
-        sizeof (uproc_suffix) * CHAR_BIT >= (UPROC_AMINO_BITS * UPROC_SUFFIX_LEN),
-        "uproc_suffix large enough");
+    ck_assert_msg(sizeof(uproc_suffix) * CHAR_BIT >=
+                      (UPROC_AMINO_BITS * UPROC_SUFFIX_LEN),
+                  "uproc_suffix large enough");
 }
 END_TEST
 

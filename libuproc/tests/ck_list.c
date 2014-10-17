@@ -2,12 +2,13 @@
 #include <limits.h>
 #include "uproc.h"
 
-#define TEST(I, V) do { \
-    struct test_data value; \
-    int res = uproc_list_get(list, (I), &value); \
-    ck_assert_int_eq(res, 0); \
-    ck_assert_int_eq(value.x, (V)); \
-} while (0)
+#define TEST(I, V)                                   \
+    do {                                             \
+        struct test_data value;                      \
+        int res = uproc_list_get(list, (I), &value); \
+        ck_assert_int_eq(res, 0);                    \
+        ck_assert_int_eq(value.x, (V));              \
+    } while (0)
 
 uproc_list *list;
 
@@ -19,7 +20,7 @@ struct test_data
 
 void setup(void)
 {
-    list = uproc_list_create(sizeof (struct test_data));
+    list = uproc_list_create(sizeof(struct test_data));
 }
 
 void teardown(void)
@@ -34,11 +35,13 @@ START_TEST(test_list)
 
     ck_assert_uint_eq(uproc_list_size(list), 0);
 
-#define APPEND(X, C) do {                       \
-    value.x = (X); value.c = (C);               \
-    int res = uproc_list_append(list, &value);  \
-    ck_assert_int_eq(res, 0);                   \
-} while (0)
+#define APPEND(X, C)                               \
+    do {                                           \
+        value.x = (X);                             \
+        value.c = (C);                             \
+        int res = uproc_list_append(list, &value); \
+        ck_assert_int_eq(res, 0);                  \
+    } while (0)
 
     for (i = 0; i < 10000; i++) {
         APPEND(i, '0' + i % 10);
@@ -76,11 +79,10 @@ START_TEST(test_list)
 }
 END_TEST
 
-
 START_TEST(test_extend)
 {
     int res;
-    struct test_data values[] = { { 0, '!' }, { 42, 'A'}, { 3, 'Z' } };
+    struct test_data values[] = {{0, '!'}, {42, 'A'}, {3, 'Z'}};
 
     res = uproc_list_extend(list, values, 3);
     ck_assert_int_eq(res, 0);
@@ -94,10 +96,8 @@ START_TEST(test_extend)
     TEST(1, 42);
     TEST(3, 0);
     TEST(4, 42);
-
 }
 END_TEST
-
 
 START_TEST(test_pop)
 {
@@ -115,11 +115,10 @@ START_TEST(test_pop)
 }
 END_TEST
 
-
 START_TEST(test_negative_index)
 {
     int i, res;
-    struct test_data value = { 0, '!' };
+    struct test_data value = {0, '!'};
 
     for (i = 0; i < 42; i++) {
         value.x = i;
@@ -128,7 +127,7 @@ START_TEST(test_negative_index)
 
     TEST(-1, 41);
     TEST(-2, 40);
-    TEST(-10, 42 -10);
+    TEST(-10, 42 - 10);
 
     res = uproc_list_get(list, -43, &value);
     ck_assert_int_ne(res, 0);
@@ -140,10 +139,7 @@ START_TEST(test_negative_index)
 }
 END_TEST
 
-
-
-void
-map_func_max(void *data, void *ctx)
+void map_func_max(void *data, void *ctx)
 {
     const struct test_data *p = data;
     int *max = ctx;

@@ -54,7 +54,6 @@ START_TEST(test_init_invalid_chars)
 }
 END_TEST
 
-
 START_TEST(test_init_valid)
 {
     uproc_alphabet *a;
@@ -63,7 +62,6 @@ START_TEST(test_init_valid)
     uproc_alphabet_destroy(a);
 }
 END_TEST
-
 
 void setup_trans(void)
 {

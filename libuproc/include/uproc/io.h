@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-
 /** \defgroup obj_io_stream object uproc_io_stream
  *
  * Optionally compressed I/O stream
@@ -56,31 +55,26 @@
  */
 typedef struct uproc_io_stream uproc_io_stream;
 
-
 /** Underlying stream type */
-enum uproc_io_type
-{
+enum uproc_io_type {
     /** standard C's FILE pointer */
     UPROC_IO_STDIO,
     /** transparent gzip stream using zlib */
     UPROC_IO_GZIP,
 };
 
-
 /** Third argument to uproc_io_seek()
  *
  * These correspond to SEEK_SET and SEEK_CUR of stdio.h. SEEK_END is missing
  * because gz streams don't support it.
  */
-enum uproc_io_seek_whence
-{
+enum uproc_io_seek_whence {
     /** Set the cursor to an absolute position */
     UPROC_IO_SEEK_SET,
 
     /** Set the new position relative to the current one */
     UPROC_IO_SEEK_CUR,
 };
-
 
 /** Open a file
  *
@@ -97,7 +91,6 @@ enum uproc_io_seek_whence
 uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
                                const char *pathfmt, ...);
 
-
 /** Open a file using a va_list
  *
  * Just like ::uproc_io_open, but with a \c va_list instead of a variable
@@ -109,10 +102,8 @@ uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
 /** Close a file stream */
 int uproc_io_close(uproc_io_stream *stream);
 
-
 /** Formatted output */
 int uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...);
-
 
 /** Read binary data */
 size_t uproc_io_read(void *ptr, size_t size, size_t nmemb,
@@ -128,7 +119,6 @@ size_t uproc_io_write(const void *ptr, size_t size, size_t nmemb,
  */
 char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
 
-
 /** Read an entire line
  *
  * Reads a whole line into \c *lineptr, reallocating it if necessary
@@ -136,20 +126,16 @@ char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
  */
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream);
 
-
 /** Set the file position */
 int uproc_io_seek(uproc_io_stream *stream, long offset,
                   enum uproc_io_seek_whence whence);
 
-
 /** Obtain current file position */
 long uproc_io_tell(uproc_io_stream *stream);
-
 
 /** Test end-of-file indicator */
 int uproc_io_eof(uproc_io_stream *stream);
 /** \} */
-
 
 /** \defgroup grp_io_io_stdstream Wrapped standard IO streams
  * \{
@@ -161,21 +147,17 @@ int uproc_io_eof(uproc_io_stream *stream);
  */
 uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
-
 /** stdin, possibly gzip compressed
  *
  */
 #define uproc_stdin uproc_io_stdstream_gz(stdin)
 
-
 /** stdout, uncompressed */
 #define uproc_stdout uproc_io_stdstream(stdout)
-
 
 /** stderr, uncompressed */
 #define uproc_stderr uproc_io_stdstream(stderr)
 /** \} */
-
 
 /** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
  *
@@ -196,15 +178,12 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
  */
 uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 
-
 /** stdout, gzip compressed */
 #define uproc_stdout_gz uproc_io_stdstream_gz(stdout)
-
 
 /** stderr, gzip compressed */
 #define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
 /** \} */
-
 
 /**
  * \}

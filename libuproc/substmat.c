@@ -41,42 +41,37 @@ struct uproc_substmat_s
 
 #define SUBSTMAT_INDEX(x, y) ((x) << UPROC_AMINO_BITS | (y))
 
-uproc_substmat *
-uproc_substmat_create(void)
+uproc_substmat *uproc_substmat_create(void)
 {
     struct uproc_substmat_s *mat = malloc(sizeof *mat);
     if (!mat) {
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
-    *mat = (struct uproc_substmat_s) { { { 0.0 } } };
+    *mat = (struct uproc_substmat_s){{{0.0}}};
     return mat;
 }
 
-void
-uproc_substmat_destroy(uproc_substmat *mat)
+void uproc_substmat_destroy(uproc_substmat *mat)
 {
     free(mat);
 }
 
-double
-uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
-                   uproc_amino x, uproc_amino y)
+double uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
+                          uproc_amino x, uproc_amino y)
 {
     return mat->dists[pos][SUBSTMAT_INDEX(x, y)];
 }
 
-void
-uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
-        uproc_amino y, double dist)
+void uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
+                        uproc_amino y, double dist)
 {
     mat->dists[pos][SUBSTMAT_INDEX(x, y)] = dist;
 }
 
-void
-uproc_substmat_align_suffixes(const uproc_substmat *mat,
-                              uproc_suffix s1, uproc_suffix s2,
-                              double dist[static UPROC_SUFFIX_LEN])
+void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
+                                   uproc_suffix s2,
+                                   double dist[static UPROC_SUFFIX_LEN])
 {
     size_t i, idx;
     uproc_amino a1, a2;
@@ -90,9 +85,8 @@ uproc_substmat_align_suffixes(const uproc_substmat *mat,
     }
 }
 
-uproc_substmat *
-uproc_substmat_loadv(enum uproc_io_type iotype, const char *pathfmt,
-                     va_list ap)
+uproc_substmat *uproc_substmat_loadv(enum uproc_io_type iotype,
+                                     const char *pathfmt, va_list ap)
 {
     struct uproc_substmat_s *mat;
     unsigned long i, j, k, rows, cols, sz, required_sz;
@@ -114,8 +108,8 @@ uproc_substmat_loadv(enum uproc_io_type iotype, const char *pathfmt,
     required_sz = UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE;
     if (sz != required_sz) {
         uproc_error_msg(UPROC_EINVAL,
-                        "invalid substmat (%lu elements instead of %lu)",
-                        sz, required_sz);
+                        "invalid substmat (%lu elements instead of %lu)", sz,
+                        required_sz);
         goto error;
     }
 
@@ -136,8 +130,8 @@ error:
     return mat;
 }
 
-uproc_substmat *
-uproc_substmat_load(enum uproc_io_type iotype, const char *pathfmt, ...)
+uproc_substmat *uproc_substmat_load(enum uproc_io_type iotype,
+                                    const char *pathfmt, ...)
 {
     struct uproc_substmat_s *mat;
     va_list ap;

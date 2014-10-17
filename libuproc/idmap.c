@@ -35,20 +35,18 @@ struct uproc_idmap_s
     char *s[UPROC_FAMILY_MAX];
 };
 
-uproc_idmap *
-uproc_idmap_create(void)
+uproc_idmap *uproc_idmap_create(void)
 {
     uproc_idmap *map = malloc(sizeof *map);
     if (!map) {
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
-    *map = (struct uproc_idmap_s) { 0, { NULL } };
+    *map = (struct uproc_idmap_s){0, {NULL}};
     return map;
 }
 
-void
-uproc_idmap_destroy(uproc_idmap *map)
+void uproc_idmap_destroy(uproc_idmap *map)
 {
     if (!map) {
         return;
@@ -60,8 +58,7 @@ uproc_idmap_destroy(uproc_idmap *map)
     free(map);
 }
 
-uproc_family
-uproc_idmap_family(uproc_idmap *map, const char *s)
+uproc_family uproc_idmap_family(uproc_idmap *map, const char *s)
 {
     uproc_family i;
     for (i = 0; i < map->n; i++) {
@@ -83,14 +80,12 @@ uproc_idmap_family(uproc_idmap *map, const char *s)
     return i;
 }
 
-char *
-uproc_idmap_str(const uproc_idmap *map, uproc_family family)
+char *uproc_idmap_str(const uproc_idmap *map, uproc_family family)
 {
     return map->s[family];
 }
 
-uproc_idmap *
-uproc_idmap_loads(uproc_io_stream *stream)
+uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
 {
     int res;
     struct uproc_idmap_s *map;
@@ -125,10 +120,9 @@ uproc_idmap_loads(uproc_io_stream *stream)
         }
         len = strlen(line);
         if (len < 1 || line[len - 1] != '\n') {
-            uproc_error_msg(
-                UPROC_EINVAL,
-                "line %" UPROC_FAMILY_PRI ": expected newline after ID",
-                i + 2);
+            uproc_error_msg(UPROC_EINVAL, "line %" UPROC_FAMILY_PRI
+                                          ": expected newline after ID",
+                            i + 2);
             goto error;
         }
         line[len - 1] = '\0';
@@ -140,7 +134,7 @@ uproc_idmap_loads(uproc_io_stream *stream)
     }
 
     if (0) {
-error:
+    error:
         uproc_idmap_destroy(map);
         map = NULL;
     }
@@ -148,9 +142,8 @@ error:
     return map;
 }
 
-
-uproc_idmap *
-uproc_idmap_loadv(enum uproc_io_type iotype, const char *pathfmt, va_list ap)
+uproc_idmap *uproc_idmap_loadv(enum uproc_io_type iotype, const char *pathfmt,
+                               va_list ap)
 {
     struct uproc_idmap_s *map;
     uproc_io_stream *stream = uproc_io_openv("r", iotype, pathfmt, ap);
@@ -158,12 +151,12 @@ uproc_idmap_loadv(enum uproc_io_type iotype, const char *pathfmt, va_list ap)
         return NULL;
     }
     map = uproc_idmap_loads(stream);
-    (void) uproc_io_close(stream);
+    (void)uproc_io_close(stream);
     return map;
 }
 
-uproc_idmap *
-uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt, ...)
+uproc_idmap *uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt,
+                              ...)
 {
     struct uproc_idmap_s *map;
     va_list ap;
@@ -173,8 +166,7 @@ uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt, ...)
     return map;
 }
 
-int
-uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
+int uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
 {
     uproc_family i;
     uproc_io_printf(stream, "[%" UPROC_FAMILY_PRI "]\n", map->n);
@@ -186,10 +178,8 @@ uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
     return 0;
 }
 
-
-int
-uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
-                   const char *pathfmt, va_list ap)
+int uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
+                       const char *pathfmt, va_list ap)
 {
     int res;
     uproc_io_stream *stream = uproc_io_openv("w", iotype, pathfmt, ap);
@@ -201,9 +191,8 @@ uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
     return res;
 }
 
-int
-uproc_idmap_store(const uproc_idmap *map, enum uproc_io_type iotype,
-                  const char *pathfmt, ...)
+int uproc_idmap_store(const uproc_idmap *map, enum uproc_io_type iotype,
+                      const char *pathfmt, ...)
 {
     int res;
     va_list ap;

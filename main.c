@@ -70,16 +70,14 @@ struct buffer
 } buf[2];
 
 #if MAIN_DNA
-static void
-map_list_dnaresult_free(void *value, void *opaque)
+static void map_list_dnaresult_free(void *value, void *opaque)
 {
-    (void) opaque;
+    (void)opaque;
     uproc_dnaresult_free(value);
 }
 #endif
 
-void
-buffer_free(struct buffer *buf)
+void buffer_free(struct buffer *buf)
 {
     for (size_t i = 0; i < CHUNK_SIZE_MAX; i++) {
         uproc_sequence_free(&buf->seqs[i]);
@@ -96,8 +94,7 @@ buffer_free(struct buffer *buf)
  * environemt variable (see determine_chunk_size())*/
 long long chunk_size = CHUNK_SIZE_DEFAULT;
 
-void
-determine_chunk_size(void)
+void determine_chunk_size(void)
 {
     size_t sz;
     char *end, *value = getenv("UPROC_CHUNK_SIZE");
@@ -111,10 +108,8 @@ determine_chunk_size(void)
     chunk_size = CHUNK_SIZE_DEFAULT;
 }
 
-
 /* Classify the buffer contents */
-void
-buffer_classify(struct buffer *buf, clf *classifier)
+void buffer_classify(struct buffer *buf, clf *classifier)
 {
     long long i;
 #pragma omp parallel for private(i) shared(buf, classifier) schedule(static)
@@ -127,8 +122,7 @@ buffer_classify(struct buffer *buf, clf *classifier)
  *
  * Returns non-zero if at least one sequence was read.
  */
-int
-buffer_read(struct buffer *buf, uproc_seqiter *seqit)
+int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
 {
     long long i;
     for (i = 0; i < chunk_size; i++) {
@@ -145,13 +139,9 @@ buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     return buf->n > 0;
 }
 
-
-void
-print_result(uproc_io_stream *stream,
-             unsigned long seq_num,
-             const char *header, unsigned long seq_len,
-             struct clfresult *result,
-             uproc_idmap *idmap)
+void print_result(uproc_io_stream *stream, unsigned long seq_num,
+                  const char *header, unsigned long seq_len,
+                  struct clfresult *result, uproc_idmap *idmap)
 {
     uproc_io_printf(stream, "%lu,%s,%lu", seq_num, header, seq_len);
 #if MAIN_DNA
@@ -161,8 +151,7 @@ print_result(uproc_io_stream *stream,
 #endif
     if (idmap) {
         uproc_io_printf(stream, ",%s", uproc_idmap_str(idmap, result->family));
-    }
-    else {
+    } else {
         uproc_io_printf(stream, ",%" UPROC_FAMILY_PRI, result->family);
     }
     uproc_io_printf(stream, ",%1.3f", result->score);
@@ -170,11 +159,10 @@ print_result(uproc_io_stream *stream,
 }
 
 /* Process (and maybe output) classification results */
-void
-buffer_process(struct buffer *buf,
-               unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
-               unsigned long counts[UPROC_FAMILY_MAX + 1],
-               uproc_io_stream *out_preds, uproc_idmap *idmap)
+void buffer_process(struct buffer *buf, unsigned long *n_seqs,
+                    unsigned long *n_seqs_unexplained,
+                    unsigned long counts[UPROC_FAMILY_MAX + 1],
+                    uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
     for (long long i = 0; i < buf->n; i++) {
         uproc_list *results = buf->results[i];
@@ -197,12 +185,10 @@ buffer_process(struct buffer *buf,
     }
 }
 
-
-void
-classify_file_mt(const char *path, clf *classifier,
-                 unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
-                 unsigned long counts[UPROC_FAMILY_MAX + 1],
-                 uproc_io_stream *out_preds, uproc_idmap *idmap)
+void classify_file_mt(const char *path, clf *classifier, unsigned long *n_seqs,
+                      unsigned long *n_seqs_unexplained,
+                      unsigned long counts[UPROC_FAMILY_MAX + 1],
+                      uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
     int more_input;
     uproc_io_stream *stream = open_read(path);
@@ -237,11 +223,10 @@ classify_file_mt(const char *path, clf *classifier,
     uproc_seqiter_destroy(seqit);
 }
 
-void
-classify_file(const char *path, clf *classifier,
-              unsigned long *n_seqs, unsigned long *n_seqs_unexplained,
-              unsigned long counts[UPROC_FAMILY_MAX + 1],
-              uproc_io_stream *out_preds, uproc_idmap *idmap)
+void classify_file(const char *path, clf *classifier, unsigned long *n_seqs,
+                   unsigned long *n_seqs_unexplained,
+                   unsigned long counts[UPROC_FAMILY_MAX + 1],
+                   uproc_io_stream *out_preds, uproc_idmap *idmap)
 {
 #if _OPENMP
     if (omp_get_max_threads() > 1) {
@@ -293,32 +278,29 @@ struct count
     unsigned long n;
 };
 
-int
-compare_count(const void *p1, const void *p2)
+int compare_count(const void *p1, const void *p2)
 {
     const struct count *c1 = p1, *c2 = p2;
 
     /* sort by n in descending order */
     if (c1->n > c2->n) {
         return -1;
-    }
-    else if (c1->n < c2->n) {
+    } else if (c1->n < c2->n) {
         return 1;
     }
 
     /* or fam in ascending */
     if (c1->fam < c2->fam) {
         return -1;
-    }
-    else if (c1->fam > c2->fam) {
+    } else if (c1->fam > c2->fam) {
         return 1;
     }
     return 0;
 }
 
-void
-print_counts(uproc_io_stream *stream,
-        unsigned long counts[UPROC_FAMILY_MAX + 1], uproc_idmap *idmap)
+void print_counts(uproc_io_stream *stream,
+                  unsigned long counts[UPROC_FAMILY_MAX + 1],
+                  uproc_idmap *idmap)
 {
     struct count c[UPROC_FAMILY_MAX + 1];
     uproc_family i, n = 0;
@@ -335,23 +317,22 @@ print_counts(uproc_io_stream *stream,
     for (i = 0; i < n; i++) {
         if (idmap) {
             uproc_io_printf(stream, "%s", uproc_idmap_str(idmap, c[i].fam));
-        }
-        else {
+        } else {
             uproc_io_printf(stream, "%" UPROC_FAMILY_PRI, c[i].fam);
         }
         uproc_io_printf(stream, ",%lu\n", c[i].n);
     }
 }
 
-void
-make_opts(struct ppopts *o, const char *progname)
+void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
-    ppopts_add_text(o,
-        "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]", progname);
+    ppopts_add_text(o, "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]",
+                    progname);
 
-    ppopts_add_text(o,
+    ppopts_add_text(
+        o,
         "Classifies %s sequences using the database in DBDIR and the model in "
         "MODELDIR. INPUTFILES can be zero or more files containing sequences "
         "in FASTA or FASTQ format (FASTQ qualities are ignored). If no file "
@@ -365,28 +346,29 @@ make_opts(struct ppopts *o, const char *progname)
         );
 
     ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help",       "",    "Print this message and exit.");
-    O('v', "version",    "",    "Print version and exit.");
-    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
 
 #if _OPENMP
-    O('t', "threads", "N",
-      "Maximum number of threads to use (default: %d).", NUM_THREADS_DEFAULT);
+    O('t', "threads", "N", "Maximum number of threads to use (default: %d).",
+      NUM_THREADS_DEFAULT);
 #endif
 
     ppopts_add_header(o, "OUTPUT FORMAT:");
-    O('p', "preds", "", "\
+    O('p', "preds", "",
+      "\
 Print all classifications as CSV with the fields:\n\
     sequence number (starting from 1)\n\
     sequence header up to the first whitespace\n\
     sequence length\n"
 #if MAIN_DNA
-    "\
+      "\
     ORF frame number (1-6)\n\
     ORF index in the DNA sequence (starting from 1)\n\
     ORF length\n"
 #endif
-    "\
+      "\
     predicted protein family\n\
     classificaton score");
 
@@ -395,7 +377,8 @@ Print all classifications as CSV with the fields:\n\
     O('c', "counts", "",
       "Print \"FAMILY,COUNT\" where COUNT is the number of classifications "
       "for FAMILY");
-    ppopts_add_text(o,
+    ppopts_add_text(
+        o,
         "If none of the above is specified, -c is used. If multiple of them "
         "are specified, they are printed in the same order as above.");
 
@@ -409,12 +392,14 @@ Print all classifications as CSV with the fields:\n\
       "the protein families instead of their names.");
 
     ppopts_add_header(o, "PROTEIN CLASSIFICATION OPTIONS:");
-    O('P', "pthresh", "N", "\
+    O('P', "pthresh", "N",
+      "\
 Protein threshold level. Allowed values:\n\
     0   fixed threshold of 0.0\n\
     2   less restrictive\n\
     3   more restrictive\n\
-Default is %d . ", PROT_THRESH_DEFAULT);
+Default is %d . ",
+      PROT_THRESH_DEFAULT);
 
 #if MAIN_DNA
     ppopts_add_header(o, "DNA CLASSIFICATION OPTIONS:");
@@ -424,25 +409,22 @@ Default is %d . ", PROT_THRESH_DEFAULT);
     O('s', "short", "",
       "Use short read mode: Accept all ORFs, report only maximum protein "
       "score (if above threshold).");
-    O('O', "othresh", "N", "\
+    O('O', "othresh", "N",
+      "\
 ORF translation threshold level (only relevant in long read mode).\n\
 Allowed values:\n\
     0   accept all ORFs\n\
     1   less restrictive\n\
     2   more restrictive\n\
-Default is %d.", ORF_THRESH_DEFAULT);
+Default is %d.",
+      ORF_THRESH_DEFAULT);
 #endif
 #undef O
 }
 
-enum nonopt_args
-{
-    DBDIR, MODELDIR, INFILES,
-    ARGC
-};
+enum nonopt_args { DBDIR, MODELDIR, INFILES, ARGC };
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     uproc_error_set_handler(errhandler_bail);
 
@@ -455,16 +437,15 @@ main(int argc, char **argv)
 #endif
 
     /* output option flags */
-    bool
-        out_preds = false,      // -p
-        out_counts = false,     // -c
-        out_stats = false,      // -f
-        out_numeric = false;    // -n
+    bool out_preds = false,   // -p
+        out_counts = false,   // -c
+        out_stats = false,    // -f
+        out_numeric = false;  // -n
 
-    int prot_thresh_level = PROT_THRESH_DEFAULT;    // -P
-    int orf_thresh_level = ORF_THRESH_DEFAULT;      // -O
+    int prot_thresh_level = PROT_THRESH_DEFAULT;  // -P
+    int orf_thresh_level = ORF_THRESH_DEFAULT;    // -O
 
-    bool short_read_mode = false;   // -s
+    bool short_read_mode = false;  // -s
 
     int opt;
     struct ppopts opts = PPOPTS_INITIALIZER;
@@ -506,17 +487,17 @@ main(int argc, char **argv)
                 break;
             case 't':
 #if _OPENMP
-                {
-                    int res, tmp;
-                    res = parse_int(optarg, &tmp);
-                    if (res || tmp <= 0) {
-                        fprintf(stderr, "-t requires a positive integer\n");
-                        return EXIT_FAILURE;
-                    }
-                    omp_set_num_threads(tmp);
+            {
+                int res, tmp;
+                res = parse_int(optarg, &tmp);
+                if (res || tmp <= 0) {
+                    fprintf(stderr, "-t requires a positive integer\n");
+                    return EXIT_FAILURE;
                 }
+                omp_set_num_threads(tmp);
+            }
 #endif
-                break;
+            break;
 #if MAIN_DNA
             case 's':
                 short_read_mode = true;
@@ -526,7 +507,6 @@ main(int argc, char **argv)
                 break;
             case 'O':
                 if (parse_orf_thresh_level(optarg, &orf_thresh_level)) {
-
                     fprintf(stderr, "-O argument must be 0, 1 or 2\n");
                     return EXIT_FAILURE;
                 }
@@ -547,13 +527,15 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    uproc_model *model = uproc_model_load(argv[optind + MODELDIR], orf_thresh_level);
-	if( ! model )
-		return EXIT_FAILURE;
+    uproc_model *model =
+        uproc_model_load(argv[optind + MODELDIR], orf_thresh_level);
+    if (!model)
+        return EXIT_FAILURE;
 
-    uproc_database *db = uproc_database_load(argv[optind + DBDIR], prot_thresh_level, UPROC_ECURVE_BINARY);
-	if( ! db)
-		return EXIT_FAILURE;
+    uproc_database *db = uproc_database_load(
+        argv[optind + DBDIR], prot_thresh_level, UPROC_ECURVE_BINARY);
+    if (!db)
+        return EXIT_FAILURE;
 
     uproc_protclass *pc;
     uproc_dnaclass *dc;
@@ -574,14 +556,12 @@ main(int argc, char **argv)
     }
 
     unsigned long n_seqs = 0, n_seqs_unexplained = 0;
-    unsigned long counts[UPROC_FAMILY_MAX + 1] = { 0 };
+    unsigned long counts[UPROC_FAMILY_MAX + 1] = {0};
 
-    for (; optind + INFILES < argc; optind++)
-    {
-        classify_file(argv[optind + INFILES], classifier,
-                      &n_seqs, &n_seqs_unexplained, counts,
-                      out_preds ? out_stream : NULL,
-                      idmap);
+    for (; optind + INFILES < argc; optind++) {
+        classify_file(argv[optind + INFILES], classifier, &n_seqs,
+                      &n_seqs_unexplained, counts,
+                      out_preds ? out_stream : NULL, idmap);
     }
 
     if (out_stats) {
@@ -602,7 +582,7 @@ main(int argc, char **argv)
     buffer_free(&buf[0]);
     buffer_free(&buf[1]);
 
-    timeit_print(&t_in,  "in ");
+    timeit_print(&t_in, "in ");
     timeit_print(&t_out, "out");
     timeit_print(&t_clf, "clf");
     timeit_print(&t_tot, "tot");

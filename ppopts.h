@@ -59,24 +59,20 @@
 #include <stdio.h>
 #include <limits.h>
 
-
 /** Always print the descriptions on the next line */
 #define PPOPTS_DESC_ON_NEXT_LINE (1 << 0)
-
 
 #define PPOPTS_LONGOPT_MAX 30
 #define PPOPTS_ARGNAME_MAX 10
 #define PPOPTS_DESC_MAX 4096
 #define PPOPTS_OPTS_MAX 50
 
-enum {
-    PPOPTS_HEADER = SCHAR_MAX + 1,
-    PPOPTS_TEXT
-};
+enum { PPOPTS_HEADER = SCHAR_MAX + 1, PPOPTS_TEXT };
 
 struct ppopts
 {
-    struct ppopts_opt {
+    struct ppopts_opt
+    {
         int shortopt;
         char longopt[PPOPTS_LONGOPT_MAX + 1];
         char argname[PPOPTS_ARGNAME_MAX + 1];
@@ -86,27 +82,28 @@ struct ppopts
     int n;
 };
 
-
-#define PPOPTS_INITIALIZER { {{ 0, "", "", "" }}, 0, 0, 0 }
-
+#define PPOPTS_INITIALIZER    \
+    {                         \
+        {                     \
+            {                 \
+                0, "", "", "" \
+            }                 \
+        }                     \
+        , 0, 0, 0             \
+    }
 
 void ppopts_init(struct ppopts *o);
-
 
 void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
                 const char *argname, const char *desc, ...);
 
-
 #define ppopts_add_header(o, ...) \
     ppopts_add((o), PPOPTS_HEADER, "", "", __VA_ARGS__)
-
 
 #define ppopts_add_text(o, ...) \
     ppopts_add((o), PPOPTS_TEXT, "", "", __VA_ARGS__)
 
-
 void ppopts_print(struct ppopts *o, FILE *stream, int wrap, int flags);
 
-
-int ppopts_getopt(struct ppopts *o, int argc, char * const argv[]);
+int ppopts_getopt(struct ppopts *o, int argc, char *const argv[]);
 #endif

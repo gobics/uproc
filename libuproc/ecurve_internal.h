@@ -10,7 +10,7 @@ typedef uint_least16_t pfxtab_neigh;
 #define PFXTAB_NEIGH_MAX UINT_LEAST16_MAX
 
 typedef uint_least16_t pfxtab_count;
-#define ECURVE_EDGE ((pfxtab_count) -1)
+#define ECURVE_EDGE ((pfxtab_count)-1)
 #define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
 
 /** Struct defining an ecurve */
@@ -39,13 +39,16 @@ struct uproc_ecurve_s
     uproc_family *families;
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
-    struct uproc_ecurve_pfxtable {
-        union {
+    struct uproc_ecurve_pfxtable
+    {
+        union
+        {
             /** Index of the first associated entry in #suffixes */
             pfxtab_suffix first;
 
             /* indicates offsets towards the nearest non-empty neighbours */
-            struct {
+            struct
+            {
                 pfxtab_neigh prev, next;
             };
         };
@@ -60,13 +63,14 @@ struct uproc_ecurve_s
         pfxtab_count count;
     }
 #if HAVE___ATTRIBUTE__
-    __attribute__ ((packed))
+    __attribute__((packed))
 #endif
-    /** Table of prefixes
-     *
-     * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
-     */
-    *prefixes;
+        /** Table of prefixes
+         *
+         * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
+         */
+        *
+        prefixes;
 
     /** Last non-empty prefix
      *

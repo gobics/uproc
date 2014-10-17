@@ -30,8 +30,7 @@
 
 #include "uproc/features.h"
 
-void
-uproc_features_print(uproc_io_stream *stream)
+void uproc_features_print(uproc_io_stream *stream)
 {
     uproc_io_printf(stream, "libuproc version %s\n", uproc_features_version());
     uproc_io_printf(stream, "zlib:   %s\n", uproc_features_zlib_version());
@@ -40,20 +39,17 @@ uproc_features_print(uproc_io_stream *stream)
                     uproc_features_mmap() ? "yes" : "no");
 }
 
-const char *
-uproc_features_version(void)
+const char *uproc_features_version(void)
 {
     return PACKAGE_VERSION;
 }
 
-bool
-uproc_features_zlib(void)
+bool uproc_features_zlib(void)
 {
     return HAVE_ZLIB_H;
 }
 
-const char *
-uproc_features_zlib_version(void)
+const char *uproc_features_zlib_version(void)
 {
 #if HAVE_ZLIB_H
     return ZLIB_VERSION;
@@ -62,8 +58,7 @@ uproc_features_zlib_version(void)
 #endif
 }
 
-bool
-uproc_features_mmap(void)
+bool uproc_features_mmap(void)
 {
 #if HAVE_MMAP && USE_MMAP
     return true;
@@ -72,8 +67,7 @@ uproc_features_mmap(void)
 #endif
 }
 
-int
-uproc_features_openmp(void)
+int uproc_features_openmp(void)
 {
 #if _OPENMP
     return _OPENMP;

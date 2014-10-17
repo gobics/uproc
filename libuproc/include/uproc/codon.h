@@ -34,7 +34,6 @@
 
 #include "uproc/common.h"
 
-
 /** Type for nucleotides
  *
  * This type can represent a standard base (A, C, G, T/U) or one of the
@@ -47,10 +46,8 @@
  */
 typedef int uproc_nt;
 
-
 /** Nucleotide values */
-enum
-{
+enum {
     /** Adenine */
     UPROC_NT_A = (1 << 0),
 
@@ -76,10 +73,8 @@ enum
     UPROC_NT_NOT_IUPAC = -2,
 };
 
-
 /** Number of bits needed to represent a valid nucleotide */
 #define UPROC_NT_BITS 4
-
 
 /** Type used to represent a codon (or codon mask)
  *
@@ -87,22 +82,17 @@ enum
  */
 typedef unsigned uproc_codon;
 
-
 /** Number of nucleotides in a codon */
 #define UPROC_CODON_NTS 3
-
 
 /** Bits used to represent a codon */
 #define UPROC_CODON_BITS (UPROC_CODON_NTS * UPROC_NT_BITS)
 
-
 /** Number of codons consisting of only A, C, G and T/U */
 #define UPROC_CODON_COUNT (4 * 4 * 4)
 
-
 /** Number of all possible binary representations of a codon mask */
 #define UPROC_BINARY_CODON_COUNT (1 << UPROC_CODON_BITS)
-
 
 /** Append nucleotide to codon
  *
@@ -116,7 +106,6 @@ typedef unsigned uproc_codon;
  */
 void uproc_codon_append(uproc_codon *codon, uproc_nt nt);
 
-
 /** Prepend nucleotide to codon
  *
  * Complementary to the append operation:
@@ -129,7 +118,6 @@ void uproc_codon_append(uproc_codon *codon, uproc_nt nt);
  */
 void uproc_codon_prepend(uproc_codon *codon, uproc_nt nt);
 
-
 /** Retrieve a codon's nucleotide at a certain position
  *
  * \param codon     codon to extract nt from
@@ -139,7 +127,6 @@ void uproc_codon_prepend(uproc_codon *codon, uproc_nt nt);
  * ::UPROC_CODON_NTS
  */
 uproc_nt uproc_codon_get_nt(uproc_codon codon, unsigned position);
-
 
 /** Match a codon against a "codon mask"
  *
@@ -157,7 +144,6 @@ uproc_nt uproc_codon_get_nt(uproc_codon codon, unsigned position);
  * Whether `codon` matches `mask`.
  */
 bool uproc_codon_match(uproc_codon codon, uproc_codon mask);
-
 
 /**
  * \}

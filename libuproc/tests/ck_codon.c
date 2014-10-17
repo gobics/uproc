@@ -5,8 +5,7 @@
 #include "uproc.h"
 #include "../codon_tables.h"
 
-uproc_codon
-codon_from_str(const char *s)
+uproc_codon codon_from_str(const char *s)
 {
     uproc_codon c = 0;
     for (int i = 0; i < UPROC_CODON_NTS; i++) {
@@ -33,7 +32,7 @@ END_TEST
 
 START_TEST(test_complement)
 {
-#define TEST(a, b) \
+#define TEST(a, b)                                                       \
     ck_assert(codon_from_str(a) == CODON_COMPLEMENT(codon_from_str(b))); \
     ck_assert(codon_from_str(b) == CODON_COMPLEMENT(codon_from_str(a)))
 
@@ -48,8 +47,8 @@ END_TEST
 
 int main(void)
 {
-    (void) codon_is_stop;
-    (void) codon_to_char;
+    (void)codon_is_stop;
+    (void)codon_to_char;
 
     Suite *s = suite_create("codon");
 

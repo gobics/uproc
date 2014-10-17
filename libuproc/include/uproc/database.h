@@ -27,7 +27,6 @@
  * \{
  */
 
-
 #ifndef UPROC_DATABASE_H
 #define UPROC_DATABASE_H
 
@@ -50,20 +49,24 @@
 typedef struct uproc_database_s uproc_database;
 
 /**
-  * Loads all required data of a UProC database from files in the given directory and returns a database object. 
+  * Loads all required data of a UProC database from files in the given
+  *directory and returns a database object.
   *
-  * \param path an existing directory containing a UProC database. 
-  * \param prot_thres_level the protein threshold to be used. Note that the corresponding file "prot_thresh_e%d" has to exist in the directory.
+  * \param path an existing directory containing a UProC database.
+  * \param prot_thres_level the protein threshold to be used. Note that the
+  *corresponding file "prot_thresh_e%d" has to exist in the directory.
   * \param format the format of the ecurves
-  * 
+  *
   * \returns the object on success or %NULL on error
   */
-uproc_database *uproc_database_load(const char *path, int prot_thresh_level, enum uproc_ecurve_format format);
+uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
+                                    enum uproc_ecurve_format format);
 
 /**
-  * Returns the forward matching ecurve of the database. Note that the returned object will
+  * Returns the forward matching ecurve of the database. Note that the returned
+  *object will
   * become invalid when the database is destroyed.
-  * 
+  *
   * \see uproc_database_destroy
   *
   * \param db the database.
@@ -72,9 +75,10 @@ uproc_database *uproc_database_load(const char *path, int prot_thresh_level, enu
 uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db);
 
 /**
-  * Returns the reverse matching ecurve of the database. Note that the returned object will
+  * Returns the reverse matching ecurve of the database. Note that the returned
+  *object will
   * become invalid when the database is destroyed.
-  * 
+  *
   * \see uproc_database_destroy
   *
   * \param db the database.
@@ -83,22 +87,25 @@ uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db);
 uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db);
 
 /**
-  * Returns the mapping from numerical to string IDs of the database. Note that the returned object will
+  * Returns the mapping from numerical to string IDs of the database. Note that
+  *the returned object will
   * become invalid when the database is destroyed.
-  * 
+  *
   * \see uproc_database_destroy
   *
   * \param db the database.
   * \returns a pointer to the idmap.
   */
-uproc_idmap  *uproc_database_idmap(uproc_database *db);
+uproc_idmap *uproc_database_idmap(uproc_database *db);
 /**
-  * Returns the protein threshold matrix of the database. Note that the returned object will
+  * Returns the protein threshold matrix of the database. Note that the returned
+  *object will
   * become invalid when the database is destroyed.
-  * The returned pointer may be %NULL if the protein threshold was set to 0 while
+  * The returned pointer may be %NULL if the protein threshold was set to 0
+  *while
   * loading the database.
   *
-  * \see uproc_database_load 
+  * \see uproc_database_load
   * \see uproc_database_destroy
   *
   * \param db the database.

@@ -61,13 +61,12 @@
 #include "uproc/protclass.h"
 #include "uproc/matrix.h"
 
-
- /** \defgroup struct_dnaresult struct uproc_dnaresult
-  *
-  * DNA classification result
-  *
-  * \{
-  */
+/** \defgroup struct_dnaresult struct uproc_dnaresult
+ *
+ * DNA classification result
+ *
+ * \{
+ */
 
 /** \copybrief struct_dnaresult */
 struct uproc_dnaresult
@@ -82,24 +81,22 @@ struct uproc_dnaresult
     struct uproc_orf orf;
 };
 
-
 /** Initializer for ::uproc_dnaresult structs */
-#define UPROC_DNARESULT_INITIALIZER { 0, 0, UPROC_ORF_INITIALIZER }
-
+#define UPROC_DNARESULT_INITIALIZER \
+    {                               \
+        0, 0, UPROC_ORF_INITIALIZER \
+    }
 
 /** Initialize a ::uproc_dnaresult struct */
 void uproc_dnaresult_init(struct uproc_dnaresult *result);
 
-
 /** Free allocated pointers of ::uproc_dnaresult struct */
 void uproc_dnaresult_free(struct uproc_dnaresult *result);
-
 
 /** Deep-copy a ::uproc_dnaresult struct */
 int uproc_dnaresult_copy(struct uproc_dnaresult *dest,
                          const struct uproc_dnaresult *src);
 /** \} */
-
 
 /** \defgroup obj_dnaclass object uproc_dnaclass
  *
@@ -129,20 +126,17 @@ int uproc_dnaresult_copy(struct uproc_dnaresult *dest,
  */
 typedef struct uproc_dnaclass_s uproc_dnaclass;
 
-
 /** Classification mode
  *
  * Determines which results ::uproc_dnaclass_classify produces.
  */
-enum uproc_dnaclass_mode
-{
+enum uproc_dnaclass_mode {
     /** Only the result with the maximum score */
     UPROC_DNACLASS_ALL,
 
     /** All results (unordered) */
     UPROC_DNACLASS_MAX,
 };
-
 
 /** Create new DNA classifier
  *
@@ -158,10 +152,8 @@ uproc_dnaclass *uproc_dnaclass_create(enum uproc_dnaclass_mode mode,
                                       uproc_orffilter *orf_filter,
                                       void *orf_filter_arg);
 
-
 /** Destroy DNA classifier */
 void uproc_dnaclass_destroy(uproc_dnaclass *dc);
-
 
 /** Classify DNA sequence
  *

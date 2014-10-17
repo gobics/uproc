@@ -7,12 +7,8 @@ uproc_matrix *m;
 START_TEST(test_init)
 {
     uproc_matrix *mat;
-    double data[] = {
-        0.0, 0.1, 0.2,
-        1.0, 1.1, 1.2,
-        2.0, 2.1, 2.2,
-        3.0, 3.1, 3.2,
-        4.0, 4.1, 4.2 };
+    double data[] = {0.0, 0.1, 0.2, 1.0, 1.1, 1.2, 2.0, 2.1,
+                     2.2, 3.0, 3.1, 3.2, 4.0, 4.1, 4.2};
 
     mat = uproc_matrix_create(5, 3, data);
     ck_assert_ptr_ne(mat, NULL);
@@ -50,9 +46,7 @@ START_TEST(test_store_load)
     int res;
     uproc_matrix *mat;
     size_t rows, cols;
-    double data[] = {
-        0.0, 0.1, 0.2, 0.3,
-        1.0, 1.1, 1.2, 1.3 };
+    double data[] = {0.0, 0.1, 0.2, 0.3, 1.0, 1.1, 1.2, 1.3};
 
     mat = uproc_matrix_create(2, 4, data);
 

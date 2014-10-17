@@ -32,7 +32,6 @@
 #include "uproc/common.h"
 #include "uproc/io.h"
 
-
 /** \defgroup obj_idmap object uproc_idmap
  *
  * Map between protein family name and its numeric identifier
@@ -47,14 +46,11 @@
  */
 typedef struct uproc_idmap_s uproc_idmap;
 
-
 /** Create idmap object */
 uproc_idmap *uproc_idmap_create(void);
 
-
 /** Destroy idmap object */
 void uproc_idmap_destroy(uproc_idmap *map);
-
 
 /** Get family number
  *
@@ -73,7 +69,6 @@ void uproc_idmap_destroy(uproc_idmap *map);
  */
 uproc_family uproc_idmap_family(uproc_idmap *map, const char *name);
 
-
 /** Get family string
  *
  * Returns the family name associated with the family number \c family.
@@ -83,10 +78,8 @@ uproc_family uproc_idmap_family(uproc_idmap *map, const char *name);
  */
 char *uproc_idmap_str(const uproc_idmap *map, uproc_family family);
 
-
 /** Load idmap from stream */
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);
-
 
 /** Load idmap from file
  *
@@ -94,27 +87,23 @@ uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);
  * \param pathfmt   printf format string for file path
  * \param ...       format string arguments
  */
-uproc_idmap *uproc_idmap_load(enum uproc_io_type iotype,
-                              const char *pathfmt, ...);
-
+uproc_idmap *uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt,
+                              ...);
 
 /** Load idmap from file
  *
  * Like ::uproc_idmap_load, but with a \c va_list instead of a variable
  * number of arguments.
  */
-uproc_idmap *uproc_idmap_loadv(enum uproc_io_type iotype,
-                               const char *pathfmt, va_list ap);
-
+uproc_idmap *uproc_idmap_loadv(enum uproc_io_type iotype, const char *pathfmt,
+                               va_list ap);
 
 /** Store idmap to stream */
 int uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream);
 
-
 /** Store idmap to file */
 int uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
                        const char *pathfmt, va_list ap);
-
 
 /** Store idmap to file
  *

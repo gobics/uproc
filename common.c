@@ -36,8 +36,7 @@
 
 #define PROGRESS_WIDTH 20
 
-uproc_io_stream *
-open_read(const char *path)
+uproc_io_stream *open_read(const char *path)
 {
     if (!strcmp(path, "-")) {
         return uproc_stdin;
@@ -45,8 +44,7 @@ open_read(const char *path)
     return uproc_io_open("r", UPROC_IO_GZIP, "%s", path);
 }
 
-uproc_io_stream *
-open_write(const char *path, enum uproc_io_type type)
+uproc_io_stream *open_write(const char *path, enum uproc_io_type type)
 {
     if (!strcmp(path, "-")) {
         return type == UPROC_IO_GZIP ? uproc_stdout_gz : uproc_stdout;
@@ -54,11 +52,12 @@ open_write(const char *path, enum uproc_io_type type)
     return uproc_io_open("w", type, "%s", path);
 }
 
-void
-print_version(const char *progname)
+void print_version(const char *progname)
 {
-    fprintf(stderr,
-        "%s, version " UPROC_VERSION "\n"
+    fprintf(
+        stderr,
+        "%s, version " UPROC_VERSION
+        "\n"
         "Copyright 2014 Peter Meinicke, Robin Martinjak\n"
         "License GPLv3+: GNU GPL version 3 or later " /* no line break! */
         "<http://gnu.org/licenses/gpl.html>\n"
@@ -70,9 +69,7 @@ print_version(const char *progname)
         progname);
 }
 
-
-int
-parse_int(const char *arg, int *x)
+int parse_int(const char *arg, int *x)
 {
     char *end;
     int tmp = strtol(arg, &end, 10);
@@ -83,8 +80,7 @@ parse_int(const char *arg, int *x)
     return 0;
 }
 
-int
-parse_prot_thresh_level(const char *arg, int *x)
+int parse_prot_thresh_level(const char *arg, int *x)
 {
     int tmp;
     if (parse_int(arg, &tmp)) {
@@ -97,8 +93,7 @@ parse_prot_thresh_level(const char *arg, int *x)
     return 0;
 }
 
-int
-parse_orf_thresh_level(const char *arg, int *x)
+int parse_orf_thresh_level(const char *arg, int *x)
 {
     int tmp;
     if (parse_int(arg, &tmp)) {
@@ -111,9 +106,8 @@ parse_orf_thresh_level(const char *arg, int *x)
     return 0;
 }
 
-
-void
-errhandler_bail(enum uproc_error_code num, const char *msg, const char *loc)
+void errhandler_bail(enum uproc_error_code num, const char *msg,
+                     const char *loc)
 {
     (void)num;
     (void)msg;
@@ -122,9 +116,7 @@ errhandler_bail(enum uproc_error_code num, const char *msg, const char *loc)
     exit(EXIT_FAILURE);
 }
 
-
-void
-trim_header(char *s)
+void trim_header(char *s)
 {
     char *start = s, *end;
     while (isspace(*start) || *start == ',') {
@@ -136,9 +128,7 @@ trim_header(char *s)
     }
 }
 
-
-void
-make_dir(const char *path)
+void make_dir(const char *path)
 {
 #if HAVE__MKDIR
     _mkdir(path);
@@ -147,10 +137,8 @@ make_dir(const char *path)
 #endif
 }
 
-
-static bool
-prot_filter(const char *seq, size_t len, uproc_family family,
-            double score, void *opaque)
+static bool prot_filter(const char *seq, size_t len, uproc_family family,
+                        double score, void *opaque)
 {
     (void)seq;
     (void)family;
@@ -166,14 +154,12 @@ prot_filter(const char *seq, size_t len, uproc_family family,
     return score >= uproc_matrix_get(thresh, len, 0);
 }
 
-
-static bool
-orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
-           double seq_gc, void *opaque)
+static bool orf_filter(const struct uproc_orf *orf, const char *seq,
+                       size_t seq_len, double seq_gc, void *opaque)
 {
     unsigned long r, c, rows, cols;
     uproc_matrix *thresh = opaque;
-    (void) seq;
+    (void)seq;
     if (orf->length < 20) {
         return false;
     }
@@ -192,20 +178,18 @@ orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
     return orf->score >= uproc_matrix_get(thresh, r, c);
 }
 
-
-int
-create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
-                   uproc_database *db, uproc_model *model,
-                   bool short_read_mode)
+int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
+                       uproc_database *db, uproc_model *model,
+                       bool short_read_mode)
 {
-	if( ! db ){
-		uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-		return -1;
-	}	
-	if( ! model ){
-		uproc_error_msg(UPROC_EINVAL, "model parameter must not be NULL");
-		return -1;
-	}	
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return -1;
+    }
+    if (!model) {
+        uproc_error_msg(UPROC_EINVAL, "model parameter must not be NULL");
+        return -1;
+    }
 
     enum uproc_protclass_mode pc_mode = UPROC_PROTCLASS_ALL;
     enum uproc_dnaclass_mode dc_mode = UPROC_DNACLASS_ALL;
@@ -214,14 +198,11 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
         pc_mode = UPROC_PROTCLASS_MAX;
         dc_mode = UPROC_DNACLASS_MAX;
     }
-    *pc = uproc_protclass_create(
-				pc_mode, 
-				uproc_database_ecurve_forward(db), 
-				uproc_database_ecurve_reverse(db), 
-				uproc_model_substitution_matrix(model),
-				prot_filter, 
-				uproc_database_protein_threshold(db)
-			);
+    *pc = uproc_protclass_create(pc_mode, uproc_database_ecurve_forward(db),
+                                 uproc_database_ecurve_reverse(db),
+                                 uproc_model_substitution_matrix(model),
+                                 prot_filter,
+                                 uproc_database_protein_threshold(db));
     if (!*pc) {
         return -1;
     }
@@ -231,11 +212,8 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
     }
 
     *dc = uproc_dnaclass_create(
-				dc_mode, 
-				*pc, 
-				uproc_model_codon_scores(model), 
-				orf_filter,
-				short_read_mode ? NULL : uproc_model_orf_threshold(model));
+        dc_mode, *pc, uproc_model_codon_scores(model), orf_filter,
+        short_read_mode ? NULL : uproc_model_orf_threshold(model));
 
     if (!*dc) {
         uproc_protclass_destroy(*pc);
@@ -243,7 +221,6 @@ create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
     }
     return 0;
 }
-
 
 #if defined(TIMEIT) && HAVE_CLOCK_GETTIME
 void timeit_start(timeit *t)
@@ -262,7 +239,8 @@ void timeit_stop(timeit *t)
         return;
     }
     clock_gettime(CLOCK_REALTIME, &stop);
-    t->total += (stop.tv_sec - t->start.tv_sec) + (stop.tv_nsec - t->start.tv_nsec) / 1e9;
+    t->total += (stop.tv_sec - t->start.tv_sec) +
+                (stop.tv_nsec - t->start.tv_nsec) / 1e9;
     t->running = 0;
 }
 
@@ -276,8 +254,7 @@ void timeit_print(timeit *t, const char *s)
 }
 #endif
 
-void
-progress(uproc_io_stream *stream, const char *new_label, double percent)
+void progress(uproc_io_stream *stream, const char *new_label, double percent)
 {
     static const char *label;
     static double last_percent;

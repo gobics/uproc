@@ -64,21 +64,20 @@ struct uproc_bstiter_s
 };
 
 /* compare keys */
-static int
-cmp_keys(struct uproc_bst_s *t, union uproc_bst_key x, union uproc_bst_key y)
+static int cmp_keys(struct uproc_bst_s *t, union uproc_bst_key x,
+                    union uproc_bst_key y)
 {
     switch (t->key_type) {
-        case UPROC_BST_UINT:
-            {
-                uintmax_t a = x.uint, b = y.uint;
-                if (a == b) {
-                    return 0;
-                }
-                if (a < b) {
-                    return -1;
-                }
-                return 1;
+        case UPROC_BST_UINT: {
+            uintmax_t a = x.uint, b = y.uint;
+            if (a == b) {
+                return 0;
             }
+            if (a < b) {
+                return -1;
+            }
+            return 1;
+        }
         case UPROC_BST_WORD:
             return uproc_word_cmp(&x.word, &y.word);
     }
@@ -86,9 +85,9 @@ cmp_keys(struct uproc_bst_s *t, union uproc_bst_key x, union uproc_bst_key y)
 }
 
 /* create a new bst node */
-static struct bstnode *
-bstnode_create(union uproc_bst_key key, const void *value, size_t value_size,
-               struct bstnode *parent)
+static struct bstnode *bstnode_create(union uproc_bst_key key,
+                                      const void *value, size_t value_size,
+                                      struct bstnode *parent)
 {
     struct bstnode *n = malloc(sizeof *n + value_size);
 
@@ -104,8 +103,7 @@ bstnode_create(union uproc_bst_key key, const void *value, size_t value_size,
 }
 
 /* free a bst node and all it's descendants recursively */
-static void
-bstnode_free(struct bstnode *n, size_t value_size)
+static void bstnode_free(struct bstnode *n, size_t value_size)
 {
     if (!n) {
         return;
@@ -116,8 +114,8 @@ bstnode_free(struct bstnode *n, size_t value_size)
 }
 
 /* find node in tree */
-static struct bstnode *
-bstnode_find(struct uproc_bst_s *t, struct bstnode *n, union uproc_bst_key key)
+static struct bstnode *bstnode_find(struct uproc_bst_s *t, struct bstnode *n,
+                                    union uproc_bst_key key)
 {
     int cmp = cmp_keys(t, key, n->key);
     if (cmp == 0) {
@@ -130,8 +128,7 @@ bstnode_find(struct uproc_bst_s *t, struct bstnode *n, union uproc_bst_key key)
 }
 
 /* find node that replaces a node n, move it to n's position and return it */
-static struct bstnode *
-bstnode_remove(struct bstnode *n)
+static struct bstnode *bstnode_remove(struct bstnode *n)
 {
     static int del_from_left = 1;
 
@@ -145,8 +142,7 @@ bstnode_remove(struct bstnode *n)
     /* 1 child */
     else if (!n->left) {
         p = n->right;
-    }
-    else if (!n->right) {
+    } else if (!n->right) {
         p = n->left;
     }
 
@@ -202,9 +198,9 @@ bstnode_remove(struct bstnode *n)
     return p;
 }
 
-static void
-bstnode_map(struct bstnode *n,
-            void(*func)(union uproc_bst_key, void *, void *), void *opaque)
+static void bstnode_map(struct bstnode *n,
+                        void (*func)(union uproc_bst_key, void *, void *),
+                        void *opaque)
 {
     if (!n) {
         return;
@@ -214,8 +210,7 @@ bstnode_map(struct bstnode *n,
     bstnode_map(n->right, func, opaque);
 }
 
-uproc_bst *
-uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size)
+uproc_bst *uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size)
 {
     struct uproc_bst_s *t = malloc(sizeof *t);
     if (!t) {
@@ -229,8 +224,7 @@ uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size)
     return t;
 }
 
-void
-uproc_bst_destroy(uproc_bst *t)
+void uproc_bst_destroy(uproc_bst *t)
 {
     if (!t) {
         return;
@@ -239,21 +233,18 @@ uproc_bst_destroy(uproc_bst *t)
     free(t);
 }
 
-int
-uproc_bst_isempty(uproc_bst *t)
+int uproc_bst_isempty(uproc_bst *t)
 {
     return t->root == NULL;
 }
 
-size_t
-uproc_bst_size(const uproc_bst *t)
+size_t uproc_bst_size(const uproc_bst *t)
 {
     return t->size;
 }
 
-static int
-insert_or_update(struct uproc_bst_s *t, union uproc_bst_key key,
-                 const void *value, bool update)
+static int insert_or_update(struct uproc_bst_s *t, union uproc_bst_key key,
+                            const void *value, bool update)
 {
     struct bstnode *n, *ins;
     int cmp;
@@ -275,12 +266,10 @@ insert_or_update(struct uproc_bst_s *t, union uproc_bst_key key,
             return 0;
         }
         return UPROC_BST_KEY_EXISTS;
-    }
-    else if (cmp < 0) {
+    } else if (cmp < 0) {
         ins = bstnode_create(key, value, t->value_size, n);
         n->left = ins;
-    }
-    else {
+    } else {
         ins = bstnode_create(key, value, t->value_size, n);
         n->right = ins;
     }
@@ -293,22 +282,17 @@ insert_or_update(struct uproc_bst_s *t, union uproc_bst_key key,
     return 0;
 }
 
-int
-uproc_bst_insert(uproc_bst *t, union uproc_bst_key key,
-                 const void *value)
+int uproc_bst_insert(uproc_bst *t, union uproc_bst_key key, const void *value)
 {
     return insert_or_update(t, key, value, false);
 }
 
-int
-uproc_bst_update(uproc_bst *t, union uproc_bst_key key,
-                 const void *value)
+int uproc_bst_update(uproc_bst *t, union uproc_bst_key key, const void *value)
 {
     return insert_or_update(t, key, value, true);
 }
 
-int
-uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value)
+int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value)
 {
     struct bstnode *n;
     if (!t->root) {
@@ -323,8 +307,7 @@ uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value)
     return UPROC_BST_KEY_NOT_FOUND;
 }
 
-int
-uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
+int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
 {
     /* node to remove and its parent */
     struct bstnode *del, *par;
@@ -342,11 +325,9 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
        uptdate `del`s parents (or `t`s root if del was the old root) */
     if (del == t->root) {
         t->root = bstnode_remove(del);
-    }
-    else if (del == par->left) {
+    } else if (del == par->left) {
         par->left = bstnode_remove(del);
-    }
-    else {
+    } else {
         par->right = bstnode_remove(del);
     }
 
@@ -356,15 +337,14 @@ uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value)
     return 0;
 }
 
-void
-uproc_bst_map(const uproc_bst *t,
-              void(*func)(union uproc_bst_key, void *, void *), void *opaque)
+void uproc_bst_map(const uproc_bst *t,
+                   void (*func)(union uproc_bst_key, void *, void *),
+                   void *opaque)
 {
     bstnode_map(t->root, func, opaque);
 }
 
-uproc_bstiter *
-uproc_bstiter_create(const uproc_bst *t)
+uproc_bstiter *uproc_bstiter_create(const uproc_bst *t)
 {
     struct bstnode *n = t->root;
     struct uproc_bstiter_s *iter = malloc(sizeof *iter);
@@ -382,8 +362,8 @@ uproc_bstiter_create(const uproc_bst *t)
     return iter;
 }
 
-int
-uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key, void *value)
+int uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key,
+                       void *value)
 {
     struct bstnode *n = iter->cur;
 
@@ -410,8 +390,7 @@ uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key, void *value)
     return 0;
 }
 
-void
-uproc_bstiter_destroy(uproc_bstiter *iter)
+void uproc_bstiter_destroy(uproc_bstiter *iter)
 {
     free(iter);
 }

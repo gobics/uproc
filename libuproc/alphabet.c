@@ -41,8 +41,7 @@ struct uproc_alphabet_s
     uproc_amino aminos[UCHAR_MAX + 1];
 };
 
-uproc_alphabet *
-uproc_alphabet_create(const char *s)
+uproc_alphabet *uproc_alphabet_create(const char *s)
 {
     unsigned char i;
     const char *p;
@@ -53,9 +52,9 @@ uproc_alphabet_create(const char *s)
     }
 
     if (strlen(s) != UPROC_ALPHABET_SIZE) {
-        uproc_error_msg(
-            UPROC_EINVAL, "string too short: %lu characters instead of %d",
-            (unsigned long)strlen(s), UPROC_ALPHABET_SIZE);
+        uproc_error_msg(UPROC_EINVAL,
+                        "string too short: %lu characters instead of %d",
+                        (unsigned long)strlen(s), UPROC_ALPHABET_SIZE);
         goto error;
     }
     strcpy(a->str, s);
@@ -80,21 +79,17 @@ error:
     return NULL;
 }
 
-void
-uproc_alphabet_destroy(uproc_alphabet *alpha)
+void uproc_alphabet_destroy(uproc_alphabet *alpha)
 {
     free(alpha);
 }
 
-uproc_amino
-uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c)
+uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c)
 {
     return alpha->aminos[(unsigned char)c];
 }
 
-int
-uproc_alphabet_amino_to_char(const uproc_alphabet *alpha,
-                             uproc_amino amino)
+int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino amino)
 {
     if (amino >= UPROC_ALPHABET_SIZE) {
         return -1;
@@ -102,8 +97,7 @@ uproc_alphabet_amino_to_char(const uproc_alphabet *alpha,
     return alpha->str[amino];
 }
 
-const char *
-uproc_alphabet_str(const uproc_alphabet *alpha)
+const char *uproc_alphabet_str(const uproc_alphabet *alpha)
 {
     return alpha->str;
 }
