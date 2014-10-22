@@ -31,26 +31,20 @@
 
 #include "uproc/io.h"
 
-
 /** Print formatted info about features */
 void uproc_features_print(uproc_io_stream *stream);
-
 
 /** Version name */
 const char *uproc_features_version(void);
 
-
 /** Check zlib support */
 bool uproc_features_zlib(void);
-
 
 /** zlib's version string */
 const char *uproc_features_zlib_version(void);
 
-
 /** Check mmap() support */
 bool uproc_features_mmap(void);
-
 
 /** Obtain OpenMP version
  *

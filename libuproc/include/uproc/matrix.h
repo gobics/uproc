@@ -30,7 +30,6 @@
 #ifndef UPROC_THRESHOLDS_H
 #define UPROC_THRESHOLDS_H
 
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include "uproc/io.h"
@@ -55,7 +54,6 @@
  */
 typedef struct uproc_matrix_s uproc_matrix;
 
-
 /** Create matrix object
  *
  * If \c values is not NULL, it should point into an array of size
@@ -70,15 +68,12 @@ typedef struct uproc_matrix_s uproc_matrix;
 uproc_matrix *uproc_matrix_create(unsigned long rows, unsigned long cols,
                                   const double *values);
 
-
 /** Destroy matrix object */
 void uproc_matrix_destroy(uproc_matrix *matrix);
-
 
 /** Set the value of matrix[row, col] */
 void uproc_matrix_set(uproc_matrix *matrix, unsigned long row,
                       unsigned long col, double value);
-
 
 /** Get the value of matrix[row, col] */
 double uproc_matrix_get(const uproc_matrix *matrix, unsigned long row,
@@ -96,7 +91,6 @@ void uproc_matrix_dimensions(const uproc_matrix *matrix, unsigned long *rows,
 /** Load matrix from stream */
 uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream);
 
-
 /** Load matrix from file
  *
  * \param iotype    IO type, see ::uproc_io_type
@@ -106,24 +100,20 @@ uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream);
 uproc_matrix *uproc_matrix_load(enum uproc_io_type iotype, const char *pathfmt,
                                 ...);
 
-
 /** Load matrix from file
  *
  * Like ::uproc_matrix_load, but with a \c va_list instead of a variable
  * number of arguments.
  */
-uproc_matrix *uproc_matrix_loadv(enum uproc_io_type iotype,
-                                 const char *pathfmt, va_list ap);
-
+uproc_matrix *uproc_matrix_loadv(enum uproc_io_type iotype, const char *pathfmt,
+                                 va_list ap);
 
 /** Store matrix to stream */
 int uproc_matrix_stores(const uproc_matrix *matrix, uproc_io_stream *stream);
 
-
 /** Store matrix to file */
 int uproc_matrix_store(const uproc_matrix *matrix, enum uproc_io_type iotype,
                        const char *pathfmt, ...);
-
 
 /** Store matrix to file
  *

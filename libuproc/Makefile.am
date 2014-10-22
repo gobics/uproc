@@ -32,8 +32,13 @@ libuproc_la_SOURCES = alphabet.c \
 					seqio.c \
 					substmat.c \
 					word.c \
-					codon_tables.h
+					codon_tables.h \
+					database.c \
+					database_internal.h \
+					model.c \
+					model_internal.h
 
+# TODO: increment version-info to 2:0:2 before release
 libuproc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
 BUILT_SOURCES = codon_tables.h

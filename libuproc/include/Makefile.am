@@ -15,4 +15,6 @@ nobase_include_HEADERS = uproc.h \
 	uproc/protclass.h \
 	uproc/seqio.h \
 	uproc/substmat.h \
-	uproc/word.h
+	uproc/word.h \
+	uproc/database.h \
+	uproc/model.h

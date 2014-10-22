@@ -189,5 +189,7 @@
 #include <uproc/substmat.h>
 #include <uproc/seqio.h>
 #include <uproc/word.h>
+#include <uproc/model.h>
+#include <uproc/database.h>
 
 #endif

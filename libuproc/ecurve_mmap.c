@@ -48,20 +48,22 @@ struct mmap_header
 
 static const uint64_t magic_number = 0xd2eadfUL;
 
-#define SIZE_HEADER (sizeof (struct mmap_header))
+#define SIZE_HEADER (sizeof(struct mmap_header))
 #define SIZE_PREFIXES \
-    ((UPROC_PREFIX_MAX + 1) * sizeof (struct uproc_ecurve_pfxtable))
-#define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof (uproc_suffix))
-#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof (uproc_family))
-#define SIZE_TOTAL(suffix_count) \
+    ((UPROC_PREFIX_MAX + 1) * sizeof(struct uproc_ecurve_pfxtable))
+#define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof(uproc_suffix))
+#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof(uproc_family))
+#define SIZE_TOTAL(suffix_count)                                 \
     (SIZE_HEADER + SIZE_PREFIXES + SIZE_SUFFIXES(suffix_count) + \
      SIZE_CLASSES(suffix_count) + (3 * sizeof magic_number))
 
 #define OFFSET_PREFIXES (SIZE_HEADER)
 #define OFFSET_MAGIC1 (OFFSET_PREFIXES + SIZE_PREFIXES)
 #define OFFSET_SUFFIXES (OFFSET_MAGIC1 + (sizeof magic_number))
-#define OFFSET_MAGIC2(suffix_count) (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
-#define OFFSET_CLASSES(suffix_count) (OFFSET_MAGIC2(suffix_count) + (sizeof magic_number))
+#define OFFSET_MAGIC2(suffix_count) \
+    (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
+#define OFFSET_CLASSES(suffix_count) \
+    (OFFSET_MAGIC2(suffix_count) + (sizeof magic_number))
 #define OFFSET_MAGIC3(suffix_count) \
     (OFFSET_CLASSES(suffix_count) + SIZE_CLASSES(suffix_count))
 
@@ -72,8 +74,7 @@ static const uint64_t magic_number = 0xd2eadfUL;
 #define MAP_POPULATE 0
 #endif
 
-static uproc_ecurve *
-ecurve_map(const char *path)
+static uproc_ecurve *ecurve_map(const char *path)
 {
 #if HAVE_MMAP && USE_MMAP
     struct stat st;
@@ -85,7 +86,7 @@ ecurve_map(const char *path)
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
-    *ec = (struct uproc_ecurve_s){ 0 };
+    *ec = (struct uproc_ecurve_s){0};
 
     ec->mmap_fd = open(path, O_RDONLY);
     if (ec->mmap_fd == -1) {
@@ -98,9 +99,9 @@ ecurve_map(const char *path)
         goto error_close;
     }
     ec->mmap_size = st.st_size;
-    ec->mmap_ptr = mmap(NULL, ec->mmap_size, PROT_READ,
-                        MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE,
-                        ec->mmap_fd, 0);
+    ec->mmap_ptr =
+        mmap(NULL, ec->mmap_size, PROT_READ,
+             MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE, ec->mmap_fd, 0);
 
     if (ec->mmap_ptr == MAP_FAILED) {
         uproc_error_msg(UPROC_ERRNO, "mmap failed");
@@ -130,18 +131,18 @@ ecurve_map(const char *path)
         goto error_munmap;
     }
 
-   ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
-   ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
-   ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
-   uint64_t *m1, *m2, *m3;
-   m1 = (void*)(ec->mmap_ptr + OFFSET_MAGIC1);
-   m2 = (void*)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
-   m3 = (void*)(ec->mmap_ptr + OFFSET_MAGIC3(ec->suffix_count));
-   if (*m1 != magic_number || *m2 != magic_number || *m3 != magic_number) {
-       uproc_error_msg(UPROC_EINVAL, "inconsistent magic number");
-       goto error_munmap;
-   }
-   return ec;
+    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
+    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
+    ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
+    uint64_t *m1, *m2, *m3;
+    m1 = (void *)(ec->mmap_ptr + OFFSET_MAGIC1);
+    m2 = (void *)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
+    m3 = (void *)(ec->mmap_ptr + OFFSET_MAGIC3(ec->suffix_count));
+    if (*m1 != magic_number || *m2 != magic_number || *m3 != magic_number) {
+        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number");
+        goto error_munmap;
+    }
+    return ec;
 
 error_munmap:
     munmap(ec->mmap_ptr, ec->mmap_size);
@@ -151,14 +152,13 @@ error:
     free(ec);
     return NULL;
 #else
-    (void) path;
+    (void)path;
     uproc_error(UPROC_ENOTSUP);
     return NULL;
 #endif
 }
 
-uproc_ecurve *
-uproc_ecurve_mmap(const char *pathfmt, ...)
+uproc_ecurve *uproc_ecurve_mmap(const char *pathfmt, ...)
 {
     struct uproc_ecurve_s *ec;
     va_list ap;
@@ -168,8 +168,7 @@ uproc_ecurve_mmap(const char *pathfmt, ...)
     return ec;
 }
 
-uproc_ecurve *
-uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
+uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
 {
     struct uproc_ecurve_s *ec;
     char *buf;
@@ -192,19 +191,17 @@ uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
     return ec;
 }
 
-void
-uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)
+void uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)
 {
 #if HAVE_MMAP && USE_MMAP
     munmap(ecurve->mmap_ptr, ecurve->mmap_size);
     close(ecurve->mmap_fd);
 #else
-    (void) ecurve;
+    (void)ecurve;
 #endif
 }
 
-static int
-mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
+static int mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
 {
 #if HAVE_MMAP && USE_MMAP
     int fd, res = 0;
@@ -239,10 +236,12 @@ mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
     memcpy(region + OFFSET_MAGIC1, &magic_number, sizeof magic_number);
     memcpy(region + OFFSET_SUFFIXES, ecurve->suffixes,
            SIZE_SUFFIXES(ecurve->suffix_count));
-    memcpy(region + OFFSET_MAGIC2(ecurve->suffix_count), &magic_number, sizeof magic_number);
+    memcpy(region + OFFSET_MAGIC2(ecurve->suffix_count), &magic_number,
+           sizeof magic_number);
     memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->families,
            SIZE_CLASSES(ecurve->suffix_count));
-    memcpy(region + OFFSET_MAGIC3(ecurve->suffix_count), &magic_number, sizeof magic_number);
+    memcpy(region + OFFSET_MAGIC3(ecurve->suffix_count), &magic_number,
+           sizeof magic_number);
 
     munmap(region, size);
     close(fd);
@@ -252,14 +251,14 @@ error_close:
     close(fd);
     return res;
 #else
-    (void) ecurve;
-    (void) path;
+    (void)ecurve;
+    (void)path;
     return uproc_error(UPROC_ENOTSUP);
 #endif
 }
 
-int
-uproc_ecurve_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...)
+int uproc_ecurve_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt,
+                            ...)
 {
     int res;
     va_list ap;
@@ -269,9 +268,8 @@ uproc_ecurve_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt, ...)
     return res;
 }
 
-int
-uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
-                  va_list ap)
+int uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
+                             va_list ap)
 {
     int res;
     char *buf;

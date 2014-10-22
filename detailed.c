@@ -43,7 +43,6 @@
 
 #include "ppopts.h"
 
-
 #define PROGNAME "uproc-detailed"
 #define PROT_THRESH_DEFAULT 3
 
@@ -62,9 +61,7 @@ struct match
     double scores[UPROC_SUFFIX_LEN];
 };
 
-
-void
-column_maxes(uproc_list *matches, double *maxes, size_t sz)
+void column_maxes(uproc_list *matches, double *maxes, size_t sz)
 {
     struct match match;
 
@@ -81,7 +78,7 @@ column_maxes(uproc_list *matches, double *maxes, size_t sz)
         }
 
         for (size_t k = 0; k < sz; k++) {
-        /* check if requested column is in the range */
+            /* check if requested column is in the range */
             if (k >= match.index && k < match.index + UPROC_SUFFIX_LEN) {
                 size_t idx = k - match.index;
                 if (match.scores[idx] > maxes[k]) {
@@ -92,17 +89,15 @@ column_maxes(uproc_list *matches, double *maxes, size_t sz)
     }
 }
 
-
 /** "collec" matches into a list */
-void
-trace_cb(const struct uproc_word *word, uproc_family family, size_t index,
-         bool reverse, const double *scores, void *opaque)
+void trace_cb(const struct uproc_word *word, uproc_family family, size_t index,
+              bool reverse, const double *scores, void *opaque)
 {
     int res;
     uproc_bst *t = opaque;
     uproc_list *list = NULL;
     union uproc_bst_key key;
-    struct match match = { .family = family, .index = index, .reverse = reverse };
+    struct match match = {.family = family, .index = index, .reverse = reverse};
     memcpy(match.scores, scores, sizeof match.scores);
     uproc_word_to_string(match.word, word, alpha);
 
@@ -115,11 +110,9 @@ trace_cb(const struct uproc_word *word, uproc_family family, size_t index,
     uproc_list_append(list, &match);
 }
 
-
 /** Print all matched words for one family */
-void
-output_details(unsigned long seq_num, const struct uproc_sequence *seq,
-               uproc_family family, uproc_list *matches)
+void output_details(unsigned long seq_num, const struct uproc_sequence *seq,
+                    uproc_family family, uproc_list *matches)
 {
     size_t seq_len = strlen(seq->data);
     double *maxes = malloc(seq_len * sizeof *maxes);
@@ -152,21 +145,20 @@ output_details(unsigned long seq_num, const struct uproc_sequence *seq,
             uproc_io_printf(out_stream, "%lu,%s,", seq_num, seq->header);
             if (!idmap) {
                 uproc_io_printf(out_stream, "%" UPROC_FAMILY_PRI ",", family);
-            }
-            else {
-                uproc_io_printf(out_stream, "%s,", uproc_idmap_str(idmap, family));
+            } else {
+                uproc_io_printf(out_stream, "%s,",
+                                uproc_idmap_str(idmap, family));
             }
             uproc_io_printf(out_stream, "%s,", match.word);
             uproc_io_printf(out_stream, "%s,", match.reverse ? "rev" : "fwd");
-            uproc_io_printf(out_stream, "%lu,%1.5f\n", (unsigned long)match.index, sum);
+            uproc_io_printf(out_stream, "%lu,%1.5f\n",
+                            (unsigned long)match.index, sum);
         }
     }
     free(maxes);
 }
 
-
-void
-bst_map_list_destroy(union uproc_bst_key key, void *value, void *opaque)
+void bst_map_list_destroy(union uproc_bst_key key, void *value, void *opaque)
 {
     uproc_list **p = value;
     (void)key;
@@ -174,12 +166,11 @@ bst_map_list_destroy(union uproc_bst_key key, void *value, void *opaque)
     uproc_list_destroy(*p);
 }
 
-
-void
-classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
+void classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
 {
     static unsigned long seq_num = 1;
-    uproc_bst *match_lists = uproc_bst_create(UPROC_BST_UINT, sizeof (uproc_list*));
+    uproc_bst *match_lists =
+        uproc_bst_create(UPROC_BST_UINT, sizeof(uproc_list *));
     uproc_protclass_set_trace(pc, trace_cb, match_lists);
 
     uproc_list *results = NULL;
@@ -189,7 +180,7 @@ classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
         uproc_list_get(results, i, &result);
 
         uproc_list *matches;
-        union uproc_bst_key key = { .uint = result.family };
+        union uproc_bst_key key = {.uint = result.family};
         if (uproc_bst_remove(match_lists, key, &matches)) {
             exit(EXIT_FAILURE);
         }
@@ -202,9 +193,7 @@ classify_detailed(uproc_protclass *pc, const struct uproc_sequence *seq)
     seq_num++;
 }
 
-
-void
-classify_file(uproc_io_stream *stream, uproc_protclass *pc)
+void classify_file(uproc_io_stream *stream, uproc_protclass *pc)
 {
     struct uproc_sequence seq = UPROC_SEQUENCE_INITIALIZER;
     uproc_seqiter *seqit = uproc_seqiter_create(stream);
@@ -216,19 +205,17 @@ classify_file(uproc_io_stream *stream, uproc_protclass *pc)
     uproc_seqiter_destroy(seqit);
 }
 
-
-void
-make_opts(struct ppopts *o, const char *progname)
+void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
-    ppopts_add_text(o,
-        "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]", progname);
+    ppopts_add_text(o, "USAGE: %s [options] DBDIR MODELDIR [INPUTFILES]",
+                    progname);
 
     ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help",       "",    "Print this message and exit.");
-    O('v', "version",    "",    "Print version and exit.");
-    O('V', "libversion", "",    "Print libuproc version/features and exit.");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
 
     ppopts_add_header(o, "OUTPUT OPTIONS:");
     O('o', "output", "FILE",
@@ -240,22 +227,18 @@ make_opts(struct ppopts *o, const char *progname)
       "instead of their names.");
 
     ppopts_add_header(o, "PROTEIN CLASSIFICATION OPTIONS:");
-    O('P', "pthresh", "N", "\
+    O('P', "pthresh", "N",
+      "\
 Protein threshold level. Allowed values:\n\
     0   fixed threshold of 0.0\n\
     2   less restrictive\n\
     3   more restrictive\n\
-Default is %d . ", PROT_THRESH_DEFAULT);
+Default is %d . ",
+      PROT_THRESH_DEFAULT);
 #undef O
 }
 
-
-enum nonopt_args
-{
-    DBDIR, MODELDIR, INFILES,
-    ARGC
-};
-
+enum nonopt_args { DBDIR, MODELDIR, INFILES, ARGC };
 
 int main(int argc, char **argv)
 {
@@ -285,17 +268,15 @@ int main(int argc, char **argv)
             case 'n':
                 use_idmap = false;
                 break;
-            case 'P':
-                {
-                    int tmp = 42;
-                    (void) parse_int(optarg, &tmp);
-                    if (tmp != 0 && tmp != 2 && tmp != 3) {
-                        fprintf(stderr, "-P argument must be 0, 2 or 3\n");
-                        return EXIT_FAILURE;
-                    }
-                    prot_thresh_level = tmp;
+            case 'P': {
+                int tmp = 42;
+                (void)parse_int(optarg, &tmp);
+                if (tmp != 0 && tmp != 2 && tmp != 3) {
+                    fprintf(stderr, "-P argument must be 0, 2 or 3\n");
+                    return EXIT_FAILURE;
                 }
-                break;
+                prot_thresh_level = tmp;
+            } break;
             case '?':
                 return EXIT_FAILURE;
         }
@@ -306,18 +287,25 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct database db;
-    struct model model;
-    model_load(&model, argv[optind + MODELDIR], 0);
-    database_load(&db, argv[optind + DBDIR], prot_thresh_level,
-                  UPROC_ECURVE_BINARY);
+    uproc_database *db;
+    uproc_model *model;
+    model = uproc_model_load(argv[optind + MODELDIR], 0);
+    if (!model)
+        return EXIT_FAILURE;
+
+    db = uproc_database_load(argv[optind + DBDIR], prot_thresh_level,
+                             UPROC_ECURVE_BINARY);
+    if (!db) {
+        uproc_model_destroy(model);
+        return EXIT_FAILURE;
+    }
 
     if (use_idmap) {
-        idmap = db.idmap;
+        idmap = uproc_database_idmap(db);
     }
-    alpha = uproc_ecurve_alphabet(db.fwd);
+    alpha = uproc_ecurve_alphabet(uproc_database_ecurve_forward(db));
     uproc_protclass *pc;
-    create_classifiers(&pc, NULL, &db, &model, false);
+    create_classifiers(&pc, NULL, db, model, false);
 
     if (argc < optind + ARGC) {
         argv[argc++] = "-";
@@ -330,7 +318,7 @@ int main(int argc, char **argv)
     }
     uproc_io_close(out_stream);
     uproc_protclass_destroy(pc);
-    model_free(&model);
-    database_free(&db);
+    uproc_model_destroy(model);
+    uproc_database_destroy(db);
     return EXIT_SUCCESS;
 }

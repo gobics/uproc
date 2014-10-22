@@ -33,16 +33,14 @@
 #define IUPAC_DNA_WC "RYSWKMBDHVN"
 #define IUPAC_DNA_ALL IUPAC_NT IUPAC_DNA_WC
 
-static uproc_nt
-iupac_char_to_nt(int c)
+static uproc_nt iupac_char_to_nt(int c)
 {
     uproc_nt nt = 0;
     c = toupper(c);
 
     if (!isalpha(c)) {
         return UPROC_NT_NOT_CHAR;
-    }
-    else if (!strchr(IUPAC_DNA_ALL, c)) {
+    } else if (!strchr(IUPAC_DNA_ALL, c)) {
         return UPROC_NT_NOT_IUPAC;
     }
 
@@ -57,8 +55,7 @@ iupac_char_to_nt(int c)
     return nt;
 }
 
-static uproc_codon
-iupac_string_to_codon(const char *str)
+static uproc_codon iupac_string_to_codon(const char *str)
 {
     unsigned i;
     uproc_codon c = 0;
@@ -70,32 +67,31 @@ iupac_string_to_codon(const char *str)
 
 #define LOW_BITS(x, n) ((x) & ~(~0 << (n)))
 
-#define NT_AT(c, pos) LOW_BITS(((c) >> (pos) * UPROC_NT_BITS), UPROC_NT_BITS)
+#define NT_AT(c, pos) LOW_BITS(((c) >> (pos)*UPROC_NT_BITS), UPROC_NT_BITS)
 
 #define CODON(nt1, nt2, nt3) \
     ((nt1 << 2 * UPROC_NT_BITS) | (nt2 << UPROC_NT_BITS) | nt3)
 
-#define TABLE(T)                                                            \
-void table_ ## T (const char *prefix, const char *fmt, T *v, unsigned n)    \
-{                                                                           \
-    unsigned i, width = 0;                                                  \
-    printf("static " # T " %s[%u] = {\n", prefix, n);                       \
-                                                                            \
-    width += printf("   ");                                                 \
-    for (i = 0; i < n; i++) {                                               \
-        if (width > 70) {                                                   \
-            width = printf("\n    ") - 1;                                   \
-        }                                                                   \
-        else {                                                              \
-            width += printf(" ");                                           \
-        }                                                                   \
-        width += printf(fmt, v[i]);                                         \
-        if (i < n) {                                                        \
-            width += printf(",");                                           \
-        }                                                                   \
-    }                                                                       \
-    printf("\n};\n");                                                       \
-}
+#define TABLE(T)                                                          \
+    void table_##T(const char *prefix, const char *fmt, T *v, unsigned n) \
+    {                                                                     \
+        unsigned i, width = 0;                                            \
+        printf("static " #T " %s[%u] = {\n", prefix, n);                  \
+                                                                          \
+        width += printf("   ");                                           \
+        for (i = 0; i < n; i++) {                                         \
+            if (width > 70) {                                             \
+                width = printf("\n    ") - 1;                             \
+            } else {                                                      \
+                width += printf(" ");                                     \
+            }                                                             \
+            width += printf(fmt, v[i]);                                   \
+            if (i < n) {                                                  \
+                width += printf(",");                                     \
+            }                                                             \
+        }                                                                 \
+        printf("\n};\n");                                                 \
+    }
 
 TABLE(int)
 
@@ -127,14 +123,18 @@ void gen_codon(void)
     for (i = 0; i < UPROC_BINARY_CODON_COUNT; i++) {
         int k;
         uproc_codon c = 0;
-        uproc_nt nt[3] = { NT_AT(i, 2), NT_AT(i, 1), NT_AT(i, 0) };
+        uproc_nt nt[3] = {NT_AT(i, 2), NT_AT(i, 1), NT_AT(i, 0)};
 
         for (k = 3; k--;) {
             uproc_nt tmp = 0;
-            if (nt[k] & UPROC_NT_A) tmp |= UPROC_NT_T;
-            if (nt[k] & UPROC_NT_C) tmp |= UPROC_NT_G;
-            if (nt[k] & UPROC_NT_G) tmp |= UPROC_NT_C;
-            if (nt[k] & UPROC_NT_T) tmp |= UPROC_NT_A;
+            if (nt[k] & UPROC_NT_A)
+                tmp |= UPROC_NT_T;
+            if (nt[k] & UPROC_NT_C)
+                tmp |= UPROC_NT_G;
+            if (nt[k] & UPROC_NT_G)
+                tmp |= UPROC_NT_C;
+            if (nt[k] & UPROC_NT_T)
+                tmp |= UPROC_NT_A;
             codon_append(&c, tmp);
         }
         codon_complement[i] = c;
@@ -152,11 +152,12 @@ void gen_codon(void)
                 codon_is_stop[i] = 0;
         }
 
-        #define CASE(nt, aa)                                            \
-        else if (uproc_codon_match(i, iupac_string_to_codon(nt)))       \
-            codon_to_char[i] = aa                                       \
+#define CASE(nt, aa)                                          \
+    else if (uproc_codon_match(i, iupac_string_to_codon(nt))) \
+        codon_to_char[i] = aa
 
-        if (0) ;
+        if (0)
+            ;
         CASE("GCN", 'A');
         CASE("CGN", 'R');
         CASE("MGR", 'R');
@@ -195,11 +196,12 @@ int main(void)
     printf("/* this file was generated by gen_codon_tables.c */\n\n");
     gen_char_to_nt();
     gen_codon();
-    printf("\n"
-           "#define CODON_IS_STOP(c) (codon_is_stop[(c)])\n"
-           "#define CODON_COMPLEMENT(c) ((uproc_codon)codon_complement[(c)])\n"
-           "#define CODON_TO_CHAR(c) (codon_to_char[(c)])\n"
-           "#define CHAR_TO_NT(c) (char_to_nt[(unsigned char) (c)])\n");
+    printf(
+        "\n"
+        "#define CODON_IS_STOP(c) (codon_is_stop[(c)])\n"
+        "#define CODON_COMPLEMENT(c) ((uproc_codon)codon_complement[(c)])\n"
+        "#define CODON_TO_CHAR(c) (codon_to_char[(c)])\n"
+        "#define CHAR_TO_NT(c) (char_to_nt[(unsigned char) (c)])\n");
 
     return EXIT_SUCCESS;
 }

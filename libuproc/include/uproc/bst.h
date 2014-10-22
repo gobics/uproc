@@ -36,7 +36,6 @@
 #include "uproc/common.h"
 #include "uproc/word.h"
 
-
 /** \defgroup obj_bst object uproc_bst
  *
  * Binary search tree
@@ -92,10 +91,8 @@ union uproc_bst_key
     struct uproc_word word;
 };
 
-
 /** Which member of union ::uproc_bst_key is used */
-enum uproc_bst_keytype
-{
+enum uproc_bst_keytype {
     /** .uint (uintmax_t) */
     UPROC_BST_UINT,
 
@@ -103,10 +100,8 @@ enum uproc_bst_keytype
     UPROC_BST_WORD,
 };
 
-
 /** BST specific return codes */
-enum
-{
+enum {
     /** BST doesn't contain an item with the given key */
 
     UPROC_BST_KEY_NOT_FOUND = -404,
@@ -115,7 +110,6 @@ enum
     UPROC_BST_KEY_EXISTS = -403,
 };
 
-
 /** Initialize an empty binary search tree
  *
  * \param key_type      key type
@@ -123,18 +117,14 @@ enum
  */
 uproc_bst *uproc_bst_create(enum uproc_bst_keytype key_type, size_t value_size);
 
-
 /** Destroy BST and all contained nodes */
 void uproc_bst_destroy(uproc_bst *t);
-
 
 /** Return non-zero if the tree is empty */
 int uproc_bst_isempty(uproc_bst *t);
 
-
 /** Return the number of nodes */
 size_t uproc_bst_size(const uproc_bst *t);
-
 
 /** Insert item
  *
@@ -147,9 +137,7 @@ size_t uproc_bst_size(const uproc_bst *t);
  * If memory allocation fails, returns -1 and sets ::uproc_errno to
  * ::UPROC_ENOMEM.
  */
-int uproc_bst_insert(uproc_bst *t, union uproc_bst_key key,
-                     const void *value);
-
+int uproc_bst_insert(uproc_bst *t, union uproc_bst_key key, const void *value);
 
 /** Insert or update item
  *
@@ -159,9 +147,7 @@ int uproc_bst_insert(uproc_bst *t, union uproc_bst_key key,
  * \param key   search key
  * \param value pointer to value to be stored
  */
-int uproc_bst_update(uproc_bst *t, union uproc_bst_key key,
-                     const void *value);
-
+int uproc_bst_update(uproc_bst *t, union uproc_bst_key key, const void *value);
 
 /** Get item
  *
@@ -175,7 +161,6 @@ int uproc_bst_update(uproc_bst *t, union uproc_bst_key key,
  * second parameter.
  */
 int uproc_bst_get(uproc_bst *t, union uproc_bst_key key, void *value);
-
 
 /** Remove item
  *
@@ -201,10 +186,9 @@ int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value);
  * \param opaque    second argument to \c function
  */
 void uproc_bst_map(const uproc_bst *t,
-                   void(*func)(union uproc_bst_key, void *, void *),
+                   void (*func)(union uproc_bst_key, void *, void *),
                    void *opaque);
 /** \} */
-
 
 /** \defgroup obj_bstiter object uproc_bstiter
  *
@@ -233,7 +217,6 @@ typedef struct uproc_bstiter_s uproc_bstiter;
  * ::UPROC_ENOMEM.
  */
 uproc_bstiter *uproc_bstiter_create(const uproc_bst *t);
-
 
 /** Obtain next key/value pair
  *

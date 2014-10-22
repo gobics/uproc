@@ -39,9 +39,7 @@
 #define PROGNAME "uproc-import"
 #endif
 
-
-void
-make_opts(struct ppopts *o, const char *progname)
+void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
@@ -50,16 +48,17 @@ make_opts(struct ppopts *o, const char *progname)
     ppopts_add_text(o, "Export database from SRCDIR to DEST.");
 #else
     ppopts_add_text(o, "USAGE: %s [options] SRC DESTDIR", progname);
-    ppopts_add_text(o, "Import database from SRC to DESTDIR"
+    ppopts_add_text(o,
+                    "Import database from SRC to DESTDIR"
 #if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
-        " (which must already exist)"
+                    " (which must already exist)"
 #endif
-        ".");
+                    ".");
 #endif
 
     ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help",       "", "Print this message and exit.");
-    O('v', "version",    "", "Print version and exit.");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
 #ifdef EXPORT
     if (uproc_features_zlib()) {
@@ -69,9 +68,7 @@ make_opts(struct ppopts *o, const char *progname)
 #undef O
 }
 
-
-void
-progress_cb(double p)
+void progress_cb(double p)
 {
     progress(uproc_stderr, NULL, p);
 }
@@ -81,88 +78,78 @@ progress_cb(double p)
 #endif
 
 #ifdef EXPORT
-#define EXPORT_FUNC(name, type, load, store, destroy)                       \
-int                                                                         \
-name(const char *dir, const char *name, uproc_io_stream *stream)            \
-{                                                                           \
-    int res;                                                                \
-    type *thing;                                                            \
-    fprintf(stderr, "exporting %s/%s\n", dir, name);                        \
-    thing = load(UPROC_IO_GZIP, "%s/%s", dir, name);                        \
-    if (!thing) {                                                           \
-        return -1;                                                          \
-    }                                                                       \
-    res = store(thing, stream);                                             \
-    destroy(thing);                                                         \
-    return res;                                                             \
-}
+#define EXPORT_FUNC(name, type, load, store, destroy)                    \
+    int name(const char *dir, const char *name, uproc_io_stream *stream) \
+    {                                                                    \
+        int res;                                                         \
+        type *thing;                                                     \
+        fprintf(stderr, "exporting %s/%s\n", dir, name);                 \
+        thing = load(UPROC_IO_GZIP, "%s/%s", dir, name);                 \
+        if (!thing) {                                                    \
+            return -1;                                                   \
+        }                                                                \
+        res = store(thing, stream);                                      \
+        destroy(thing);                                                  \
+        return res;                                                      \
+    }
 
-uproc_ecurve *
-wrap_load(enum uproc_io_type iotype, const char *fmt, const char *dir,
-          const char *name)
+uproc_ecurve *wrap_load(enum uproc_io_type iotype, const char *fmt,
+                        const char *dir, const char *name)
 {
     progress(uproc_stderr, "Loading", -1);
-    return uproc_ecurve_loadp(UPROC_ECURVE_BINARY, iotype, progress_cb,
-                              fmt, dir, name);
+    return uproc_ecurve_loadp(UPROC_ECURVE_BINARY, iotype, progress_cb, fmt,
+                              dir, name);
 }
 
-int
-wrap_store(uproc_ecurve *ec, uproc_io_stream *stream)
+int wrap_store(uproc_ecurve *ec, uproc_io_stream *stream)
 {
     progress(uproc_stderr, "Storing", -1);
     return uproc_ecurve_storeps(ec, UPROC_ECURVE_PLAIN, progress_cb, stream);
 }
 
-EXPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store,
-            uproc_ecurve_destroy)
+EXPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store, uproc_ecurve_destroy)
 EXPORT_FUNC(matrix, uproc_matrix, uproc_matrix_load, uproc_matrix_stores,
             uproc_matrix_destroy)
 EXPORT_FUNC(idmap, uproc_idmap, uproc_idmap_load, uproc_idmap_stores,
             uproc_idmap_destroy)
 #else
-#define IMPORT_FUNC(name, type, load, store, destroy)                       \
-int                                                                         \
-name(const char *dir, const char *name, uproc_io_stream *stream)            \
-{                                                                           \
-    int res;                                                                \
-    type *thing;                                                            \
-    fprintf(stderr, "importing %s/%s\n", dir, name);                        \
-    thing = load(stream);                                                   \
-    if (!thing) {                                                           \
-        return -1;                                                          \
-    }                                                                       \
-    res = store(thing, UPROC_IO_GZIP, "%s/%s", dir, name);                  \
-    destroy(thing);                                                         \
-    return res;                                                             \
-}
+#define IMPORT_FUNC(name, type, load, store, destroy)                    \
+    int name(const char *dir, const char *name, uproc_io_stream *stream) \
+    {                                                                    \
+        int res;                                                         \
+        type *thing;                                                     \
+        fprintf(stderr, "importing %s/%s\n", dir, name);                 \
+        thing = load(stream);                                            \
+        if (!thing) {                                                    \
+            return -1;                                                   \
+        }                                                                \
+        res = store(thing, UPROC_IO_GZIP, "%s/%s", dir, name);           \
+        destroy(thing);                                                  \
+        return res;                                                      \
+    }
 
-uproc_ecurve *
-wrap_load(uproc_io_stream *stream)
+uproc_ecurve *wrap_load(uproc_io_stream *stream)
 {
     progress(uproc_stderr, "Loading", -1);
     return uproc_ecurve_loadps(UPROC_ECURVE_PLAIN, progress_cb, stream);
 }
 
-int
-wrap_store(uproc_ecurve *ec, enum uproc_io_type iotype, const char *fmt,
-           const char *dir, const char *name)
+int wrap_store(uproc_ecurve *ec, enum uproc_io_type iotype, const char *fmt,
+               const char *dir, const char *name)
 {
     progress(uproc_stderr, "Storing", -1);
     return uproc_ecurve_storep(ec, UPROC_ECURVE_BINARY, iotype, progress_cb,
                                fmt, dir, name);
 }
 
-IMPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store,
-            uproc_ecurve_destroy)
+IMPORT_FUNC(ecurve, uproc_ecurve, wrap_load, wrap_store, uproc_ecurve_destroy)
 IMPORT_FUNC(matrix, uproc_matrix, uproc_matrix_loads, uproc_matrix_store,
             uproc_matrix_destroy)
 IMPORT_FUNC(idmap, uproc_idmap, uproc_idmap_loads, uproc_idmap_store,
             uproc_idmap_destroy)
 #endif
 
-
-int
-db_info(const char *dir, uproc_io_stream *stream)
+int db_info(const char *dir, uproc_io_stream *stream)
 {
     char *line = NULL;
     size_t sz;
@@ -190,13 +177,7 @@ db_info(const char *dir, uproc_io_stream *stream)
     return 0;
 }
 
-
-enum nonopt_args
-{
-    SOURCE,
-    DEST,
-    ARGC
-};
+enum nonopt_args { SOURCE, DEST, ARGC };
 
 int main(int argc, char **argv)
 {
@@ -253,32 +234,32 @@ int main(int argc, char **argv)
     }
     res = matrix(dir, "prot_thresh_e2", stream);
     if (res) {
-        uproc_perror("error " IMEX"porting matrix");
+        uproc_perror("error " IMEX "porting matrix");
         return EXIT_FAILURE;
     }
     res = matrix(dir, "prot_thresh_e3", stream);
     if (res) {
-        uproc_perror("error " IMEX"porting matrix");
+        uproc_perror("error " IMEX "porting matrix");
         return EXIT_FAILURE;
     }
     res = idmap(dir, "idmap", stream);
     if (res) {
-        uproc_perror("error " IMEX"porting idmap");
+        uproc_perror("error " IMEX "porting idmap");
         return EXIT_FAILURE;
     }
     res = ecurve(dir, "fwd.ecurve", stream);
     if (res) {
-        uproc_perror("error " IMEX"porting forward ecurve");
+        uproc_perror("error " IMEX "porting forward ecurve");
         return EXIT_FAILURE;
     }
     res = ecurve(dir, "rev.ecurve", stream);
     if (res) {
-        uproc_perror("error " IMEX"porting reverse ecurve");
+        uproc_perror("error " IMEX "porting reverse ecurve");
         return EXIT_FAILURE;
     }
     res = db_info(dir, stream);
     if (res) {
-        uproc_perror("error " IMEX"porting info.txt");
+        uproc_perror("error " IMEX "porting info.txt");
         return EXIT_FAILURE;
     }
     uproc_io_close(stream);

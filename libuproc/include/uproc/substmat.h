@@ -35,7 +35,6 @@
 #include "uproc/io.h"
 #include "uproc/alphabet.h"
 
-
 /** \defgroup obj_substmat object uproc_substmat
  *
  * Array of matrices of amino acid distances
@@ -53,17 +52,14 @@
  */
 typedef struct uproc_substmat_s uproc_substmat;
 
-
 /** Create substmat object
  *
  * Create substitution matrix object with all entries set to 0.
  */
 uproc_substmat *uproc_substmat_create(void);
 
-
 /** Destroy substmat object */
 void uproc_substmat_destroy(uproc_substmat *mat);
-
 
 /** Get distance of two amino acids
  *
@@ -80,7 +76,6 @@ void uproc_substmat_destroy(uproc_substmat *mat);
 double uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
                           uproc_amino x, uproc_amino y);
 
-
 /** Set distance of two amino acids
  *
  * Sets the distance between two amino acids \c x and \c y at the suffix
@@ -94,7 +89,6 @@ double uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
  */
 void uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
                         uproc_amino y, double dist);
-
 
 /** Look up all distances between amino acids in a suffix
  *
@@ -110,7 +104,6 @@ void uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
 void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
                                    uproc_suffix s2, double *dist);
 
-
 /** Load substmat from file
  *
  * \param iotype    IO type, see ::uproc_io_type
@@ -119,7 +112,6 @@ void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
  */
 uproc_substmat *uproc_substmat_load(enum uproc_io_type iotype,
                                     const char *pathfmt, ...);
-
 
 /** Load substmat from file
  *

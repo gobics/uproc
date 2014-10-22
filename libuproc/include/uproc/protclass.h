@@ -30,12 +30,10 @@
 #ifndef UPROC_PROTCLASS_H
 #define UPROC_PROTCLASS_H
 
-
 #include "uproc/common.h"
 #include "uproc/ecurve.h"
 #include "uproc/substmat.h"
 #include "uproc/list.h"
-
 
 /** \defgroup struct_protresult struct uproc_protresult
  * Protein classification result
@@ -52,25 +50,22 @@ struct uproc_protresult
     double score;
 };
 
-
 /** Initializer for ::uproc_protresult structs */
-#define UPROC_PROTRESULT_INITIALIZER { 0, 0 }
-
+#define UPROC_PROTRESULT_INITIALIZER \
+    {                                \
+        0, 0                         \
+    }
 
 /** Initialize a ::uproc_protresult struct */
 void uproc_protresult_init(struct uproc_protresult *results);
 
-
 /** Free allocated pointers of ::uproc_protresult struct */
 void uproc_protresult_free(struct uproc_protresult *results);
-
 
 /** Deep-copy a ::uproc_protresult struct */
 int uproc_protresult_copy(struct uproc_protresult *dest,
                           const struct uproc_protresult *src);
 /** \} */
-
-
 
 /** \defgroup obj_protclass object uproc_protclass
  *
@@ -87,7 +82,6 @@ int uproc_protresult_copy(struct uproc_protresult *dest,
  */
 typedef struct uproc_protclass_s uproc_protclass;
 
-
 /** Protein filter function type
  *
  * Used by uproc_protclass_classify() to decide whether a classification should
@@ -103,19 +97,16 @@ typedef struct uproc_protclass_s uproc_protclass;
 typedef bool uproc_protfilter(const char *seq, size_t seq_len,
                               uproc_family family, double score, void *arg);
 
-
 /** Classification mode
  *
  * Determines which results uproc_protclass_classify() produces.
  */
-enum uproc_protclass_mode
-{
+enum uproc_protclass_mode {
     /** Only the result with the maximum score */
     UPROC_PROTCLASS_ALL,
     /** All results (unordered) */
     UPROC_PROTCLASS_MAX,
 };
-
 
 /** Create new protein classifier
  *
@@ -133,10 +124,8 @@ uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
                                         uproc_protfilter *filter,
                                         void *filter_arg);
 
-
 /** Destroy protein classifier */
 void uproc_protclass_destroy(uproc_protclass *pc);
-
 
 /** Classify DNA sequence
  *
@@ -153,7 +142,6 @@ void uproc_protclass_destroy(uproc_protclass *pc);
  */
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
                              uproc_list **results);
-
 
 /** Tracing callback type
  *
@@ -172,10 +160,9 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
  * \param arg       user-supplied argument
  */
 typedef void uproc_protclass_trace_cb(const struct uproc_word *word,
-                                      uproc_family family,
-                                      size_t index, bool reverse,
-                                      const double *scores, void *opaque);
-
+                                      uproc_family family, size_t index,
+                                      bool reverse, const double *scores,
+                                      void *opaque);
 
 /** Set trace callback
  *

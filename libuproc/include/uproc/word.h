@@ -51,10 +51,11 @@ struct uproc_word
     uproc_suffix suffix;
 };
 
-
 /** Initializer to be used for all ::uproc_word structs */
-#define UPROC_WORD_INITIALIZER { 0, 0 }
-
+#define UPROC_WORD_INITIALIZER \
+    {                          \
+        0, 0                   \
+    }
 
 /** Transform a string to amino acid word
  *
@@ -69,7 +70,6 @@ struct uproc_word
 int uproc_word_from_string(struct uproc_word *word, const char *str,
                            const uproc_alphabet *alpha);
 
-
 /** Build string corresponding to amino acid word
  *
  * Translates an amino acid word back to a string. The string will be
@@ -82,7 +82,6 @@ int uproc_word_from_string(struct uproc_word *word, const char *str,
  */
 int uproc_word_to_string(char *str, const struct uproc_word *word,
                          const uproc_alphabet *alpha);
-
 
 /** Append amino acid
  *
@@ -98,7 +97,6 @@ int uproc_word_to_string(char *str, const struct uproc_word *word,
  */
 void uproc_word_append(struct uproc_word *word, uproc_amino amino);
 
-
 /** Prepend amino acid
  *
  * Complement to the append operation, e.g.
@@ -109,10 +107,8 @@ void uproc_word_append(struct uproc_word *word, uproc_amino amino);
  */
 void uproc_word_prepend(struct uproc_word *word, uproc_amino amino);
 
-
 /** Compare first amino acid of a word */
 bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
-
 
 /** Compare words
  *
@@ -122,7 +118,6 @@ bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
  */
 int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
 /** \} */
-
 
 /** \defgroup obj_worditer object uproc_worditer
  * \{
@@ -153,7 +148,6 @@ int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
  */
 typedef struct uproc_worditer_s uproc_worditer;
 
-
 /** Create worditer object
  *
  * The iterator may not be used after the lifetime of the objects pointed to
@@ -164,7 +158,6 @@ typedef struct uproc_worditer_s uproc_worditer;
  */
 uproc_worditer *uproc_worditer_create(const char *seq,
                                       const uproc_alphabet *alpha);
-
 
 /** Obtain the next word(s) from a word iterator
  *
@@ -178,7 +171,6 @@ uproc_worditer *uproc_worditer_create(const char *seq,
  */
 int uproc_worditer_next(uproc_worditer *iter, size_t *index,
                         struct uproc_word *fwd, struct uproc_word *rev);
-
 
 /** Destroy worditer object */
 void uproc_worditer_destroy(uproc_worditer *iter);

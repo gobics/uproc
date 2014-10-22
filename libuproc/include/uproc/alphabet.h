@@ -32,7 +32,6 @@
 
 #include "uproc/common.h"
 
-
 /** \defgroup obj_alphabet object uproc_alphabet
  *
  * Amino acid alphabet
@@ -53,7 +52,6 @@
  */
 typedef struct uproc_alphabet_s uproc_alphabet;
 
-
 /** Create alphabet object
  *
  * The first argument string \c s must be a string exactly
@@ -63,10 +61,8 @@ typedef struct uproc_alphabet_s uproc_alphabet;
  */
 uproc_alphabet *uproc_alphabet_create(const char *s);
 
-
 /** Destroy alphabet object */
 void uproc_alphabet_destroy(uproc_alphabet *alpha);
-
 
 /** Translate character to amino acid
  *
@@ -81,7 +77,6 @@ void uproc_alphabet_destroy(uproc_alphabet *alpha);
  */
 uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c);
 
-
 /** Translate amino acid to character
  *
  * \param alpha     alphabet object
@@ -95,7 +90,6 @@ uproc_amino uproc_alphabet_char_to_amino(const uproc_alphabet *alpha, int c);
  */
 int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
 
-
 /** Return the underlying string
  *
  *  Returns a pointer to the underlying string, which is a copy of the argument
@@ -104,7 +98,6 @@ int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
 const char *uproc_alphabet_str(const uproc_alphabet *alpha);
 
 /** \} */
-
 
 /**
  * \}

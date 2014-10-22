@@ -32,7 +32,6 @@
 #define MIN_CAPACITY 32
 #define MAX_SIZE (LONG_MAX)
 
-
 struct uproc_list_s
 {
     /* Number of stored values */
@@ -48,11 +47,9 @@ struct uproc_list_s
     unsigned char *data;
 };
 
-
 /* Reallocate the list data pointer to the given new capacity or at
  * least MIN_CAPACITY. Fails if memory can't be reallocated */
-static int
-list_realloc(struct uproc_list_s *list, long n)
+static int list_realloc(struct uproc_list_s *list, long n)
 {
     unsigned char *tmp;
     if (n < MIN_CAPACITY) {
@@ -67,12 +64,10 @@ list_realloc(struct uproc_list_s *list, long n)
     return 0;
 }
 
-
 /* Doubles the capacity of a list. If (value_size * capacity) would exceed
  * MAX_SIZE, use (MAX_SIZE / value_size) instead of doubling.
  * Fails if the size is already (MAX_SIZE / value_size).  */
-static int
-list_grow(struct uproc_list_s *list, long n)
+static int list_grow(struct uproc_list_s *list, long n)
 {
     long cap_req, cap_new, cap_max;
 
@@ -88,8 +83,7 @@ list_grow(struct uproc_list_s *list, long n)
 
     if (cap_max / 2 > list->capacity) {
         cap_new = list->capacity * 2;
-    }
-    else {
+    } else {
         cap_new = cap_max;
     }
     if (cap_new < cap_req) {
@@ -98,35 +92,31 @@ list_grow(struct uproc_list_s *list, long n)
     return list_realloc(list, cap_new);
 }
 
-
-uproc_list *
-uproc_list_create(size_t value_size)
+uproc_list *uproc_list_create(size_t value_size)
 {
-   struct uproc_list_s *list;
-   if (!value_size) {
-       uproc_error_msg(UPROC_EINVAL, "value size must be non-zero");
-       return NULL;
-   }
+    struct uproc_list_s *list;
+    if (!value_size) {
+        uproc_error_msg(UPROC_EINVAL, "value size must be non-zero");
+        return NULL;
+    }
 
-   list = malloc(sizeof *list);
-   if (!list) {
-       uproc_error(UPROC_ENOMEM);
-       return NULL;
-   }
-   list->size = list->capacity = 0;
-   list->value_size = value_size;
-   list->data = NULL;
+    list = malloc(sizeof *list);
+    if (!list) {
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    list->size = list->capacity = 0;
+    list->value_size = value_size;
+    list->data = NULL;
 
-   if (list_realloc(list, 0)) {
-       free(list);
-       return NULL;
-   }
-   return list;
+    if (list_realloc(list, 0)) {
+        free(list);
+        return NULL;
+    }
+    return list;
 }
 
-
-void
-uproc_list_destroy(uproc_list *list)
+void uproc_list_destroy(uproc_list *list)
 {
     if (!list) {
         return;
@@ -135,32 +125,26 @@ uproc_list_destroy(uproc_list *list)
     free(list);
 }
 
-
-void
-uproc_list_clear(uproc_list *list)
+void uproc_list_clear(uproc_list *list)
 {
     list->size = 0;
 }
 
-
-int
-uproc_list_get(const uproc_list *list, long index, void *value)
+int uproc_list_get(const uproc_list *list, long index, void *value)
 {
     long idx = index;
     if (idx < 0) {
         idx += list->size;
     }
     if (idx < 0 || idx >= list->size) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "list index %ld out of range", index);
+        return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
+                               index);
     }
     memcpy(value, list->data + idx * list->value_size, list->value_size);
     return 0;
 }
 
-
-size_t
-uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
+size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
 {
     size_t needed = list->value_size * list->size;
     if (needed < sz) {
@@ -170,25 +154,21 @@ uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
     return needed;
 }
 
-
-int
-uproc_list_set(uproc_list *list, long index, const void *value)
+int uproc_list_set(uproc_list *list, long index, const void *value)
 {
     long idx = index;
     if (idx < 0) {
         idx += list->size;
     }
     if (idx < 0 || idx >= list->size) {
-        return uproc_error_msg(
-            UPROC_EINVAL, "list index %ld out of range", index);
+        return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
+                               index);
     }
     memcpy(list->data + idx * list->value_size, value, list->value_size);
     return 0;
 }
 
-
-int
-uproc_list_append(uproc_list *list, const void *value)
+int uproc_list_append(uproc_list *list, const void *value)
 {
     int res = list_grow(list, 1);
     if (res) {
@@ -198,9 +178,7 @@ uproc_list_append(uproc_list *list, const void *value)
     return uproc_list_set(list, list->size - 1, value);
 }
 
-
-int
-uproc_list_extend(uproc_list *list, const void *values, long n)
+int uproc_list_extend(uproc_list *list, const void *values, long n)
 {
     int res;
     if (n < 0) {
@@ -214,14 +192,13 @@ uproc_list_extend(uproc_list *list, const void *values, long n)
     if (res) {
         return res;
     }
-    memcpy(list->data + list->size * list->value_size, values, n * list->value_size);
+    memcpy(list->data + list->size * list->value_size, values,
+           n * list->value_size);
     list->size += n;
     return 0;
 }
 
-
-int
-uproc_list_add(uproc_list *list, const uproc_list *src)
+int uproc_list_add(uproc_list *list, const uproc_list *src)
 {
     if (list->value_size != src->value_size) {
         return uproc_error_msg(UPROC_EINVAL,
@@ -230,9 +207,7 @@ uproc_list_add(uproc_list *list, const uproc_list *src)
     return uproc_list_extend(list, src->data, src->size);
 }
 
-
-int
-uproc_list_pop(uproc_list *list, void *value)
+int uproc_list_pop(uproc_list *list, void *value)
 {
     if (list->size < 1) {
         return uproc_error_msg(UPROC_EINVAL, "pop from empty list");
@@ -245,17 +220,13 @@ uproc_list_pop(uproc_list *list, void *value)
     return list_realloc(list, list->capacity / 2);
 }
 
-
-long
-uproc_list_size(const uproc_list *list)
+long uproc_list_size(const uproc_list *list)
 {
     return list->size;
 }
 
-
-void
-uproc_list_map(const uproc_list *list, void(*func)(void *, void *),
-               void *opaque)
+void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
+                    void *opaque)
 {
     for (long i = 0; i < list->size; i++) {
         func(list->data + i * list->value_size, opaque);

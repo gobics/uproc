@@ -34,10 +34,8 @@
 
 #include "uproc/common.h"
 
-
 /** Available error codes */
-enum uproc_error_code
-{
+enum uproc_error_code {
     /** Success */
     UPROC_SUCCESS = 0,
 
@@ -66,11 +64,9 @@ enum uproc_error_code
     UPROC_ENOTSUP,
 };
 
-
 /* Set error information */
 int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
                  int line, const char *fmt, ...);
-
 
 /** Set ::uproc_errno with a custom message
  * \hideinitializer
@@ -93,14 +89,11 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
 #define uproc_error_msg(num, ...) \
     uproc_error_((num), __func__, __FILE__, __LINE__, __VA_ARGS__)
 
-
 /* Get pointer to thread-local uproc_errno */
 int *uproc_error_errno_(void);
 
-
 /** Set ::uproc_errno with a standard message */
 #define uproc_error(num) uproc_error_msg((num), NULL)
-
 
 /** \c errno -like error indicator
  *
@@ -110,10 +103,8 @@ int *uproc_error_errno_(void);
  */
 #define uproc_errno (*(uproc_error_errno_()))
 
-
 /* Get thread-local uproc_errmsg */
 const char *uproc_error_errmsg_(void);
-
 
 /** Error message
  *
@@ -122,10 +113,8 @@ const char *uproc_error_errmsg_(void);
  */
 #define uproc_errmsg (uproc_error_errmsg_())
 
-
 /* Get thread-local uproc_errloc */
 const char *uproc_error_errloc_(void);
-
 
 /** Error location
  *
@@ -134,7 +123,6 @@ const char *uproc_error_errloc_(void);
  * the last time.
  */
 #define uproc_errloc (uproc_error_errloc_())
-
 
 /** Print error message to stderr
  *
@@ -145,7 +133,6 @@ const char *uproc_error_errloc_(void);
  * \param ...   format string arguments
  */
 void uproc_perror(const char *fmt, ...);
-
 
 /** Error handler type
  *
@@ -159,7 +146,6 @@ typedef void uproc_error_handler(	enum uproc_error_code num,
                                  	const char *loc, 
 									void *context
 								);
-
 
 /** Set error handler
  *

@@ -33,15 +33,15 @@
 
 #define PROGNAME "uproc-makedb"
 
-void
-make_opts(struct ppopts *o, const char *progname)
+void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
     ppopts_add_text(o, "USAGE: %s [options] MODELDIR SOURCEFILE DESTDIR",
                     progname);
 
-    ppopts_add_text(o,
+    ppopts_add_text(
+        o,
         "Builds a UProC database from the model in MODELDIR and a FASTA/FASTQ \
         formatted SOURCEFILE and stores it in DESTDIR"
 #if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
@@ -49,17 +49,16 @@ make_opts(struct ppopts *o, const char *progname)
 #endif
         ".");
     ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help",       "", "Print this message and exit.");
-    O('v', "version",    "", "Print version and exit.");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
-    O('c', "calib",      "",
+    O('c', "calib", "",
       "Re-calibrate existing database (SOURCEFILE will be ignored).");
 #undef O
 }
 
-static int
-load_alphabet(const char *modeldir,
-              char alphabet[static UPROC_ALPHABET_SIZE + 1])
+static int load_alphabet(const char *modeldir,
+                         char alphabet[static UPROC_ALPHABET_SIZE + 1])
 {
     char tmp[UPROC_ALPHABET_SIZE + 2];
     uproc_io_stream *stream;
@@ -76,9 +75,7 @@ load_alphabet(const char *modeldir,
     return 0;
 };
 
-
-int
-write_db_info(const char *outdir, const char *infile)
+int write_db_info(const char *outdir, const char *infile)
 {
     uproc_io_stream *stream;
     time_t now = time(NULL);
@@ -94,22 +91,13 @@ write_db_info(const char *outdir, const char *infile)
     return 0;
 }
 
-
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int res;
-    char alphabet[UPROC_ALPHABET_SIZE + 1],
-         *modeldir,
-         *infile,
-         *outdir;
+    char alphabet[UPROC_ALPHABET_SIZE + 1], *modeldir, *infile, *outdir;
     bool calib_only = false;
 
-    enum nonopt_args
-    {
-        MODELDIR, INFILE, OUTDIR,
-        ARGC
-    };
+    enum nonopt_args { MODELDIR, INFILE, OUTDIR, ARGC };
 
     int opt;
     struct ppopts opts = PPOPTS_INITIALIZER;

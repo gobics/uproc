@@ -38,20 +38,19 @@ static char error_loc[256], error_msg[256];
 static uproc_error_handler *error_handler = NULL;
 static void *error_context = NULL;
 
-static const char *error_strs[] =
-{
-    [UPROC_SUCCESS] = "success",
-    [UPROC_FAILURE] = "unspecified error",
-    [UPROC_ENOMEM]  = "memory allocation failed",
-    [UPROC_EINVAL]  = "invalid argument",
-    [UPROC_ENOENT]  = "no such object",
-    [UPROC_EIO]     = "I/O error",
-    [UPROC_EEXIST]  = "object already exists",
+
+static const char *error_strs[] = {
+        [UPROC_SUCCESS] = "success",
+        [UPROC_FAILURE] = "unspecified error",
+        [UPROC_ENOMEM] = "memory allocation failed",
+        [UPROC_EINVAL] = "invalid argument",
+        [UPROC_ENOENT] = "no such object",
+        [UPROC_EIO] = "I/O error",
+        [UPROC_EEXIST] = "object already exists",
 };
 
-int
-uproc_error_(enum uproc_error_code num, const char *func, const char *file,
-             int line, const char *fmt, ...)
+int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
+                 int line, const char *fmt, ...)
 {
     va_list ap;
     error_num = num;
@@ -59,8 +58,7 @@ uproc_error_(enum uproc_error_code num, const char *func, const char *file,
     va_start(ap, fmt);
     if (fmt) {
         vsnprintf(error_msg, sizeof error_msg - 1, fmt, ap);
-    }
-    else {
+    } else {
         error_msg[0] = '\0';
     }
     va_end(ap);
@@ -73,14 +71,12 @@ uproc_error_(enum uproc_error_code num, const char *func, const char *file,
     return -1;
 }
 
-int *
-uproc_error_errno_(void)
+int *uproc_error_errno_(void)
 {
     return &error_num;
 }
 
-void
-uproc_perror(const char *fmt, ...)
+void uproc_perror(const char *fmt, ...)
 {
     va_list ap;
 #ifndef NDEBUG
@@ -96,21 +92,18 @@ uproc_perror(const char *fmt, ...)
     }
     if (error_num == UPROC_ERRNO) {
         perror("");
-    }
-    else {
+    } else {
         fprintf(stderr, "%s\n", error_strs[error_num]);
     }
     va_end(ap);
 }
 
-const char *
-uproc_error_errmsg_(void)
+const char *uproc_error_errmsg_(void)
 {
     return error_msg;
 }
 
-const char *
-uproc_error_errloc_(void)
+const char *uproc_error_errloc_(void)
 {
     return error_loc;
 }

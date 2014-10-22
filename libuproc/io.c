@@ -42,7 +42,8 @@
 struct uproc_io_stream
 {
     enum uproc_io_type type;
-    union {
+    union
+    {
         FILE *fp;
 #if HAVE_ZLIB_H
         gzFile gz;
@@ -51,18 +52,15 @@ struct uproc_io_stream
     bool stdstream;
 };
 
-uproc_io_stream *
-uproc_io_stdstream(FILE *stream)
+uproc_io_stream *uproc_io_stdstream(FILE *stream)
 {
     static uproc_io_stream s[3];
     size_t i;
     if (stream == stdin) {
         i = 0;
-    }
-    else if (stream == stdout) {
+    } else if (stream == stdout) {
         i = 1;
-    }
-    else {
+    } else {
         i = 2;
     }
     if (!s[i].s.fp) {
@@ -74,17 +72,15 @@ uproc_io_stdstream(FILE *stream)
 }
 
 #if HAVE_ZLIB_H
-static void
-close_stdstream_gz(void)
+static void close_stdstream_gz(void)
 {
-    (void) uproc_io_stdstream_gz(NULL);
+    (void)uproc_io_stdstream_gz(NULL);
 }
 
-uproc_io_stream *
-uproc_io_stdstream_gz(FILE *stream)
+uproc_io_stream *uproc_io_stdstream_gz(FILE *stream)
 {
     static uproc_io_stream s[3];
-    static char *mode[] = { "r", "w", "w" };
+    static char *mode[] = {"r", "w", "w"};
     size_t i;
     if (s[0].type != UPROC_IO_GZIP) {
         for (i = 0; i < 3; i++) {
@@ -107,11 +103,9 @@ uproc_io_stdstream_gz(FILE *stream)
 
     if (stream == stdin) {
         i = 0;
-    }
-    else if (stream == stdout) {
+    } else if (stream == stdout) {
         i = 1;
-    }
-    else {
+    } else {
         i = 2;
     }
     if (!s[i].s.gz) {
@@ -125,8 +119,7 @@ uproc_io_stdstream_gz(FILE *stream)
 #endif
 
 #if ZLIB_VERNUM < 0x1271
-static int
-gzvprintf(gzFile file, const char *format, va_list va)
+static int gzvprintf(gzFile file, const char *format, va_list va)
 {
     char *buf;
     size_t n;
@@ -147,8 +140,8 @@ gzvprintf(gzFile file, const char *format, va_list va)
 }
 #endif
 #else
-uproc_io_stream *
-uproc_io_stdstream_gz(FILE *stream) {
+uproc_io_stream *uproc_io_stdstream_gz(FILE *stream)
+{
     if (stream == stdin) {
         return uproc_io_stdstream(stdin);
     }
@@ -157,8 +150,8 @@ uproc_io_stdstream_gz(FILE *stream) {
 }
 #endif
 
-static uproc_io_stream *
-io_open(const char *path, const char *mode, enum uproc_io_type type)
+static uproc_io_stream *io_open(const char *path, const char *mode,
+                                enum uproc_io_type type)
 {
     uproc_io_stream *stream = malloc(sizeof *stream);
     if (!stream) {
@@ -178,7 +171,7 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
                 }
                 goto error_errno;
             }
-            (void) gzbuffer(stream->s.gz, GZIP_BUFSZ);
+            (void)gzbuffer(stream->s.gz, GZIP_BUFSZ);
             break;
 #endif
         case UPROC_IO_STDIO:
@@ -191,16 +184,15 @@ io_open(const char *path, const char *mode, enum uproc_io_type type)
     }
     return stream;
 error_errno:
-    uproc_error_msg(UPROC_ERRNO, "can't open \"%s\" with mode \"%s\"",
-                    path, mode);
+    uproc_error_msg(UPROC_ERRNO, "can't open \"%s\" with mode \"%s\"", path,
+                    mode);
 error:
     free(stream);
     return NULL;
 }
 
-uproc_io_stream *
-uproc_io_open(const char *mode, enum uproc_io_type type, const char *pathfmt,
-              ...)
+uproc_io_stream *uproc_io_open(const char *mode, enum uproc_io_type type,
+                               const char *pathfmt, ...)
 {
     uproc_io_stream *stream;
     va_list ap;
@@ -210,9 +202,8 @@ uproc_io_open(const char *mode, enum uproc_io_type type, const char *pathfmt,
     return stream;
 }
 
-uproc_io_stream *
-uproc_io_openv(const char *mode, enum uproc_io_type type, const char *pathfmt,
-               va_list ap)
+uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
+                                const char *pathfmt, va_list ap)
 {
     uproc_io_stream *stream;
     char *buf;
@@ -234,8 +225,7 @@ uproc_io_openv(const char *mode, enum uproc_io_type type, const char *pathfmt,
     return stream;
 }
 
-int
-uproc_io_close(uproc_io_stream *stream)
+int uproc_io_close(uproc_io_stream *stream)
 {
     int res = 1;
     if (!stream) {
@@ -249,10 +239,9 @@ uproc_io_close(uproc_io_stream *stream)
                 stream->s.gz = NULL;
                 if (res == Z_OK) {
                     res = 0;
-                }
-                else {
-                    res = uproc_error_msg(UPROC_ERRNO,
-                                         "error closing gz stream");
+                } else {
+                    res =
+                        uproc_error_msg(UPROC_ERRNO, "error closing gz stream");
                 }
             }
             break;
@@ -275,8 +264,7 @@ uproc_io_close(uproc_io_stream *stream)
     return res;
 }
 
-int
-uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...)
+int uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...)
 {
     int res = -1;
     va_list ap;
@@ -297,22 +285,22 @@ uproc_io_printf(uproc_io_stream *stream, const char *fmt, ...)
     return res;
 }
 
-size_t
-uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
+size_t uproc_io_read(void *ptr, size_t size, size_t nmemb,
+                     uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
-            {
-                size_t i, n;
-                for (i = 0; i < nmemb; i++) {
-                    n = gzread(stream->s.gz, (char*)ptr + i * size, size);
-                    if (n != size) {
-                        break;
-                    }
+        {
+            size_t i, n;
+            for (i = 0; i < nmemb; i++) {
+                n = gzread(stream->s.gz, (char *)ptr + i * size, size);
+                if (n != size) {
+                    break;
                 }
-                return i;
             }
+            return i;
+        }
 #endif
         case UPROC_IO_STDIO:
             return fread(ptr, size, nmemb, stream->s.fp);
@@ -321,23 +309,22 @@ uproc_io_read(void *ptr, size_t size, size_t nmemb, uproc_io_stream *stream)
     return 0;
 }
 
-size_t
-uproc_io_write(const void *ptr, size_t size, size_t nmemb,
-               uproc_io_stream *stream)
+size_t uproc_io_write(const void *ptr, size_t size, size_t nmemb,
+                      uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
-            {
-                size_t i, n;
-                for (i = 0; i < nmemb; i++) {
-                    n = gzwrite(stream->s.gz, (char*)ptr + i * size, size);
-                    if (n != size) {
-                        break;
-                    }
+        {
+            size_t i, n;
+            for (i = 0; i < nmemb; i++) {
+                n = gzwrite(stream->s.gz, (char *)ptr + i * size, size);
+                if (n != size) {
+                    break;
                 }
-                return i;
             }
+            return i;
+        }
 #endif
         case UPROC_IO_STDIO:
             return fwrite(ptr, size, nmemb, stream->s.fp);
@@ -346,8 +333,7 @@ uproc_io_write(const void *ptr, size_t size, size_t nmemb,
     return 0;
 }
 
-char *
-uproc_io_gets(char *s, int size, uproc_io_stream *stream)
+char *uproc_io_gets(char *s, int size, uproc_io_stream *stream)
 {
     char *res;
     switch (stream->type) {
@@ -359,7 +345,8 @@ uproc_io_gets(char *s, int size, uproc_io_stream *stream)
                 const char *msg = gzerror(stream->s.gz, &num);
                 if (num != Z_OK && num != Z_STREAM_END) {
                     uproc_error_msg(UPROC_EIO,
-                                    "failed to read from gz stream: %d %s", num, msg);
+                                    "failed to read from gz stream: %d %s", num,
+                                    msg);
                 }
             }
             break;
@@ -377,8 +364,7 @@ uproc_io_gets(char *s, int size, uproc_io_stream *stream)
     return res;
 }
 
-long
-uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
+long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
 {
 #if defined(_GNU_SOURCE) || _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700
     if (stream->type == UPROC_IO_STDIO) {
@@ -386,8 +372,7 @@ uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
         if (res == -1) {
             if (ferror(stream->s.fp)) {
                 uproc_error(UPROC_ERRNO);
-            }
-            else {
+            } else {
                 uproc_error(UPROC_SUCCESS);
             }
         }
@@ -421,9 +406,8 @@ uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
     return total;
 }
 
-int
-uproc_io_seek(uproc_io_stream *stream, long offset,
-              enum uproc_io_seek_whence whence)
+int uproc_io_seek(uproc_io_stream *stream, long offset,
+                  enum uproc_io_seek_whence whence)
 {
     int w;
     switch (whence) {
@@ -447,8 +431,7 @@ uproc_io_seek(uproc_io_stream *stream, long offset,
     return -1;
 }
 
-long
-uproc_io_tell(uproc_io_stream *stream)
+long uproc_io_tell(uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_GZIP:
@@ -462,8 +445,7 @@ uproc_io_tell(uproc_io_stream *stream)
     return -1;
 }
 
-int
-uproc_io_eof(uproc_io_stream *stream)
+int uproc_io_eof(uproc_io_stream *stream)
 {
     switch (stream->type) {
         case UPROC_IO_GZIP:

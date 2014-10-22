@@ -75,8 +75,7 @@ START_TEST(test_append)
     int res;
     struct uproc_word word;
     int i = 4;
-    char *old =     "AAAAAAAAAAAAAAAAAA",
-         *expect =  "AANERDNERDNERDNERD",
+    char *old = "AAAAAAAAAAAAAAAAAA", *expect = "AANERDNERDNERDNERD",
          new[UPROC_WORD_LEN + 1];
 
     res = uproc_word_from_string(&word, old, alpha);
@@ -99,8 +98,7 @@ START_TEST(test_prepend)
     int res;
     struct uproc_word word;
     int i = 4;
-    char *old =     "AAAAAAAAAAAAAAAAAA",
-         *expect =  "NERDNERDNERDNERDAA",
+    char *old = "AAAAAAAAAAAAAAAAAA", *expect = "NERDNERDNERDNERDAA",
          new[UPROC_WORD_LEN + 1];
 
     res = uproc_word_from_string(&word, old, alpha);
@@ -123,7 +121,8 @@ START_TEST(test_startswith)
     struct uproc_word word;
 
     uproc_word_from_string(&word, "AAAAAAAAAAAAAAAAAAAA", alpha);
-    ck_assert(uproc_word_startswith(&word, uproc_alphabet_char_to_amino(alpha, 'A')));
+    ck_assert(
+        uproc_word_startswith(&word, uproc_alphabet_char_to_amino(alpha, 'A')));
 
     uproc_word_prepend(&word, 15);
     ck_assert(uproc_word_startswith(&word, 15));
@@ -147,19 +146,20 @@ START_TEST(test_worditer)
 
     iter = uproc_worditer_create(seq, alpha);
 
-#define TEST(IDX, FWD, REV) do {                            \
-    res = uproc_worditer_next(iter, &index, &fwd, &rev);    \
-    ck_assert_int_eq(res, 0);                               \
-    ck_assert_uint_eq(index, IDX);                          \
-    uproc_word_to_string(new, &fwd, alpha);                 \
-    ck_assert_str_eq(new, FWD);                             \
-    uproc_word_to_string(new, &rev, alpha);                 \
-    ck_assert_str_eq(new, REV);                             \
-} while (0)
+#define TEST(IDX, FWD, REV)                                  \
+    do {                                                     \
+        res = uproc_worditer_next(iter, &index, &fwd, &rev); \
+        ck_assert_int_eq(res, 0);                            \
+        ck_assert_uint_eq(index, IDX);                       \
+        uproc_word_to_string(new, &fwd, alpha);              \
+        ck_assert_str_eq(new, FWD);                          \
+        uproc_word_to_string(new, &rev, alpha);              \
+        ck_assert_str_eq(new, REV);                          \
+    } while (0)
 
-    TEST(0,  "RAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAR");
-    TEST(1,  "AAAAAAAAAAAAAAAAAG", "GAAAAAAAAAAAAAAAAA");
-    TEST(2,  "AAAAAAAAAAAAAAAAGC", "CGAAAAAAAAAAAAAAAA");
+    TEST(0, "RAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAR");
+    TEST(1, "AAAAAAAAAAAAAAAAAG", "GAAAAAAAAAAAAAAAAA");
+    TEST(2, "AAAAAAAAAAAAAAAAGC", "CGAAAAAAAAAAAAAAAA");
     TEST(21, "VVVVVVVVVVVVVVVVVV", "VVVVVVVVVVVVVVVVVV");
     TEST(22, "VVVVVVVVVVVVVVVVVS", "SVVVVVVVVVVVVVVVVV");
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
@@ -172,8 +172,8 @@ END_TEST
 
 int main(void)
 {
-    (void) codon_is_stop;
-    (void) codon_to_char;
+    (void)codon_is_stop;
+    (void)codon_to_char;
 
     Suite *s = suite_create("word");
 

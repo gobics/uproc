@@ -35,10 +35,8 @@
 #include "uproc/io.h"
 #include "uproc/matrix.h"
 
-
 /** Number of possible frames (forward and reverse) */
 #define UPROC_ORF_FRAMES 6
-
 
 /** \defgroup struct_orf struct uproc_orf
  *
@@ -71,14 +69,14 @@ struct uproc_orf
     unsigned frame;
 };
 
-
 /** Initializer macro */
-#define UPROC_ORF_INITIALIZER { NULL, 0, 0, 0.0, 0 }
-
+#define UPROC_ORF_INITIALIZER \
+    {                         \
+        NULL, 0, 0, 0.0, 0    \
+    }
 
 /** Initializer function */
 void uproc_orf_init(struct uproc_orf *orf);
-
 
 /** Freeing function */
 void uproc_orf_free(struct uproc_orf *orf);
@@ -87,16 +85,14 @@ void uproc_orf_free(struct uproc_orf *orf);
 int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
 /** \} */
 
-
 /** ORF filter function
  *
  * The function should take an ORF, the DNA sequence, it's length and GC
  * content and finally a user-supplied "opaque" pointer as arguments and return
  * whether the ORF is accepted or not.
  */
-typedef bool uproc_orffilter(const struct uproc_orf*, const char *, size_t,
-                             double, void*);
-
+typedef bool uproc_orffilter(const struct uproc_orf *, const char *, size_t,
+                             double, void *);
 
 /** Prepare codon score table
  *
@@ -116,7 +112,6 @@ typedef bool uproc_orffilter(const struct uproc_orf*, const char *, size_t,
  * \param score_matrix  codon scores, size <tt>::UPROC_CODON_COUNT x 1</tt>
  */
 void uproc_orf_codonscores(double *scores, const uproc_matrix *score_matrix);
-
 
 /** \defgroup obj_orfiter object uproc_orfiter
  *
@@ -142,14 +137,11 @@ typedef struct uproc_orfiter_s uproc_orfiter;
  * \param filter_arg    additional argument to \c filter
  *
  */
-uproc_orfiter *uproc_orfiter_create(
-    const char *seq,
-    const double *codon_scores,
-    uproc_orffilter *filter, void *filter_arg);
+uproc_orfiter *uproc_orfiter_create(const char *seq, const double *codon_scores,
+                                    uproc_orffilter *filter, void *filter_arg);
 
 /** Destroy orfiter object */
 void uproc_orfiter_destroy(uproc_orfiter *iter);
-
 
 /** Obtain the next ORF
  *

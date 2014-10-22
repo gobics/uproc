@@ -36,7 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 /** \defgroup obj_list object uproc_list
  *
  * List of homogenous items (also known as "vector" or "arraylist")
@@ -51,28 +50,23 @@
  */
 typedef struct uproc_list_s uproc_list;
 
-
 /** Create an empty list
  *
  * \param value_size        size of the stored values
  */
 uproc_list *uproc_list_create(size_t value_size);
 
-
 /** Destroy list object */
 void uproc_list_destroy(uproc_list *list);
 
-
 /** Remove all items */
 void uproc_list_clear(uproc_list *list);
-
 
 /* Get item at index
  *
  * Copies the data of the item at \c index into \c *value.
  */
 int uproc_list_get(const uproc_list *list, long index, void *value);
-
 
 /** Get all items
  *
@@ -89,7 +83,6 @@ int uproc_list_get(const uproc_list *list, long index, void *value);
  */
 size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz);
 
-
 /** Set item at index
  *
  * Stores a copy of \c *value at position \c index, which must be less than the
@@ -97,20 +90,17 @@ size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz);
  */
 int uproc_list_set(uproc_list *list, long index, const void *value);
 
-
 /** Append item to list
  *
  * Stores a copy of \c *value at the end of the list.
  */
 int uproc_list_append(uproc_list *list, const void *value);
 
-
 /** Append array of items
  *
  * Appends the \c n elements of \c values to the end of the list.
  */
 int uproc_list_extend(uproc_list *list, const void *values, long n);
-
 
 /** Append all elements of another list
  *
@@ -119,14 +109,11 @@ int uproc_list_extend(uproc_list *list, const void *values, long n);
  */
 int uproc_list_add(uproc_list *list, const uproc_list *src);
 
-
 /** Get and remove the last item */
 int uproc_list_pop(uproc_list *list, void *value);
 
-
 /** Returns the number of items */
 long uproc_list_size(const uproc_list *list);
-
 
 /** Apply function to all items
  *
@@ -138,10 +125,9 @@ long uproc_list_size(const uproc_list *list);
  * \param func      function to call
  * \param opaque    second argument to \c function
  */
-void uproc_list_map(const uproc_list *list, void(*func)(void *, void *),
+void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
                     void *opaque);
 /** \} */
-
 
 /**
  * \}
