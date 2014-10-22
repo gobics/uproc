@@ -259,7 +259,7 @@ enum nonopt_args
 
 int main(int argc, char **argv)
 {
-    uproc_error_set_handler(errhandler_bail);
+    uproc_error_set_handler(errhandler_bail, NULL);
     out_stream = uproc_stdout;
 
     bool use_idmap = true;

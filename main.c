@@ -444,7 +444,7 @@ enum nonopt_args
 int
 main(int argc, char **argv)
 {
-    uproc_error_set_handler(errhandler_bail);
+    uproc_error_set_handler(errhandler_bail, NULL);
 
     uproc_io_stream *out_stream = uproc_stdout;
 
