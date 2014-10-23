@@ -242,7 +242,7 @@ enum nonopt_args { DBDIR, MODELDIR, INFILES, ARGC };
 
 int main(int argc, char **argv)
 {
-    uproc_error_set_handler(errhandler_bail);
+    uproc_error_set_handler(errhandler_bail, NULL);
     out_stream = uproc_stdout;
 
     bool use_idmap = true;

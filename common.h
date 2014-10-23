@@ -56,7 +56,7 @@ int parse_orf_thresh_level(const char *arg, int *x);
 
 /* Error handler that prints the message and exits the program */
 void errhandler_bail(enum uproc_error_code num, const char *msg,
-                     const char *loc);
+                     const char *loc, void *context);
 
 /* Trim to the first word containing neither a comma nor any whitespace */
 void trim_header(char *s);

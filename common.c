@@ -106,12 +106,13 @@ int parse_orf_thresh_level(const char *arg, int *x)
     return 0;
 }
 
-void errhandler_bail(enum uproc_error_code num, const char *msg,
-                     const char *loc)
+void
+errhandler_bail(enum uproc_error_code num, const char *msg, const char *loc, void *context)
 {
     (void)num;
     (void)msg;
     (void)loc;
+	(void)context;
     uproc_perror("");
     exit(EXIT_FAILURE);
 }

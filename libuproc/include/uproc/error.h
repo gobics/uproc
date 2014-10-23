@@ -126,7 +126,7 @@ const char *uproc_error_errloc_(void);
 
 /** Print error message to stderr
  *
- * If `fmt` is a nonempty string, format it using the other arguments an
+ * If `fmt` is a nonempty string, format it using the other arguments and
  * prepend the result, followed by a colon and space, to the error message.
  *
  * \param fmt   printf-style format string
@@ -136,12 +136,16 @@ void uproc_perror(const char *fmt, ...);
 
 /** Error handler type
  *
- * \param num   error code
- * \param msg   error message
- * \param loc   source file and line
+ * \param num     error code
+ * \param msg     error message
+ * \param loc     source file and line
+ * \param context user defined pointer as set via ::uproc_error_set_handler
  */
-typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
-                                 const char *loc);
+typedef void uproc_error_handler(	enum uproc_error_code num, 
+									const char *msg,
+                                 	const char *loc, 
+									void *context
+								);
 
 /** Set error handler
  *
@@ -151,14 +155,17 @@ typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
  * could look like this:
  *
  * \code
- * void handler(enum uproc_error_code num, const char *msg, const char *loc)
+ * void handler(enum uproc_error_code num, const char *msg, const char *loc, void *context)
  * {
  *     uproc_perror("");
  *     exit(EXIT_FAILURE);
  * }
  * \endcode
+ *
+ * \param hdl     the error handler function
+ * \param context a pointer that is forwarded as last paramter to the error handler function (may be %NULL)
  */
-void uproc_error_set_handler(uproc_error_handler *);
+void uproc_error_set_handler(uproc_error_handler *hdl, void *context);
 
 /**
  * \}
