@@ -38,7 +38,6 @@ static char error_loc[256], error_msg[256];
 static uproc_error_handler *error_handler = NULL;
 static void *error_context = NULL;
 
-
 static const char *error_strs[] = {
         [UPROC_SUCCESS] = "success",
         [UPROC_FAILURE] = "unspecified error",
@@ -108,9 +107,8 @@ const char *uproc_error_errloc_(void)
     return error_loc;
 }
 
-void
-uproc_error_set_handler(uproc_error_handler *handler, void *context)
+void uproc_error_set_handler(uproc_error_handler *handler, void *context)
 {
     error_handler = handler;
-	error_context = context;
+    error_context = context;
 }

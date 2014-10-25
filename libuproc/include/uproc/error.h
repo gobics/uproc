@@ -141,11 +141,8 @@ void uproc_perror(const char *fmt, ...);
  * \param loc     source file and line
  * \param context user defined pointer as set via ::uproc_error_set_handler
  */
-typedef void uproc_error_handler(	enum uproc_error_code num, 
-									const char *msg,
-                                 	const char *loc, 
-									void *context
-								);
+typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
+                                 const char *loc, void *context);
 
 /** Set error handler
  *
@@ -155,7 +152,8 @@ typedef void uproc_error_handler(	enum uproc_error_code num,
  * could look like this:
  *
  * \code
- * void handler(enum uproc_error_code num, const char *msg, const char *loc, void *context)
+ * void handler(enum uproc_error_code num, const char *msg, const char *loc,
+ *              void *context)
  * {
  *     uproc_perror("");
  *     exit(EXIT_FAILURE);
@@ -163,7 +161,8 @@ typedef void uproc_error_handler(	enum uproc_error_code num,
  * \endcode
  *
  * \param hdl     the error handler function
- * \param context a pointer that is forwarded as last paramter to the error handler function (may be %NULL)
+ * \param context opaque pointer that is passed as the last argument to the
+ *                error handler function (may be %NULL)
  */
 void uproc_error_set_handler(uproc_error_handler *hdl, void *context);
 
