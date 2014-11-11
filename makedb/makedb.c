@@ -52,6 +52,8 @@ void make_opts(struct ppopts *o, const char *progname)
     O('h', "help", "", "Print this message and exit.");
     O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
+    O('n', "no-calib", "",
+      "Do not calibrate created database.");
     O('c', "calib", "",
       "Re-calibrate existing database (SOURCEFILE will be ignored).");
 #undef O
@@ -95,6 +97,7 @@ int main(int argc, char **argv)
 {
     int res;
     char alphabet[UPROC_ALPHABET_SIZE + 1], *modeldir, *infile, *outdir;
+	bool calibrate_db = true;
     bool calib_only = false;
 
     enum nonopt_args { MODELDIR, INFILE, OUTDIR, ARGC };
@@ -113,6 +116,9 @@ int main(int argc, char **argv)
             case 'V':
                 uproc_features_print(uproc_stderr);
                 return EXIT_SUCCESS;
+            case 'n':
+                calibrate_db = false;
+                break;
             case 'c':
                 calib_only = true;
                 break;
@@ -160,10 +166,12 @@ int main(int argc, char **argv)
         }
     }
 
-    res = calib(alphabet, outdir, modeldir);
-    if (res) {
-        uproc_perror("error while calibrating");
-        return EXIT_FAILURE;
+    if( calibrate_db || calib_only ){
+        res = calib(alphabet, outdir, modeldir);
+        if (res) {
+            uproc_perror("error while calibrating");
+            return EXIT_FAILURE;
+        }
     }
     return EXIT_SUCCESS;
 }
