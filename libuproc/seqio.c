@@ -270,7 +270,7 @@ int uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq)
         } else if (iter->line[0] == '@') {
             iter->format = FASTQ;
         } else {
-            return uproc_error_msg(UPROC_EINVAL, "Unknown sequence format\n");
+            return uproc_error_msg(UPROC_EINVAL, "Unknown sequence format: %s\n", iter->line);
         }
     }
 
