@@ -370,7 +370,7 @@ Print all classifications as CSV with the fields:\n\
 #endif
       "\
     predicted protein family\n\
-    classificaton score");
+    classification score");
 
     O('f', "stats", "",
       "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
