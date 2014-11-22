@@ -237,7 +237,7 @@ static int read_fastq(struct uproc_seqiter_s *iter)
     iter_getline(iter);
     if (iter->line_len == -1) {
         return uproc_error_msg(
-            UPROC_EINVAL, "expected \"qualities\" (line %lu)\n", iter->line_no);
+            UPROC_EINVAL, "expected \"qualities\" (line %lu)", iter->line_no);
     }
 
     /* get line for next iteration */
@@ -270,7 +270,8 @@ int uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq)
         } else if (iter->line[0] == '@') {
             iter->format = FASTQ;
         } else {
-            return uproc_error_msg(UPROC_EINVAL, "Unknown sequence format: %s\n", iter->line);
+            return uproc_error_msg(UPROC_EINVAL, "Unknown sequence format: %s",
+                                   iter->line);
         }
     }
 
