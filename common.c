@@ -54,8 +54,7 @@ uproc_io_stream *open_write(const char *path, enum uproc_io_type type)
 
 void print_version(const char *progname)
 {
-    fprintf(
-        stderr,
+    printf(
         "%s, version " UPROC_VERSION
         "\n"
         "Copyright 2014 Peter Meinicke, Robin Martinjak\n"

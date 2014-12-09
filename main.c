@@ -453,13 +453,13 @@ int main(int argc, char **argv)
     while ((opt = ppopts_getopt(&opts, argc, argv)) != -1) {
         switch (opt) {
             case 'h':
-                ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
+                ppopts_print(&opts, stdout, 80, PPOPTS_DESC_ON_NEXT_LINE);
                 return EXIT_SUCCESS;
             case 'v':
                 print_version(PROGNAME);
                 return EXIT_SUCCESS;
             case 'V':
-                uproc_features_print(uproc_stderr);
+                uproc_features_print(uproc_stdout);
                 return EXIT_SUCCESS;
             case 'p':
                 out_preds = true;
@@ -523,7 +523,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < optind + ARGC - 1) {
-        ppopts_print(&opts, stderr, 80, PPOPTS_DESC_ON_NEXT_LINE);
+        ppopts_print(&opts, stdout, 80, PPOPTS_DESC_ON_NEXT_LINE);
         return EXIT_FAILURE;
     }
 
