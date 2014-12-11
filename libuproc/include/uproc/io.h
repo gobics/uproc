@@ -126,6 +126,12 @@ char *uproc_io_gets(char *s, int size, uproc_io_stream *stream);
  */
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream);
 
+/** Write a character */
+int uproc_io_putc(int c, uproc_io_stream *stream);
+
+/** Write a string and a trailing newline */
+int uproc_io_puts(const char *s, uproc_io_stream *stream);
+
 /** Set the file position */
 int uproc_io_seek(uproc_io_stream *stream, long offset,
                   enum uproc_io_seek_whence whence);

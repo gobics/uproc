@@ -406,6 +406,42 @@ long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
     return total;
 }
 
+int uproc_io_putc(int c, uproc_io_stream *stream)
+{
+    switch (stream->type) {
+        case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
+            return gzputc(stream->s.gz, c);
+            break;
+#endif
+        case UPROC_IO_STDIO:
+            return fputc(c, stream->s.fp);
+        default:
+            return uproc_error_msg(UPROC_EINVAL, "invalid stream");
+    }
+}
+
+int uproc_io_puts(const char *s, uproc_io_stream *stream)
+{
+    switch (stream->type) {
+        case UPROC_IO_GZIP:
+#if HAVE_ZLIB_H
+            {
+                int res = gzputs(stream->s.gz, s);
+                if (gzputc(stream->s.gz, '\n') == -1) {
+                    return -1;
+                }
+                return res + 1;
+            }
+#endif
+        case UPROC_IO_STDIO:
+            return fputs(s, stream->s.fp);
+        default:
+            return uproc_error_msg(UPROC_EINVAL, "invalid stream");
+    }
+}
+
+
 int uproc_io_seek(uproc_io_stream *stream, long offset,
                   enum uproc_io_seek_whence whence)
 {
