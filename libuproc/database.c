@@ -33,7 +33,7 @@ uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
                                     enum uproc_ecurve_format format)
 {
     uproc_database *db = malloc(sizeof *db);
-    *db = (struct uproc_database_s){NULL, NULL, NULL, NULL};
+    *db = (struct uproc_database_s)UPROC_DATABASE_INITIALIZER;
     if (!db) {
         uproc_error_msg(UPROC_ENOMEM,
                         "can not allocate memory for database object");

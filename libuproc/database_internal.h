@@ -31,9 +31,9 @@ struct uproc_database_s
 /**
   * Initializer for the database struct setting all pointers to %NULL.
   */
-#define DATABASE_INITIALIZER \
-    {                        \
-        0, 0, 0, 0           \
+#define UPROC_DATABASE_INITIALIZER \
+    {                              \
+        0, 0, 0, 0                 \
     }
 
 #endif
