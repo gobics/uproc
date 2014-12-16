@@ -31,7 +31,8 @@
 
 uproc_model *uproc_model_load(const char *path, int orf_thresh_level)
 {
-    uproc_model *m = malloc(sizeof(uproc_model));
+    uproc_model *m = malloc(sizeof *m);
+    *m = (struct uproc_model_s)UPROC_MODEL_INITIALIZER;
     if (!m) {
         uproc_error_msg(UPROC_ENOMEM,
                         "can not allocate memory for model object");
