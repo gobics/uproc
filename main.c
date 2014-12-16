@@ -139,23 +139,89 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     return buf->n > 0;
 }
 
-void print_result(uproc_io_stream *stream, unsigned long seq_num,
-                  const char *header, unsigned long seq_len,
-                  struct clfresult *result, uproc_idmap *idmap)
-{
-    uproc_io_printf(stream, "%lu,%s,%lu", seq_num, header, seq_len);
-#if MAIN_DNA
-    uproc_io_printf(stream, ",%u,%lu,%lu", result->orf.frame + 1,
-                    (unsigned long)result->orf.start + 1,
-                    (unsigned long)result->orf.length);
+
+// Available characters for the -F format string.
+#define OUTFMT_PROT "nhl"
+#define OUTFMT_DNA "FIL"  // only when compiling uproc-dna, see below
+#define OUTFMT_PRED "fs"
+enum {
+    OUTFMT_SEQ_NUMBER,
+    OUTFMT_SEQ_HEADER,
+    OUTFMT_SEQ_LENGTH,
+#ifdef MAIN_DNA
+    OUTFMT_ORF_FRAME,
+    OUTFMT_ORF_INDEX,
+    OUTFMT_ORF_LENGTH,
 #endif
-    if (idmap) {
-        uproc_io_printf(stream, ",%s", uproc_idmap_str(idmap, result->family));
-    } else {
-        uproc_io_printf(stream, ",%" UPROC_FAMILY_PRI, result->family);
+    OUTFMT_PFAM,
+    OUTFMT_SCORE,
+};
+
+#ifdef MAIN_DNA
+#define OUTFMT OUTFMT_PROT OUTFMT_DNA OUTFMT_PRED
+#else
+#define OUTFMT OUTFMT_PROT OUTFMT_PRED
+#endif
+
+// Print all fields by default, can be overridden with -F
+const char *out_format = OUTFMT;
+
+void print_result(uproc_io_stream *stream,
+                  unsigned long seq_num, const char *header,
+                  unsigned long seq_len, struct clfresult *result,
+                  uproc_idmap *idmap)
+{
+    const char *format = out_format;
+    while (*format) {
+        // increment format here so we know later if we need to print a comma
+        const char *p = strchr(OUTFMT, *format++);
+        // ignore unknown format characters
+        if (!p) {
+            continue;
+        }
+
+        // print the item corresponding to the
+        switch (p - OUTFMT) {
+            case OUTFMT_SEQ_NUMBER:
+                uproc_io_printf(stream, "%lu", seq_num);
+                break;
+            case OUTFMT_SEQ_HEADER:
+                uproc_io_printf(stream, "%s", header);
+                break;
+            case OUTFMT_SEQ_LENGTH:
+                uproc_io_printf(stream, "%lu", seq_len);
+                break;
+#if MAIN_DNA
+            case OUTFMT_ORF_FRAME:
+                uproc_io_printf(stream, "%u", result->orf.frame + 1);
+                break;
+            case OUTFMT_ORF_INDEX:
+                uproc_io_printf(stream, "%lu",
+                                (unsigned long)result->orf.start + 1);
+                break;
+            case OUTFMT_ORF_LENGTH:
+                uproc_io_printf(stream, "%lu",
+                                (unsigned long)result->orf.length);
+                break;
+#endif
+            case OUTFMT_PFAM:
+                if (idmap) {
+                    uproc_io_printf(stream, "%s",
+                                    uproc_idmap_str(idmap, result->family));
+                } else {
+                    uproc_io_printf(stream, "%" UPROC_FAMILY_PRI,
+                                    result->family);
+                }
+                break;
+            case OUTFMT_SCORE:
+                uproc_io_printf(stream, "%1.3f", result->score);
+                break;
+        }
+        if (*format) {
+            uproc_io_putc(',', stream);
+        }
     }
-    uproc_io_printf(stream, ",%1.3f", result->score);
-    uproc_io_printf(stream, "\n");
+    uproc_io_putc('\n', stream);
 }
 
 /* Process (and maybe output) classification results */
@@ -357,20 +423,23 @@ void make_opts(struct ppopts *o, const char *progname)
 
     ppopts_add_header(o, "OUTPUT FORMAT:");
     O('p', "preds", "",
+      "Print all classifications as CSV with the fields specified by -F.");
+    O('F', "format", "FORMAT",
       "\
-Print all classifications as CSV with the fields:\n\
-    sequence number (starting from 1)\n\
-    sequence header up to the first whitespace\n\
-    sequence length\n"
+Columns to be printed when -p is used. By default, all of them are printed\n\
+in the order as below:\n\
+    n: sequence number (starting from 1)\n\
+    h: sequence header up to the first whitespace\n\
+    l: sequence length (this is a lowercase L)\n"
 #if MAIN_DNA
       "\
-    ORF frame number (1-6)\n\
-    ORF index in the DNA sequence (starting from 1)\n\
-    ORF length\n"
+    F: ORF frame number (1-6)\n\
+    I: ORF index in the DNA sequence (starting from 1)\n\
+    L: ORF length\n"
 #endif
       "\
-    predicted protein family\n\
-    classification score");
+    f: predicted protein family\n\
+    s: classification score");
 
     O('f', "stats", "",
       "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
@@ -463,6 +532,9 @@ int main(int argc, char **argv)
                 return EXIT_SUCCESS;
             case 'p':
                 out_preds = true;
+                break;
+            case 'F':
+                out_format = optarg;
                 break;
             case 'c':
                 out_counts = true;
