@@ -32,7 +32,8 @@
 uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
                                     enum uproc_ecurve_format format)
 {
-    uproc_database *db = malloc(sizeof(uproc_database));
+    uproc_database *db = malloc(sizeof *db);
+    *db = (struct uproc_database_s){NULL, NULL, NULL, NULL};
     if (!db) {
         uproc_error_msg(UPROC_ENOMEM,
                         "can not allocate memory for database object");
@@ -120,6 +121,7 @@ uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db)
     }
     return db->rev;
 }
+
 uproc_idmap *uproc_database_idmap(uproc_database *db)
 {
     if (!db) {
@@ -128,6 +130,7 @@ uproc_idmap *uproc_database_idmap(uproc_database *db)
     }
     return db->idmap;
 }
+
 uproc_matrix *uproc_database_protein_threshold(uproc_database *db)
 {
     if (!db) {
