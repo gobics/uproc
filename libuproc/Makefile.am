@@ -40,7 +40,7 @@ BUILT_SOURCES = codon_tables.h
 EXTRA_DIST = codon_tables.h
 
 codon_tables.h :
-	cc $(AM_CPPFLAGS) $(AM_CFLAGS) -o gen_ct$(EXEEXT) gen_codon_tables.c
+	$(CC) $(AM_CPPFLAGS) $(AM_CFLAGS) -o gen_ct$(EXEEXT) gen_codon_tables.c
 	./gen_ct$(EXEEXT) > $@
 
 CLEANFILES = gen_ct$(EXEEXT)
