@@ -21,6 +21,9 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_LIBTOOL_WIN32_DLL
 
+# Enable "most reasonable" warnings
+AX_CFLAGS_WARN_ALL
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h])
