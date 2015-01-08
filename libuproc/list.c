@@ -31,8 +31,10 @@
 
 // Undef macros from list.h that invoke the _safe variant.
 #undef uproc_list_get
+#undef uproc_list_get_all
 #undef uproc_list_set
 #undef uproc_list_append
+#undef uproc_list_extend
 #undef uproc_list_pop
 
 #define MIN_CAPACITY 32
@@ -179,6 +181,14 @@ size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
     return needed;
 }
 
+size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
+                               size_t value_size) {
+    if (uproc_list_check_value_size(list, value_size)) {
+        return 0;
+    }
+    return uproc_list_get_all(list, buf, sz);
+}
+
 int uproc_list_set(uproc_list *list, long index, const void *value)
 {
     long idx = index;
@@ -235,6 +245,13 @@ int uproc_list_extend(uproc_list *list, const void *values, long n)
            n * list->value_size);
     list->size += n;
     return 0;
+}
+
+int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
+                        size_t value_size)
+{
+    return uproc_list_check_value_size(list, value_size) ||
+           uproc_list_extend(list, values, n);
 }
 
 int uproc_list_add(uproc_list *list, const uproc_list *src)
