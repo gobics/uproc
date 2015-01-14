@@ -167,9 +167,10 @@ END_TEST
 
 START_TEST(test_value_size_check)
 {
-    struct foo {
+    struct foo
+    {
         int x[10];
-    } foo = { { 0 } };
+    } foo = {{0}};
     int bar = 42;
 
     uproc_list *tmp = uproc_list_create(sizeof foo);

@@ -182,7 +182,8 @@ size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
 }
 
 size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
-                               size_t value_size) {
+                               size_t value_size)
+{
     if (uproc_list_check_value_size(list, value_size)) {
         return 0;
     }
@@ -248,7 +249,7 @@ int uproc_list_extend(uproc_list *list, const void *values, long n)
 }
 
 int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
-                        size_t value_size)
+                           size_t value_size)
 {
     return uproc_list_check_value_size(list, value_size) ||
            uproc_list_extend(list, values, n);
