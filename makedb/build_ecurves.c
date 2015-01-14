@@ -286,11 +286,11 @@ error:
 static int build_ecurve(const char *infile, const char *alphabet,
                         uproc_idmap *idmap, bool reverse, uproc_ecurve **ecurve)
 {
-    int res;
+    int res = 0;
     uproc_io_stream *stream;
     struct ecurve_entry *entries = NULL;
     size_t n_entries;
-    uproc_amino first;
+    uproc_amino first = 0;
     uproc_alphabet *alpha;
 
     alpha = uproc_alphabet_create(alphabet);
@@ -304,7 +304,7 @@ static int build_ecurve(const char *infile, const char *alphabet,
     }
 
     progress(uproc_stderr, reverse ? "rev.ecurve" : "fwd.ecurve", -1.0);
-    for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
+    for (; first < UPROC_ALPHABET_SIZE; first++) {
         n_entries = 0;
         free(entries);
         stream = uproc_io_open("r", UPROC_IO_GZIP, infile);

@@ -426,13 +426,13 @@ int uproc_io_puts(const char *s, uproc_io_stream *stream)
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
-            {
-                int res = gzputs(stream->s.gz, s);
-                if (gzputc(stream->s.gz, '\n') == -1) {
-                    return -1;
-                }
-                return res + 1;
+        {
+            int res = gzputs(stream->s.gz, s);
+            if (gzputc(stream->s.gz, '\n') == -1) {
+                return -1;
             }
+            return res + 1;
+        }
 #endif
         case UPROC_IO_STDIO:
             return fputs(s, stream->s.fp);
@@ -441,11 +441,10 @@ int uproc_io_puts(const char *s, uproc_io_stream *stream)
     }
 }
 
-
 int uproc_io_seek(uproc_io_stream *stream, long offset,
                   enum uproc_io_seek_whence whence)
 {
-    int w;
+    int w = 0;
     switch (whence) {
         case UPROC_IO_SEEK_SET:
             w = SEEK_SET;
@@ -453,6 +452,8 @@ int uproc_io_seek(uproc_io_stream *stream, long offset,
         case UPROC_IO_SEEK_CUR:
             w = SEEK_CUR;
             break;
+        default:
+            return uproc_error_msg(UPROC_EINVAL, "invalid `whence` argument");
     }
 
     switch (stream->type) {
