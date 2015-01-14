@@ -27,17 +27,25 @@
 #include "uproc/error.h"
 #include "uproc/model.h"
 
-#include "model_internal.h"
+#include "uproc/substmat.h"
+#include "uproc/matrix.h"
+
+/* Struct representing the "model" */
+struct uproc_model_s
+{
+    uproc_substmat *substmat;
+    uproc_matrix *codon_scores, *orf_thresh;
+};
 
 uproc_model *uproc_model_load(const char *path, int orf_thresh_level)
 {
     uproc_model *m = malloc(sizeof *m);
-    *m = (struct uproc_model_s)UPROC_MODEL_INITIALIZER;
     if (!m) {
         uproc_error_msg(UPROC_ENOMEM,
                         "can not allocate memory for model object");
         return NULL;
     }
+    *m = (struct uproc_model_s){0};
 
     m->substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", path);
     if (!m->substmat) {

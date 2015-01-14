@@ -27,18 +27,43 @@
 #include "uproc/error.h"
 #include "uproc/database.h"
 
-#include "database_internal.h"
+#include "uproc/ecurve.h"
+#include "uproc/matrix.h"
+#include "uproc/idmap.h"
+
+/** Struct defining a database **/
+struct uproc_database_s
+{
+    /**
+      * The forward matching ecurve.
+      * \see uproc_ecurve
+      */
+    uproc_ecurve *fwd;
+    /**
+      * The backward matching ecurve.
+      * \see uproc_ecurve
+      */
+    uproc_ecurve *rev;
+    /**
+      * The mapping of numerical ID to string ID.
+      */
+    uproc_idmap *idmap;
+    /**
+      * The matrix containing protein thresholds.
+      */
+    uproc_matrix *prot_thresh;
+};
 
 uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
                                     enum uproc_ecurve_format format)
 {
     uproc_database *db = malloc(sizeof *db);
-    *db = (struct uproc_database_s)UPROC_DATABASE_INITIALIZER;
     if (!db) {
         uproc_error_msg(UPROC_ENOMEM,
                         "can not allocate memory for database object");
         return NULL;
     }
+    *db = (struct uproc_database_s){0};
 
     switch (prot_thresh_level) {
         case 2:
