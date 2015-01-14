@@ -39,6 +39,7 @@ Makefile.in
 /libuproc/docs/doxygen.stamp
 /libuproc/docs/libuproc
 /libuproc/docs/libuproc.tar.gz
+/libuproc/tests/data/*.tmp
 
 /libuproc/tests/ck_*
 !/libuproc/tests/ck_*.c

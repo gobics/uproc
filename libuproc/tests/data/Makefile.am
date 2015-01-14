@@ -5,4 +5,4 @@ dist_check_DATA = \
 		missing_header.matrix \
 		invalid_header.matrix
 
-CLEANFILES = test.idmap test.matrix
+CLEANFILES = test_idmap.tmp test.matrix

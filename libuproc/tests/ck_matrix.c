@@ -50,11 +50,11 @@ START_TEST(test_store_load)
 
     mat = uproc_matrix_create(2, 4, data);
 
-    res = uproc_matrix_store(mat, UPROC_IO_GZIP, TMPDATADIR "test.matrix");
+    res = uproc_matrix_store(mat, UPROC_IO_GZIP, TMPDATADIR "test_matrix.tmp");
     ck_assert_msg(res == 0, "storing failed");
     uproc_matrix_destroy(mat);
 
-    mat = uproc_matrix_load(UPROC_IO_GZIP, TMPDATADIR "test.matrix");
+    mat = uproc_matrix_load(UPROC_IO_GZIP, TMPDATADIR "test_matrix.tmp");
     ck_assert_ptr_ne(mat, NULL);
 
     uproc_matrix_dimensions(mat, &rows, &cols);
