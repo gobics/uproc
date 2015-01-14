@@ -62,16 +62,24 @@ void uproc_list_destroy(uproc_list *list);
 /** Remove all items */
 void uproc_list_clear(uproc_list *list);
 
+int uproc_list_get_safe(const uproc_list *list, long index, void *value,
+                        size_t value_size);
+
 /* Get item at index
  *
  * Copies the data of the item at \c index into \c *value.
+ * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-int uproc_list_get(const uproc_list *list, long index, void *value);
+#define uproc_list_get(list, index, value) \
+    uproc_list_get_safe((list), (index), (value), sizeof *(value))
 
+size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
+                               size_t value_size);
 /** Get all items
  *
  * Copies the whole list data, but at most \c sz bytes, into the array pointed
  * to by \c dest.
+ * NOTE: \c buf WILL BE EVALUATED TWICE.
  *
  * \param list  list to copy from
  * \param buf   buffer to copy into
@@ -81,26 +89,43 @@ int uproc_list_get(const uproc_list *list, long index, void *value);
  * the number of copied bytes, or how many bytes would have been
  * copied, if this number exceeds \c sz.
  */
-size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz);
+#define uproc_list_get_all(list, buf, sz) \
+    uproc_list_get_all_safe((list), (buf), (sz), sizeof *(buf))
+
+int uproc_list_set_safe(uproc_list *list, long index, const void *value,
+                        size_t value_size);
 
 /** Set item at index
  *
  * Stores a copy of \c *value at position \c index, which must be less than the
  * size of the list.
+ * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-int uproc_list_set(uproc_list *list, long index, const void *value);
+#define uproc_list_set(list, index, value) \
+    uproc_list_set_safe((list), (index), (value), sizeof *(value))
+
+int uproc_list_append_safe(uproc_list *list, const void *value,
+                           size_t value_size);
 
 /** Append item to list
  *
  * Stores a copy of \c *value at the end of the list.
+ * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-int uproc_list_append(uproc_list *list, const void *value);
+#define uproc_list_append(list, value) \
+    uproc_list_append_safe((list), (value), sizeof *(value))
+
+int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
+                           size_t value_size);
 
 /** Append array of items
  *
  * Appends the \c n elements of \c values to the end of the list.
+ *
+ * NOTE: \c values WILL BE EVALUATED TWICE.
  */
-int uproc_list_extend(uproc_list *list, const void *values, long n);
+#define uproc_list_extend(list, values, n) \
+    uproc_list_extend_safe((list), (values), (n), sizeof *(values))
 
 /** Append all elements of another list
  *
@@ -109,8 +134,15 @@ int uproc_list_extend(uproc_list *list, const void *values, long n);
  */
 int uproc_list_add(uproc_list *list, const uproc_list *src);
 
-/** Get and remove the last item */
-int uproc_list_pop(uproc_list *list, void *value);
+int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size);
+
+/** Get and remove the last item
+ *
+ * NOTE: \c value WILL BE EVALUATED TWICE.
+ *
+ * */
+#define uproc_list_pop(list, value) \
+    uproc_list_pop_safe((list), (value), sizeof *(value))
 
 /** Returns the number of items */
 long uproc_list_size(const uproc_list *list);

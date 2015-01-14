@@ -73,7 +73,7 @@ START_TEST(test_list)
     value.x = 114;
     value.c = '!';
     res = uproc_list_get(list, 10006, &value);
-    ck_assert_int_eq(res, -1);
+    ck_assert_int_ne(res, 0);
     ck_assert_int_eq(value.x, 114);
     ck_assert_int_eq(value.c, '!');
 }
@@ -165,6 +165,24 @@ START_TEST(test_map)
 }
 END_TEST
 
+START_TEST(test_value_size_check)
+{
+    struct foo
+    {
+        int x[10];
+    } foo = {{0}};
+    int bar = 42;
+
+    uproc_list *tmp = uproc_list_create(sizeof foo);
+    ck_assert_int_eq(uproc_list_append(tmp, &foo), 0);
+    ck_assert_int_ne(uproc_list_append(tmp, &bar), 0);
+
+    ck_assert_int_eq(uproc_list_set(tmp, 0, &foo), 0);
+    ck_assert_int_eq(uproc_list_get(tmp, 0, &foo), 0);
+    ck_assert_int_ne(uproc_list_set(tmp, 0, &bar), 0);
+}
+END_TEST
+
 int main(void)
 {
     Suite *s = suite_create("list");
@@ -175,6 +193,7 @@ int main(void)
     tcase_add_test(tc, test_pop);
     tcase_add_test(tc, test_negative_index);
     tcase_add_test(tc, test_map);
+    tcase_add_test(tc, test_value_size_check);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
 
