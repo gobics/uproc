@@ -276,7 +276,8 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             size_t seq_len;
             uproc_protclass *pc;
             uproc_list *results = NULL;
-            pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, fwd, rev, substmat,
+            pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, false,
+                                        fwd, rev, substmat,
                                         prot_filter, NULL);
 
             all_preds_n = 0;

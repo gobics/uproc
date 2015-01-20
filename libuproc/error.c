@@ -46,6 +46,11 @@ static const char *error_strs[] = {
         [UPROC_ENOENT] = "no such object",
         [UPROC_EIO] = "I/O error",
         [UPROC_EEXIST] = "object already exists",
+#if HAVE_CONFIG_H
+        [UPROC_ASSERTION_FAILED] = "report this bug to: " PACKAGE_BUGREPORT,
+#else
+        [UPROC_ASSERTION_FAILED] = "this is a bug",
+#endif
 };
 
 int uproc_error_(enum uproc_error_code num, const char *func, const char *file,

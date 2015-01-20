@@ -92,6 +92,12 @@ static void map_bst_dnaresult_free(union uproc_bst_key key, void *value,
     uproc_dnaresult_free(value);
 }
 
+static void map_list_protresult_free(void *value, void *opaque)
+{
+    (void)opaque;
+    uproc_protresult_free(value);
+}
+
 int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
                             uproc_list **results)
 {
@@ -136,12 +142,16 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
             (void)uproc_list_get(pc_results, i, &pp);
             key.uint = pp.family;
             uproc_dnaresult_init(&pred);
-            pred.score = -INFINITY;
+            pred.protresult.score = -INFINITY;
             (void)uproc_bst_get(max_scores, key, &pred);
-            if (pp.score > pred.score) {
+            if (pp.score > pred.protresult.score) {
                 uproc_dnaresult_free(&pred);
-                pred.family = pp.family;
-                pred.score = pp.score;
+
+                // Make a shallow copy and take ownership of the allocated list
+                pred.protresult = pp;
+                pp.matched_words = NULL;
+                uproc_list_set(pc_results, i, &pp);
+
                 res = uproc_orf_copy(&pred.orf, &orf);
                 if (res) {
                     goto error;
@@ -169,7 +179,7 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
                 if (res) {
                     break;
                 }
-            } else if (pred.score > pred_max.score) {
+            } else if (pred.protresult.score > pred_max.protresult.score) {
                 uproc_dnaresult_free(&pred_max);
                 pred_max = pred;
                 uproc_list_set(*results, 0, &pred_max);
@@ -190,7 +200,9 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
     if (0) {
     error:
         uproc_bst_map(max_scores, map_bst_dnaresult_free, NULL);
+        uproc_list_clear(*results);
     }
+    uproc_list_map(pc_results, map_list_protresult_free, NULL);
     uproc_list_destroy(pc_results);
     uproc_bst_destroy(max_scores);
     uproc_orfiter_destroy(orf_iter);
@@ -205,6 +217,7 @@ void uproc_dnaresult_init(struct uproc_dnaresult *result)
 void uproc_dnaresult_free(struct uproc_dnaresult *result)
 {
     uproc_orf_free(&result->orf);
+    uproc_protresult_free(&result->protresult);
 }
 
 int uproc_dnaresult_copy(struct uproc_dnaresult *dest,

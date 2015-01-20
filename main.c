@@ -43,22 +43,75 @@
 #define PROGNAME "uproc-prot"
 #endif
 
-#define PROT_THRESH_DEFAULT 3
-#define ORF_THRESH_DEFAULT 2
+// Before you condemn me for using "global" variables, let me clarify:
+// The code in this file is for the main executable and thus has no practical
+// value for re-use anyway. Most of the globals are controlled by command-line
+// flags, and while I could define a struct that holds all of them, this would
+// make setting the default values quite cumbersome.
+//
+// If you like C++ or Java, just imagine I had wrapped a "class GodObject"
+// around the whole file ;)
+//
+// Robin
 
-#define NUM_THREADS_DEFAULT 8
-#define CHUNK_SIZE_DEFAULT (1 << 10)
-#define CHUNK_SIZE_MAX (1 << 14)
+// Options controlled by command line arguments.
+int flag_prot_thresh_level_ = 3;
+int flag_orf_thresh_level_ = 2;
+int flag_num_threads_ = 8;
+bool flag_dna_short_read_mode_ = false;
+bool flag_output_counts_ = false;
+bool flag_output_summary_ = false;
+bool flag_output_predictions_ = false;
+bool flag_output_matched_words_ = false;
+const char *flag_output_format_ = NULL;
+
+uproc_io_stream *output_stream_ = NULL;
+uproc_database *database_;
+uproc_model *model_;
+
+// available in both protein/dna and detailed/non-detailed
+#define OUTFMT_ALL "nhlfs"
+
+#ifdef MAIN_DNA
+#define OUTFMT_DNA "FIL"
+#else
+#define OUTFMT_DNA ""
+#endif
+#define OUTFMT_PREDICTIONS OUTFMT_ALL OUTFMT_DNA
+#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wri"
+
+enum {
+    OUTFMT_SEQ_NUMBER = 'n',
+    OUTFMT_SEQ_HEADER = 'h',
+    OUTFMT_SEQ_LENGTH = 'l',
+    OUTFMT_PFAM = 'f',
+    OUTFMT_SCORE = 's',
+#ifdef MAIN_DNA
+    OUTFMT_ORF_FRAME = 'F',
+    OUTFMT_ORF_INDEX = 'I',
+    OUTFMT_ORF_LENGTH = 'L',
+#endif
+    OUTFMT_MATCH_WORD = 'w',
+    OUTFMT_MATCH_REVERSE = 'r',
+    OUTFMT_MATCH_INDEX = 'i',
+};
 
 #if MAIN_DNA
 #define clf uproc_dnaclass
 #define clf_classify uproc_dnaclass_classify
 #define clfresult uproc_dnaresult
+#define PROTRESULT(result) (&(result)->protresult)
 #else
 #define clf uproc_protclass
 #define clf_classify uproc_protclass_classify
 #define clfresult uproc_protresult
+#define PROTRESULT(result) (result)
 #endif
+clf *classifier_;
+
+
+#define CHUNK_SIZE_DEFAULT (1 << 10)
+#define CHUNK_SIZE_MAX (1 << 14)
 
 timeit t_in, t_out, t_clf, t_tot;
 
@@ -69,22 +122,22 @@ struct buffer
     long long n;
 } buf[2];
 
-#if MAIN_DNA
-static void map_list_dnaresult_free(void *value, void *opaque)
+static void map_list_result_free(void *value, void *opaque)
 {
     (void)opaque;
+#if MAIN_DNA
     uproc_dnaresult_free(value);
-}
+#else
+    uproc_protresult_free(value);
 #endif
+}
 
 void buffer_free(struct buffer *buf)
 {
     for (size_t i = 0; i < CHUNK_SIZE_MAX; i++) {
         uproc_sequence_free(&buf->seqs[i]);
         if (buf->results[i]) {
-#if MAIN_DNA
-            uproc_list_map(buf->results[i], map_list_dnaresult_free, NULL);
-#endif
+            uproc_list_map(buf->results[i], map_list_result_free, NULL);
             uproc_list_destroy(buf->results[i]);
         }
     }
@@ -109,12 +162,12 @@ void determine_chunk_size(void)
 }
 
 /* Classify the buffer contents */
-void buffer_classify(struct buffer *buf, clf *classifier)
+void buffer_classify(struct buffer *buf)
 {
     long long i;
-#pragma omp parallel for private(i) shared(buf, classifier) schedule(static)
+#pragma omp parallel for private(i) shared(buf, classifier_) schedule(static)
     for (i = 0; i < buf->n; i++) {
-        clf_classify(classifier, buf->seqs[i].data, &buf->results[i]);
+        clf_classify(classifier_, buf->seqs[i].data, &buf->results[i]);
     }
 }
 
@@ -129,6 +182,7 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
         struct uproc_sequence seq;
         int res = uproc_seqiter_next(seqit, &seq);
         if (res) {
+            // either an error occured (-1) or EOF was reached (1)
             break;
         }
         trim_header(seq.header);
@@ -139,94 +193,109 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     return buf->n > 0;
 }
 
-// Available characters for the -F format string.
-#define OUTFMT_PROT "nhl"
-#define OUTFMT_DNA "FIL"  // only when compiling uproc-dna, see below
-#define OUTFMT_PRED "fs"
-enum {
-    OUTFMT_SEQ_NUMBER,
-    OUTFMT_SEQ_HEADER,
-    OUTFMT_SEQ_LENGTH,
-#ifdef MAIN_DNA
-    OUTFMT_ORF_FRAME,
-    OUTFMT_ORF_INDEX,
-    OUTFMT_ORF_LENGTH,
-#endif
-    OUTFMT_PFAM,
-    OUTFMT_SCORE,
-};
-
-#ifdef MAIN_DNA
-#define OUTFMT OUTFMT_PROT OUTFMT_DNA OUTFMT_PRED
-#else
-#define OUTFMT OUTFMT_PROT OUTFMT_PRED
-#endif
-
-// Print all fields by default, can be overridden with -F
-const char *out_format = OUTFMT;
-
-void print_result(uproc_io_stream *stream, unsigned long seq_num,
-                  const char *header, unsigned long seq_len,
-                  struct clfresult *result, uproc_idmap *idmap)
+/* Invoked if -p or -m is used. With -m it will call itself for each
+ * element in the result->matched_words list */
+void print_result_or_match(unsigned long seq_num, const char *header,
+                           unsigned long seq_len,
+                           const struct clfresult *result,
+                           const struct uproc_matchedword *matched_word)
 {
-    const char *format = out_format;
-    while (*format) {
-        // increment format here so we know later if we need to print a comma
-        const char *p = strchr(OUTFMT, *format++);
-        // ignore unknown format characters
-        if (!p) {
-            continue;
-        }
+    const char *format = flag_output_format_;
+    if (!format) {
+        return;
+    }
+    const struct uproc_protresult *protresult = PROTRESULT(result);
 
-        // print the item corresponding to the
-        switch (p - OUTFMT) {
+    if (!matched_word && flag_output_matched_words_) {
+        uproc_assert(protresult->matched_words);
+        for (long i = 0; i < uproc_list_size(protresult->matched_words); i++) {
+            struct uproc_matchedword matched_word;
+            uproc_list_get(protresult->matched_words, i, &matched_word);
+            print_result_or_match(seq_num, header, seq_len, result,
+                                  &matched_word);
+        }
+        return;
+    }
+
+    while (*format++) {
+        // increment here so we know if theres another item
+        switch (*format++) {
             case OUTFMT_SEQ_NUMBER:
-                uproc_io_printf(stream, "%lu", seq_num);
+                uproc_io_printf(output_stream_, "%lu", seq_num);
                 break;
             case OUTFMT_SEQ_HEADER:
-                uproc_io_printf(stream, "%s", header);
+                uproc_io_puts(header, output_stream_);
                 break;
             case OUTFMT_SEQ_LENGTH:
-                uproc_io_printf(stream, "%lu", seq_len);
+                uproc_io_printf(output_stream_, "%lu", seq_len);
                 break;
 #if MAIN_DNA
             case OUTFMT_ORF_FRAME:
-                uproc_io_printf(stream, "%u", result->orf.frame + 1);
+                uproc_io_printf(output_stream_, "%u", result->orf.frame + 1);
                 break;
             case OUTFMT_ORF_INDEX:
-                uproc_io_printf(stream, "%lu",
+                uproc_io_printf(output_stream_, "%lu",
                                 (unsigned long)result->orf.start + 1);
                 break;
             case OUTFMT_ORF_LENGTH:
-                uproc_io_printf(stream, "%lu",
+                uproc_io_printf(output_stream_, "%lu",
                                 (unsigned long)result->orf.length);
                 break;
 #endif
             case OUTFMT_PFAM:
-                if (idmap) {
-                    uproc_io_printf(stream, "%s",
-                                    uproc_idmap_str(idmap, result->family));
-                } else {
-                    uproc_io_printf(stream, "%" UPROC_FAMILY_PRI,
-                                    result->family);
+                {
+                    uproc_idmap *idmap = uproc_database_idmap(database_);
+                    uproc_io_puts(uproc_idmap_str(idmap, protresult->family),
+                                  output_stream_);
                 }
                 break;
             case OUTFMT_SCORE:
-                uproc_io_printf(stream, "%1.3f", result->score);
+                uproc_io_printf(output_stream_, "%1.3f", protresult->score);
                 break;
+            case OUTFMT_MATCH_WORD:
+                {
+                    char w[UPROC_WORD_LEN + 1] = "";
+                    uproc_word_to_string(w, &matched_word->word,
+                                         uproc_database_alphabet(database_));
+                    uproc_io_puts(w, output_stream_);
+                }
+                break;
+            case OUTFMT_MATCH_REVERSE:
+                uproc_io_puts(matched_word->reverse ? "rev" : "fwd",
+                           output_stream_);
+                break;
+            case OUTFMT_MATCH_INDEX:
+                uproc_io_printf(output_stream_, "%lu",
+                                (unsigned long)matched_word->index + 1);
+                break;
+
+            default:
+                uproc_assert_msg(false,
+                                 "default case should not be reached");
         }
         if (*format) {
-            uproc_io_putc(',', stream);
+            uproc_io_putc(',', output_stream_);
         }
     }
-    uproc_io_putc('\n', stream);
+    uproc_io_putc('\n', output_stream_);
+}
+
+void print_matches(unsigned long seq_num, const char *header,
+                   unsigned long seq_len, const struct clfresult *result)
+{
+    const struct uproc_protresult *protresult = PROTRESULT(result);
+
+    if (!protresult->matched_words) {
+        fprintf(stderr, "programmer is daft, matched_words is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
 }
 
 /* Process (and maybe output) classification results */
 void buffer_process(struct buffer *buf, unsigned long *n_seqs,
                     unsigned long *n_seqs_unexplained,
-                    unsigned long counts[UPROC_FAMILY_MAX + 1],
-                    uproc_io_stream *out_preds, uproc_idmap *idmap)
+                    unsigned long counts[UPROC_FAMILY_MAX + 1])
 {
     for (long long i = 0; i < buf->n; i++) {
         uproc_list *results = buf->results[i];
@@ -240,19 +309,19 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
         struct clfresult result;
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
-            counts[result.family] += 1;
-            if (out_preds) {
-                print_result(out_preds, *n_seqs, buf->seqs[i].header,
-                             strlen(buf->seqs[i].data), &result, idmap);
+            counts[PROTRESULT(&result)->family] += 1;
+            if (flag_output_predictions_ || flag_output_matched_words_) {
+                print_result_or_match(*n_seqs, buf->seqs[i].header,
+                                      strlen(buf->seqs[i].data), &result,
+                                      NULL);
             }
         }
     }
 }
 
-void classify_file_mt(const char *path, clf *classifier, unsigned long *n_seqs,
+void classify_file_mt(const char *path, unsigned long *n_seqs,
                       unsigned long *n_seqs_unexplained,
-                      unsigned long counts[UPROC_FAMILY_MAX + 1],
-                      uproc_io_stream *out_preds, uproc_idmap *idmap)
+                      unsigned long counts[UPROC_FAMILY_MAX + 1])
 {
     int more_input;
     uproc_io_stream *stream = open_read(path);
@@ -273,11 +342,10 @@ void classify_file_mt(const char *path, clf *classifier, unsigned long *n_seqs,
 #pragma omp section
             {
                 timeit_start(&t_clf);
-                buffer_classify(buf_out, classifier);
+                buffer_classify(buf_out);
                 timeit_stop(&t_clf);
                 timeit_start(&t_out);
-                buffer_process(buf_out, n_seqs, n_seqs_unexplained, counts,
-                               out_preds, idmap);
+                buffer_process(buf_out, n_seqs, n_seqs_unexplained, counts);
                 timeit_stop(&t_out);
             }
         }
@@ -285,17 +353,16 @@ void classify_file_mt(const char *path, clf *classifier, unsigned long *n_seqs,
     } while (more_input);
     timeit_stop(&t_tot);
     uproc_seqiter_destroy(seqit);
+    uproc_io_close(stream);
 }
 
-void classify_file(const char *path, clf *classifier, unsigned long *n_seqs,
+void classify_file(const char *path, unsigned long *n_seqs,
                    unsigned long *n_seqs_unexplained,
-                   unsigned long counts[UPROC_FAMILY_MAX + 1],
-                   uproc_io_stream *out_preds, uproc_idmap *idmap)
+                   unsigned long counts[UPROC_FAMILY_MAX + 1])
 {
 #if _OPENMP
     if (omp_get_max_threads() > 1) {
-        return classify_file_mt(path, classifier, n_seqs, n_seqs_unexplained,
-                                counts, out_preds, idmap);
+        return classify_file_mt(path, n_seqs, n_seqs_unexplained, counts);
     }
 #endif
     timeit_start(&t_tot);
@@ -309,7 +376,7 @@ void classify_file(const char *path, clf *classifier, unsigned long *n_seqs,
         trim_header(seq.header);
 
         timeit_start(&t_clf);
-        clf_classify(classifier, seq.data, &results);
+        clf_classify(classifier_, seq.data, &results);
         timeit_stop(&t_clf);
 
         timeit_start(&t_out);
@@ -321,10 +388,11 @@ void classify_file(const char *path, clf *classifier, unsigned long *n_seqs,
         for (long i = 0; i < n_results; i++) {
             struct clfresult result;
             uproc_list_get(results, i, &result);
-            counts[result.family] += 1;
-            if (out_preds) {
-                print_result(out_preds, *n_seqs, seq.header, strlen(seq.data),
-                             &result, idmap);
+            counts[PROTRESULT(&result)->family] += 1;
+            if (flag_output_predictions_ || flag_output_matched_words_) {
+                print_result_or_match(*n_seqs, buf->seqs[i].header,
+                                      strlen(buf->seqs[i].data), &result,
+                                      NULL);
             }
         }
         timeit_stop(&t_out);
@@ -333,6 +401,9 @@ void classify_file(const char *path, clf *classifier, unsigned long *n_seqs,
     }
     timeit_stop(&t_in);
     uproc_seqiter_destroy(seqit);
+    uproc_list_map(results, map_list_result_free, NULL);
+    uproc_list_destroy(results);
+    uproc_io_close(stream);
     timeit_stop(&t_tot);
 }
 
@@ -362,9 +433,7 @@ int compare_count(const void *p1, const void *p2)
     return 0;
 }
 
-void print_counts(uproc_io_stream *stream,
-                  unsigned long counts[UPROC_FAMILY_MAX + 1],
-                  uproc_idmap *idmap)
+void print_counts(unsigned long counts[UPROC_FAMILY_MAX + 1])
 {
     struct count c[UPROC_FAMILY_MAX + 1];
     uproc_family i, n = 0;
@@ -379,12 +448,10 @@ void print_counts(uproc_io_stream *stream,
     qsort(c, n, sizeof *c, compare_count);
 
     for (i = 0; i < n; i++) {
-        if (idmap) {
-            uproc_io_printf(stream, "%s", uproc_idmap_str(idmap, c[i].fam));
-        } else {
-            uproc_io_printf(stream, "%" UPROC_FAMILY_PRI, c[i].fam);
-        }
-        uproc_io_printf(stream, ",%lu\n", c[i].n);
+        uproc_io_puts(uproc_idmap_str(uproc_database_idmap(database_),
+                                      c[i].fam),
+                      output_stream_);
+        uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
     }
 }
 
@@ -416,16 +483,14 @@ void make_opts(struct ppopts *o, const char *progname)
 
 #if _OPENMP
     O('t', "threads", "N", "Maximum number of threads to use (default: %d).",
-      NUM_THREADS_DEFAULT);
+      flag_num_threads_);
 #endif
 
     ppopts_add_header(o, "OUTPUT FORMAT:");
-    O('p', "preds", "",
-      "Print all classifications as CSV with the fields specified by -F.");
-    O('F', "format", "FORMAT",
+    O('p', "predictions", "FORMAT",
       "\
-Columns to be printed when -p is used. By default, all of them are printed\n\
-in the order as below:\n\
+Print all classifications as CSV with the fields specified by the format\n\
+string FORMAT. Available characters are:\n\
     n: sequence number (starting from 1)\n\
     h: sequence header up to the first whitespace\n\
     l: sequence length (this is a lowercase L)\n"
@@ -438,6 +503,8 @@ in the order as below:\n\
       "\
     f: predicted protein family\n\
     s: classification score");
+
+    O('m', "matches", "FORMAT", "XXX WRITEME");
 
     O('f', "stats", "",
       "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
@@ -466,7 +533,7 @@ Protein threshold level. Allowed values:\n\
     2   less restrictive\n\
     3   more restrictive\n\
 Default is %d . ",
-      PROT_THRESH_DEFAULT);
+      flag_prot_thresh_level_);
 
 #if MAIN_DNA
     ppopts_add_header(o, "DNA CLASSIFICATION OPTIONS:");
@@ -484,7 +551,7 @@ Allowed values:\n\
     1   less restrictive\n\
     2   more restrictive\n\
 Default is %d.",
-      ORF_THRESH_DEFAULT);
+      flag_orf_thresh_level_);
 #endif
 #undef O
 }
@@ -495,24 +562,7 @@ int main(int argc, char **argv)
 {
     uproc_error_set_handler(errhandler_bail, NULL);
 
-    uproc_io_stream *out_stream = uproc_stdout;
-
     determine_chunk_size();
-#if _OPENMP
-    omp_set_nested(1);
-    omp_set_num_threads(NUM_THREADS_DEFAULT);
-#endif
-
-    /* output option flags */
-    bool out_preds = false,   // -p
-        out_counts = false,   // -c
-        out_stats = false,    // -f
-        out_numeric = false;  // -n
-
-    int prot_thresh_level = PROT_THRESH_DEFAULT;  // -P
-    int orf_thresh_level = ORF_THRESH_DEFAULT;    // -O
-
-    bool short_read_mode = false;  // -s
 
     int opt;
     struct ppopts opts = PPOPTS_INITIALIZER;
@@ -521,36 +571,35 @@ int main(int argc, char **argv)
         switch (opt) {
             case 'h':
                 ppopts_print(&opts, stdout, 80, PPOPTS_DESC_ON_NEXT_LINE);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'v':
                 print_version(PROGNAME);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'V':
                 uproc_features_print(uproc_stdout);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'p':
-                out_preds = true;
+                flag_output_predictions_ = true;
+                flag_output_format_ = optarg;
                 break;
-            case 'F':
-                out_format = optarg;
+            case 'm':
+                flag_output_matched_words_ = true;
+                flag_output_format_ = optarg;
                 break;
             case 'c':
-                out_counts = true;
+                flag_output_counts_ = true;
                 break;
             case 'f':
-                out_stats = true;
+                flag_output_summary_ = true;
                 break;
             case 'o':
-                out_stream = open_write(optarg, UPROC_IO_STDIO);
+                output_stream_ = open_write(optarg, UPROC_IO_STDIO);
                 break;
             case 'z':
-                out_stream = open_write(optarg, UPROC_IO_GZIP);
-                break;
-            case 'n':
-                out_numeric = true;
+                output_stream_ = open_write(optarg, UPROC_IO_GZIP);
                 break;
             case 'P':
-                if (parse_prot_thresh_level(optarg, &prot_thresh_level)) {
+                if (parse_prot_thresh_level(optarg, &flag_prot_thresh_level_)) {
                     fprintf(stderr, "-P argument must be 0, 2 or 3\n");
                     return EXIT_FAILURE;
                 }
@@ -566,30 +615,58 @@ int main(int argc, char **argv)
                 }
                 omp_set_num_threads(tmp);
             }
+#else
+                fputs("UProC was compiled without OpenMP; -t ignored\n",
+                      stderr);
+                exit(EXIT_FAILURE);
 #endif
             break;
 #if MAIN_DNA
             case 's':
-                short_read_mode = true;
+                flag_dna_short_read_mode_ = true;
                 break;
             case 'l':
-                short_read_mode = false;
+                flag_dna_short_read_mode_ = false;
                 break;
             case 'O':
-                if (parse_orf_thresh_level(optarg, &orf_thresh_level)) {
+                if (parse_orf_thresh_level(optarg, &flag_orf_thresh_level_)) {
                     fprintf(stderr, "-O argument must be 0, 1 or 2\n");
-                    return EXIT_FAILURE;
+                    exit(EXIT_FAILURE);
                 }
                 break;
 
 #endif
             case '?':
-                return EXIT_FAILURE;
+                exit(EXIT_FAILURE);
         }
     }
 
-    if (!out_counts && !out_preds && !out_stats) {
-        out_counts = true;
+#if _OPENMP
+    omp_set_nested(1);
+    omp_set_num_threads(flag_num_threads_);
+#endif
+
+    if (!output_stream_) {
+        output_stream_ = uproc_stdout;
+    }
+
+    // if no output mode was selected, set a default
+    if (!flag_output_predictions_ &&
+        !flag_output_matched_words_ &&
+        !flag_output_counts_ &&
+        !flag_output_summary_) {
+        flag_output_summary_ = true;
+    }
+
+    // verify that all format string characters are valid
+    if (flag_output_predictions_ || flag_output_matched_words_) {
+        const char *valid = flag_output_predictions_ ? OUTFMT_PREDICTIONS : OUTFMT_MATCHES;
+        size_t spn = strspn(flag_output_format_, valid);
+        if (spn != strlen(flag_output_format_)) {
+            fprintf(stderr, "%s: invalid format string character -- '%c'\n",
+                    argv[0], flag_output_format_[spn]);
+            return EXIT_FAILURE;
+        }
     }
 
     if (argc < optind + ARGC - 1) {
@@ -597,28 +674,29 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    uproc_model *model =
-        uproc_model_load(argv[optind + MODELDIR], orf_thresh_level);
-    if (!model)
+    model_ = uproc_model_load(argv[optind + MODELDIR],
+                               flag_orf_thresh_level_);
+    if (!model_) {
         return EXIT_FAILURE;
+    }
 
-    uproc_database *db = uproc_database_load(
-        argv[optind + DBDIR], prot_thresh_level, UPROC_ECURVE_BINARY);
-    if (!db)
+    database_ = uproc_database_load(argv[optind + DBDIR],
+                                    flag_prot_thresh_level_,
+                                    UPROC_ECURVE_BINARY);
+    if (!database_) {
         return EXIT_FAILURE;
+    }
 
     uproc_protclass *pc;
     uproc_dnaclass *dc;
-    clf *classifier;
 
-    create_classifiers(&pc, &dc, db, model, short_read_mode);
+    create_classifiers(&pc, &dc, database_, model_, flag_dna_short_read_mode_,
+                       flag_output_matched_words_);
 #if MAIN_DNA
-    classifier = dc;
+    classifier_ = dc;
 #else
-    classifier = pc;
+    classifier_ = pc;
 #endif
-
-    uproc_idmap *idmap = out_numeric ? NULL : uproc_database_idmap(db);
 
     /* use stdin if no input file specified */
     if (argc < optind + ARGC) {
@@ -629,26 +707,25 @@ int main(int argc, char **argv)
     unsigned long counts[UPROC_FAMILY_MAX + 1] = {0};
 
     for (; optind + INFILES < argc; optind++) {
-        classify_file(argv[optind + INFILES], classifier, &n_seqs,
-                      &n_seqs_unexplained, counts,
-                      out_preds ? out_stream : NULL, idmap);
+        classify_file(argv[optind + INFILES], &n_seqs,
+                      &n_seqs_unexplained, counts);
     }
 
-    if (out_stats) {
-        uproc_io_printf(out_stream, "%lu,", n_seqs - n_seqs_unexplained);
-        uproc_io_printf(out_stream, "%lu,", n_seqs_unexplained);
-        uproc_io_printf(out_stream, "%lu\n", n_seqs);
+    if (flag_output_summary_) {
+        uproc_io_printf(output_stream_, "%lu,", n_seqs - n_seqs_unexplained);
+        uproc_io_printf(output_stream_, "%lu,", n_seqs_unexplained);
+        uproc_io_printf(output_stream_, "%lu\n", n_seqs);
     }
-    if (out_counts) {
-        print_counts(out_stream, counts, idmap);
+    if (flag_output_counts_) {
+        print_counts(counts);
     }
 
-    uproc_io_close(out_stream);
+    uproc_io_close(output_stream_);
 
     uproc_protclass_destroy(pc);
     uproc_dnaclass_destroy(dc);
-    uproc_model_destroy(model);
-    uproc_database_destroy(db);
+    uproc_model_destroy(model_);
+    uproc_database_destroy(database_);
     buffer_free(&buf[0]);
     buffer_free(&buf[1]);
 
