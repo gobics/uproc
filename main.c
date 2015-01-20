@@ -139,7 +139,6 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     return buf->n > 0;
 }
 
-
 // Available characters for the -F format string.
 #define OUTFMT_PROT "nhl"
 #define OUTFMT_DNA "FIL"  // only when compiling uproc-dna, see below
@@ -166,10 +165,9 @@ enum {
 // Print all fields by default, can be overridden with -F
 const char *out_format = OUTFMT;
 
-void print_result(uproc_io_stream *stream,
-                  unsigned long seq_num, const char *header,
-                  unsigned long seq_len, struct clfresult *result,
-                  uproc_idmap *idmap)
+void print_result(uproc_io_stream *stream, unsigned long seq_num,
+                  const char *header, unsigned long seq_len,
+                  struct clfresult *result, uproc_idmap *idmap)
 {
     const char *format = out_format;
     while (*format) {
