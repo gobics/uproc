@@ -4,6 +4,7 @@ AC_INIT([uproc], [1.1.2], [uproc@gobics.de])
 # GNU make specific constructs are covered by AX_CHECK_GNU_MAKE, so don't warn about them
 AM_INIT_AUTOMAKE([foreign check-news -Wall -Wno-portability])
 
+AC_GNU_SOURCE
 AX_CHECK_GNU_MAKE
 
 LT_PREREQ([2.2])

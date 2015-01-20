@@ -133,6 +133,9 @@
  *   \defgroup grp_datastructs_list List
  *     <!-- list.h -->
  *
+ *   \defgroup grp_datastructs_dict Dictionary
+ *     <!-- dict.h -->
+ *
  *   \defgroup grp_datastructs_bst Binary search tree
  *     <!-- bst.h -->
  *
@@ -176,6 +179,7 @@
 #include <uproc/bst.h>
 #include <uproc/codon.h>
 #include <uproc/common.h>
+#include <uproc/dict.h>
 #include <uproc/dnaclass.h>
 #include <uproc/ecurve.h>
 #include <uproc/error.h>

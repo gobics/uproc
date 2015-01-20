@@ -3,6 +3,7 @@ nobase_include_HEADERS = uproc.h \
 	uproc/bst.h \
 	uproc/codon.h \
 	uproc/common.h \
+	uproc/dict.h \
 	uproc/dnaclass.h \
 	uproc/ecurve.h \
 	uproc/error.h \

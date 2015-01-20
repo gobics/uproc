@@ -4,6 +4,7 @@ TESTS = ck_common \
 		ck_alphabet \
 		ck_bst \
 		ck_codon \
+		ck_dict \
 		ck_idmap \
 		ck_list \
 		ck_matrix \

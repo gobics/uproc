@@ -23,8 +23,7 @@
 #include <config.h>
 #endif
 
-#if HAVE_GETOPT_LONG
-#define _GNU_SOURCE
+#if defined(_GNU_SOURCE) && HAVE_GETOPT_LONG
 #include <getopt.h>
 #else
 #include <unistd.h>

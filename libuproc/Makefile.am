@@ -16,6 +16,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 libuproc_la_SOURCES = alphabet.c \
 					bst.c \
 					codon.c \
+					dict.c \
 					dnaclass.c \
 					ecurve.c \
 					ecurve_internal.h \
