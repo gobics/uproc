@@ -62,6 +62,9 @@ enum uproc_error_code {
 
     /** Operation not supported */
     UPROC_ENOTSUP,
+
+    /** Used by the ::uproc_assert macro */
+    UPROC_ASSERTION_FAILED,
 };
 
 /* Set error information */
@@ -88,6 +91,15 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
  */
 #define uproc_error_msg(num, ...) \
     uproc_error_((num), __func__, __FILE__, __LINE__, __VA_ARGS__)
+
+#define uproc_assert_msg(expr, msg) do { \
+    if (!(expr)) {              \
+        uproc_error_msg(UPROC_ASSERTION_FAILED, "%s", (msg)); \
+    } } while (0)
+
+#define uproc_assert(expr) uproc_assert_msg((expr), #expr)
+
+
 
 /* Get pointer to thread-local uproc_errno */
 int *uproc_error_errno_(void);
