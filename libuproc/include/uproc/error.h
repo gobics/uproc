@@ -96,6 +96,8 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
     do {                                                          \
         if (!(expr)) {                                            \
             uproc_error_msg(UPROC_ASSERTION_FAILED, "%s", (msg)); \
+            uproc_perror("");                                     \
+            exit(EXIT_FAILURE);                                   \
         }                                                         \
     } while (0)
 
