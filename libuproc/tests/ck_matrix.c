@@ -6,11 +6,10 @@ uproc_matrix *m;
 
 START_TEST(test_init)
 {
-    uproc_matrix *mat;
     double data[] = {0.0, 0.1, 0.2, 1.0, 1.1, 1.2, 2.0, 2.1,
                      2.2, 3.0, 3.1, 3.2, 4.0, 4.1, 4.2};
 
-    mat = uproc_matrix_create(5, 3, data);
+    uproc_matrix *mat = uproc_matrix_create(5, 3, data);
     ck_assert_ptr_ne(mat, NULL);
 
     ck_assert(uproc_matrix_get(mat, 0, 0) == 0.0);
@@ -20,6 +19,7 @@ START_TEST(test_init)
     ck_assert(uproc_matrix_get(mat, 3, 1) == 3.1);
     ck_assert(uproc_matrix_get(mat, 4, 0) == 4.0);
     ck_assert(uproc_matrix_get(mat, 4, 2) == 4.2);
+    uproc_matrix_destroy(mat);
 }
 END_TEST
 
@@ -44,11 +44,9 @@ END_TEST
 START_TEST(test_store_load)
 {
     int res;
-    uproc_matrix *mat;
-    size_t rows, cols;
     double data[] = {0.0, 0.1, 0.2, 0.3, 1.0, 1.1, 1.2, 1.3};
 
-    mat = uproc_matrix_create(2, 4, data);
+    uproc_matrix *mat = uproc_matrix_create(2, 4, data);
 
     res = uproc_matrix_store(mat, UPROC_IO_GZIP, TMPDATADIR "test_matrix.tmp");
     ck_assert_msg(res == 0, "storing failed");
@@ -57,6 +55,7 @@ START_TEST(test_store_load)
     mat = uproc_matrix_load(UPROC_IO_GZIP, TMPDATADIR "test_matrix.tmp");
     ck_assert_ptr_ne(mat, NULL);
 
+    size_t rows, cols;
     uproc_matrix_dimensions(mat, &rows, &cols);
     ck_assert_uint_eq(rows, 2);
     ck_assert_uint_eq(cols, 4);
@@ -67,6 +66,7 @@ START_TEST(test_store_load)
     ck_assert(uproc_matrix_get(mat, 1, 0) == 1.0);
     ck_assert(uproc_matrix_get(mat, 1, 2) == 1.2);
     ck_assert(uproc_matrix_get(mat, 1, 3) == 1.3);
+    uproc_matrix_destroy(mat);
 }
 END_TEST
 

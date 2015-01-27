@@ -180,6 +180,7 @@ START_TEST(test_value_size_check)
     ck_assert_int_eq(uproc_list_set(tmp, 0, &foo), 0);
     ck_assert_int_eq(uproc_list_get(tmp, 0, &foo), 0);
     ck_assert_int_ne(uproc_list_set(tmp, 0, &bar), 0);
+    uproc_list_destroy(tmp);
 }
 END_TEST
 

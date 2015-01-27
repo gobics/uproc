@@ -165,6 +165,7 @@ START_TEST(test_worditer)
     TEST(23, "VVVVVVVVVVVVVVVVSD", "DSVVVVVVVVVVVVVVVV");
 
     res = uproc_worditer_next(iter, &index, &fwd, &rev);
+    uproc_worditer_destroy(iter);
     ck_assert_int_eq(res, 1);
 #undef TEST
 }
