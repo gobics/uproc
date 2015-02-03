@@ -98,7 +98,7 @@ uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
     if (!map) {
         return NULL;
     }
-    if (!uproc_io_getline(&line, &sz, stream)) {
+    if (uproc_io_getline(&line, &sz, stream) == -1) {
         goto error;
     }
     res = sscanf(line, "[%lu]\n", &n);
@@ -112,7 +112,7 @@ uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
     }
     for (i = 0; i < n; i++) {
         size_t len;
-        if (!uproc_io_getline(&line, &sz, stream)) {
+        if (uproc_io_getline(&line, &sz, stream) == -1) {
             if (uproc_io_eof(stream)) {
                 uproc_error_msg(UPROC_EINVAL, "unexpected end of file");
             }

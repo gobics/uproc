@@ -445,7 +445,7 @@ uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
 
     char *line = NULL;
     size_t line_sz = 0;
-    while (res = uproc_io_getline(&line, &line_sz, stream), res > 0) {
+    while (res = uproc_io_getline(&line, &line_sz, stream), res != -1) {
         unsigned char key[UPROC_DICT_KEY_SIZE_MAX],
             value[UPROC_DICT_VALUE_SIZE_MAX];
         char *p = strchr(line, '\n');

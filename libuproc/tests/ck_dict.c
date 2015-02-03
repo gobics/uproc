@@ -84,7 +84,7 @@ START_TEST(test_many_values)
                                            DATADIR "dict_english_wordlist.txt");
         ck_assert(f);
         value = 0;
-        while (uproc_io_getline(&line, &line_sz, f) > 0) {
+        while (uproc_io_getline(&line, &line_sz, f) != -1) {
             *strchr(line, '\n') = '\0';
             ck_assert_int_eq(uproc_dict_set(dict, line, &value), 0);
             value++;
@@ -99,7 +99,7 @@ START_TEST(test_many_values)
                                            DATADIR "dict_english_wordlist.txt");
         ck_assert(f);
         value = 0;
-        while (uproc_io_getline(&line, &line_sz, f) > 0) {
+        while (uproc_io_getline(&line, &line_sz, f) != -1) {
             *strchr(line, '\n') = '\0';
             uint64_t tmp;
             ck_assert_int_eq(uproc_dict_get(dict, line, &tmp), 0);
@@ -128,7 +128,7 @@ START_TEST(test_many_values)
         size_t line_number = 0;
         ck_assert(f);
         value = 0;
-        while (uproc_io_getline(&line, &line_sz, f) > 0) {
+        while (uproc_io_getline(&line, &line_sz, f) != -1) {
             *strchr(line, '\n') = '\0';
             if (line_number++ <= 29617 / 2) {
                 ck_assert_int_eq(uproc_dict_remove(dict, line), 0);
@@ -162,7 +162,7 @@ START_TEST(test_iter)
     uproc_io_stream *f =
         uproc_io_open("r", UPROC_IO_STDIO, DATADIR "dict_single_words.txt");
     ck_assert(f);
-    while (uproc_io_getline(&line, &line_sz, f) > 0) {
+    while (uproc_io_getline(&line, &line_sz, f) != -1) {
         uproc_word_from_string(&key, line, alpha);
         strncpy(value, line, UPROC_WORD_LEN);
 
