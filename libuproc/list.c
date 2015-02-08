@@ -29,14 +29,6 @@
 #include "uproc/error.h"
 #include "uproc/list.h"
 
-// Undef macros from list.h that invoke the _safe variant.
-#undef uproc_list_get
-#undef uproc_list_get_all
-#undef uproc_list_set
-#undef uproc_list_append
-#undef uproc_list_extend
-#undef uproc_list_pop
-
 #define MIN_CAPACITY 32
 #define MAX_SIZE (LONG_MAX)
 
@@ -133,7 +125,7 @@ void uproc_list_destroy(uproc_list *list)
     free(list);
 }
 
-int uproc_list_check_value_size(const uproc_list *list, size_t value_size)
+static int check_value_size(const uproc_list *list, size_t value_size)
 {
     if (value_size && value_size != list->value_size) {
         return uproc_error_msg(UPROC_EINVAL,
@@ -150,7 +142,7 @@ void uproc_list_clear(uproc_list *list)
     list->size = 0;
 }
 
-int uproc_list_get(const uproc_list *list, long index, void *value)
+static int list_get(const uproc_list *list, long index, void *value)
 {
     long idx = index;
     if (idx < 0) {
@@ -167,11 +159,10 @@ int uproc_list_get(const uproc_list *list, long index, void *value)
 int uproc_list_get_safe(const uproc_list *list, long index, void *value,
                         size_t value_size)
 {
-    return uproc_list_check_value_size(list, value_size) ||
-           uproc_list_get(list, index, value);
+    return check_value_size(list, value_size) || list_get(list, index, value);
 }
 
-size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
+static size_t list_get_all(const uproc_list *list, void *buf, size_t sz)
 {
     size_t needed = list->value_size * list->size;
     if (needed < sz) {
@@ -184,13 +175,13 @@ size_t uproc_list_get_all(const uproc_list *list, void *buf, size_t sz)
 size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
                                size_t value_size)
 {
-    if (uproc_list_check_value_size(list, value_size)) {
+    if (check_value_size(list, value_size)) {
         return 0;
     }
-    return uproc_list_get_all(list, buf, sz);
+    return list_get_all(list, buf, sz);
 }
 
-int uproc_list_set(uproc_list *list, long index, const void *value)
+static int list_set(uproc_list *list, long index, const void *value)
 {
     long idx = index;
     if (idx < 0) {
@@ -207,28 +198,26 @@ int uproc_list_set(uproc_list *list, long index, const void *value)
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
                         size_t value_size)
 {
-    return uproc_list_check_value_size(list, value_size) ||
-           uproc_list_set(list, index, value);
+    return check_value_size(list, value_size) || list_set(list, index, value);
 }
 
-int uproc_list_append(uproc_list *list, const void *value)
+static int list_append(uproc_list *list, const void *value)
 {
     int res = list_grow(list, 1);
     if (res) {
         return res;
     }
     list->size++;
-    return uproc_list_set(list, list->size - 1, value);
+    return list_set(list, list->size - 1, value);
 }
 
 int uproc_list_append_safe(uproc_list *list, const void *value,
                            size_t value_size)
 {
-    return uproc_list_check_value_size(list, value_size) ||
-           uproc_list_append(list, value);
+    return check_value_size(list, value_size) || list_append(list, value);
 }
 
-int uproc_list_extend(uproc_list *list, const void *values, long n)
+static int list_extend(uproc_list *list, const void *values, long n)
 {
     int res;
     if (n < 0) {
@@ -251,8 +240,7 @@ int uproc_list_extend(uproc_list *list, const void *values, long n)
 int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
                            size_t value_size)
 {
-    return uproc_list_check_value_size(list, value_size) ||
-           uproc_list_extend(list, values, n);
+    return check_value_size(list, value_size) || list_extend(list, values, n);
 }
 
 int uproc_list_add(uproc_list *list, const uproc_list *src)
@@ -261,15 +249,15 @@ int uproc_list_add(uproc_list *list, const uproc_list *src)
         return uproc_error_msg(UPROC_EINVAL,
                                "can't add lists with different value sizes");
     }
-    return uproc_list_extend(list, src->data, src->size);
+    return list_extend(list, src->data, src->size);
 }
 
-int uproc_list_pop(uproc_list *list, void *value)
+static int list_pop(uproc_list *list, void *value)
 {
     if (list->size < 1) {
         return uproc_error_msg(UPROC_EINVAL, "pop from empty list");
     }
-    uproc_list_get(list, list->size - 1, value);
+    list_get(list, list->size - 1, value);
     list->size--;
     if (list->size > list->capacity / 4) {
         return 0;
@@ -279,8 +267,7 @@ int uproc_list_pop(uproc_list *list, void *value)
 
 int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size)
 {
-    return uproc_list_check_value_size(list, value_size) ||
-           uproc_list_pop(list, value);
+    return check_value_size(list, value_size) || list_pop(list, value);
 }
 
 long uproc_list_size(const uproc_list *list)
