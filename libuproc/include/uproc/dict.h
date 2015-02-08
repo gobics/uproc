@@ -136,8 +136,7 @@ long uproc_dict_size(const uproc_dict *dict);
  * See ::uproc_dict_load for details.
  */
 uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
-                             int (*scan)(const char *, void *, void *,
-                                         void *),
+                             int (*scan)(const char *, void *, void *, void *),
                              void *opaque, uproc_io_stream *stream);
 
 /** Load dict from file
@@ -163,25 +162,21 @@ uproc_dict *uproc_dict_load(size_t key_size, size_t value_size,
  * number of arguments.
  */
 uproc_dict *uproc_dict_loadv(size_t key_size, size_t value_size,
-                             int (*scan)(const char *, void *, void *,
-                                         void *),
+                             int (*scan)(const char *, void *, void *, void *),
                              void *opaque, enum uproc_io_type iotype,
                              const char *pathfmt, va_list ap);
 
 int uproc_dict_stores(const uproc_dict *dict,
-                      int (*format)(char *, const void *, const void *,
-                                    void *),
+                      int (*format)(char *, const void *, const void *, void *),
                       void *opaque, uproc_io_stream *stream);
 
 int uproc_dict_storev(const uproc_dict *dict,
-                      int (*format)(char *, const void *, const void *,
-                                    void *),
+                      int (*format)(char *, const void *, const void *, void *),
                       void *opaque, enum uproc_io_type iotype,
                       const char *pathfmt, va_list ap);
 
 int uproc_dict_store(const uproc_dict *dict,
-                     int (*format)(char *, const void *, const void *,
-                                   void *),
+                     int (*format)(char *, const void *, const void *, void *),
                      void *opaque, enum uproc_io_type iotype,
                      const char *pathfmt, ...);
 

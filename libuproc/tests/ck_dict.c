@@ -23,7 +23,8 @@ START_TEST(test_string_keys)
     uproc_dict *dict = uproc_dict_create(0, sizeof value);
     ck_assert(dict);
 
-    ck_assert_int_ne(uproc_dict_set(
+    ck_assert_int_ne(
+        uproc_dict_set(
             dict, "string that is waaaaaaaay too long for using it as a key",
             &value),
         0);
@@ -203,7 +204,7 @@ int format(char *str, const void *key, const void *value, void *opaque)
     (void)opaque;
     const uint64_t *v = value;
     int res = snprintf(str, UPROC_DICT_STORE_SIZE_MAX, "%s %" PRIu64,
-                       (char*)key, *v);
+                       (char *)key, *v);
     return res > 0 ? 0 : -1;
 }
 
@@ -211,7 +212,7 @@ int scan(const char *str, void *key, void *value, void *opaque)
 {
     (void)opaque;
     uint64_t v = 0;
-    int res = sscanf(str, "%s %" SCNu64, (char*)key, &v);
+    int res = sscanf(str, "%s %" SCNu64, (char *)key, &v);
     memcpy(value, &v, sizeof v);
     return res == 2 ? 0 : -1;
 }
@@ -228,14 +229,13 @@ START_TEST(test_store_load)
     uproc_dict_set(dict, "bacon", &value);
     ck_assert_uint_eq(uproc_dict_size(dict), 3);
 
-    int res = uproc_dict_store(dict,
-                               format, NULL,
-                               UPROC_IO_GZIP, TMPDATADIR "test_dict.tmp");
+    int res = uproc_dict_store(dict, format, NULL, UPROC_IO_GZIP,
+                               TMPDATADIR "test_dict.tmp");
     ck_assert_int_eq(res, 0);
     uproc_dict_destroy(dict);
 
-    dict = uproc_dict_load(0, sizeof value, scan, NULL,
-                           UPROC_IO_GZIP, TMPDATADIR "test_dict.tmp");
+    dict = uproc_dict_load(0, sizeof value, scan, NULL, UPROC_IO_GZIP,
+                           TMPDATADIR "test_dict.tmp");
     ck_assert(dict);
     ck_assert_uint_eq(uproc_dict_size(dict), 3);
     uproc_dict_get(dict, "spam", &value);
@@ -246,7 +246,8 @@ START_TEST(test_store_load)
     ck_assert_uint_eq(value, 1337);
 
     uproc_dict_destroy(dict);
-} END_TEST
+}
+END_TEST
 
 int main(void)
 {

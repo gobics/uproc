@@ -528,8 +528,7 @@ int uproc_dict_stores(const uproc_dict *dict,
 }
 
 int uproc_dict_storev(const uproc_dict *dict,
-                      int (*format)(char *, const void *, const void *,
-                                    void *),
+                      int (*format)(char *, const void *, const void *, void *),
                       void *opaque, enum uproc_io_type iotype,
                       const char *pathfmt, va_list ap)
 {
