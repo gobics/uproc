@@ -445,7 +445,25 @@ uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
 
     char *line = NULL;
     size_t line_sz = 0;
-    while (res = uproc_io_getline(&line, &line_sz, stream), res != -1) {
+
+    res = uproc_io_getline(&line, &line_sz, stream);
+    if (res == -1) {
+        return NULL;
+    }
+
+    long size;
+    res = sscanf(line, "[%ld]", &size);
+    if (res != 1) {
+        uproc_error_msg(UPROC_EINVAL, "invalid dict header");
+        return NULL;
+    }
+
+    while (size--) {
+        res = uproc_io_getline(&line, &line_sz, stream);
+        if (res == -1) {
+            break;
+        }
+
         unsigned char key[UPROC_DICT_KEY_SIZE_MAX],
             value[UPROC_DICT_VALUE_SIZE_MAX];
         char *p = strchr(line, '\n');
@@ -461,7 +479,7 @@ uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
             break;
         }
     }
-    if (uproc_errno != UPROC_SUCCESS) {
+    if (res) {
         uproc_dict_destroy(dict);
         dict = NULL;
     }
@@ -509,6 +527,12 @@ int uproc_dict_stores(const uproc_dict *dict,
     unsigned char key[UPROC_DICT_KEY_SIZE_MAX],
         value[UPROC_DICT_VALUE_SIZE_MAX];
     char buf[UPROC_DICT_STORE_SIZE_MAX + 1];
+
+    res = uproc_io_printf(stream, "[%ld]\n", uproc_dict_size(dict));
+    if (res < 0) {
+        return -1;
+    }
+
     while (res = iter_next(iter, key, value), !res) {
         res = format(buf, key, value, opaque);
         if (res) {
