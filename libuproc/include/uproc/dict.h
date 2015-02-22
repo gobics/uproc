@@ -131,6 +131,19 @@ int uproc_dict_pop_safe(uproc_dict *dict, void *key, size_t key_size,
 /** Return the number of items */
 long uproc_dict_size(const uproc_dict *dict);
 
+/** Apply function to all key/value pairs
+ *
+ * The first two arguments passed to \c func are pointers to shallow copies of
+ * key and value in the dict.
+ * The third argument to \c func is the user-supplied \c opaque pointer.
+ *
+ * \param t         BST instance
+ * \param func      function to call
+ * \param opaque    second argument to \c function
+ */
+void uproc_dict_map(const uproc_dict *dict,
+                    void (*func)(void *, void *, void *), void *opaque);
+
 /** Load dict from stream
  *
  * See ::uproc_dict_load for details.

@@ -199,6 +199,35 @@ START_TEST(test_iter)
 }
 END_TEST
 
+void map_func(const void *key, const void *value, void *opaque)
+{
+    const int *k = key;
+    const uint64_t *v = value;
+    uint64_t *o = opaque;
+    ck_assert_uint_eq(o[*k], *v);
+    o[*k] = 0;
+}
+
+START_TEST(test_map)
+{
+    int key = 0;
+    uint64_t values[] = {42, 1337, 31};
+    uproc_dict *dict = uproc_dict_create(sizeof key, sizeof values[0]);
+    ck_assert(dict);
+
+    for (int key = 0; key < 3; key++) {
+        ck_assert_int_eq(uproc_dict_set(dict, &key, &values[key]), 0);
+    }
+
+    uproc_dict_map(dict, map_func, values);
+
+    for (int key = 0; key < 3; key++) {
+        ck_assert_uint_eq(values[key], 0);
+    }
+    uproc_dict_destroy(dict);
+}
+END_TEST
+
 int format(char *str, const void *key, const void *value, void *opaque)
 {
     (void)opaque;
@@ -257,6 +286,7 @@ int main(void)
     tcase_add_test(tc, test_string_keys);
     tcase_add_test(tc, test_many_values);
     tcase_add_test(tc, test_iter);
+    tcase_add_test(tc, test_map);
     tcase_add_test(tc, test_store_load);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);

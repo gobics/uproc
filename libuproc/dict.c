@@ -578,6 +578,18 @@ int uproc_dict_store(const uproc_dict *dict,
     return res;
 }
 
+void uproc_dict_map(const uproc_dict *dict,
+                    void (*func)(void *, void *, void *), void *opaque)
+{
+    struct uproc_dictiter_s iter = {dict, 0, 0};
+    int res;
+    key_value_buffer buf;
+    void *key = buf, *value = buf + UPROC_DICT_KEY_SIZE_MAX;
+    while (res = iter_next(&iter, key, value), !res) {
+        func(key, value, opaque);
+    }
+}
+
 uproc_dictiter *uproc_dictiter_create(const uproc_dict *dict)
 {
     uproc_dictiter *iter = malloc(sizeof *iter);
