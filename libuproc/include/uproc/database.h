@@ -31,6 +31,7 @@
 #define UPROC_DATABASE_H
 
 #include "uproc/ecurve.h"
+#include "uproc/dict.h"
 #include "uproc/idmap.h"
 #include "uproc/matrix.h"
 
@@ -49,8 +50,8 @@
 typedef struct uproc_database_s uproc_database;
 
 /**
-  * Loads all required data of a UProC database from files in the given
-  *directory and returns a database object.
+  * Loads all required data of a UProC database (versions 1.x.x) from files in
+  * the given directory and returns a database object.
   *
   * \param path an existing directory containing a UProC database.
   * \param prot_thres_level the protein threshold to be used. Note that the
@@ -59,13 +60,11 @@ typedef struct uproc_database_s uproc_database;
   *
   * \returns the object on success or %NULL on error
   */
-uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
-                                    enum uproc_ecurve_format format);
+uproc_database *uproc_database_load(const char *path);
 
 /**
   * Returns the forward matching ecurve of the database. Note that the returned
-  *object will
-  * become invalid when the database is destroyed.
+  * object will become invalid when the database is destroyed.
   *
   * \see uproc_database_destroy
   *
@@ -97,6 +96,7 @@ uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db);
   * \returns a pointer to the idmap.
   */
 uproc_idmap *uproc_database_idmap(uproc_database *db);
+
 /**
   * Returns the protein threshold matrix of the database. Note that the returned
   *object will
@@ -111,7 +111,7 @@ uproc_idmap *uproc_database_idmap(uproc_database *db);
   * \param db the database.
   * \returns a pointer to the matrix or %NULL
   */
-uproc_matrix *uproc_database_protein_threshold(uproc_database *db);
+uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level);
 
 uproc_alphabet *uproc_database_alphabet(uproc_database *db);
 
@@ -121,4 +121,34 @@ uproc_alphabet *uproc_database_alphabet(uproc_database *db);
   */
 void uproc_database_destroy(uproc_database *db);
 
+/** \} */
+
+// The size of the largest primitive type in the union corresponds to its
+// alignment (unless the enum type would be larger, but that's not possible
+// with uintmax_t in the union)
+#define UPROC_DATABASE_METADATA_STR_SIZE \
+    (UPROC_DICT_VALUE_SIZE_MAX -  sizeof (uintmax_t))
+struct uproc_database_metadata
+{
+    enum uproc_database_metadata_type {
+        STR = 's',
+        UINT = 'u',
+    } type;
+    union {
+        char str[UPROC_DATABASE_METADATA_STR_SIZE];
+        uintmax_t uint;
+    } value;
+};
+
+int uproc_database_metadata_get_uint(const uproc_database *db,
+                                     const char *key, uintmax_t *value);
+
+int uproc_database_metadata_get_str(const uproc_database *db, const char *key,
+                                    char value[static UPROC_DATABASE_METADATA_STR_SIZE]);
+
+int uproc_database_metadata_set_uint(uproc_database *db,
+                                     const char *key, uintmax_t value);
+
+int uproc_database_metadata_set_str(uproc_database *db,
+                                    const char *key, char *value);
 #endif

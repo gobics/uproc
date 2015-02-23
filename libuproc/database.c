@@ -28,12 +28,16 @@
 #include "uproc/database.h"
 
 #include "uproc/ecurve.h"
+#include "uproc/dict.h"
 #include "uproc/matrix.h"
 #include "uproc/idmap.h"
 
 /** Struct defining a database **/
 struct uproc_database_s
 {
+    /** Data describing the database.
+     * Maps (string) -> (struct uproc_database_metadata) */
+    uproc_dict *metadata;
     /**
       * The forward matching ecurve.
       * \see uproc_ecurve
@@ -44,18 +48,83 @@ struct uproc_database_s
       * \see uproc_ecurve
       */
     uproc_ecurve *rev;
+
     /**
-      * The mapping of numerical ID to string ID.
-      */
+     * The mapping of numerical ID to string ID.
+     */
     uproc_idmap *idmap;
+
     /**
-      * The matrix containing protein thresholds.
-      */
-    uproc_matrix *prot_thresh;
+     * Matrices containing protein thresholds.
+     */
+    uproc_matrix *prot_thresh_e2, *prot_thresh_e3;
 };
 
-uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
-                                    enum uproc_ecurve_format format)
+// Formats into "t key: value" where t is a one-character type identifier
+int metadata_format(char *buf, const void *key, const void *value, void *opaque)
+{
+    uproc_assert(strlen(key) < UPROC_DICT_KEY_SIZE_MAX);
+    const struct uproc_database_metadata *v = value;
+    int bytes_left = UPROC_DICT_STORE_BUFFER_SIZE;
+    int res = snprintf(buf, bytes_left, "%c %s: ",
+                       v->type, (const char *)key);
+
+    if (res < 0 || res > bytes_left) {
+        return -1;
+    }
+    bytes_left -= res;
+    buf += res;
+
+    switch (v->type) {
+        case STR:
+            res = snprintf(buf, bytes_left, "%s", v->value.str);
+            break;
+        case UINT:
+            res = snprintf(buf, bytes_left, "%ju", v->value.uint);
+            break;
+        default:
+            uproc_assert_msg(0, "invalid type");
+            return -1;
+    }
+    return (res > 0 && res <= UPROC_DICT_STORE_BUFFER_SIZE) ? 0 : -1;
+}
+
+int metadata_scan(const char *s, void *key, void *value, void *opaque)
+{
+    struct uproc_database_metadata *v = value;
+
+    // determine type by looking at the first character
+    switch (*s) {
+        case STR:
+        case UINT:
+            break;
+        default:
+            return uproc_error_msg(UPROC_EINVAL,
+                                   "invalid type identifier %c", *s);
+    }
+    v->type = *s;
+    s += 2;
+
+    memset(key, 0, UPROC_DICT_KEY_SIZE_MAX);
+    const char *sep = strchr(s, ':');
+    if (!sep) {
+        return -1;
+    }
+    strncpy(key, s, sep - s);
+
+    s = sep + 2;  // skip ": "
+
+    switch (v->type) {
+        case STR:
+            strncpy(v->value.str, s, sizeof v->value.str);
+            break;
+        case UINT:
+            sscanf(s, "%ju", &v->value.uint);
+    }
+    return 0;
+}
+
+uproc_database *uproc_database_load(const char *path)
 {
     uproc_database *db = malloc(sizeof *db);
     if (!db) {
@@ -65,34 +134,36 @@ uproc_database *uproc_database_load(const char *path, int prot_thresh_level,
     }
     *db = (struct uproc_database_s){0};
 
-    switch (prot_thresh_level) {
-        case 2:
-        case 3:
-            db->prot_thresh = uproc_matrix_load(
-                UPROC_IO_GZIP, "%s/prot_thresh_e%d", path, prot_thresh_level);
-            if (!db->prot_thresh) {
-                goto error;
-            }
-            break;
+    db->metadata = uproc_dict_load(0, sizeof (struct uproc_database_metadata),
+                                   metadata_scan, NULL,
+                                   UPROC_IO_GZIP, "%s/metadata", path);
+    if (!db->metadata) {
+        // We'll allow old databases without metadata (for now)
+        // goto error;
+    }
 
-        case 0:
-            break;
-
-        default:
-            uproc_error_msg(UPROC_EINVAL,
-                            "protein threshold level must be 0, 2, or 3");
-            goto error;
+    db->prot_thresh_e2 = uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e2",
+                                           path);
+    if (!db->prot_thresh_e2) {
+        goto error;
+    }
+    db->prot_thresh_e3 = uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e3",
+                                           path);
+    if (!db->prot_thresh_e2) {
+        goto error;
     }
 
     db->idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
     if (!db->idmap) {
         goto error;
     }
-    db->fwd = uproc_ecurve_load(format, UPROC_IO_GZIP, "%s/fwd.ecurve", path);
+    db->fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                "%s/fwd.ecurve", path);
     if (!db->fwd) {
         goto error;
     }
-    db->rev = uproc_ecurve_load(format, UPROC_IO_GZIP, "%s/rev.ecurve", path);
+    db->rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                "%s/rev.ecurve", path);
     if (!db->rev) {
         goto error;
     }
@@ -108,24 +179,12 @@ void uproc_database_destroy(uproc_database *db)
     if (!db) {
         return;
     }
-
-    if (db->idmap) {
-        uproc_idmap_destroy(db->idmap);
-        db->idmap = NULL;
-    }
-    if (db->fwd) {
-        uproc_ecurve_destroy(db->fwd);
-        db->fwd = NULL;
-    }
-    if (db->rev) {
-        uproc_ecurve_destroy(db->rev);
-        db->rev = NULL;
-    }
-    if (db->prot_thresh) {
-        uproc_matrix_destroy(db->prot_thresh);
-        db->prot_thresh = NULL;
-    }
-
+    uproc_dict_destroy(db->metadata);
+    uproc_ecurve_destroy(db->fwd);
+    uproc_ecurve_destroy(db->rev);
+    uproc_idmap_destroy(db->idmap);
+    uproc_matrix_destroy(db->prot_thresh_e2);
+    uproc_matrix_destroy(db->prot_thresh_e3);
     free(db);
 }
 
@@ -156,13 +215,19 @@ uproc_idmap *uproc_database_idmap(uproc_database *db)
     return db->idmap;
 }
 
-uproc_matrix *uproc_database_protein_threshold(uproc_database *db)
+uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level)
 {
-    if (!db) {
-        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-        return NULL;
+    uproc_assert(db);
+    switch (level) {
+        case 0:
+            return NULL;
+        case 2:
+            return db->prot_thresh_e2;
+        case 3:
+            return db->prot_thresh_e3;
     }
-    return db->prot_thresh;
+    uproc_error_msg(UPROC_EINVAL, "invalid protein threshold level %d", level);
+    return NULL;
 }
 
 uproc_alphabet *uproc_database_alphabet(uproc_database *db)
@@ -172,4 +237,67 @@ uproc_alphabet *uproc_database_alphabet(uproc_database *db)
         return NULL;
     }
     return uproc_ecurve_alphabet(db->fwd);
+}
+
+int metadata_get(const uproc_database *db,
+                 const char *key, struct uproc_database_metadata *value)
+{
+    uproc_assert(db->metadata);
+    if (uproc_dict_get(db->metadata, key, value)) {
+        return -1;
+    }
+    return 0;
+}
+
+int uproc_database_metadata_get_uint(const uproc_database *db,
+                                     const char *key, uintmax_t *value)
+{
+    struct uproc_database_metadata v;
+    if (metadata_get(db, key, &v)) {
+        return -1;
+    }
+    uproc_assert(v.type == UINT);
+    *value = v.value.uint;
+    return 0;
+}
+
+int uproc_database_metadata_get_str(const uproc_database *db, const char *key,
+                                    char value[static UPROC_DATABASE_METADATA_STR_SIZE])
+{
+    struct uproc_database_metadata v;
+    if (metadata_get(db, key, &v)) {
+        return -1;
+    }
+    uproc_assert(v.type == STR);
+    strncpy(value, v.value.str, sizeof v.value.str);
+    return 0;
+}
+
+int metadata_set(uproc_database *db, const char *key,
+                 const struct uproc_database_metadata *value)
+{
+    uproc_assert(db->metadata);
+    if (uproc_dict_set(db->metadata, key, value)) {
+        return -1;
+    }
+    return 0;
+}
+
+int uproc_database_metadata_set_uint(uproc_database *db,
+                                     const char *key, uintmax_t value)
+{
+    struct uproc_database_metadata v;
+    v.type = UINT;
+    v.value.uint = value;
+    return metadata_set(db, key, &v);
+}
+
+int uproc_database_metadata_set_str(uproc_database *db,
+                                    const char *key, char *value)
+{
+    struct uproc_database_metadata v;
+    v.type = STR;
+    v.value.str[sizeof v.value.str - 1] = '\0';
+    strncpy(v.value.str, value, sizeof v.value.str - 1);
+    return metadata_set(db, key, &v);
 }

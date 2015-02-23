@@ -680,9 +680,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    database_ = uproc_database_load(argv[optind + DBDIR],
-                                    flag_prot_thresh_level_,
-                                    UPROC_ECURVE_BINARY);
+    database_ = uproc_database_load(argv[optind + DBDIR]);
     if (!database_) {
         return EXIT_FAILURE;
     }
@@ -690,7 +688,9 @@ int main(int argc, char **argv)
     uproc_protclass *pc;
     uproc_dnaclass *dc;
 
-    create_classifiers(&pc, &dc, database_, model_, flag_dna_short_read_mode_,
+    create_classifiers(&pc, &dc, database_, model_,
+                       flag_prot_thresh_level_,
+                       flag_dna_short_read_mode_,
                        flag_output_matched_words_);
 #if MAIN_DNA
     classifier_ = dc;
