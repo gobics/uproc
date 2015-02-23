@@ -217,7 +217,7 @@ void print_result_or_match(unsigned long seq_num, const char *header,
         return;
     }
 
-    while (*format++) {
+    while (*format) {
         // increment here so we know if theres another item
         switch (*format++) {
             case OUTFMT_SEQ_NUMBER:
