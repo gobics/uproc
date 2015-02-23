@@ -65,7 +65,7 @@ enum {
     /** Maximum number of bytes that can be used for values */
     UPROC_DICT_VALUE_SIZE_MAX = 32,
 
-    UPROC_DICT_STORE_SIZE_MAX = 4096,
+    UPROC_DICT_STORE_BUFFER_SIZE = 4096,
 };
 
 /** Create an empty dict
@@ -179,19 +179,44 @@ uproc_dict *uproc_dict_loadv(size_t key_size, size_t value_size,
                              void *opaque, enum uproc_io_type iotype,
                              const char *pathfmt, va_list ap);
 
+/** Store dict to stream
+ *
+ * See ::uproc_dict_store for details.
+ */
 int uproc_dict_stores(const uproc_dict *dict,
                       int (*format)(char *, const void *, const void *, void *),
                       void *opaque, uproc_io_stream *stream);
 
-int uproc_dict_storev(const uproc_dict *dict,
-                      int (*format)(char *, const void *, const void *, void *),
-                      void *opaque, enum uproc_io_type iotype,
-                      const char *pathfmt, va_list ap);
-
+/** Store dict to file
+ *
+ * \c format should convert key and value (second and third argument) to a
+ * string and store it in the buffer pointed to by the first argument. The size
+ * of the buffer is :UPROC_DICT_STORE_BUFFER_SIZE.
+ * The fourth parameter to \c format is the user supplied \c opaque pointer.
+ * The formatted key/value string should not contain newlines, because
+ * :uproc_dict_load passes each line to its \c scan function.
+ *
+ * \param key_size      size of the stored keys (see ::uproc_dict_create)
+ * \param value_size    size of the stored values (see ::uproc_dict_create)
+ * \param format        pointer to function converting key and value to string
+ * \param opaque        fourth argument to \c scan
+ * \param pathfmt       printf format string for file path
+ * \param ...           format string arguments
+ */
 int uproc_dict_store(const uproc_dict *dict,
                      int (*format)(char *, const void *, const void *, void *),
                      void *opaque, enum uproc_io_type iotype,
                      const char *pathfmt, ...);
+
+/** Store dict to file
+ *
+ * Like ::uproc_dict_store, but with a \c va_list instead of a variable
+ * number of arguments.
+ */
+int uproc_dict_storev(const uproc_dict *dict,
+                      int (*format)(char *, const void *, const void *, void *),
+                      void *opaque, enum uproc_io_type iotype,
+                      const char *pathfmt, va_list ap);
 
 /** \} */
 
@@ -199,6 +224,12 @@ int uproc_dict_store(const uproc_dict *dict,
  *
  * Dict iterator (unordered).
  * \{
+ */
+
+/** \struct uproc_dictiter
+ * \copybrief obj_dictiter
+ *
+ * See \ref obj_dictiter for details.
  */
 typedef struct uproc_dictiter_s uproc_dictiter;
 

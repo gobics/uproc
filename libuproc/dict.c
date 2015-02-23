@@ -526,7 +526,7 @@ int uproc_dict_stores(const uproc_dict *dict,
     }
     unsigned char key[UPROC_DICT_KEY_SIZE_MAX],
         value[UPROC_DICT_VALUE_SIZE_MAX];
-    char buf[UPROC_DICT_STORE_SIZE_MAX + 1];
+    char buf[UPROC_DICT_STORE_BUFFER_SIZE];
 
     res = uproc_io_printf(stream, "[%ld]\n", uproc_dict_size(dict));
     if (res < 0) {
