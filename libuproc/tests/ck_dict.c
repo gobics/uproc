@@ -199,11 +199,10 @@ START_TEST(test_iter)
 }
 END_TEST
 
-void map_func(const void *key, const void *value, void *opaque)
+void map_func(void *key, void *value, void *opaque)
 {
-    const int *k = key;
-    const uint64_t *v = value;
-    uint64_t *o = opaque;
+    int *k = key;
+    uint64_t *v = value, *o = opaque;
     ck_assert_uint_eq(o[*k], *v);
     o[*k] = 0;
 }
@@ -232,7 +231,7 @@ int format(char *str, const void *key, const void *value, void *opaque)
 {
     (void)opaque;
     const uint64_t *v = value;
-    int res = snprintf(str, UPROC_DICT_STORE_SIZE_MAX, "%s %" PRIu64,
+    int res = snprintf(str, UPROC_DICT_STORE_BUFFER_SIZE - 1, "%s %" PRIu64,
                        (char *)key, *v);
     return res > 0 ? 0 : -1;
 }
