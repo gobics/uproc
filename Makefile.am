@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = libuproc
 
-bin_PROGRAMS = uproc-dna uproc-prot uproc-detailed uproc-import uproc-export uproc-orf uproc-makedb
+bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf uproc-makedb
 noinst_LTLIBRARIES = libcommon.la
 
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
@@ -17,8 +17,6 @@ uproc_dna_CFLAGS = $(OPENMP_CFLAGS)
 
 uproc_prot_SOURCES = main.c
 uproc_prot_CFLAGS = $(OPENMP_CFLAGS)
-
-uproc_detailed_SOURCES = detailed.c
 
 uproc_import_SOURCES = import.c
 uproc_import_CPPFLAGS = $(AM_CPPFLAGS)
