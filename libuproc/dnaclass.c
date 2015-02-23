@@ -202,7 +202,9 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
         uproc_bst_map(max_scores, map_bst_dnaresult_free, NULL);
         uproc_list_clear(*results);
     }
-    uproc_list_map(pc_results, map_list_protresult_free, NULL);
+    if (pc_results) {
+        uproc_list_map(pc_results, map_list_protresult_free, NULL);
+    }
     uproc_list_destroy(pc_results);
     uproc_bst_destroy(max_scores);
     uproc_orfiter_destroy(orf_iter);
