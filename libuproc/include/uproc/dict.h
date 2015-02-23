@@ -63,7 +63,7 @@ enum {
     UPROC_DICT_KEY_SIZE_MAX = 32,
 
     /** Maximum number of bytes that can be used for values */
-    UPROC_DICT_VALUE_SIZE_MAX = 32,
+    UPROC_DICT_VALUE_SIZE_MAX = 128,
 
     UPROC_DICT_STORE_BUFFER_SIZE = 4096,
 };
