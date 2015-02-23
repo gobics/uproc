@@ -305,7 +305,7 @@ int main(int argc, char **argv)
     }
     alpha = uproc_ecurve_alphabet(uproc_database_ecurve_forward(db));
     uproc_protclass *pc;
-    create_classifiers(&pc, NULL, db, model, false);
+    create_classifiers(&pc, NULL, db, model, false, false);
 
     if (argc < optind + ARGC) {
         argv[argc++] = "-";

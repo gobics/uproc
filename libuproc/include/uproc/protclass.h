@@ -35,6 +35,46 @@
 #include "uproc/substmat.h"
 #include "uproc/list.h"
 
+/** \defgroup struct_matchedword struct uproc_matchedword
+ * Word that was matched in an ecurve.
+ * \{
+ */
+
+struct uproc_matchedword
+{
+    /** The matched aminoacid word. */
+    struct uproc_word word;
+
+    /** Position in the protein sequence. */
+    size_t index;
+
+    /** Whether this word matched in the forward or reverse ecurve */
+    bool reverse;
+
+    /** Sum of the scores of all positions of this word, independent of whether
+     * they contribute to the mosaic score or not.
+     *
+     * TODO: is this the desired way of computing the score? */
+    double score;
+};
+
+#define UPROC_MATCHEDWORD_INITIALIZER         \
+    {                                         \
+        UPROC_WORD_INITIALIZER, 0, false, 0.0 \
+    }
+
+/** Initialize a ::uproc_matchedword struct */
+void uproc_matchedword_init(struct uproc_matchedword *results);
+
+/** Free allocated pointers of a ::uproc_matchedword struct */
+void uproc_matchedword_free(struct uproc_matchedword *results);
+
+/** Deep-copy a ::uproc_matchedword struct */
+int uproc_matchedword_copy(struct uproc_matchedword *dest,
+                           const struct uproc_matchedword *src);
+
+/** \} */
+
 /** \defgroup struct_protresult struct uproc_protresult
  * Protein classification result
  * \{
@@ -48,18 +88,23 @@ struct uproc_protresult
 
     /** Prediction score */
     double score;
+
+    /** List of \ref struct_matchedword objects holding all matched
+     * words for this family. Only set to non-NULL if the protein classifier
+     * was used in "detailed" mode . */
+    uproc_list *matched_words;
 };
 
 /** Initializer for ::uproc_protresult structs */
 #define UPROC_PROTRESULT_INITIALIZER \
     {                                \
-        0, 0                         \
+        0, 0, NULL                   \
     }
 
 /** Initialize a ::uproc_protresult struct */
 void uproc_protresult_init(struct uproc_protresult *results);
 
-/** Free allocated pointers of ::uproc_protresult struct */
+/** Free allocated pointers of a ::uproc_protresult struct */
 void uproc_protresult_free(struct uproc_protresult *results);
 
 /** Deep-copy a ::uproc_protresult struct */
@@ -118,6 +163,7 @@ enum uproc_protclass_mode {
  * \param filter_arg    Additional argument to \c filter
  */
 uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
+                                        bool detailed,
                                         const uproc_ecurve *fwd,
                                         const uproc_ecurve *rev,
                                         const uproc_substmat *substmat,

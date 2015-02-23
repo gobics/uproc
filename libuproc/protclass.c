@@ -34,6 +34,7 @@
 struct uproc_protclass_s
 {
     enum uproc_protclass_mode mode;
+    bool detailed;
     const uproc_substmat *substmat;
     const uproc_ecurve *fwd;
     const uproc_ecurve *rev;
@@ -54,6 +55,7 @@ struct sc
 {
     size_t index;
     double total, dist[UPROC_WORD_LEN];
+    uproc_list *matched_words;
 };
 
 static void reverse_array(void *p, size_t n, size_t sz)
@@ -80,6 +82,7 @@ static void sc_init(struct sc *s)
     for (i = 0; i < UPROC_WORD_LEN; i++) {
         s->dist[i] = -INFINITY;
     }
+    s->matched_words = NULL;
 }
 
 static void sc_add(struct sc *score, size_t index,
@@ -121,6 +124,20 @@ static void sc_add(struct sc *score, size_t index,
     score->index = index;
 }
 
+static void map_list_matchedword_free(void *value, void *opaque)
+{
+    (void)opaque;
+    uproc_matchedword_free(value);
+}
+
+static void sc_free(struct sc *s)
+{
+    if (s->matched_words) {
+        uproc_list_map(s->matched_words, map_list_matchedword_free, NULL);
+        uproc_list_destroy(s->matched_words);
+    }
+}
+
 static double sc_finalize(struct sc *score)
 {
     size_t i;
@@ -132,14 +149,33 @@ static double sc_finalize(struct sc *score)
     return score->total;
 }
 
-static int scores_add(uproc_bst *scores, uproc_family family, size_t index,
-                      double dist[static UPROC_SUFFIX_LEN], bool reverse)
+static int scores_add(uproc_bst *scores, const struct uproc_word *word,
+                      uproc_family family, size_t index,
+                      double dist[static UPROC_SUFFIX_LEN], bool reverse,
+                      bool detailed)
 {
     struct sc sc;
     union uproc_bst_key key = {.uint = family};
     sc_init(&sc);
-    (void)uproc_bst_get(scores, key, &sc);
+    int res = uproc_bst_get(scores, key, &sc);
+    if (res == UPROC_BST_KEY_NOT_FOUND && detailed) {
+        sc.matched_words = uproc_list_create(sizeof (struct uproc_matchedword));
+        if (!sc.matched_words) {
+            return -1;
+        }
+    }
     sc_add(&sc, index, dist, reverse);
+    if (sc.matched_words) {
+        struct uproc_matchedword matched_word = {
+            *word, index, reverse, 0.0 };
+        for (int i = 0; i < UPROC_SUFFIX_LEN; i++) {
+            matched_word.score += dist[i];
+        }
+        int res = uproc_list_append(sc.matched_words, &matched_word);
+        if (res) {
+            return -1;
+        }
+    }
     return uproc_bst_update(scores, key, &sc);
 }
 
@@ -165,7 +201,8 @@ static int scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
         pc->trace.cb(&lower_nb, lower_family, index, reverse, dist,
                      pc->trace.cb_arg);
     }
-    res = scores_add(scores, lower_family, index, dist, reverse);
+    res = scores_add(scores, &lower_nb, lower_family, index, dist, reverse,
+                     pc->detailed);
     if (res || !uproc_word_cmp(&lower_nb, &upper_nb)) {
         return res;
     }
@@ -175,7 +212,8 @@ static int scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
         pc->trace.cb(&upper_nb, upper_family, index, reverse, dist,
                      pc->trace.cb_arg);
     }
-    res = scores_add(scores, upper_family, index, dist, reverse);
+    res = scores_add(scores, &upper_nb, upper_family, index, dist, reverse,
+                     pc->detailed);
     return res;
 }
 
@@ -214,6 +252,7 @@ static int scores_compute(const struct uproc_protclass_s *pc, const char *seq,
  * finalization *
  ****************/
 
+
 static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
                            uproc_bst *score_tree, uproc_list *results)
 {
@@ -222,7 +261,7 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
     union uproc_bst_key key;
     struct sc value;
     size_t seq_len = strlen(seq);
-    struct uproc_protresult pred, pred_max = {.score = -INFINITY};
+    struct uproc_protresult pred_max = {.score = -INFINITY};
 
     iter = uproc_bstiter_create(score_tree);
     if (!iter) {
@@ -233,10 +272,14 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
         double score = sc_finalize(&value);
         if (pc->filter &&
             !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
+            sc_free(&value);
             continue;
         }
-        pred.score = score;
-        pred.family = family;
+        struct uproc_protresult pred = {
+            .score = score,
+            .family = family,
+            .matched_words = value.matched_words };
+        value.matched_words = NULL;
         if (pc->mode == UPROC_PROTCLASS_MAX) {
             if (!uproc_list_size(results)) {
                 pred_max = pred;
@@ -245,8 +288,11 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
                     break;
                 }
             } else if (pred.score > pred_max.score) {
+                uproc_protresult_free(&pred_max);
                 pred_max = pred;
                 uproc_list_set(results, 0, &pred_max);
+            } else {
+                uproc_protresult_free(&pred);
             }
         } else {
             uproc_list_append(results, &pred);
@@ -261,6 +307,7 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
  **********************/
 
 uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
+                                        bool detailed,
                                         const uproc_ecurve *fwd,
                                         const uproc_ecurve *rev,
                                         const uproc_substmat *substmat,
@@ -280,6 +327,7 @@ uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
     }
     *pc = (struct uproc_protclass_s){
         .mode = mode,
+        .detailed = detailed,
         .substmat = substmat,
         .fwd = fwd,
         .rev = rev,
@@ -340,6 +388,23 @@ void uproc_protclass_set_trace(uproc_protclass *pc,
     pc->trace.cb_arg = cb_arg;
 }
 
+void uproc_matchedword_init(struct uproc_matchedword *word)
+{
+    *word = (struct uproc_matchedword)UPROC_MATCHEDWORD_INITIALIZER;
+}
+
+void uproc_matchedword_free(struct uproc_matchedword *word)
+{
+    (void)word;
+}
+
+int uproc_matchedword_copy(struct uproc_matchedword *dest,
+                          const struct uproc_matchedword *src)
+{
+    *dest = *src;
+    return 0;
+}
+
 void uproc_protresult_init(struct uproc_protresult *results)
 {
     *results = (struct uproc_protresult)UPROC_PROTRESULT_INITIALIZER;
@@ -347,12 +412,30 @@ void uproc_protresult_init(struct uproc_protresult *results)
 
 void uproc_protresult_free(struct uproc_protresult *results)
 {
-    (void)results;
+    if (results->matched_words) {
+        uproc_list_map(results->matched_words, map_list_matchedword_free,
+                       NULL);
+        uproc_list_destroy(results->matched_words);
+     }
 }
 
 int uproc_protresult_copy(struct uproc_protresult *dest,
                           const struct uproc_protresult *src)
 {
     *dest = *src;
+    // if there was a details list, make a deep copy
+    if (src->matched_words) {
+        dest->matched_words =
+            uproc_list_create(sizeof (struct uproc_matchedword));
+        if (!dest->matched_words) {
+            return -1;
+        }
+        for (long i = 0; i < uproc_list_size(src->matched_words); i++) {
+            struct uproc_matchedword src_word, dest_word;
+            uproc_list_get(src->matched_words, i, &src_word);
+            uproc_matchedword_copy(&dest_word, &src_word);
+            uproc_list_append(dest->matched_words, &dest_word);
+        }
+    }
     return 0;
 }

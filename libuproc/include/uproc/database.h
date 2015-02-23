@@ -113,6 +113,8 @@ uproc_idmap *uproc_database_idmap(uproc_database *db);
   */
 uproc_matrix *uproc_database_protein_threshold(uproc_database *db);
 
+uproc_alphabet *uproc_database_alphabet(uproc_database *db);
+
 /**
   * Destroy the database and all associated object within the database.
   * \param db the database to destroy and free memory for.

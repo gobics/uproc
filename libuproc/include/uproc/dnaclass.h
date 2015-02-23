@@ -71,20 +71,16 @@
 /** \copybrief struct_dnaresult */
 struct uproc_dnaresult
 {
-    /** Predicted family */
-    uproc_family family;
-
-    /** Prediction score */
-    double score;
-
     /** ORF from which the prediction was made */
     struct uproc_orf orf;
+
+    struct uproc_protresult protresult;
 };
 
 /** Initializer for ::uproc_dnaresult structs */
 #define UPROC_DNARESULT_INITIALIZER \
     {                               \
-        0, 0, UPROC_ORF_INITIALIZER \
+        UPROC_ORF_INITIALIZER, UPROC_PROTRESULT_INITIALIZER \
     }
 
 /** Initialize a ::uproc_dnaresult struct */

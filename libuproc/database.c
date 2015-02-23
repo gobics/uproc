@@ -164,3 +164,12 @@ uproc_matrix *uproc_database_protein_threshold(uproc_database *db)
     }
     return db->prot_thresh;
 }
+
+uproc_alphabet *uproc_database_alphabet(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
+        return NULL;
+    }
+    return uproc_ecurve_alphabet(db->fwd);
+}
