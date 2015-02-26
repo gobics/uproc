@@ -74,6 +74,7 @@ struct uproc_dnaresult
     /** ORF from which the prediction was made */
     struct uproc_orf orf;
 
+    /** Prediction for the ORF */
     struct uproc_protresult protresult;
 };
 
@@ -107,9 +108,9 @@ int uproc_dnaresult_copy(struct uproc_dnaresult *dest,
  *
  * \li Every ORF is classified with uproc_protclass_classify().
  *
- * \li For each protein family, the result of the best-scoring ORF is reported.
+ * \li For each protein class, the result of the best-scoring ORF is reported.
  *
- * \li If the ::UPROC_DNACLASS_MAX mode is used, only the protein family with
+ * \li If the ::UPROC_DNACLASS_MAX mode is used, only the protein class with
  * the highest score is retained in the result list.
  *
  * \{

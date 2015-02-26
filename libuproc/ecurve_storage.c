@@ -41,14 +41,6 @@
 #define STR(x) STR1(x)
 #define BUFSZ 1024
 #define COMMENT_CHAR '#'
-#define HEADER_PRI ">> alphabet: %." STR(UPROC_ALPHABET_SIZE) "s\n"
-#define HEADER_SCN ">> alphabet: %" STR(UPROC_ALPHABET_SIZE) "c"
-
-#define PREFIX_PRI ">%." STR(UPROC_PREFIX_LEN) "s\n"
-#define PREFIX_SCN ">%" STR(UPROC_PREFIX_LEN) "c"
-
-#define SUFFIX_PRI "%." STR(UPROC_SUFFIX_LEN) "s %" UPROC_FAMILY_PRI "\n"
-#define SUFFIX_SCN "%" STR(UPROC_SUFFIX_LEN) "c %" UPROC_FAMILY_SCN
 
 static int read_line(uproc_io_stream *stream, char *line, size_t n)
 {
@@ -60,12 +52,17 @@ static int read_line(uproc_io_stream *stream, char *line, size_t n)
     return 0;
 }
 
-static int parse_header(const char *line, char *alpha)
+static int parse_header(const char *line, char *alpha, uproc_rank *ranks_count)
 {
     int res;
-    res = sscanf(line, HEADER_SCN, alpha);
+    // old files are missing the "classes: " part and have always 1 class.
+    *ranks_count = 1;
+    res = sscanf(line,
+                 ">> alphabet: %" STR(UPROC_ALPHABET_SIZE) "c "
+                 "classes: %hhu", alpha,
+                 ranks_count);
     alpha[UPROC_ALPHABET_SIZE] = '\0';
-    if (res != 1) {
+    if (res < 1) {
         return uproc_error_msg(UPROC_EINVAL, "invalid header: \"%s\"", line);
     }
     return 0;
@@ -89,6 +86,7 @@ static int parse_prefix(const char *line, const uproc_alphabet *alpha,
 }
 
 static int parse_suffixentry(const char *line, const uproc_alphabet *alpha,
+                             uproc_rank ranks_count,
                              struct uproc_ecurve_suffixentry *entry)
 {
     int res;
@@ -104,10 +102,18 @@ static int parse_suffixentry(const char *line, const uproc_alphabet *alpha,
     entry->suffix = word.suffix;
 
     line += UPROC_SUFFIX_LEN + 1;
-    res = sscanf(line, "%" UPROC_FAMILY_SCN, &entry->family);
-    if (res != 1) {
-        return uproc_error_msg(UPROC_EINVAL,
-                               "invalid family identifier: \"%s\"", line);
+    for (int i = 0; *line != '\n' && i < ranks_count; i++) {
+        int consumed;
+        res = sscanf(line, " %" UPROC_CLASS_SCN "%n", &entry->classes[i],
+                     &consumed);
+        if (res != 1) {
+            return uproc_error_msg(UPROC_EINVAL,
+                                   "invalid class identifier: \"%s\"", line);
+        }
+        line += consumed;
+    }
+    if (*line != '\n') {
+        return uproc_error_msg(UPROC_EINVAL, "too many class identifiers");
     }
     return 0;
 }
@@ -121,6 +127,7 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
     char line[BUFSZ];
     char alpha[UPROC_ALPHABET_SIZE + 1];
     uproc_alphabet *ec_alpha;
+    uproc_rank ranks_count;
 
     uproc_prefix prefix = UPROC_PREFIX_MAX + 1;
     uproc_list *suffix_list;
@@ -134,10 +141,10 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
     if (read_line(stream, line, sizeof line)) {
         goto error;
     }
-    if (parse_header(line, alpha)) {
+    if (parse_header(line, alpha, &ranks_count)) {
         goto error;
     }
-    ec = uproc_ecurve_create(alpha, 0);
+    ec = uproc_ecurve_create(alpha, ranks_count, 0);
     if (!ec) {
         goto error;
         return NULL;
@@ -166,7 +173,8 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
                 progress(100.0 / UPROC_PREFIX_MAX * prefix);
             }
         } else {
-            res = parse_suffixentry(line, ec_alpha, &suffix_entry);
+            res = parse_suffixentry(line, ec_alpha, ec->ranks_count,
+                                    &suffix_entry);
             if (res) {
                 goto error;
             }
@@ -189,13 +197,6 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
     return ec;
 }
 
-static int store_header(uproc_io_stream *stream, const char *alpha)
-{
-    int res;
-    res = uproc_io_printf(stream, HEADER_PRI, alpha);
-    return (res > 0) ? 0 : -1;
-}
-
 static int store_prefix(uproc_io_stream *stream, const uproc_alphabet *alpha,
                         uproc_prefix prefix)
 {
@@ -208,12 +209,13 @@ static int store_prefix(uproc_io_stream *stream, const uproc_alphabet *alpha,
         return res;
     }
     str[UPROC_PREFIX_LEN] = '\0';
-    res = uproc_io_printf(stream, PREFIX_PRI, str);
+    res = uproc_io_printf(stream, ">%s\n", str);
     return (res > 0) ? 0 : -1;
 }
 
 static int store_suffix(uproc_io_stream *stream, const uproc_alphabet *alpha,
-                        uproc_suffix suffix, uproc_family family)
+                        uproc_suffix suffix, uproc_rank ranks_count,
+                        const uproc_class classes[UPROC_RANKS_MAX])
 {
     int res;
     char str[UPROC_WORD_LEN + 1];
@@ -223,8 +225,14 @@ static int store_suffix(uproc_io_stream *stream, const uproc_alphabet *alpha,
     if (res) {
         return res;
     }
-    res = uproc_io_printf(stream, SUFFIX_PRI, &str[UPROC_PREFIX_LEN], family);
-    return (res > 0) ? 0 : -1;
+    res = uproc_io_printf(stream, "%s", str + UPROC_PREFIX_LEN);
+    for (int i = 0; res >= 0 && i < ranks_count; i++) {
+        res = uproc_io_printf(stream, " %" UPROC_CLASS_PRI, classes[i]);
+    }
+    if (res < 0) {
+        return -1;
+    }
+    return uproc_io_putc('\n', stream) == '\n' ? 0 : -1;
 }
 
 static int store_plain(const struct uproc_ecurve_s *ecurve,
@@ -233,10 +241,12 @@ static int store_plain(const struct uproc_ecurve_s *ecurve,
     int res;
     size_t p;
 
-    res = store_header(stream, uproc_alphabet_str(ecurve->alphabet));
+    res = uproc_io_printf(stream, ">> alphabet: %s classes: %u\n",
+                          uproc_alphabet_str(ecurve->alphabet),
+                          ecurve->ranks_count);
 
-    if (res) {
-        return res;
+    if (res < 0) {
+        return -1;
     }
 
     for (p = 0; p <= UPROC_PREFIX_MAX; p++) {
@@ -253,9 +263,10 @@ static int store_plain(const struct uproc_ecurve_s *ecurve,
         }
 
         for (pfxtab_count i = 0; i < suffix_count; i++) {
-            res = store_suffix(stream, ecurve->alphabet,
-                               ecurve->suffixes[first + i],
-                               ecurve->families[first + i]);
+            res = store_suffix(
+                stream, ecurve->alphabet, ecurve->suffixes[first + i],
+                ecurve->ranks_count,
+                &ecurve->classes[(first + i) * ecurve->ranks_count]);
             if (res) {
                 return res;
             }
@@ -275,11 +286,8 @@ static int store_plain(const struct uproc_ecurve_s *ecurve,
 static uproc_ecurve *load_binary(uproc_io_stream *stream,
                                  void (*progress)(double))
 {
-    struct uproc_ecurve_s *ecurve;
     size_t sz;
-    size_t suffix_count;
     char alpha[UPROC_ALPHABET_SIZE + 1];
-
     sz = uproc_io_read(alpha, sizeof *alpha, UPROC_ALPHABET_SIZE, stream);
     if (sz != UPROC_ALPHABET_SIZE) {
         uproc_error(UPROC_ERRNO);
@@ -287,18 +295,28 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
     }
     alpha[UPROC_ALPHABET_SIZE] = '\0';
 
+    uproc_rank ranks_count;
+    sz = uproc_io_read(&ranks_count, sizeof ranks_count, 1, stream);
+    if (sz != 1) {
+        uproc_error(UPROC_ERRNO);
+        return NULL;
+    }
+
+    size_t suffix_count;
     sz = uproc_io_read(&suffix_count, sizeof suffix_count, 1, stream);
     if (sz != 1) {
         uproc_error(UPROC_ERRNO);
         return NULL;
     }
-    if (progress) {
-        progress(0.1);
-    }
 
-    ecurve = uproc_ecurve_create(alpha, suffix_count);
+    struct uproc_ecurve_s *ecurve =
+        uproc_ecurve_create(alpha, ranks_count, suffix_count);
     if (!ecurve) {
         return NULL;
+    }
+
+    if (progress) {
+        progress(0.1);
     }
 
     sz = uproc_io_read(ecurve->suffixes, sizeof *ecurve->suffixes, suffix_count,
@@ -309,9 +327,9 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
     if (progress) {
         progress(25.0);
     }
-    sz = uproc_io_read(ecurve->families, sizeof *ecurve->families, suffix_count,
-                       stream);
-    if (sz != suffix_count) {
+    sz = uproc_io_read(ecurve->classes, sizeof *ecurve->classes,
+                       ranks_count * suffix_count, stream);
+    if (sz != ranks_count * suffix_count) {
         goto error;
     }
     if (progress) {
@@ -352,6 +370,11 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
     if (sz != UPROC_ALPHABET_SIZE) {
         return uproc_error(UPROC_ERRNO);
     }
+    sz = uproc_io_write(&ecurve->ranks_count, sizeof ecurve->ranks_count, 1,
+                        stream);
+    if (sz != 1) {
+        return uproc_error(UPROC_ERRNO);
+    }
     sz = uproc_io_write(&ecurve->suffix_count, sizeof ecurve->suffix_count, 1,
                         stream);
     if (sz != 1) {
@@ -369,8 +392,8 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
     if (progress) {
         progress(25.0);
     }
-    sz = uproc_io_write(ecurve->families, sizeof *ecurve->families,
-                        ecurve->suffix_count, stream);
+    sz = uproc_io_write(ecurve->classes, sizeof *ecurve->classes,
+                        ecurve->ranks_count * ecurve->suffix_count, stream);
     if (sz != ecurve->suffix_count) {
         return uproc_error(UPROC_ERRNO);
     }

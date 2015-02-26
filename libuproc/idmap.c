@@ -1,4 +1,4 @@
-/* Map string identifier to family number
+/* Map string identifier to class number
  *
  * Copyright 2014 Peter Meinicke, Robin Martinjak
  *
@@ -31,8 +31,8 @@
 
 struct uproc_idmap_s
 {
-    uproc_family n;
-    char *s[UPROC_FAMILY_MAX];
+    uproc_class n;
+    char *s[UPROC_CLASS_MAX];
 };
 
 uproc_idmap *uproc_idmap_create(void)
@@ -51,24 +51,24 @@ void uproc_idmap_destroy(uproc_idmap *map)
     if (!map) {
         return;
     }
-    uproc_family i;
+    uproc_class i;
     for (i = 0; i < map->n; i++) {
         free(map->s[i]);
     }
     free(map);
 }
 
-uproc_family uproc_idmap_family(uproc_idmap *map, const char *s)
+uproc_class uproc_idmap_class(uproc_idmap *map, const char *s)
 {
-    uproc_family i;
+    uproc_class i;
     for (i = 0; i < map->n; i++) {
         if (!strcmp(s, map->s[i])) {
             return i;
         }
     }
-    if (map->n == UPROC_FAMILY_MAX) {
+    if (map->n == UPROC_CLASS_MAX) {
         uproc_error_msg(UPROC_ENOENT, "idmap exhausted");
-        return UPROC_FAMILY_INVALID;
+        return UPROC_CLASS_INVALID;
     }
     size_t len = strlen(s);
     map->s[map->n] = malloc(len + 1);
@@ -80,16 +80,16 @@ uproc_family uproc_idmap_family(uproc_idmap *map, const char *s)
     return i;
 }
 
-char *uproc_idmap_str(const uproc_idmap *map, uproc_family family)
+char *uproc_idmap_str(const uproc_idmap *map, uproc_class class)
 {
-    return map->s[family];
+    return map->s[class];
 }
 
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
 {
     int res;
     struct uproc_idmap_s *map;
-    uproc_family i;
+    uproc_class i;
     unsigned long n;
     char *line = NULL;
     size_t sz;
@@ -106,7 +106,7 @@ uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
         uproc_error_msg(UPROC_EINVAL, "invalid idmap header");
         goto error;
     }
-    if (n > UPROC_FAMILY_MAX) {
+    if (n > UPROC_CLASS_MAX) {
         uproc_error_msg(UPROC_EINVAL, "idmap size too large");
         goto error;
     }
@@ -120,15 +120,15 @@ uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
         }
         len = strlen(line);
         if (len < 1 || line[len - 1] != '\n') {
-            uproc_error_msg(UPROC_EINVAL, "line %" UPROC_FAMILY_PRI
+            uproc_error_msg(UPROC_EINVAL, "line %" UPROC_CLASS_PRI
                                           ": expected newline after ID",
                             i + 2);
             goto error;
         }
         line[len - 1] = '\0';
-        if (uproc_idmap_family(map, line) != i) {
+        if (uproc_idmap_class(map, line) != i) {
             uproc_error_msg(UPROC_EINVAL,
-                            "line %" UPROC_FAMILY_PRI ": duplicate ID", i + 2);
+                            "line %" UPROC_CLASS_PRI ": duplicate ID", i + 2);
             goto error;
         }
     }
@@ -168,8 +168,8 @@ uproc_idmap *uproc_idmap_load(enum uproc_io_type iotype, const char *pathfmt,
 
 int uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
 {
-    uproc_family i;
-    uproc_io_printf(stream, "[%" UPROC_FAMILY_PRI "]\n", map->n);
+    uproc_class i;
+    uproc_io_printf(stream, "[%" UPROC_CLASS_PRI "]\n", map->n);
     for (i = 0; i < map->n; i++) {
         if (uproc_io_printf(stream, "%s\n", map->s[i]) < 0) {
             return -1;

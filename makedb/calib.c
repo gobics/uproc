@@ -210,12 +210,12 @@ static int store_interpolated(double thresh[static POW_DIFF + 1],
     return res;
 }
 
-static bool prot_filter(const char *seq, size_t len, uproc_family family,
+static bool prot_filter(const char *seq, size_t len, uproc_class class,
                         double score, void *opaque)
 {
     (void)seq;
     (void)len;
-    (void)family;
+    (void)class;
     (void)opaque;
     return score > UPROC_EPSILON;
 }
@@ -278,6 +278,11 @@ int calib(const char *alphabet, const char *dbdir, const char *modeldir)
             uproc_list *results = NULL;
             pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, false, fwd, rev,
                                         substmat, prot_filter, NULL);
+
+            all_preds_n = 0;
+            seq_len = 1 << power;
+            seq_count = (1 << (POW_MAX - power)) * SEQ_COUNT_MULTIPLIER;
+            seq[seq_len] = '\0';
 
             all_preds_n = 0;
             seq_len = 1 << power;

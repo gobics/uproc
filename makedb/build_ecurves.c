@@ -32,12 +32,10 @@
 #include "common.h"
 #include "makedb.h"
 
-unsigned long filtered_counts[UPROC_FAMILY_MAX] = {0};
-
 struct ecurve_entry
 {
     struct uproc_word word;
-    uproc_family family;
+    uproc_class classes[UPROC_RANKS_MAX];
 };
 
 static char *crop_first_word(char *s)
@@ -87,9 +85,9 @@ static int extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
     uproc_bst *tree;
     union uproc_bst_key tree_key;
 
-    uproc_family family;
+    uproc_class classes[UPROC_RANKS_MAX] = {0};
 
-    tree = uproc_bst_create(UPROC_BST_WORD, sizeof family);
+    tree = uproc_bst_create(UPROC_BST_WORD, sizeof classes);
     if (!tree) {
         return -1;
     }
@@ -103,11 +101,11 @@ static int extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         uproc_worditer *iter;
         struct uproc_word fwd_word = UPROC_WORD_INITIALIZER,
                           rev_word = UPROC_WORD_INITIALIZER;
-        uproc_family tmp_family;
 
         crop_first_word(seq.header);
-        family = uproc_idmap_family(idmap, seq.header);
-        if (family == UPROC_FAMILY_INVALID) {
+        classes[0] = uproc_idmap_class(idmap, seq.header);
+        // XXX: look up classes[1..n-1] somewhere
+        if (classes[0] == UPROC_CLASS_INVALID) {
             res = -1;
             break;
         }
@@ -128,21 +126,21 @@ static int extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
                 continue;
             }
             tree_key.word = fwd_word;
-            res = uproc_bst_get(tree, tree_key, &tmp_family);
+            uproc_class tmp_classes[UPROC_RANKS_MAX];
+            res = uproc_bst_get(tree, tree_key, &tmp_classes);
 
-            /* word was already present -> mark as duplicate if stored class
-             * differs */
+            /* word was already present -> mark as duplicate for each
+             * stored class that differs */
             if (!res) {
-                if (tmp_family != family) {
-                    filtered_counts[family] += 1;
-                    if (tmp_family != UPROC_FAMILY_INVALID) {
-                        filtered_counts[tmp_family] += 1;
+                for (int i = 0; i < UPROC_RANKS_MAX; i++) {
+                    uproc_class cls = classes[i], tmp_class = tmp_classes[i];
+                    if (tmp_class != cls) {
+                        tmp_classes[i] = UPROC_CLASS_INVALID;
                     }
-                    tmp_family = UPROC_FAMILY_INVALID;
-                    res = uproc_bst_update(tree, tree_key, &tmp_family);
                 }
+                res = uproc_bst_update(tree, tree_key, &tmp_classes);
             } else if (res == UPROC_BST_KEY_NOT_FOUND) {
-                res = uproc_bst_update(tree, tree_key, &family);
+                res = uproc_bst_update(tree, tree_key, &classes);
             }
             if (res) {
                 break;
@@ -165,9 +163,12 @@ static int extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         goto error;
     }
     *n_entries = 0;
-    while (!uproc_bstiter_next(iter, &tree_key, &family)) {
-        if (family != UPROC_FAMILY_INVALID) {
-            *n_entries += 1;
+    while (!uproc_bstiter_next(iter, &tree_key, &classes)) {
+        for (int i = 0; i < UPROC_RANKS_MAX; i++) {
+            if (classes[i] != UPROC_CLASS_INVALID) {
+                *n_entries += 1;
+                break;
+            }
         }
     }
     *entries = malloc(*n_entries * sizeof **entries);
@@ -183,11 +184,14 @@ static int extract_uniques(uproc_io_stream *stream, const uproc_alphabet *alpha,
         goto error;
     }
     struct ecurve_entry *entries_insert = *entries;
-    while (!uproc_bstiter_next(iter, &tree_key, &family)) {
-        if (family != UPROC_FAMILY_INVALID) {
-            entries_insert->word = tree_key.word;
-            entries_insert->family = family;
-            entries_insert++;
+    while (!uproc_bstiter_next(iter, &tree_key, &classes)) {
+        for (int i = 0; i < UPROC_RANKS_MAX; i++) {
+            if (classes[i] != UPROC_CLASS_INVALID) {
+                entries_insert->word = tree_key.word;
+                memcpy(entries_insert->classes, classes, sizeof classes);
+                entries_insert++;
+                break;
+            }
         }
     }
     uproc_bstiter_destroy(iter);
@@ -198,51 +202,49 @@ error:
     return res;
 }
 
-static size_t filter_singletons(struct ecurve_entry *entries, size_t n)
+static void mark_singletons(struct ecurve_entry *entries, size_t entries_count,
+                            unsigned char classes_count)
 {
-    size_t i, k;
-    unsigned char *types = calloc(n, sizeof *types);
     enum { SINGLE, CLUSTER, BRIDGED, CROSSOVER };
+    unsigned char *types = calloc(entries_count, sizeof *types);
+    for (int cls = 0; cls < classes_count; cls++) {
+        for (size_t i = 0; i < entries_count; i++) {
+            struct ecurve_entry *e = &entries[i];
+            unsigned char *t = &types[i];
 
-    for (i = 0; i < n; i++) {
-        struct ecurve_entry *e = &entries[i];
-        unsigned char *t = &types[i];
-
-        /* |AA..| */
-        if (i < n - 1 && e[0].family == e[1].family) {
-            t[0] = t[1] = CLUSTER;
-        }
-        /* |ABA.| */
-        else if (i < n - 2 && e[0].family == e[2].family) {
-            /* B|ABA.| */
-            if (t[1] == BRIDGED || t[1] == CROSSOVER) {
-                t[0] = t[1] = t[2] = CROSSOVER;
+            /* |AA..| */
+            if (i < entries_count - 1 &&
+                e[0].classes[cls] == e[1].classes[cls]) {
+                t[0] = t[1] = CLUSTER;
             }
-            /* |ABAB| */
-            else if (i < n - 3 && t[0] != CLUSTER &&
-                     e[1].family == e[3].family) {
-                t[0] = t[1] = t[2] = t[3] = CROSSOVER;
-            }
-            /* A|ABA.| or .|ABA.| */
-            else {
-                if (t[0] != CLUSTER && t[0] != CROSSOVER) {
-                    t[0] = BRIDGED;
+            /* |ABA.| */
+            else if (i < entries_count - 2 &&
+                     e[0].classes[cls] == e[2].classes[cls]) {
+                /* B|ABA.| */
+                if (t[1] == BRIDGED || t[1] == CROSSOVER) {
+                    t[0] = t[1] = t[2] = CROSSOVER;
                 }
-                t[2] = BRIDGED;
+                /* |ABAB| */
+                else if (i < entries_count - 3 && t[0] != CLUSTER &&
+                         e[1].classes[cls] == e[3].classes[cls]) {
+                    t[0] = t[1] = t[2] = t[3] = CROSSOVER;
+                }
+                /* A|ABA.| or .|ABA.| */
+                else {
+                    if (t[0] != CLUSTER && t[0] != CROSSOVER) {
+                        t[0] = BRIDGED;
+                    }
+                    t[2] = BRIDGED;
+                }
             }
         }
-    }
-
-    for (i = k = 0; i < n; i++) {
-        if (types[i] == CLUSTER || types[i] == BRIDGED) {
-            entries[k] = entries[i];
-            k++;
-        } else {
-            filtered_counts[entries[i].family] += 1;
+        for (size_t i = 0; i < entries_count; i++) {
+            if (types[i] == SINGLE || types[i] == CROSSOVER) {
+                entries[i].classes[cls] = UPROC_CLASS_INVALID;
+            }
         }
     }
     free(types);
-    return k;
 }
 
 static int insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
@@ -271,7 +273,8 @@ static int insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
             current_prefix = entries[i].word.prefix;
         }
         suffix_entry.suffix = entries[i].word.suffix;
-        suffix_entry.family = entries[i].family;
+        memcpy(suffix_entry.classes, entries[i].classes,
+               sizeof suffix_entry.classes);
         res = uproc_list_append(suffix_list, &suffix_entry);
         if (res) {
             goto error;
@@ -298,7 +301,7 @@ static int build_ecurve(const char *infile, const char *alphabet,
         return -1;
     }
 
-    *ecurve = uproc_ecurve_create(alphabet, 0);
+    *ecurve = uproc_ecurve_create(alphabet, 1, 0);
     if (!*ecurve) {
         goto error;
     }
@@ -320,10 +323,8 @@ static int build_ecurve(const char *infile, const char *alphabet,
             goto error;
         }
 
-        n_entries = filter_singletons(entries, n_entries);
-        if (!n_entries) {
-            continue;
-        }
+#define classes_count UPROC_RANKS_MAX  // XXX: dynamically
+        mark_singletons(entries, n_entries, classes_count);
 
         res = insert_entries(*ecurve, entries, n_entries);
         if (res) {

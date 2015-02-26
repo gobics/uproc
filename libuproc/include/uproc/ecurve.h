@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "uproc/common.h"
 #include "uproc/alphabet.h"
 #include "uproc/io.h"
 #include "uproc/list.h"
@@ -52,7 +53,13 @@
  */
 typedef struct uproc_ecurve_s uproc_ecurve;
 
-/** Pair of suffix and family
+struct uproc_classes
+{
+    uproc_class family;
+    uproc_class clan;
+};
+
+/** Pair of suffix and class
  *
  * uproc_ecurve_add_prefix() expects a \ref grp_datastructs_list  of these as
  * its \c suffixes argument.
@@ -62,8 +69,8 @@ struct uproc_ecurve_suffixentry
     /** Suffix */
     uproc_suffix suffix;
 
-    /** Protein family */
-    uproc_family family;
+    /** Protein class */
+    uproc_class classes[UPROC_RANKS_MAX];
 };
 
 /** Storage format */
@@ -91,16 +98,18 @@ enum {
  *
  * \param alphabet      string to initialize the ecurve's alphabet
  *                      (see uproc_alphabet_init())
+ * \param ranks_count   number of classes stored per suffix
  * \param suffix_count  number of entries in the suffix table
  */
-uproc_ecurve *uproc_ecurve_create(const char *alphabet, size_t suffix_count);
+uproc_ecurve *uproc_ecurve_create(const char *alphabet, uproc_rank ranks_count,
+                                  size_t suffix_count);
 
 /** Destroy ecurve object */
 void uproc_ecurve_destroy(uproc_ecurve *ecurve);
 
 /** Add a prefix entry
  *
- * Adds the prefix \c pfx and the suffix/family pairs in the \c suffixes list
+ * Adds the prefix \c pfx and the suffix/class pairs in the \c suffixes list
  * to the ecurve.
  *
  * The argument to \c ecurve \em must be an ecurve fulfilling the following
@@ -122,14 +131,14 @@ void uproc_ecurve_destroy(uproc_ecurve *ecurve);
  * Example
  * \code
  * int add_entries(uproc_ecurve *ec, uproc_prefix p,
- *                 uproc_suffix *s, uproc_family *f, int n)
+ *                 uproc_suffix *s, uproc_class *f, int n)
  * {
  *     int i, res;
  *     struct uproc_ecurve_suffixentry e;
  *     uproc_list *list = uproc_list_create(sizeof e);
  *     for (i = 0; i < n; i++) {
  *         e.suffix = s[i];
- *         e.family = f[i];
+ *         e.class = f[i];
  *         res = uproc_list_append(list, &e);
  *         if (res) {
  *             // handle error
@@ -179,9 +188,9 @@ int uproc_ecurve_finalize(uproc_ecurve *ecurve);
 int uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                         const struct uproc_word *word,
                         struct uproc_word *lower_neighbour,
-                        uproc_family *lower_class,
+                        uproc_class lower_classes[static UPROC_RANKS_MAX],
                         struct uproc_word *upper_neighbour,
-                        uproc_family *upper_class);
+                        uproc_class upper_classes[static UPROC_RANKS_MAX]);
 
 /** Return the internal alphabet */
 uproc_alphabet *uproc_ecurve_alphabet(const uproc_ecurve *ecurve);

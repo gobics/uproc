@@ -243,7 +243,7 @@ void print_result_or_match(unsigned long seq_num, const char *header,
 #endif
             case OUTFMT_PFAM: {
                 uproc_idmap *idmap = uproc_database_idmap(database_);
-                uproc_io_puts(uproc_idmap_str(idmap, protresult->family),
+                uproc_io_puts(uproc_idmap_str(idmap, protresult->class),
                               output_stream_);
             } break;
             case OUTFMT_SCORE:
@@ -288,7 +288,7 @@ void print_matches(unsigned long seq_num, const char *header,
 /* Process (and maybe output) classification results */
 void buffer_process(struct buffer *buf, unsigned long *n_seqs,
                     unsigned long *n_seqs_unexplained,
-                    unsigned long counts[UPROC_FAMILY_MAX + 1])
+                    unsigned long counts[UPROC_CLASS_MAX + 1])
 {
     for (long long i = 0; i < buf->n; i++) {
         uproc_list *results = buf->results[i];
@@ -302,7 +302,7 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
         struct clfresult result;
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
-            counts[PROTRESULT(&result)->family] += 1;
+            counts[PROTRESULT(&result)->class] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
@@ -313,7 +313,7 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
 
 void classify_file_mt(const char *path, unsigned long *n_seqs,
                       unsigned long *n_seqs_unexplained,
-                      unsigned long counts[UPROC_FAMILY_MAX + 1])
+                      unsigned long counts[UPROC_CLASS_MAX + 1])
 {
     int more_input;
     uproc_io_stream *stream = open_read(path);
@@ -350,7 +350,7 @@ void classify_file_mt(const char *path, unsigned long *n_seqs,
 
 void classify_file(const char *path, unsigned long *n_seqs,
                    unsigned long *n_seqs_unexplained,
-                   unsigned long counts[UPROC_FAMILY_MAX + 1])
+                   unsigned long counts[UPROC_CLASS_MAX + 1])
 {
 #if _OPENMP
     if (omp_get_max_threads() > 1) {
@@ -380,7 +380,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
         for (long i = 0; i < n_results; i++) {
             struct clfresult result;
             uproc_list_get(results, i, &result);
-            counts[PROTRESULT(&result)->family] += 1;
+            counts[PROTRESULT(&result)->class] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
@@ -400,7 +400,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
 
 struct count
 {
-    uproc_family fam;
+    uproc_class class;
     unsigned long n;
 };
 
@@ -415,22 +415,22 @@ int compare_count(const void *p1, const void *p2)
         return 1;
     }
 
-    /* or fam in ascending */
-    if (c1->fam < c2->fam) {
+    /* or class in ascending */
+    if (c1->class < c2->class) {
         return -1;
-    } else if (c1->fam > c2->fam) {
+    } else if (c1->class > c2->class) {
         return 1;
     }
     return 0;
 }
 
-void print_counts(unsigned long counts[UPROC_FAMILY_MAX + 1])
+void print_counts(unsigned long counts[UPROC_CLASS_MAX + 1])
 {
-    struct count c[UPROC_FAMILY_MAX + 1];
-    uproc_family i, n = 0;
-    for (i = 0; i < UPROC_FAMILY_MAX + 1; i++) {
+    struct count c[UPROC_CLASS_MAX + 1];
+    uproc_class i, n = 0;
+    for (i = 0; i < UPROC_CLASS_MAX + 1; i++) {
         if (counts[i]) {
-            c[n].fam = i;
+            c[n].class = i;
             c[n].n = counts[i];
             n++;
         }
@@ -440,7 +440,7 @@ void print_counts(unsigned long counts[UPROC_FAMILY_MAX + 1])
 
     for (i = 0; i < n; i++) {
         uproc_io_puts(
-            uproc_idmap_str(uproc_database_idmap(database_), c[i].fam),
+            uproc_idmap_str(uproc_database_idmap(database_), c[i].class),
             output_stream_);
         uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
     }
@@ -492,7 +492,7 @@ string FORMAT. Available characters are:\n\
     L: ORF length\n"
 #endif
       "\
-    f: predicted protein family\n\
+    f: predicted protein class\n\
     s: classification score");
 
     O('m', "matches", "FORMAT", "XXX WRITEME");
@@ -500,8 +500,8 @@ string FORMAT. Available characters are:\n\
     O('f', "stats", "",
       "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
     O('c', "counts", "",
-      "Print \"FAMILY,COUNT\" where COUNT is the number of classifications "
-      "for FAMILY");
+      "Print \"CLASS,COUNT\" where COUNT is the number of classifications "
+      "for CLASS");
     ppopts_add_text(
         o,
         "If none of the above is specified, -c is used. If multiple of them "
@@ -691,7 +691,7 @@ int main(int argc, char **argv)
     }
 
     unsigned long n_seqs = 0, n_seqs_unexplained = 0;
-    unsigned long counts[UPROC_FAMILY_MAX + 1] = {0};
+    unsigned long counts[UPROC_CLASS_MAX + 1] = {0};
 
     for (; optind + INFILES < argc; optind++) {
         classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained,

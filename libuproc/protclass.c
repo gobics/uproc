@@ -31,6 +31,8 @@
 #include "uproc/list.h"
 #include "uproc/protclass.h"
 
+#include "ecurve_internal.h"
+
 struct uproc_protclass_s
 {
     enum uproc_protclass_mode mode;
@@ -57,6 +59,14 @@ struct sc
     double total, dist[UPROC_WORD_LEN];
     uproc_list *matched_words;
 };
+
+static inline uproc_rank get_ranks_count(const uproc_protclass *pc)
+{
+    if (!pc->fwd) {
+        return pc->rev->ranks_count;
+    }
+    return pc->fwd->ranks_count;
+}
 
 static void reverse_array(void *p, size_t n, size_t sz)
 {
@@ -150,12 +160,15 @@ static double sc_finalize(struct sc *score)
 }
 
 static int scores_add(uproc_bst *scores, const struct uproc_word *word,
-                      uproc_family family, size_t index,
+                      uproc_class class, size_t index,
                       double dist[static UPROC_SUFFIX_LEN], bool reverse,
                       bool detailed)
 {
+    if (class == UPROC_CLASS_INVALID) {
+        return 0;
+    }
+    union uproc_bst_key key = {.uint = class};
     struct sc sc;
-    union uproc_bst_key key = {.uint = family};
     sc_init(&sc);
     int res = uproc_bst_get(scores, key, &sc);
     if (res == UPROC_BST_KEY_NOT_FOUND && detailed) {
@@ -178,46 +191,48 @@ static int scores_add(uproc_bst *scores, const struct uproc_word *word,
     return uproc_bst_update(scores, key, &sc);
 }
 
-static int scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
+static int scores_add_word(const uproc_protclass *pc,
+                           uproc_bst *scores[UPROC_RANKS_MAX],
                            const struct uproc_word *word, size_t index,
                            bool reverse, const uproc_ecurve *ecurve,
                            const uproc_substmat *substmat)
 {
-    int res;
-    struct uproc_word lower_nb = UPROC_WORD_INITIALIZER,
-                      upper_nb = UPROC_WORD_INITIALIZER;
-    uproc_family lower_family, upper_family;
+    int res = 0;
+    struct uproc_word nb_words[2];
+    uproc_class nb_classes[2][UPROC_RANKS_MAX];
     double dist[UPROC_SUFFIX_LEN];
 
     if (!ecurve) {
         return 0;
     }
-    uproc_ecurve_lookup(ecurve, word, &lower_nb, &lower_family, &upper_nb,
-                        &upper_family);
-    uproc_substmat_align_suffixes(substmat, word->suffix, lower_nb.suffix,
-                                  dist);
-    if (pc->trace.cb) {
-        pc->trace.cb(&lower_nb, lower_family, index, reverse, dist,
-                     pc->trace.cb_arg);
+    uproc_ecurve_lookup(ecurve, word, &nb_words[0], nb_classes[0], &nb_words[1],
+                        nb_classes[1]);
+
+    int ranks_count = get_ranks_count(pc);
+    for (int i = ranks_count; i < UPROC_RANKS_MAX; i++) {
+        nb_classes[0][i] = nb_classes[1][i] = UPROC_CLASS_INVALID;
     }
-    res = scores_add(scores, &lower_nb, lower_family, index, dist, reverse,
-                     pc->detailed);
-    if (res || !uproc_word_cmp(&lower_nb, &upper_nb)) {
-        return res;
+
+    // Iff both words are equal, we start at index 1 instead of 0
+    for (int i = !uproc_word_cmp(&nb_words[0], &nb_words[1]); !res && i < 2;
+         i++) {
+        uproc_substmat_align_suffixes(substmat, word->suffix,
+                                      nb_words[i].suffix, dist);
+        if (pc->trace.cb) {
+            pc->trace.cb(&nb_words[i], nb_classes[i], index, reverse, dist,
+                         pc->trace.cb_arg);
+        }
+        for (int k = 0; !res && k < ranks_count; k++) {
+            uproc_assert(scores[k]);
+            res = scores_add(scores[k], &nb_words[i], nb_classes[i][k], index,
+                             dist, reverse, pc->detailed);
+        }
     }
-    uproc_substmat_align_suffixes(substmat, word->suffix, upper_nb.suffix,
-                                  dist);
-    if (pc->trace.cb) {
-        pc->trace.cb(&upper_nb, upper_family, index, reverse, dist,
-                     pc->trace.cb_arg);
-    }
-    res = scores_add(scores, &upper_nb, upper_family, index, dist, reverse,
-                     pc->detailed);
     return res;
 }
 
 static int scores_compute(const struct uproc_protclass_s *pc, const char *seq,
-                          uproc_bst *scores)
+                          uproc_bst *scores[UPROC_RANKS_MAX])
 {
     int res;
     uproc_worditer *iter;
@@ -252,50 +267,40 @@ static int scores_compute(const struct uproc_protclass_s *pc, const char *seq,
  ****************/
 
 static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
-                           uproc_bst *score_tree, uproc_list *results)
+                           uproc_bst *scores[UPROC_RANKS_MAX],
+                           uproc_list *results)
 {
     int res = 0;
-    uproc_bstiter *iter;
-    union uproc_bst_key key;
-    struct sc value;
     size_t seq_len = strlen(seq);
-    struct uproc_protresult pred_max = {.score = -INFINITY};
 
-    iter = uproc_bstiter_create(score_tree);
-    if (!iter) {
-        return -1;
-    }
-    while (!uproc_bstiter_next(iter, &key, &value)) {
-        uproc_family family = key.uint;
-        double score = sc_finalize(&value);
-        if (pc->filter &&
-            !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
-            sc_free(&value);
+    for (int i = 0, n = get_ranks_count(pc); i < n; i++) {
+        if (!scores[i] || !uproc_bst_size(scores[i])) {
             continue;
         }
-        struct uproc_protresult pred = {.score = score,
-                                        .family = family,
-                                        .matched_words = value.matched_words};
-        value.matched_words = NULL;
-        if (pc->mode == UPROC_PROTCLASS_MAX) {
-            if (!uproc_list_size(results)) {
-                pred_max = pred;
-                res = uproc_list_append(results, &pred);
-                if (res) {
-                    break;
-                }
-            } else if (pred.score > pred_max.score) {
-                uproc_protresult_free(&pred_max);
-                pred_max = pred;
-                uproc_list_set(results, 0, &pred_max);
-            } else {
-                uproc_protresult_free(&pred);
-            }
-        } else {
-            uproc_list_append(results, &pred);
+        struct uproc_protresult result = {.rank = i};
+
+        union uproc_bst_key key;
+        struct sc sc;
+        uproc_bstiter *iter = uproc_bstiter_create(scores[i]);
+        if (!iter) {
+            return -1;
         }
+        while (!uproc_bstiter_next(iter, &key, &sc)) {
+            uproc_class class = key.uint;
+            double score = sc_finalize(&sc);
+            if (pc->filter &&
+                !pc->filter(seq, seq_len, class, score, pc->filter_arg)) {
+                sc_free(&sc);
+                continue;
+            }
+            result.score = score;
+            result.class = class;
+            // take ownership -> don't call sc_free.
+            result.matched_words = sc.matched_words;
+            uproc_list_append(results, &result);
+        }
+        uproc_bstiter_destroy(iter);
     }
-    uproc_bstiter_destroy(iter);
     return res;
 }
 
@@ -347,33 +352,67 @@ static void map_list_protresult_free(void *value, void *opaque)
     uproc_protresult_free(value);
 }
 
+static void map_list_protresult_max(void *value, void *opaque)
+{
+    struct uproc_protresult *v = value, *max = opaque;
+    if (uproc_protresult_cmp(v, max) > 0) {
+        uproc_protresult_free(max);
+        uproc_protresult_copy(max, v);
+    } else {
+        uproc_protresult_free(v);
+    }
+}
+
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
                              uproc_list **results)
 {
     int res;
-    uproc_bst *scores;
+    uproc_bst *scores[UPROC_RANKS_MAX] = {0};
 
+    int ranks_count = get_ranks_count(pc);
+    for (int i = 0; i < ranks_count; i++) {
+        scores[i] = uproc_bst_create(UPROC_BST_UINT, sizeof(struct sc));
+        if (!scores[i]) {
+            goto error;
+        }
+    }
     if (!*results) {
         *results = uproc_list_create(sizeof(struct uproc_protresult));
         if (!*results) {
-            return -1;
+            goto error;
         }
     } else {
         uproc_list_map(*results, map_list_protresult_free, NULL);
         uproc_list_clear(*results);
     }
 
-    scores = uproc_bst_create(UPROC_BST_UINT, sizeof(struct sc));
-    if (!scores) {
-        return -1;
-    }
     res = scores_compute(pc, seq, scores);
-    if (res || uproc_bst_isempty(scores)) {
+    if (res) {
         goto error;
     }
     res = scores_finalize(pc, seq, scores, *results);
-error:
-    uproc_bst_destroy(scores);
+    if (res) {
+        goto error;
+    }
+
+    if (pc->mode == UPROC_PROTCLASS_MAX) {
+        struct uproc_protresult result_max = UPROC_PROTRESULT_INITIALIZER;
+        result_max.rank = UPROC_RANKS_MAX;
+        result_max.score = -INFINITY;
+        uproc_list_map(*results, map_list_protresult_max, &result_max);
+        uproc_list_clear(*results);
+        res = uproc_list_append(*results, &result_max);
+    }
+
+    if (0) {
+    error:
+        uproc_list_destroy(*results);
+        *results = NULL;
+    }
+    for (int i = 0; i < ranks_count; i++) {
+        uproc_bst_destroy(scores[i]);
+    }
+
     return res;
 }
 
@@ -433,4 +472,14 @@ int uproc_protresult_copy(struct uproc_protresult *dest,
         }
     }
     return 0;
+}
+
+int uproc_protresult_cmp(const struct uproc_protresult *p1,
+                         const struct uproc_protresult *p2)
+{
+    int r = p1->rank - p2->rank;
+    if (r) {
+        return r;
+    }
+    return ceil(p1->score - p2->score);
 }
