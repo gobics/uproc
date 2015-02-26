@@ -34,12 +34,11 @@ void ppopts_init(struct ppopts *o)
     memset(o, 0, sizeof *o);
 }
 
-void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
-                const char *argname, const char *desc, ...)
+static void ppopts_addv(struct ppopts *o, int shortopt, const char *longopt,
+                        const char *argname, const char *desc, va_list ap)
 {
     int len;
     struct ppopts_opt *opt;
-    va_list ap;
 
     if (o->n >= PPOPTS_OPTS_MAX) {
         return;
@@ -48,9 +47,7 @@ void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
     opt = &o->options[o->n];
     opt->shortopt = shortopt;
 
-    va_start(ap, desc);
     vsnprintf(opt->desc, sizeof opt->desc, desc, ap);
-    va_end(ap);
 
     strncpy(opt->longopt, longopt, PPOPTS_LONGOPT_MAX);
     len = strlen(longopt);
@@ -65,6 +62,31 @@ void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
     }
 
     o->n++;
+}
+
+void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
+                        const char *argname, const char *desc, ...)
+{
+    va_list ap;
+    va_start(ap, desc);
+    ppopts_addv(o, shortopt, longopt, argname, desc, ap);
+    va_end(ap);
+}
+
+void ppopts_add_header(struct ppopts *o, const char *text, ...)
+{
+    va_list ap;
+    va_start(ap, text);
+    ppopts_addv(o, PPOPTS_HEADER, "", "", text, ap);
+    va_end(ap);
+}
+
+void ppopts_add_text(struct ppopts *o, const char *text, ...)
+{
+    va_list ap;
+    va_start(ap, text);
+    ppopts_addv(o, PPOPTS_TEXT, "", "", text, ap);
+    va_end(ap);
 }
 
 static int get_word(char *dest, int n, char *src, char **next)

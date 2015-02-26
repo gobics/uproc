@@ -97,11 +97,8 @@ void ppopts_init(struct ppopts *o);
 void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
                 const char *argname, const char *desc, ...);
 
-#define ppopts_add_header(o, ...) \
-    ppopts_add((o), PPOPTS_HEADER, "", "", __VA_ARGS__)
-
-#define ppopts_add_text(o, ...) \
-    ppopts_add((o), PPOPTS_TEXT, "", "", __VA_ARGS__)
+void ppopts_add_header(struct ppopts *o, const char *fmt, ...);
+void ppopts_add_text(struct ppopts *o, const char *fmt, ...);
 
 void ppopts_print(struct ppopts *o, FILE *stream, int wrap, int flags);
 
