@@ -163,8 +163,7 @@ enum uproc_protclass_mode {
  * \param filter_arg    Additional argument to \c filter
  */
 uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
-                                        bool detailed,
-                                        const uproc_ecurve *fwd,
+                                        bool detailed, const uproc_ecurve *fwd,
                                         const uproc_ecurve *rev,
                                         const uproc_substmat *substmat,
                                         uproc_protfilter *filter,

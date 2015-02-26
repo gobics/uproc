@@ -109,7 +109,6 @@ enum {
 #endif
 clf *classifier_;
 
-
 #define CHUNK_SIZE_DEFAULT (1 << 10)
 #define CHUNK_SIZE_MAX (1 << 14)
 
@@ -242,27 +241,23 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                                 (unsigned long)result->orf.length);
                 break;
 #endif
-            case OUTFMT_PFAM:
-                {
-                    uproc_idmap *idmap = uproc_database_idmap(database_);
-                    uproc_io_puts(uproc_idmap_str(idmap, protresult->family),
-                                  output_stream_);
-                }
-                break;
+            case OUTFMT_PFAM: {
+                uproc_idmap *idmap = uproc_database_idmap(database_);
+                uproc_io_puts(uproc_idmap_str(idmap, protresult->family),
+                              output_stream_);
+            } break;
             case OUTFMT_SCORE:
                 uproc_io_printf(output_stream_, "%1.3f", protresult->score);
                 break;
-            case OUTFMT_MATCH_WORD:
-                {
-                    char w[UPROC_WORD_LEN + 1] = "";
-                    uproc_word_to_string(w, &matched_word->word,
-                                         uproc_database_alphabet(database_));
-                    uproc_io_puts(w, output_stream_);
-                }
-                break;
+            case OUTFMT_MATCH_WORD: {
+                char w[UPROC_WORD_LEN + 1] = "";
+                uproc_word_to_string(w, &matched_word->word,
+                                     uproc_database_alphabet(database_));
+                uproc_io_puts(w, output_stream_);
+            } break;
             case OUTFMT_MATCH_REVERSE:
                 uproc_io_puts(matched_word->reverse ? "rev" : "fwd",
-                           output_stream_);
+                              output_stream_);
                 break;
             case OUTFMT_MATCH_INDEX:
                 uproc_io_printf(output_stream_, "%lu",
@@ -270,8 +265,7 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                 break;
 
             default:
-                uproc_assert_msg(false,
-                                 "default case should not be reached");
+                uproc_assert_msg(false, "default case should not be reached");
         }
         if (*format) {
             uproc_io_putc(',', output_stream_);
@@ -289,7 +283,6 @@ void print_matches(unsigned long seq_num, const char *header,
         fprintf(stderr, "programmer is daft, matched_words is NULL\n");
         exit(EXIT_FAILURE);
     }
-
 }
 
 /* Process (and maybe output) classification results */
@@ -312,8 +305,7 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
             counts[PROTRESULT(&result)->family] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
-                                      strlen(buf->seqs[i].data), &result,
-                                      NULL);
+                                      strlen(buf->seqs[i].data), &result, NULL);
             }
         }
     }
@@ -391,8 +383,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
             counts[PROTRESULT(&result)->family] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
-                                      strlen(buf->seqs[i].data), &result,
-                                      NULL);
+                                      strlen(buf->seqs[i].data), &result, NULL);
             }
         }
         timeit_stop(&t_out);
@@ -448,9 +439,9 @@ void print_counts(unsigned long counts[UPROC_FAMILY_MAX + 1])
     qsort(c, n, sizeof *c, compare_count);
 
     for (i = 0; i < n; i++) {
-        uproc_io_puts(uproc_idmap_str(uproc_database_idmap(database_),
-                                      c[i].fam),
-                      output_stream_);
+        uproc_io_puts(
+            uproc_idmap_str(uproc_database_idmap(database_), c[i].fam),
+            output_stream_);
         uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
     }
 }
@@ -651,16 +642,15 @@ int main(int argc, char **argv)
     }
 
     // if no output mode was selected, set a default
-    if (!flag_output_predictions_ &&
-        !flag_output_matched_words_ &&
-        !flag_output_counts_ &&
-        !flag_output_summary_) {
+    if (!flag_output_predictions_ && !flag_output_matched_words_ &&
+        !flag_output_counts_ && !flag_output_summary_) {
         flag_output_summary_ = true;
     }
 
     // verify that all format string characters are valid
     if (flag_output_predictions_ || flag_output_matched_words_) {
-        const char *valid = flag_output_predictions_ ? OUTFMT_PREDICTIONS : OUTFMT_MATCHES;
+        const char *valid =
+            flag_output_predictions_ ? OUTFMT_PREDICTIONS : OUTFMT_MATCHES;
         size_t spn = strspn(flag_output_format_, valid);
         if (spn != strlen(flag_output_format_)) {
             fprintf(stderr, "%s: invalid format string character -- '%c'\n",
@@ -674,8 +664,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    model_ = uproc_model_load(argv[optind + MODELDIR],
-                               flag_orf_thresh_level_);
+    model_ = uproc_model_load(argv[optind + MODELDIR], flag_orf_thresh_level_);
     if (!model_) {
         return EXIT_FAILURE;
     }
@@ -688,10 +677,8 @@ int main(int argc, char **argv)
     uproc_protclass *pc;
     uproc_dnaclass *dc;
 
-    create_classifiers(&pc, &dc, database_, model_,
-                       flag_prot_thresh_level_,
-                       flag_dna_short_read_mode_,
-                       flag_output_matched_words_);
+    create_classifiers(&pc, &dc, database_, model_, flag_prot_thresh_level_,
+                       flag_dna_short_read_mode_, flag_output_matched_words_);
 #if MAIN_DNA
     classifier_ = dc;
 #else
@@ -707,8 +694,8 @@ int main(int argc, char **argv)
     unsigned long counts[UPROC_FAMILY_MAX + 1] = {0};
 
     for (; optind + INFILES < argc; optind++) {
-        classify_file(argv[optind + INFILES], &n_seqs,
-                      &n_seqs_unexplained, counts);
+        classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained,
+                      counts);
     }
 
     if (flag_output_summary_) {

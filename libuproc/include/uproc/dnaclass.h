@@ -78,8 +78,8 @@ struct uproc_dnaresult
 };
 
 /** Initializer for ::uproc_dnaresult structs */
-#define UPROC_DNARESULT_INITIALIZER \
-    {                               \
+#define UPROC_DNARESULT_INITIALIZER                         \
+    {                                                       \
         UPROC_ORF_INITIALIZER, UPROC_PROTRESULT_INITIALIZER \
     }
 

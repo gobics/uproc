@@ -66,8 +66,7 @@ int metadata_format(char *buf, const void *key, const void *value, void *opaque)
     uproc_assert(strlen(key) < UPROC_DICT_KEY_SIZE_MAX);
     const struct uproc_database_metadata *v = value;
     int bytes_left = UPROC_DICT_STORE_BUFFER_SIZE;
-    int res = snprintf(buf, bytes_left, "%c %s: ",
-                       v->type, (const char *)key);
+    int res = snprintf(buf, bytes_left, "%c %s: ", v->type, (const char *)key);
 
     if (res < 0 || res > bytes_left) {
         return -1;
@@ -99,8 +98,8 @@ int metadata_scan(const char *s, void *key, void *value, void *opaque)
         case UINT:
             break;
         default:
-            return uproc_error_msg(UPROC_EINVAL,
-                                   "invalid type identifier %c", *s);
+            return uproc_error_msg(UPROC_EINVAL, "invalid type identifier %c",
+                                   *s);
     }
     v->type = *s;
     s += 2;
@@ -133,7 +132,7 @@ uproc_database *uproc_database_create(void)
         return NULL;
     }
     *db = (struct uproc_database_s){0};
-    db->metadata = uproc_dict_create(0, sizeof (struct uproc_database_metadata));
+    db->metadata = uproc_dict_create(0, sizeof(struct uproc_database_metadata));
     if (!db->metadata) {
         free(db);
         return NULL;
@@ -148,21 +147,21 @@ uproc_database *uproc_database_load(const char *path)
         return NULL;
     }
     uproc_dict_destroy(db->metadata);
-    db->metadata = uproc_dict_load(0, sizeof (struct uproc_database_metadata),
-                                   metadata_scan, NULL,
-                                   UPROC_IO_GZIP, "%s/metadata", path);
+    db->metadata = uproc_dict_load(0, sizeof(struct uproc_database_metadata),
+                                   metadata_scan, NULL, UPROC_IO_GZIP,
+                                   "%s/metadata", path);
     if (!db->metadata) {
         // We'll allow old databases without metadata (for now)
         // goto error;
     }
 
-    db->prot_thresh_e2 = uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e2",
-                                           path);
+    db->prot_thresh_e2 =
+        uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e2", path);
     if (!db->prot_thresh_e2) {
         goto error;
     }
-    db->prot_thresh_e3 = uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e3",
-                                           path);
+    db->prot_thresh_e3 =
+        uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e3", path);
     if (!db->prot_thresh_e2) {
         goto error;
     }
@@ -340,8 +339,8 @@ int metadata_get(const uproc_database *db, const char *key,
     return 0;
 }
 
-int uproc_database_metadata_get_uint(const uproc_database *db,
-                                     const char *key, uintmax_t *value)
+int uproc_database_metadata_get_uint(const uproc_database *db, const char *key,
+                                     uintmax_t *value)
 {
     struct uproc_database_metadata v;
     if (metadata_get(db, key, &v)) {
@@ -352,8 +351,9 @@ int uproc_database_metadata_get_uint(const uproc_database *db,
     return 0;
 }
 
-int uproc_database_metadata_get_str(const uproc_database *db, const char *key,
-                                    char value[static UPROC_DATABASE_METADATA_STR_SIZE])
+int uproc_database_metadata_get_str(
+    const uproc_database *db, const char *key,
+    char value[static UPROC_DATABASE_METADATA_STR_SIZE])
 {
     struct uproc_database_metadata v;
     if (metadata_get(db, key, &v)) {
@@ -375,8 +375,8 @@ int metadata_set(uproc_database *db, const char *key,
     return 0;
 }
 
-int uproc_database_metadata_set_uint(uproc_database *db,
-                                     const char *key, uintmax_t value)
+int uproc_database_metadata_set_uint(uproc_database *db, const char *key,
+                                     uintmax_t value)
 {
     struct uproc_database_metadata v;
     v.type = UINT;
@@ -384,8 +384,8 @@ int uproc_database_metadata_set_uint(uproc_database *db,
     return metadata_set(db, key, &v);
 }
 
-int uproc_database_metadata_set_str(uproc_database *db,
-                                    const char *key, char *value)
+int uproc_database_metadata_set_str(uproc_database *db, const char *key,
+                                    char *value)
 {
     struct uproc_database_metadata v;
     v.type = STR;

@@ -65,7 +65,7 @@ static void ppopts_addv(struct ppopts *o, int shortopt, const char *longopt,
 }
 
 void ppopts_add(struct ppopts *o, int shortopt, const char *longopt,
-                        const char *argname, const char *desc, ...)
+                const char *argname, const char *desc, ...)
 {
     va_list ap;
     va_start(ap, desc);

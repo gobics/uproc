@@ -69,8 +69,8 @@ void make_dir(const char *path);
  * */
 int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
                        uproc_database *db, uproc_model *model,
-                       int prot_thresh_level,
-                       bool short_read_mode, bool detailed_mode);
+                       int prot_thresh_level, bool short_read_mode,
+                       bool detailed_mode);
 
 #if defined(TIMEIT) && HAVE_CLOCK_GETTIME
 #include <time.h>

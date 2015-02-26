@@ -180,8 +180,8 @@ static bool orf_filter(const struct uproc_orf *orf, const char *seq,
 
 int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
                        uproc_database *db, uproc_model *model,
-                       int prot_thresh_level,
-                       bool short_read_mode, bool detailed_mode)
+                       int prot_thresh_level, bool short_read_mode,
+                       bool detailed_mode)
 {
     if (!db) {
         uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
@@ -199,15 +199,13 @@ int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
         pc_mode = UPROC_PROTCLASS_MAX;
         dc_mode = UPROC_DNACLASS_MAX;
     }
-    uproc_matrix *prot_thresh = uproc_database_protein_threshold(
-        db, prot_thresh_level);
+    uproc_matrix *prot_thresh =
+        uproc_database_protein_threshold(db, prot_thresh_level);
 
-    *pc = uproc_protclass_create(pc_mode, detailed_mode,
-                                 uproc_database_ecurve_forward(db),
-                                 uproc_database_ecurve_reverse(db),
-                                 uproc_model_substitution_matrix(model),
-                                 prot_filter,
-                                 prot_thresh);
+    *pc = uproc_protclass_create(
+        pc_mode, detailed_mode, uproc_database_ecurve_forward(db),
+        uproc_database_ecurve_reverse(db),
+        uproc_model_substitution_matrix(model), prot_filter, prot_thresh);
     if (!*pc) {
         return -1;
     }

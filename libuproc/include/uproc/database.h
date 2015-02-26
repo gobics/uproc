@@ -59,7 +59,6 @@ typedef struct uproc_database_s uproc_database;
  */
 uproc_database *uproc_database_load(const char *path);
 
-
 /** Store database to directory.
  *
  * Stores all database elements to their corresponding files in the directory
@@ -80,7 +79,8 @@ uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db);
  *
  * The database takes ownership of \c ecurve
  */
-void uproc_database_set_ecurve_forward(uproc_database *db, uproc_ecurve *ecurve);
+void uproc_database_set_ecurve_forward(uproc_database *db,
+                                       uproc_ecurve *ecurve);
 
 /** Get the reverse matching ecurve of the database.
  *
@@ -92,7 +92,8 @@ uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db);
  *
  * The database takes ownership of \c ecurve
  */
-void uproc_database_set_ecurve_reverse(uproc_database *db, uproc_ecurve *ecurve);
+void uproc_database_set_ecurve_reverse(uproc_database *db,
+                                       uproc_ecurve *ecurve);
 
 /** Returns the mapping from numerical to string IDs of the database
  *
@@ -136,28 +137,30 @@ void uproc_database_destroy(uproc_database *db);
 // alignment (unless the enum type would be larger, but that's not possible
 // with uintmax_t in the union)
 #define UPROC_DATABASE_METADATA_STR_SIZE \
-    (UPROC_DICT_VALUE_SIZE_MAX -  sizeof (uintmax_t))
+    (UPROC_DICT_VALUE_SIZE_MAX - sizeof(uintmax_t))
 struct uproc_database_metadata
 {
     enum uproc_database_metadata_type {
         STR = 's',
         UINT = 'u',
     } type;
-    union {
+    union
+    {
         char str[UPROC_DATABASE_METADATA_STR_SIZE];
         uintmax_t uint;
     } value;
 };
 
-int uproc_database_metadata_get_uint(const uproc_database *db,
-                                     const char *key, uintmax_t *value);
+int uproc_database_metadata_get_uint(const uproc_database *db, const char *key,
+                                     uintmax_t *value);
 
-int uproc_database_metadata_get_str(const uproc_database *db, const char *key,
-                                    char value[static UPROC_DATABASE_METADATA_STR_SIZE]);
+int uproc_database_metadata_get_str(
+    const uproc_database *db, const char *key,
+    char value[static UPROC_DATABASE_METADATA_STR_SIZE]);
 
-int uproc_database_metadata_set_uint(uproc_database *db,
-                                     const char *key, uintmax_t value);
+int uproc_database_metadata_set_uint(uproc_database *db, const char *key,
+                                     uintmax_t value);
 
-int uproc_database_metadata_set_str(uproc_database *db,
-                                    const char *key, char *value);
+int uproc_database_metadata_set_str(uproc_database *db, const char *key,
+                                    char *value);
 #endif
