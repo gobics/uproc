@@ -83,10 +83,10 @@ int metadata_format(char *buf, const void *key, const void *value, void *opaque)
             res = snprintf(buf, bytes_left, "%ju", v->value.uint);
             break;
         default:
-            uproc_assert_msg(0, "invalid type");
+            uproc_assert_msg(0, "metadata value has invalid type");
             return -1;
     }
-    return (res > 0 && res <= UPROC_DICT_STORE_BUFFER_SIZE) ? 0 : -1;
+    return (res > 0 && res <= bytes_left) ? 0 : -1;
 }
 
 int metadata_scan(const char *s, void *key, void *value, void *opaque)
@@ -124,7 +124,7 @@ int metadata_scan(const char *s, void *key, void *value, void *opaque)
     return 0;
 }
 
-uproc_database *uproc_database_load(const char *path)
+uproc_database *uproc_database_create(void)
 {
     uproc_database *db = malloc(sizeof *db);
     if (!db) {
@@ -133,7 +133,21 @@ uproc_database *uproc_database_load(const char *path)
         return NULL;
     }
     *db = (struct uproc_database_s){0};
+    db->metadata = uproc_dict_create(0, sizeof (struct uproc_database_metadata));
+    if (!db->metadata) {
+        free(db);
+        return NULL;
+    }
+    return db;
+}
 
+uproc_database *uproc_database_load(const char *path)
+{
+    uproc_database *db = uproc_database_create();
+    if (!db) {
+        return NULL;
+    }
+    uproc_dict_destroy(db->metadata);
     db->metadata = uproc_dict_load(0, sizeof (struct uproc_database_metadata),
                                    metadata_scan, NULL,
                                    UPROC_IO_GZIP, "%s/metadata", path);
@@ -174,6 +188,49 @@ error:
     return NULL;
 }
 
+int uproc_database_store(const uproc_database *db, const char *path,
+                         void (*progress)(double))
+{
+    uproc_assert(db);
+    uproc_assert(db->metadata && db->idmap);
+
+    if (uproc_dict_store(db->metadata, metadata_format, NULL, UPROC_IO_GZIP,
+                         "%s/metadata", path)) {
+        return -1;
+    }
+    if (uproc_idmap_store(db->idmap, UPROC_IO_GZIP, "%s/idmap", path)) {
+        return -1;
+    }
+
+    if (db->fwd) {
+        if (uproc_ecurve_storep(db->fwd, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                progress, "%s/fwd.ecurve", path)) {
+            return -1;
+        }
+    }
+    if (db->rev) {
+        if (uproc_ecurve_storep(db->rev, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                progress, "%s/rev.ecurve", path)) {
+            return -1;
+        }
+    }
+
+    if (db->prot_thresh_e2) {
+        if (uproc_matrix_store(db->prot_thresh_e2, UPROC_IO_GZIP,
+                               "%s/prot_thresh_e2", path)) {
+            return -1;
+        }
+    }
+    if (db->prot_thresh_e3) {
+        if (uproc_matrix_store(db->prot_thresh_e3, UPROC_IO_GZIP,
+                               "%s/prot_thresh_e3", path)) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 void uproc_database_destroy(uproc_database *db)
 {
     if (!db) {
@@ -190,29 +247,41 @@ void uproc_database_destroy(uproc_database *db)
 
 uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db)
 {
-    if (!db) {
-        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-        return NULL;
-    }
+    uproc_assert(db);
     return db->fwd;
+}
+
+void uproc_database_set_ecurve_forward(uproc_database *db, uproc_ecurve *ecurve)
+{
+    uproc_assert(db);
+    uproc_ecurve_destroy(db->fwd);
+    db->fwd = ecurve;
 }
 
 uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db)
 {
-    if (!db) {
-        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-        return NULL;
-    }
+    uproc_assert(db);
     return db->rev;
+}
+
+void uproc_database_set_ecurve_reverse(uproc_database *db, uproc_ecurve *ecurve)
+{
+    uproc_assert(db);
+    uproc_ecurve_destroy(db->rev);
+    db->rev = ecurve;
 }
 
 uproc_idmap *uproc_database_idmap(uproc_database *db)
 {
-    if (!db) {
-        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-        return NULL;
-    }
+    uproc_assert(db);
     return db->idmap;
+}
+
+void uproc_database_set_idmap(uproc_database *db, uproc_idmap *idmap)
+{
+    uproc_assert(db);
+    uproc_idmap_destroy(db->idmap);
+    db->idmap = idmap;
 }
 
 uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level)
@@ -230,18 +299,40 @@ uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level)
     return NULL;
 }
 
-uproc_alphabet *uproc_database_alphabet(uproc_database *db)
+int uproc_database_set_protein_threshold(uproc_database *db, int level,
+                                         uproc_matrix *prot_thresh)
 {
-    if (!db) {
-        uproc_error_msg(UPROC_EINVAL, "database parameter must not be NULL");
-        return NULL;
+    uproc_assert(db);
+    uproc_assert(prot_thresh);
+    switch (level) {
+        case 2:
+            uproc_matrix_destroy(db->prot_thresh_e2);
+            db->prot_thresh_e2 = prot_thresh;
+            break;
+        case 3:
+            uproc_matrix_destroy(db->prot_thresh_e3);
+            db->prot_thresh_e3 = prot_thresh;
+        default:
+            return uproc_error_msg(UPROC_EINVAL,
+                                   "invalid protein threshold level %d", level);
     }
-    return uproc_ecurve_alphabet(db->fwd);
+    return 0;
 }
 
-int metadata_get(const uproc_database *db,
-                 const char *key, struct uproc_database_metadata *value)
+uproc_alphabet *uproc_database_alphabet(uproc_database *db)
 {
+    uproc_assert(db);
+    uproc_assert(db->fwd || db->rev);
+    if (db->fwd) {
+        return uproc_ecurve_alphabet(db->fwd);
+    }
+    return uproc_ecurve_alphabet(db->rev);
+}
+
+int metadata_get(const uproc_database *db, const char *key,
+                 struct uproc_database_metadata *value)
+{
+    uproc_assert(db);
     uproc_assert(db->metadata);
     if (uproc_dict_get(db->metadata, key, value)) {
         return -1;
@@ -276,6 +367,7 @@ int uproc_database_metadata_get_str(const uproc_database *db, const char *key,
 int metadata_set(uproc_database *db, const char *key,
                  const struct uproc_database_metadata *value)
 {
+    uproc_assert(db);
     uproc_assert(db->metadata);
     if (uproc_dict_set(db->metadata, key, value)) {
         return -1;

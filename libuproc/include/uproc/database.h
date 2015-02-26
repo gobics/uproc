@@ -49,76 +49,85 @@
  */
 typedef struct uproc_database_s uproc_database;
 
-/**
-  * Loads all required data of a UProC database (versions 1.x.x) from files in
-  * the given directory and returns a database object.
-  *
-  * \param path an existing directory containing a UProC database.
-  * \param prot_thres_level the protein threshold to be used. Note that the
-  *corresponding file "prot_thresh_e%d" has to exist in the directory.
-  * \param format the format of the ecurves
-  *
-  * \returns the object on success or %NULL on error
-  */
+/** Load database from directory.
+ *
+ * Loads all required data of a UProC database from files in * the given
+ * directory and returns a database object.
+ *
+ * \param path  existing directory containing a UProC database
+ * \returns the object on success or %NULL on error
+ */
 uproc_database *uproc_database_load(const char *path);
 
-/**
-  * Returns the forward matching ecurve of the database. Note that the returned
-  * object will become invalid when the database is destroyed.
-  *
-  * \see uproc_database_destroy
-  *
-  * \param db the database.
-  * \returns a pointer to the ecurve.
-  */
+
+/** Store database to directory.
+ *
+ * Stores all database elements to their corresponding files in the directory
+ * given by \c path. This directory must already exist.
+ * When storing the ecurves, \c progress is periodically called with the
+ * current progress in percent.
+ */
+int uproc_database_store(const uproc_database *db, const char *path,
+                         void (*progress)(double));
+
+/** Get the forward matching ecurve of the database.
+ *
+ * The database retains ownership of the returned object.
+ */
 uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db);
 
-/**
-  * Returns the reverse matching ecurve of the database. Note that the returned
-  *object will
-  * become invalid when the database is destroyed.
-  *
-  * \see uproc_database_destroy
-  *
-  * \param db the database.
-  * \returns a pointer to the ecurve.
-  */
+/** Set forward ecurve.
+ *
+ * The database takes ownership of \c ecurve
+ */
+void uproc_database_set_ecurve_forward(uproc_database *db, uproc_ecurve *ecurve);
+
+/** Get the reverse matching ecurve of the database.
+ *
+ * The database retains ownership of the returned object.
+ */
 uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db);
 
-/**
-  * Returns the mapping from numerical to string IDs of the database. Note that
-  *the returned object will
-  * become invalid when the database is destroyed.
-  *
-  * \see uproc_database_destroy
-  *
-  * \param db the database.
-  * \returns a pointer to the idmap.
-  */
+/** Set reverse ecurve.
+ *
+ * The database takes ownership of \c ecurve
+ */
+void uproc_database_set_ecurve_reverse(uproc_database *db, uproc_ecurve *ecurve);
+
+/** Returns the mapping from numerical to string IDs of the database
+ *
+ * The database retains ownership of the returned object.
+ */
 uproc_idmap *uproc_database_idmap(uproc_database *db);
 
-/**
-  * Returns the protein threshold matrix of the database. Note that the returned
-  *object will
-  * become invalid when the database is destroyed.
-  * The returned pointer may be %NULL if the protein threshold was set to 0
-  *while
-  * loading the database.
-  *
-  * \see uproc_database_load
-  * \see uproc_database_destroy
-  *
-  * \param db the database.
-  * \returns a pointer to the matrix or %NULL
-  */
+/** Set idmap
+ *
+ * The database takes ownership of \c idmap
+ */
+void uproc_database_set_idmap(uproc_database *db, uproc_idmap *idmap);
+
+/** Return the protein threshold matrix for the given level.
+ *
+ * Valid levels are 0, 2 and 3. If \c level is 0, returns NULL.
+ * The database retains ownership of the returned object.
+ */
 uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level);
+
+/** Set protein threshold matrix
+ *
+ * Valid levels are 2 and 3.
+ *
+ * The database takes ownership of \c prot_thresh
+ */
+int uproc_database_set_protein_threshold(uproc_database *db, int level,
+                                         uproc_matrix *prot_thresh);
 
 uproc_alphabet *uproc_database_alphabet(uproc_database *db);
 
 /**
-  * Destroy the database and all associated object within the database.
-  * \param db the database to destroy and free memory for.
-  */
+ * Destroy the database and all associated object within the database.
+ * \param db the database to destroy and free memory for.
+ */
 void uproc_database_destroy(uproc_database *db);
 
 /** \} */
