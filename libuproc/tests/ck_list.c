@@ -1,5 +1,6 @@
 #include <check.h>
 #include <limits.h>
+#include <time.h>
 #include "uproc.h"
 
 #define TEST(I, V)                                   \
@@ -184,6 +185,36 @@ START_TEST(test_value_size_check)
 }
 END_TEST
 
+int compare_int(const void *p1, const void *p2)
+{
+    // the list will contain only numbers from [0, RAND_MAX / 2), so overflow
+    // is not possible
+    const int *i1 = p1, *i2 = p2;
+    return *i1 - *i2;
+}
+
+START_TEST(test_sort)
+{
+    srand(time(NULL));
+
+    uproc_list *list = uproc_list_create(sizeof(int));
+
+    for (int i = 0; i < 1337; i++) {
+        int val = rand() / 2;
+        uproc_list_append(list, &val);
+    }
+
+    uproc_list_sort(list, compare_int);
+    int last_val = INT_MIN;
+    for (long i = 0, n = uproc_list_size(list); i < n; i++) {
+        int val;
+        uproc_list_get(list, i, &val);
+        ck_assert_int_le(last_val, val);
+        last_val = val;
+    }
+}
+END_TEST
+
 int main(void)
 {
     Suite *s = suite_create("list");
@@ -195,6 +226,7 @@ int main(void)
     tcase_add_test(tc, test_negative_index);
     tcase_add_test(tc, test_map);
     tcase_add_test(tc, test_value_size_check);
+    tcase_add_test(tc, test_sort);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
 

@@ -282,3 +282,9 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
         func(list->data + i * list->value_size, opaque);
     }
 }
+
+void uproc_list_sort(uproc_list *list,
+                     int (*compare)(const void *, const void *))
+{
+    qsort(list->data, list->size, list->value_size, compare);
+}
