@@ -70,7 +70,7 @@ uproc_database *database_;
 uproc_model *model_;
 
 // available in both protein/dna and detailed/non-detailed
-#define OUTFMT_ALL "nhlfs"
+#define OUTFMT_ALL "nhlcrs"
 
 #ifdef MAIN_DNA
 #define OUTFMT_DNA "FIL"
@@ -78,13 +78,14 @@ uproc_model *model_;
 #define OUTFMT_DNA ""
 #endif
 #define OUTFMT_PREDICTIONS OUTFMT_ALL OUTFMT_DNA
-#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wri"
+#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wdi"
 
 enum {
     OUTFMT_SEQ_NUMBER = 'n',
     OUTFMT_SEQ_HEADER = 'h',
     OUTFMT_SEQ_LENGTH = 'l',
-    OUTFMT_PFAM = 'f',
+    OUTFMT_CLASS = 'c',
+    OUTFMT_RANK = 'r',
     OUTFMT_SCORE = 's',
 #ifdef MAIN_DNA
     OUTFMT_ORF_FRAME = 'F',
@@ -92,7 +93,7 @@ enum {
     OUTFMT_ORF_LENGTH = 'L',
 #endif
     OUTFMT_MATCH_WORD = 'w',
-    OUTFMT_MATCH_REVERSE = 'r',
+    OUTFMT_MATCH_DIRECTION = 'd',
     OUTFMT_MATCH_INDEX = 'i',
 };
 
@@ -241,11 +242,14 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                                 (unsigned long)result->orf.length);
                 break;
 #endif
-            case OUTFMT_PFAM: {
+            case OUTFMT_CLASS: {
                 uproc_idmap *idmap = uproc_database_idmap(database_);
                 uproc_io_puts(uproc_idmap_str(idmap, protresult->class),
                               output_stream_);
             } break;
+            case OUTFMT_RANK:
+                uproc_io_printf(output_stream_, "%u", protresult->rank + 1);
+                break;
             case OUTFMT_SCORE:
                 uproc_io_printf(output_stream_, "%1.3f", protresult->score);
                 break;
@@ -255,7 +259,7 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                                      uproc_database_alphabet(database_));
                 uproc_io_puts(w, output_stream_);
             } break;
-            case OUTFMT_MATCH_REVERSE:
+            case OUTFMT_MATCH_DIRECTION:
                 uproc_io_puts(matched_word->reverse ? "rev" : "fwd",
                               output_stream_);
                 break;
@@ -492,7 +496,8 @@ string FORMAT. Available characters are:\n\
     L: ORF length\n"
 #endif
       "\
-    f: predicted protein class\n\
+    f: predicted class\n\
+    r: rank of predicted class (1 is the lowest, e.g. protein family)\n\
     s: classification score");
 
     O('m', "matches", "FORMAT", "XXX WRITEME");
