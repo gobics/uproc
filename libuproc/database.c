@@ -142,43 +142,58 @@ uproc_database *uproc_database_create(void)
 
 uproc_database *uproc_database_load(const char *path)
 {
+    return uproc_database_load_some(path, UPROC_DATABASE_LOAD_ALL);
+}
+
+uproc_database *uproc_database_load_some(const char *path, int which)
+{
     uproc_database *db = uproc_database_create();
     if (!db) {
         return NULL;
     }
-    uproc_dict_destroy(db->metadata);
-    db->metadata = uproc_dict_load(0, sizeof(struct uproc_database_metadata),
-                                   metadata_scan, NULL, UPROC_IO_GZIP,
-                                   "%s/metadata", path);
-    if (!db->metadata) {
-        // We'll allow old databases without metadata (for now)
-        // goto error;
+
+    if (which & UPROC_DATABASE_LOAD_METADATA) {
+        uproc_dict_destroy(db->metadata);
+        db->metadata = uproc_dict_load(
+            0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
+            UPROC_IO_GZIP, "%s/metadata", path);
+        if (!db->metadata) {
+            // We'll allow old databases without metadata (for now)
+            // goto error;
+        }
     }
 
-    db->prot_thresh_e2 =
-        uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e2", path);
-    if (!db->prot_thresh_e2) {
-        goto error;
-    }
-    db->prot_thresh_e3 =
-        uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e3", path);
-    if (!db->prot_thresh_e2) {
-        goto error;
+    if (which & UPROC_DATABASE_LOAD_PROT_THRESH) {
+        db->prot_thresh_e2 =
+            uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e2", path);
+        if (!db->prot_thresh_e2) {
+            goto error;
+        }
+        db->prot_thresh_e3 =
+            uproc_matrix_load(UPROC_IO_GZIP, "%s/prot_thresh_e3", path);
+        if (!db->prot_thresh_e2) {
+            goto error;
+        }
     }
 
-    db->idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
-    if (!db->idmap) {
-        goto error;
+    if (which & UPROC_DATABASE_LOAD_IDMAPS) {
+        db->idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
+        if (!db->idmap) {
+            goto error;
+        }
     }
-    db->fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                "%s/fwd.ecurve", path);
-    if (!db->fwd) {
-        goto error;
-    }
-    db->rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                "%s/rev.ecurve", path);
-    if (!db->rev) {
-        goto error;
+
+    if (which & UPROC_DATABASE_LOAD_ECURVES) {
+        db->fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                    "%s/fwd.ecurve", path);
+        if (!db->fwd) {
+            goto error;
+        }
+        db->rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                    "%s/rev.ecurve", path);
+        if (!db->rev) {
+            goto error;
+        }
     }
 
     return db;

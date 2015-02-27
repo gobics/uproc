@@ -181,6 +181,11 @@ size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
     return list_get_all(list, buf, sz);
 }
 
+void *uproc_list_get_all_ptr(uproc_list *list)
+{
+    return list->data;
+}
+
 static int list_set(uproc_list *list, long index, const void *value)
 {
     long idx = index;

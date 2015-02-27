@@ -49,6 +49,8 @@
  */
 typedef struct uproc_database_s uproc_database;
 
+uproc_database *uproc_database_create(void);
+
 /** Load database from directory.
  *
  * Loads all required data of a UProC database from files in * the given
@@ -58,6 +60,27 @@ typedef struct uproc_database_s uproc_database;
  * \returns the object on success or %NULL on error
  */
 uproc_database *uproc_database_load(const char *path);
+
+/** Flags for :uproc_database_load_some */
+enum uproc_database_load_which {
+    /** Load the metadata dict */
+    UPROC_DATABASE_LOAD_METADATA = 1,
+
+    /** Load protein threshold matrices */
+    UPROC_DATABASE_LOAD_PROT_THRESH = (1 << 1),
+
+    /** Load class ID to string maps */
+    UPROC_DATABASE_LOAD_IDMAPS = (1 << 2),
+
+    /** Load ecurves */
+    UPROC_DATABASE_LOAD_ECURVES = (1 << 3),
+
+    /** Load everything */
+    UPROC_DATABASE_LOAD_ALL = 0xff,
+};
+
+/** Load some parts of a database from directory. */
+uproc_database *uproc_database_load_some(const char *path, int which);
 
 /** Store database to directory.
  *

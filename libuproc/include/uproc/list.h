@@ -93,6 +93,13 @@ size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
 #define uproc_list_get_all(list, buf, sz) \
     uproc_list_get_all_safe((list), (buf), (sz), sizeof *(buf))
 
+/** Get pointer to data
+ *
+ * Returns a pointer to the underlying data. Use this pointer at your own risk,
+ * whenever the list is modified, this pointer could become invalid.
+ */
+void *uproc_list_get_all_ptr(uproc_list *list);
+
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
                         size_t value_size);
 

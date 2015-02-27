@@ -26,10 +26,7 @@ uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1
 
 uproc_orf_SOURCES = orf.c
 
-uproc_makedb_SOURCES = makedb/makedb.h makedb/makedb.c makedb/build_ecurves.c \
-					makedb/calib.c
-
-uproc_makedb_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libuproc/include -I$(top_srcdir)/libuproc
+uproc_makedb_SOURCES = makedb.c
 uproc_makedb_CFLAGS = $(OPENMP_CFLAGS)
 
 dist_doc_DATA = README.rst

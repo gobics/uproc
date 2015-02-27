@@ -187,7 +187,7 @@ END_TEST
 
 bool filter_u32_even(const void *data, void *ctx)
 {
-    (void) ctx;
+    (void)ctx;
     const uint32_t *p = data;
     return !(*p % 2);
 }
@@ -210,8 +210,8 @@ START_TEST(test_filter)
         uproc_list_pop(list, &value);
         ck_assert_uint_eq(value % 2, 0);
     }
-
-} END_TEST
+}
+END_TEST
 
 int compare_int(const void *p1, const void *p2)
 {
