@@ -35,6 +35,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 /** \defgroup obj_list object uproc_list
  *
@@ -159,6 +160,17 @@ long uproc_list_size(const uproc_list *list);
  */
 void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
                     void *opaque);
+
+/** Filter list
+ *
+ * Removes all items from the list for which \c func returns false.
+ *
+ * \param list      list instance
+ * \param func      function to call
+ * \param opaque    second argument to \c function
+ */
+void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
+                       void *opaque);
 
 void uproc_list_sort(uproc_list *list,
                      int (*compare)(const void *, const void *));

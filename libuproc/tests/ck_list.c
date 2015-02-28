@@ -185,6 +185,34 @@ START_TEST(test_value_size_check)
 }
 END_TEST
 
+bool filter_u32_even(const void *data, void *ctx)
+{
+    (void) ctx;
+    const uint32_t *p = data;
+    return !(*p % 2);
+}
+
+START_TEST(test_filter)
+{
+    uint32_t value;
+    uproc_list *list = uproc_list_create(sizeof value);
+
+    for (uint32_t i = 0; i < 20; i++) {
+        uproc_list_append(list, &i);
+    }
+    ck_assert_int_eq(uproc_list_size(list), 20);
+
+    uproc_list_filter(list, filter_u32_even, NULL);
+
+    ck_assert_int_eq(uproc_list_size(list), 10);
+
+    while (uproc_list_size(list)) {
+        uproc_list_pop(list, &value);
+        ck_assert_uint_eq(value % 2, 0);
+    }
+
+} END_TEST
+
 int compare_int(const void *p1, const void *p2)
 {
     // the list will contain only numbers from [0, RAND_MAX / 2), so overflow
@@ -226,6 +254,7 @@ int main(void)
     tcase_add_test(tc, test_negative_index);
     tcase_add_test(tc, test_map);
     tcase_add_test(tc, test_value_size_check);
+    tcase_add_test(tc, test_filter);
     tcase_add_test(tc, test_sort);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
