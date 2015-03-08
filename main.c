@@ -67,7 +67,27 @@ const char *flag_output_format_ = NULL;
 
 uproc_io_stream *output_stream_ = NULL;
 uproc_database *database_;
+uproc_rank ranks_count_;
 uproc_model *model_;
+
+unsigned long (*counts_)[UPROC_CLASS_MAX + 1];
+void counts_increment(uproc_rank rank, uproc_class class)
+{
+    if (!flag_output_counts_) {
+        return;
+    }
+    if (class == UPROC_CLASS_INVALID) {
+        return;
+    }
+    uproc_assert(rank < ranks_count_);
+    if (!counts_) {
+        counts_ = calloc(ranks_count_, sizeof *counts_);
+        if (!counts_) {
+            uproc_error(UPROC_ENOMEM);
+        }
+    }
+    counts_[rank][class] += 1;
+}
 
 // available in both protein/dna and detailed/non-detailed
 #define OUTFMT_ALL "nhlcrs"
@@ -243,7 +263,8 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                 break;
 #endif
             case OUTFMT_CLASS: {
-                uproc_idmap *idmap = uproc_database_idmap(database_);
+                uproc_idmap *idmap =
+                    uproc_database_idmap(database_, protresult->rank);
                 uproc_io_puts(uproc_idmap_str(idmap, protresult->class),
                               output_stream_);
             } break;
@@ -291,8 +312,7 @@ void print_matches(unsigned long seq_num, const char *header,
 
 /* Process (and maybe output) classification results */
 void buffer_process(struct buffer *buf, unsigned long *n_seqs,
-                    unsigned long *n_seqs_unexplained,
-                    unsigned long counts[UPROC_CLASS_MAX + 1])
+                    unsigned long *n_seqs_unexplained)
 {
     for (long long i = 0; i < buf->n; i++) {
         uproc_list *results = buf->results[i];
@@ -306,18 +326,18 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
         struct clfresult result;
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
-            counts[PROTRESULT(&result)->class] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
             }
+            struct uproc_protresult *p = PROTRESULT(&result);
+            counts_increment(p->rank, p->class);
         }
     }
 }
 
 void classify_file_mt(const char *path, unsigned long *n_seqs,
-                      unsigned long *n_seqs_unexplained,
-                      unsigned long counts[UPROC_CLASS_MAX + 1])
+                      unsigned long *n_seqs_unexplained)
 {
     int more_input;
     uproc_io_stream *stream = open_read(path);
@@ -341,7 +361,7 @@ void classify_file_mt(const char *path, unsigned long *n_seqs,
                 buffer_classify(buf_out);
                 timeit_stop(&t_clf);
                 timeit_start(&t_out);
-                buffer_process(buf_out, n_seqs, n_seqs_unexplained, counts);
+                buffer_process(buf_out, n_seqs, n_seqs_unexplained);
                 timeit_stop(&t_out);
             }
         }
@@ -353,12 +373,11 @@ void classify_file_mt(const char *path, unsigned long *n_seqs,
 }
 
 void classify_file(const char *path, unsigned long *n_seqs,
-                   unsigned long *n_seqs_unexplained,
-                   unsigned long counts[UPROC_CLASS_MAX + 1])
+                   unsigned long *n_seqs_unexplained)
 {
 #if _OPENMP
     if (omp_get_max_threads() > 1) {
-        return classify_file_mt(path, n_seqs, n_seqs_unexplained, counts);
+        return classify_file_mt(path, n_seqs, n_seqs_unexplained);
     }
 #endif
     timeit_start(&t_tot);
@@ -384,11 +403,12 @@ void classify_file(const char *path, unsigned long *n_seqs,
         for (long i = 0; i < n_results; i++) {
             struct clfresult result;
             uproc_list_get(results, i, &result);
-            counts[PROTRESULT(&result)->class] += 1;
             if (flag_output_predictions_ || flag_output_matched_words_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
             }
+            struct uproc_protresult *p = PROTRESULT(&result);
+            counts_increment(p->rank, p->class);
         }
         timeit_stop(&t_out);
 
@@ -428,25 +448,29 @@ int compare_count(const void *p1, const void *p2)
     return 0;
 }
 
-void print_counts(unsigned long counts[UPROC_CLASS_MAX + 1])
+void counts_print(void)
 {
-    struct count c[UPROC_CLASS_MAX + 1];
-    uproc_class i, n = 0;
-    for (i = 0; i < UPROC_CLASS_MAX + 1; i++) {
-        if (counts[i]) {
-            c[n].class = i;
-            c[n].n = counts[i];
-            n++;
-        }
+    if (!counts_) {
+        return;
     }
+    for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
+        struct count c[UPROC_CLASS_MAX + 1];
+        uproc_class i, n = 0;
+        for (i = 0; i < UPROC_CLASS_MAX + 1; i++) {
+            if (counts_[rank][i]) {
+                c[n].class = i;
+                c[n].n = counts_[rank][i];
+                n++;
+            }
+        }
 
-    qsort(c, n, sizeof *c, compare_count);
+        qsort(c, n, sizeof *c, compare_count);
 
-    for (i = 0; i < n; i++) {
-        uproc_io_puts(
-            uproc_idmap_str(uproc_database_idmap(database_), c[i].class),
-            output_stream_);
-        uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
+        for (i = 0; i < n; i++) {
+            uproc_idmap *idmap = uproc_database_idmap(database_, rank);
+            uproc_io_puts(uproc_idmap_str(idmap, c[i].class), output_stream_);
+            uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
+        }
     }
 }
 
@@ -678,6 +702,9 @@ int main(int argc, char **argv)
     if (!database_) {
         return EXIT_FAILURE;
     }
+    uintmax_t tmp;
+    uproc_database_metadata_get_uint(database_, "ranks", &tmp);
+    ranks_count_ = tmp;
 
     uproc_protclass *pc;
     uproc_dnaclass *dc;
@@ -696,11 +723,9 @@ int main(int argc, char **argv)
     }
 
     unsigned long n_seqs = 0, n_seqs_unexplained = 0;
-    unsigned long counts[UPROC_CLASS_MAX + 1] = {0};
 
     for (; optind + INFILES < argc; optind++) {
-        classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained,
-                      counts);
+        classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained);
     }
 
     if (flag_output_summary_) {
@@ -709,7 +734,7 @@ int main(int argc, char **argv)
         uproc_io_printf(output_stream_, "%lu\n", n_seqs);
     }
     if (flag_output_counts_) {
-        print_counts(counts);
+        counts_print();
     }
 
     uproc_io_close(output_stream_);

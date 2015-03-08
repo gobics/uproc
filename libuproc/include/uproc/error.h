@@ -180,6 +180,10 @@ typedef void uproc_error_handler(enum uproc_error_code num, const char *msg,
  */
 void uproc_error_set_handler(uproc_error_handler *hdl, void *context);
 
+void uproc_error_enable_handler(void);
+
+void uproc_error_disable_handler(void);
+
 /**
  * \}
  */

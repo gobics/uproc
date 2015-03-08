@@ -52,7 +52,7 @@ struct uproc_database_s
     /**
      * The mapping of numerical ID to string ID.
      */
-    uproc_idmap *idmap;
+    uproc_idmap *idmaps[UPROC_RANKS_MAX];
 
     /**
      * Matrices containing protein thresholds.
@@ -151,16 +151,17 @@ uproc_database *uproc_database_load_some(const char *path, int which)
     if (!db) {
         return NULL;
     }
-
-    if (which & UPROC_DATABASE_LOAD_METADATA) {
+    // We'll allow old databases without metadata (for now)
+    uproc_error_disable_handler();
+    uproc_dict *new_metadata = uproc_dict_load(
+        0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
+        UPROC_IO_GZIP, "%s/metadata", path);
+    uproc_error_enable_handler();
+    if (new_metadata) {
         uproc_dict_destroy(db->metadata);
-        db->metadata = uproc_dict_load(
-            0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
-            UPROC_IO_GZIP, "%s/metadata", path);
-        if (!db->metadata) {
-            // We'll allow old databases without metadata (for now)
-            // goto error;
-        }
+        db->metadata = new_metadata;
+    } else {
+        uproc_database_metadata_set_uint(db, "ranks", 1);
     }
 
     if (which & UPROC_DATABASE_LOAD_PROT_THRESH) {
@@ -177,9 +178,17 @@ uproc_database *uproc_database_load_some(const char *path, int which)
     }
 
     if (which & UPROC_DATABASE_LOAD_IDMAPS) {
-        db->idmap = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
-        if (!db->idmap) {
+        uintmax_t ranks;
+        int res = uproc_database_metadata_get_uint(db, "ranks", &ranks);
+        if (res) {
             goto error;
+        }
+        for (int i = 0; i < ranks; i++) {
+            db->idmaps[i] =
+                uproc_idmap_load(UPROC_IO_GZIP, "%s/rank%d.idmap", path, i);
+            if (!db->idmaps[i]) {
+                goto error;
+            }
         }
     }
 
@@ -206,14 +215,20 @@ int uproc_database_store(const uproc_database *db, const char *path,
                          void (*progress)(double))
 {
     uproc_assert(db);
-    uproc_assert(db->metadata && db->idmap);
+    uproc_assert(db->metadata);
 
     if (uproc_dict_store(db->metadata, metadata_format, NULL, UPROC_IO_GZIP,
                          "%s/metadata", path)) {
         return -1;
     }
-    if (uproc_idmap_store(db->idmap, UPROC_IO_GZIP, "%s/idmap", path)) {
-        return -1;
+    for (int i = 0; i < UPROC_RANKS_MAX; i++) {
+        if (!db->idmaps[i]) {
+            continue;
+        }
+        if (uproc_idmap_store(db->idmaps[i], UPROC_IO_GZIP, "%s/rank%d.idmap",
+                              path, i)) {
+            return -1;
+        }
     }
 
     if (db->fwd) {
@@ -250,12 +265,14 @@ void uproc_database_destroy(uproc_database *db)
     if (!db) {
         return;
     }
-    uproc_dict_destroy(db->metadata);
+    for (unsigned i = 0; i < UPROC_RANKS_MAX; i++) {
+        uproc_idmap_destroy(db->idmaps[i]);
+    }
     uproc_ecurve_destroy(db->fwd);
     uproc_ecurve_destroy(db->rev);
-    uproc_idmap_destroy(db->idmap);
     uproc_matrix_destroy(db->prot_thresh_e2);
     uproc_matrix_destroy(db->prot_thresh_e3);
+    uproc_dict_destroy(db->metadata);
     free(db);
 }
 
@@ -285,17 +302,18 @@ void uproc_database_set_ecurve_reverse(uproc_database *db, uproc_ecurve *ecurve)
     db->rev = ecurve;
 }
 
-uproc_idmap *uproc_database_idmap(uproc_database *db)
+uproc_idmap *uproc_database_idmap(uproc_database *db, uproc_rank rank)
 {
     uproc_assert(db);
-    return db->idmap;
+    return db->idmaps[rank];
 }
 
-void uproc_database_set_idmap(uproc_database *db, uproc_idmap *idmap)
+void uproc_database_set_idmap(uproc_database *db, uproc_rank rank,
+                              uproc_idmap *idmap)
 {
     uproc_assert(db);
-    uproc_idmap_destroy(db->idmap);
-    db->idmap = idmap;
+    uproc_idmap_destroy(db->idmaps[rank]);
+    db->idmaps[rank] = idmap;
 }
 
 uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level)

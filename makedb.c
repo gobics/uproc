@@ -182,8 +182,12 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
 void mark_singletons(struct ecurve_entry *entries, size_t entries_count)
 {
     enum { SINGLE, CLUSTER, BRIDGED, CROSSOVER };
-    unsigned char types[entries_count];
-    memset(types, SINGLE, sizeof types);
+    unsigned char *types = calloc(entries_count, 1);
+    if (!types) {
+        uproc_error(UPROC_ENOMEM);
+        uproc_perror("");
+        exit(EXIT_FAILURE);
+    }
 
     for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
         for (size_t i = 0; i < entries_count; i++) {
@@ -225,6 +229,7 @@ void mark_singletons(struct ecurve_entry *entries, size_t entries_count)
             }
         }
     }
+    free(types);
 }
 
 void insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
@@ -515,11 +520,6 @@ uproc_alphabet *load_alphabet(void)
 
 void load_ranks_mapping(const char *path)
 {
-    // start from 1 because idmaps_[0] is initialized in main()
-    for (uproc_class i = 1; i < UPROC_RANKS_MAX; i++) {
-        idmaps_[i] = uproc_idmap_create();
-    }
-
     uproc_class classes[UPROC_RANKS_MAX];
     ranks_ = uproc_dict_create(sizeof classes[0], sizeof classes);
 
@@ -541,10 +541,13 @@ void load_ranks_mapping(const char *path)
                 crop_first_word(tok);
             }
             if (tok && *tok) {
-                classes[i] = uproc_idmap_class(idmaps_[i], tok);
                 if (i + 1 > ranks_count_) {
                     ranks_count_ = i + 1;
+                    uproc_assert(!idmaps_[i]);
+                    idmaps_[i] = uproc_idmap_create();
+                    uproc_database_set_idmap(database_, i, idmaps_[i]);
                 }
+                classes[i] = uproc_idmap_class(idmaps_[i], tok);
             } else {
                 classes[i] = UPROC_CLASS_INVALID;
             }
@@ -642,6 +645,7 @@ int main(int argc, char **argv)
         database_ = uproc_database_create();
         make_dir(destdir_);
         idmaps_[0] = uproc_idmap_create();
+        uproc_database_set_idmap(database_, 0, idmaps_[0]);
 
         if (flags_ranks_file_) {
             load_ranks_mapping(flags_ranks_file_);

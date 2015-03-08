@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -31,8 +32,10 @@
 
 static int error_num;
 static char error_loc[256], error_msg[256];
+static bool error_handler_enabled;
 #if _OPENMP
-#pragma omp threadprivate(error_num, error_loc, error_msg)
+#pragma omp threadprivate(error_num, error_loc, error_msg, \
+                          error_handler_enabled)
 #endif
 
 static uproc_error_handler *error_handler = NULL;
@@ -116,4 +119,15 @@ void uproc_error_set_handler(uproc_error_handler *handler, void *context)
 {
     error_handler = handler;
     error_context = context;
+    error_handler_enabled = true;
+}
+
+void uproc_error_enable_handler(void)
+{
+    error_handler_enabled = true;
+}
+
+void uproc_error_disable_handler(void)
+{
+    error_handler_enabled = true;
 }

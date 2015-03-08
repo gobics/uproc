@@ -277,6 +277,9 @@ int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size)
 
 long uproc_list_size(const uproc_list *list)
 {
+    if (!list) {
+        return 0;
+    }
     return list->size;
 }
 

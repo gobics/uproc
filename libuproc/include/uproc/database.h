@@ -122,13 +122,14 @@ void uproc_database_set_ecurve_reverse(uproc_database *db,
  *
  * The database retains ownership of the returned object.
  */
-uproc_idmap *uproc_database_idmap(uproc_database *db);
+uproc_idmap *uproc_database_idmap(uproc_database *db, uproc_rank rank);
 
 /** Set idmap
  *
  * The database takes ownership of \c idmap
  */
-void uproc_database_set_idmap(uproc_database *db, uproc_idmap *idmap);
+void uproc_database_set_idmap(uproc_database *db, uproc_rank rank,
+                              uproc_idmap *idmap);
 
 /** Return the protein threshold matrix for the given level.
  *
