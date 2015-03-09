@@ -1,5 +1,5 @@
 #####################################
-UProC Version 1.1.2 2014-07-27 README
+UProC Version 1.2.0 2015-03-09 README
 #####################################
 
 .. This document is formatted using reStructuredText

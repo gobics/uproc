@@ -1,3 +1,16 @@
+1.2.0
+=====
+
+- New: When using ``uproc-dna`` or ``uproc-prot`` with ``-p``, it is possible
+  to control which columns are printed by passing a format string via the new
+  ``-F`` // ``--format`` option
+- New in `libuproc`: ``uproc_database`` and ``uproc_model`` objects
+- New in `libuproc`: Error handler receives a user-defined "context" pointer
+  when invoked
+- New in `libuproc`: Some of ``uproc_list_*`` are wrapped by macros that
+  verify that the size of the passed object matches the list element size.
+
+
 1.1.2
 =====
 
