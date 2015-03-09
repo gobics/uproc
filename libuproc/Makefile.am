@@ -37,8 +37,7 @@ libuproc_la_SOURCES = alphabet.c \
 					database.c \
 					model.c
 
-# TODO: increment version-info to 2:0:0 before release
-libuproc_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libuproc_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 BUILT_SOURCES = codon_tables.h
 EXTRA_DIST = codon_tables.h
