@@ -338,8 +338,9 @@ int uproc_ecurve_finalize(uproc_ecurve *ecurve)
     }
     ecurve->suffixes = tmp;
 
-    tmp = realloc(ecurve->classes,
-                  sizeof *ecurve->classes * ecurve->suffix_count);
+    tmp = realloc(
+        ecurve->classes,
+        sizeof *ecurve->classes * ecurve->suffix_count * ecurve->ranks_count);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
