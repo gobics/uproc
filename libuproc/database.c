@@ -344,6 +344,7 @@ int uproc_database_set_protein_threshold(uproc_database *db, int level,
         case 3:
             uproc_matrix_destroy(db->prot_thresh_e3);
             db->prot_thresh_e3 = prot_thresh;
+            break;
         default:
             return uproc_error_msg(UPROC_EINVAL,
                                    "invalid protein threshold level %d", level);
@@ -424,5 +425,9 @@ int uproc_database_metadata_set_str(uproc_database *db, const char *key,
     v.type = STR;
     v.value.str[sizeof v.value.str - 1] = '\0';
     strncpy(v.value.str, value, sizeof v.value.str - 1);
+    char *p = strchr(v.value.str, '\n');
+    if (p) {
+        *p = '\0';
+    }
     return metadata_set(db, key, &v);
 }
