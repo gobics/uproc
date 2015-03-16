@@ -55,11 +55,11 @@ static int read_line(uproc_io_stream *stream, char *line, size_t n)
 static int parse_header(const char *line, char *alpha, uproc_rank *ranks_count)
 {
     int res;
-    // old files are missing the "classes: " part and have always 1 class.
+    // old files are missing the "ranks: " part and have always 1 class.
     *ranks_count = 1;
     res = sscanf(line,
                  ">> alphabet: %" STR(UPROC_ALPHABET_SIZE) "c "
-                 "classes: %hhu", alpha,
+                 "ranks: %hhu", alpha,
                  ranks_count);
     alpha[UPROC_ALPHABET_SIZE] = '\0';
     if (res < 1) {
@@ -119,7 +119,8 @@ static int parse_suffixentry(const char *line, const uproc_alphabet *alpha,
 }
 
 static uproc_ecurve *load_plain(uproc_io_stream *stream,
-                                void (*progress)(double))
+                                void (*progress)(double, void *),
+                                void *progress_arg)
 {
     int res = 0;
     uproc_ecurve *ec = NULL;
@@ -170,7 +171,7 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
                 goto error;
             }
             if (progress) {
-                progress(100.0 / UPROC_PREFIX_MAX * prefix);
+                progress(100.0 / UPROC_PREFIX_MAX * prefix, progress_arg);
             }
         } else {
             res = parse_suffixentry(line, ec_alpha, ec->ranks_count,
@@ -186,7 +187,7 @@ static uproc_ecurve *load_plain(uproc_io_stream *stream,
     }
     uproc_ecurve_finalize(ec);
     if (progress) {
-        progress(100.0);
+        progress(100.0, progress_arg);
     }
     if (res) {
     error:
@@ -236,12 +237,13 @@ static int store_suffix(uproc_io_stream *stream, const uproc_alphabet *alpha,
 }
 
 static int store_plain(const struct uproc_ecurve_s *ecurve,
-                       uproc_io_stream *stream, void (*progress)(double))
+                       uproc_io_stream *stream,
+                       void (*progress)(double, void *), void *progress_arg)
 {
     int res;
     size_t p;
 
-    res = uproc_io_printf(stream, ">> alphabet: %s classes: %u\n",
+    res = uproc_io_printf(stream, ">> alphabet: %s ranks: %u\n",
                           uproc_alphabet_str(ecurve->alphabet),
                           ecurve->ranks_count);
 
@@ -272,19 +274,20 @@ static int store_plain(const struct uproc_ecurve_s *ecurve,
             }
         }
         if (progress) {
-            progress(100.0 / UPROC_PREFIX_MAX * p);
+            progress(100.0 / UPROC_PREFIX_MAX * p, progress_arg);
         }
     }
     uproc_io_printf(stream, ".\n");
     if (progress) {
-        progress(100.0);
+        progress(100.0, progress_arg);
     }
     return 0;
 }
 
 #if !(HAVE_MMAP && USE_MMAP)
 static uproc_ecurve *load_binary(uproc_io_stream *stream,
-                                 void (*progress)(double))
+                                 void (*progress)(double,
+                                                  void *) void *progress_arg)
 {
     size_t sz;
     char alpha[UPROC_ALPHABET_SIZE + 1];
@@ -316,7 +319,7 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
     }
 
     if (progress) {
-        progress(0.1);
+        progress(0.1, progress);
     }
 
     sz = uproc_io_read(ecurve->suffixes, sizeof *ecurve->suffixes, suffix_count,
@@ -325,7 +328,7 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
         goto error;
     }
     if (progress) {
-        progress(25.0);
+        progress(25.0, progress);
     }
     sz = uproc_io_read(ecurve->classes, sizeof *ecurve->classes,
                        ranks_count * suffix_count, stream);
@@ -333,7 +336,7 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
         goto error;
     }
     if (progress) {
-        progress(50.0);
+        progress(50.0, progress);
     }
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
@@ -348,11 +351,11 @@ static uproc_ecurve *load_binary(uproc_io_stream *stream,
             goto error;
         }
         if (progress) {
-            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i, progress);
         }
     }
     if (progress) {
-        progress(100.0);
+        progress(100.0, progress);
     }
     return ecurve;
 error:
@@ -362,7 +365,8 @@ error:
 }
 
 static int store_binary(const struct uproc_ecurve_s *ecurve,
-                        uproc_io_stream *stream, void (*progress)(double))
+                        uproc_io_stream *stream,
+                        void (*progress)(double, void *), void *progress_arg)
 {
     size_t sz;
     sz = uproc_io_write(uproc_alphabet_str(ecurve->alphabet), 1,
@@ -381,7 +385,7 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
         return uproc_error(UPROC_ERRNO);
     }
     if (progress) {
-        progress(0.1);
+        progress(0.1, progress_arg);
     }
 
     sz = uproc_io_write(ecurve->suffixes, sizeof *ecurve->suffixes,
@@ -390,7 +394,7 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
         return uproc_error(UPROC_ERRNO);
     }
     if (progress) {
-        progress(25.0);
+        progress(25.0, progress_arg);
     }
     sz = uproc_io_write(ecurve->classes, sizeof *ecurve->classes,
                         ecurve->ranks_count * ecurve->suffix_count, stream);
@@ -398,7 +402,7 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
         return uproc_error(UPROC_ERRNO);
     }
     if (progress) {
-        progress(50.0);
+        progress(50.0, progress_arg);
     }
 
     for (uproc_prefix i = 0; i <= UPROC_PREFIX_MAX; i++) {
@@ -413,11 +417,11 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
             return uproc_error(UPROC_ERRNO);
         }
         if (progress) {
-            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i);
+            progress(50.0 + 50.0 / UPROC_PREFIX_MAX * i, progress_arg);
         }
     }
     if (progress) {
-        progress(100.0);
+        progress(100.0, progress_arg);
     }
     return 0;
 }
@@ -426,12 +430,12 @@ static int store_binary(const struct uproc_ecurve_s *ecurve,
 uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
                                  uproc_io_stream *stream)
 {
-    return uproc_ecurve_loadps(format, NULL, stream);
+    return uproc_ecurve_loadps(format, NULL, NULL, stream);
 }
 
 uproc_ecurve *uproc_ecurve_loadps(enum uproc_ecurve_format format,
-                                  void (*progress)(double),
-                                  uproc_io_stream *stream)
+                                  void (*progress)(double, void *),
+                                  void *progress_arg, uproc_io_stream *stream)
 {
     if (format == UPROC_ECURVE_BINARY) {
 #if HAVE_MMAP && USE_MMAP
@@ -439,22 +443,23 @@ uproc_ecurve *uproc_ecurve_loadps(enum uproc_ecurve_format format,
         uproc_error_msg(UPROC_EINVAL, "can't load mmap format from stream");
         return NULL;
 #else
-        return load_binary(stream, progress);
+        return load_binary(stream, progress, progress_arg);
 #endif
     }
-    return load_plain(stream, progress);
+    return load_plain(stream, progress, progress_arg);
 }
 
 uproc_ecurve *uproc_ecurve_loadv(enum uproc_ecurve_format format,
                                  enum uproc_io_type iotype, const char *pathfmt,
                                  va_list ap)
 {
-    return uproc_ecurve_loadpv(format, iotype, NULL, pathfmt, ap);
+    return uproc_ecurve_loadpv(format, iotype, NULL, NULL, pathfmt, ap);
 }
 
 uproc_ecurve *uproc_ecurve_loadpv(enum uproc_ecurve_format format,
                                   enum uproc_io_type iotype,
-                                  void (*progress)(double), const char *pathfmt,
+                                  void (*progress)(double, void *),
+                                  void *progress_arg, const char *pathfmt,
                                   va_list ap)
 {
     struct uproc_ecurve_s *ec;
@@ -470,7 +475,7 @@ uproc_ecurve *uproc_ecurve_loadpv(enum uproc_ecurve_format format,
     if (format == UPROC_ECURVE_BINARY) {
         ec = uproc_ecurve_mmapv(pathfmt, aq);
         if (ec && progress) {
-            progress(100.0);
+            progress(100.0, progress_arg);
         }
         va_end(aq);
         return ec;
@@ -482,7 +487,7 @@ uproc_ecurve *uproc_ecurve_loadpv(enum uproc_ecurve_format format,
     if (!stream) {
         return NULL;
     }
-    ec = uproc_ecurve_loadps(format, progress, stream);
+    ec = uproc_ecurve_loadps(format, progress, progress_arg, stream);
     uproc_io_close(stream);
     return ec;
 }
@@ -501,13 +506,14 @@ uproc_ecurve *uproc_ecurve_load(enum uproc_ecurve_format format,
 
 uproc_ecurve *uproc_ecurve_loadp(enum uproc_ecurve_format format,
                                  enum uproc_io_type iotype,
-                                 void (*progress)(double), const char *pathfmt,
-                                 ...)
+                                 void (*progress)(double, void *),
+                                 void *progress_arg, const char *pathfmt, ...)
 {
     struct uproc_ecurve_s *ec;
     va_list ap;
     va_start(ap, pathfmt);
-    ec = uproc_ecurve_loadpv(format, iotype, progress, pathfmt, ap);
+    ec = uproc_ecurve_loadpv(format, iotype, progress, progress_arg, pathfmt,
+                             ap);
     va_end(ap);
     return ec;
 }
@@ -516,22 +522,23 @@ int uproc_ecurve_stores(const uproc_ecurve *ecurve,
                         enum uproc_ecurve_format format,
                         uproc_io_stream *stream)
 {
-    return uproc_ecurve_storeps(ecurve, format, NULL, stream);
+    return uproc_ecurve_storeps(ecurve, format, NULL, NULL, stream);
 }
 
 int uproc_ecurve_storeps(const uproc_ecurve *ecurve,
                          enum uproc_ecurve_format format,
-                         void (*progress)(double), uproc_io_stream *stream)
+                         void (*progress)(double, void *), void *progress_arg,
+                         uproc_io_stream *stream)
 {
     if (format == UPROC_ECURVE_BINARY) {
 #if HAVE_MMAP && USE_MMAP
         return uproc_error_msg(UPROC_EINVAL,
                                "can't store mmap format to stream");
 #else
-        return store_binary(ecurve, stream, progress);
+        return store_binary(ecurve, stream, progress, progress_arg);
 #endif
     }
-    return store_plain(ecurve, stream, progress);
+    return store_plain(ecurve, stream, progress, progress_arg);
 }
 
 int uproc_ecurve_storev(const uproc_ecurve *ecurve,
@@ -539,12 +546,14 @@ int uproc_ecurve_storev(const uproc_ecurve *ecurve,
                         enum uproc_io_type iotype, const char *pathfmt,
                         va_list ap)
 {
-    return uproc_ecurve_storepv(ecurve, format, iotype, NULL, pathfmt, ap);
+    return uproc_ecurve_storepv(ecurve, format, iotype, NULL, NULL, pathfmt,
+                                ap);
 }
 
 int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
                          enum uproc_ecurve_format format,
-                         enum uproc_io_type iotype, void (*progress)(double),
+                         enum uproc_io_type iotype,
+                         void (*progress)(double, void *), void *progress_arg,
                          const char *pathfmt, va_list ap)
 {
     int res;
@@ -561,7 +570,7 @@ int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
         res = uproc_ecurve_mmap_storev(ecurve, pathfmt, aq);
         va_end(aq);
         if (!res && progress) {
-            progress(100.0);
+            progress(100.0, progress_arg);
         }
         return res;
     }
@@ -571,7 +580,7 @@ int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
     if (!stream) {
         return -1;
     }
-    res = uproc_ecurve_storeps(ecurve, format, progress, stream);
+    res = uproc_ecurve_storeps(ecurve, format, progress, progress_arg, stream);
     uproc_io_close(stream);
     return res;
 }
@@ -590,13 +599,15 @@ int uproc_ecurve_store(const uproc_ecurve *ecurve,
 
 int uproc_ecurve_storep(const uproc_ecurve *ecurve,
                         enum uproc_ecurve_format format,
-                        enum uproc_io_type iotype, void (*progress)(double),
+                        enum uproc_io_type iotype,
+                        void (*progress)(double, void *), void *progress_arg,
                         const char *pathfmt, ...)
 {
     int res;
     va_list ap;
     va_start(ap, pathfmt);
-    res = uproc_ecurve_storepv(ecurve, format, iotype, progress, pathfmt, ap);
+    res = uproc_ecurve_storepv(ecurve, format, iotype, progress, progress_arg,
+                               pathfmt, ap);
     va_end(ap);
     return res;
 }

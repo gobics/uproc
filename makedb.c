@@ -587,6 +587,11 @@ void make_opts(struct ppopts *o, const char *progname)
 #undef O
 }
 
+void progress_cb(double p, void *arg)
+{
+    progress(uproc_stderr, NULL, p);
+}
+
 int main(int argc, char **argv)
 {
     uproc_error_set_handler(errhandler_bail, NULL);
@@ -640,7 +645,7 @@ int main(int argc, char **argv)
 
     if (flags_calib_only_) {
         int which = UPROC_DATABASE_LOAD_ALL & ~UPROC_DATABASE_LOAD_PROT_THRESH;
-        database_ = uproc_database_load_some(destdir_, which);
+        database_ = uproc_database_load_some(destdir_, which, NULL, NULL);
     } else {
         database_ = uproc_database_create();
         make_dir(destdir_);
@@ -674,6 +679,8 @@ int main(int argc, char **argv)
         uproc_database_set_ecurve_reverse(database_, NULL);
     }
 
-    uproc_database_store(database_, destdir_, NULL);
+    progress(uproc_stderr, "Storing database", -1);
+    uproc_database_store(database_, destdir_, progress_cb, NULL);
+    progress(uproc_stderr, NULL, 100.0);
     return EXIT_SUCCESS;
 }

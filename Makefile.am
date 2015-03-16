@@ -19,10 +19,8 @@ uproc_prot_SOURCES = main.c
 uproc_prot_CFLAGS = $(OPENMP_CFLAGS)
 
 uproc_import_SOURCES = import.c
-uproc_import_CPPFLAGS = $(AM_CPPFLAGS)
 
-uproc_export_SOURCES = import.c
-uproc_export_CPPFLAGS = $(AM_CPPFLAGS) -DEXPORT=1
+uproc_export_SOURCES = export.c
 
 uproc_orf_SOURCES = orf.c
 

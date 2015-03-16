@@ -59,7 +59,8 @@ uproc_database *uproc_database_create(void);
  * \param path  existing directory containing a UProC database
  * \returns the object on success or %NULL on error
  */
-uproc_database *uproc_database_load(const char *path);
+uproc_database *uproc_database_load(const char *path,
+                         void (*progress)(double, void *), void *progress_arg);
 
 /** Flags for :uproc_database_load_some */
 enum uproc_database_load_which {
@@ -80,7 +81,8 @@ enum uproc_database_load_which {
 };
 
 /** Load some parts of a database from directory. */
-uproc_database *uproc_database_load_some(const char *path, int which);
+uproc_database *uproc_database_load_some(const char *path, int which,
+                         void (*progress)(double, void *), void *progress_arg);
 
 /** Store database to directory.
  *
@@ -90,7 +92,15 @@ uproc_database *uproc_database_load_some(const char *path, int which);
  * current progress in percent.
  */
 int uproc_database_store(const uproc_database *db, const char *path,
-                         void (*progress)(double));
+                         void (*progress)(double, void *), void *progress_arg);
+
+uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
+                                         void (*progress)(double, void *),
+                                         void *progress_arg);
+
+int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
+                           void (*progress)(double, void *),
+                           void *progress_arg);
 
 /** Get the forward matching ecurve of the database.
  *

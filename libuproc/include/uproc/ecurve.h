@@ -204,8 +204,8 @@ uproc_ecurve *uproc_ecurve_loads(enum uproc_ecurve_format format,
                                  uproc_io_stream *stream);
 
 uproc_ecurve *uproc_ecurve_loadps(enum uproc_ecurve_format format,
-                                  void (*progress)(double),
-                                  uproc_io_stream *stream);
+                                  void (*progress)(double, void *),
+                                  void *progress_arg, uproc_io_stream *stream);
 
 /** Load ecurve from file
  *
@@ -232,8 +232,8 @@ uproc_ecurve *uproc_ecurve_load(enum uproc_ecurve_format format,
  */
 uproc_ecurve *uproc_ecurve_loadp(enum uproc_ecurve_format format,
                                  enum uproc_io_type iotype,
-                                 void (*progress)(double), const char *pathfmt,
-                                 ...);
+                                 void (*progress)(double, void *),
+                                 void *progress_arg, const char *pathfmt, ...);
 
 /** Load ecurve from file
  *
@@ -251,7 +251,8 @@ uproc_ecurve *uproc_ecurve_loadv(enum uproc_ecurve_format format,
  */
 uproc_ecurve *uproc_ecurve_loadpv(enum uproc_ecurve_format format,
                                   enum uproc_io_type iotype,
-                                  void (*progress)(double), const char *pathfmt,
+                                  void (*progress)(double, void *),
+                                  void *progress_arg, const char *pathfmt,
                                   va_list ap);
 
 /** Store ecurve to stream
@@ -270,7 +271,8 @@ int uproc_ecurve_stores(const uproc_ecurve *ecurve,
  */
 int uproc_ecurve_storeps(const uproc_ecurve *ecurve,
                          enum uproc_ecurve_format format,
-                         void (*progress)(double), uproc_io_stream *stream);
+                         void (*progress)(double, void *), void *progress_arg,
+                         uproc_io_stream *stream);
 
 /** Store ecurve to file
  *
@@ -297,7 +299,8 @@ int uproc_ecurve_store(const uproc_ecurve *ecurve,
  */
 int uproc_ecurve_storep(const uproc_ecurve *ecurve,
                         enum uproc_ecurve_format format,
-                        enum uproc_io_type iotype, void (*progress)(double),
+                        enum uproc_io_type iotype,
+                        void (*progress)(double, void *), void *progress_arg,
                         const char *pathfmt, ...);
 
 /** Store ecurve to file
@@ -317,7 +320,8 @@ int uproc_ecurve_storev(const uproc_ecurve *ecurve,
  */
 int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
                          enum uproc_ecurve_format format,
-                         enum uproc_io_type iotype, void (*progress)(double),
+                         enum uproc_io_type iotype,
+                         void (*progress)(double, void *), void *progress_arg,
                          const char *pathfmt, va_list ap);
 
 /** Map a file to an ecurve

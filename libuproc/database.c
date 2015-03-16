@@ -140,12 +140,32 @@ uproc_database *uproc_database_create(void)
     return db;
 }
 
-uproc_database *uproc_database_load(const char *path)
+struct db_progress_arg
 {
-    return uproc_database_load_some(path, UPROC_DATABASE_LOAD_ALL);
+    void (*parent_func)(double, void *);
+    void *parent_arg;
+    bool fwd_finished;
+};
+
+void db_progress(double percent, void *progress_arg)
+{
+    struct db_progress_arg *arg = progress_arg;
+    percent /= 2;
+    if (arg->fwd_finished) {
+        percent += 50.0;
+    }
+    if (arg->parent_func) {
+        arg->parent_func(percent, arg->parent_arg);
+    }
 }
 
-uproc_database *uproc_database_load_some(const char *path, int which)
+uproc_database *uproc_database_load(const char *path, void(*progress)(double, void*), void*progress_arg)
+{
+    return uproc_database_load_some(path, UPROC_DATABASE_LOAD_ALL, progress, progress_arg);
+}
+
+uproc_database *uproc_database_load_some(const char *path, int which,
+                                         void (*progress)(double, void*), void*progress_arg)
 {
     uproc_database *db = uproc_database_create();
     if (!db) {
@@ -193,16 +213,26 @@ uproc_database *uproc_database_load_some(const char *path, int which)
     }
 
     if (which & UPROC_DATABASE_LOAD_ECURVES) {
-        db->fwd = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+        struct db_progress_arg p_arg = {
+            .parent_func = progress,
+            .parent_arg = progress_arg,
+            .fwd_finished = false,
+        };
+        db->fwd = uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                     db_progress, &p_arg,
                                     "%s/fwd.ecurve", path);
         if (!db->fwd) {
             goto error;
         }
-        db->rev = uproc_ecurve_load(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+        p_arg.fwd_finished = true;
+        db->rev = uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                     db_progress, &p_arg,
                                     "%s/rev.ecurve", path);
         if (!db->rev) {
             goto error;
         }
+    } else {
+        progress(100.0, progress_arg);
     }
 
     return db;
@@ -212,7 +242,7 @@ error:
 }
 
 int uproc_database_store(const uproc_database *db, const char *path,
-                         void (*progress)(double))
+                         void (*progress)(double, void *), void *progress_arg)
 {
     uproc_assert(db);
     uproc_assert(db->metadata);
@@ -231,19 +261,6 @@ int uproc_database_store(const uproc_database *db, const char *path,
         }
     }
 
-    if (db->fwd) {
-        if (uproc_ecurve_storep(db->fwd, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                progress, "%s/fwd.ecurve", path)) {
-            return -1;
-        }
-    }
-    if (db->rev) {
-        if (uproc_ecurve_storep(db->rev, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                progress, "%s/rev.ecurve", path)) {
-            return -1;
-        }
-    }
-
     if (db->prot_thresh_e2) {
         if (uproc_matrix_store(db->prot_thresh_e2, UPROC_IO_GZIP,
                                "%s/prot_thresh_e2", path)) {
@@ -257,7 +274,131 @@ int uproc_database_store(const uproc_database *db, const char *path,
         }
     }
 
+    struct db_progress_arg p_arg = {
+        .parent_func = progress,
+        .parent_arg = progress_arg,
+        .fwd_finished = false,
+    };
+    if (db->fwd) {
+        if (uproc_ecurve_storep(db->fwd, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                db_progress, &p_arg, "%s/fwd.ecurve", path)) {
+            return -1;
+        }
+    }
+    p_arg.fwd_finished = false;
+    if (db->rev) {
+        if (uproc_ecurve_storep(db->rev, UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
+                                db_progress, &p_arg, "%s/rev.ecurve", path)) {
+            return -1;
+        }
+    }
+    progress(100.0, progress_arg);
+
     return 0;
+}
+
+uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
+                                         void (*progress)(double, void *),
+                                         void *progress_arg)
+{
+    uproc_database *db = uproc_database_create();
+    if (!db) {
+        return NULL;
+    }
+    uproc_dict_destroy(db->metadata);
+    db->metadata = uproc_dict_loads(0, sizeof(struct uproc_database_metadata),
+                                    metadata_scan, NULL, stream);
+    if (!db->metadata) {
+        goto error;
+    }
+    db->prot_thresh_e2 = uproc_matrix_loads(stream);
+    if (!db->prot_thresh_e2) {
+        goto error;
+    }
+    db->prot_thresh_e3 = uproc_matrix_loads(stream);
+    if (!db->prot_thresh_e3) {
+        goto error;
+    }
+
+    uintmax_t ranks_count = 1;
+    int res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
+    if (res) {
+        goto error;
+    }
+    for (unsigned int i = 0; i < ranks_count; i++) {
+        db->idmaps[i] = uproc_idmap_loads(stream);
+        if (!db->idmaps[i]) {
+            goto error;
+        }
+    }
+    struct db_progress_arg p_arg = {
+        .parent_func = progress,
+        .parent_arg = progress_arg,
+        .fwd_finished = false,
+    };
+    db->fwd =
+        uproc_ecurve_loadps(UPROC_ECURVE_PLAIN, db_progress, &p_arg, stream);
+    if (!db->fwd) {
+        goto error;
+    }
+    p_arg.fwd_finished = true;
+    db->rev =
+        uproc_ecurve_loadps(UPROC_ECURVE_PLAIN, db_progress, &p_arg, stream);
+    if (!db->rev) {
+        goto error;
+    }
+
+    return db;
+error:
+    uproc_database_destroy(db);
+    return NULL;
+}
+
+int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
+                           void (*progress)(double, void *), void *progress_arg)
+{
+    uproc_assert(db);
+    int res = uproc_dict_stores(db->metadata, metadata_format, NULL, stream);
+    if (res) {
+        goto error;
+    }
+    res = uproc_matrix_stores(db->prot_thresh_e2, stream);
+    if (res) {
+        goto error;
+    }
+    res = uproc_matrix_stores(db->prot_thresh_e3, stream);
+    if (res) {
+        goto error;
+    }
+
+    uintmax_t ranks_count = 1;
+    res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
+    for (unsigned int i = 0; !res && i < ranks_count; i++) {
+        res = uproc_idmap_stores(db->idmaps[i], stream);
+    }
+    if (res) {
+        goto error;
+    }
+
+    struct db_progress_arg p_arg = {
+        .parent_func = progress,
+        .parent_arg = progress_arg,
+        .fwd_finished = false,
+    };
+    res = uproc_ecurve_storeps(db->fwd, UPROC_ECURVE_PLAIN, db_progress, &p_arg,
+                               stream);
+    if (res) {
+        goto error;
+    }
+    p_arg.fwd_finished = true;
+    res = uproc_ecurve_storeps(db->rev, UPROC_ECURVE_PLAIN, db_progress, &p_arg,
+                               stream);
+    if (res) {
+        goto error;
+    }
+
+error:
+    return res;
 }
 
 void uproc_database_destroy(uproc_database *db)
