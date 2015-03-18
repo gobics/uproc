@@ -201,14 +201,10 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
     }
     res = 0;
 
-    if (dc->mode == UPROC_DNACLASS_MAX) {
-        // Find the classification result on the
-        // lowest rank, and there with the highest score
-        // then throw anything else in the list away.
+    if (dc->mode == UPROC_DNACLASS_MAX && uproc_list_size(*results)) {
         struct uproc_dnaresult result_max = UPROC_DNARESULT_INITIALIZER;
         result_max.protresult.rank = UPROC_RANKS_MAX;
         result_max.protresult.score = -INFINITY;
-        // takes care of freeing list elements.
         uproc_list_map(*results, map_list_dnaresult_max, &result_max);
         uproc_list_clear(*results);
         res = uproc_list_append(*results, &result_max);

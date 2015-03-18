@@ -352,6 +352,8 @@ static void map_list_protresult_free(void *value, void *opaque)
     uproc_protresult_free(value);
 }
 
+// If value is greater than opaque (lower rank OR same rank with higher
+// score), overwrite opaque with value. Frees the smaller value.
 static void map_list_protresult_max(void *value, void *opaque)
 {
     struct uproc_protresult *v = value, *max = opaque;
@@ -395,13 +397,16 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
         goto error;
     }
 
-    if (pc->mode == UPROC_PROTCLASS_MAX) {
+    if (pc->mode == UPROC_PROTCLASS_MAX && uproc_list_size(*results)) {
         struct uproc_protresult result_max = UPROC_PROTRESULT_INITIALIZER;
         result_max.rank = UPROC_RANKS_MAX;
         result_max.score = -INFINITY;
         uproc_list_map(*results, map_list_protresult_max, &result_max);
         uproc_list_clear(*results);
         res = uproc_list_append(*results, &result_max);
+        if (res) {
+            goto error;
+        }
     }
 
     if (0) {
