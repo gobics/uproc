@@ -404,8 +404,8 @@ void classify_file(const char *path, unsigned long *n_seqs,
             struct clfresult result;
             uproc_list_get(results, i, &result);
             if (flag_output_predictions_ || flag_output_matched_words_) {
-                print_result_or_match(*n_seqs, buf->seqs[i].header,
-                                      strlen(buf->seqs[i].data), &result, NULL);
+                print_result_or_match(*n_seqs, seq.header, strlen(seq.data),
+                                      &result, NULL);
             }
             struct uproc_protresult *p = PROTRESULT(&result);
             counts_increment(p->rank, p->class);
