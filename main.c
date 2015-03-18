@@ -98,7 +98,7 @@ void counts_increment(uproc_rank rank, uproc_class class)
 #define OUTFMT_DNA ""
 #endif
 #define OUTFMT_PREDICTIONS OUTFMT_ALL OUTFMT_DNA
-#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wdi"
+#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wdiS"
 
 enum {
     OUTFMT_SEQ_NUMBER = 'n',
@@ -115,6 +115,7 @@ enum {
     OUTFMT_MATCH_WORD = 'w',
     OUTFMT_MATCH_DIRECTION = 'd',
     OUTFMT_MATCH_INDEX = 'i',
+    OUTFMT_MATCH_SCORE = 'S',
 };
 
 #if MAIN_DNA
@@ -287,6 +288,9 @@ void print_result_or_match(unsigned long seq_num, const char *header,
             case OUTFMT_MATCH_INDEX:
                 uproc_io_printf(output_stream_, "%lu",
                                 (unsigned long)matched_word->index + 1);
+                break;
+            case OUTFMT_MATCH_SCORE:
+                uproc_io_printf(output_stream_, "%1.3f", matched_word->score);
                 break;
 
             default:
@@ -520,11 +524,18 @@ string FORMAT. Available characters are:\n\
     L: ORF length\n"
 #endif
       "\
-    f: predicted class\n\
+    c: predicted class\n\
     r: rank of predicted class (1 is the lowest, e.g. protein family)\n\
     s: classification score");
 
-    O('m', "matches", "FORMAT", "XXX WRITEME");
+    O('m', "matches", "FORMAT",
+      "\
+Like -p, but additionally collect and print information about every matched\n\
+word. In addition to the format characters of -p, the following are recognized:\n\
+    m: matched amino acid word\n\
+    d: match direction (\"fwd\" or \"rev\")\n\
+    i: position of the word in the protein sequence\n\
+    S: sum of the scores of all positions in the word");
 
     O('f', "stats", "",
       "Print \"CLASSIFIED,UNCLASSIFIED,TOTAL\" sequence counts.");
