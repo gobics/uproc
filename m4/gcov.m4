@@ -61,21 +61,19 @@ AC_DEFUN([AC_TDD_GCOV],
         fi
       done
     ])
+    AM_CONDITIONAL(HAVE_LCOV, true)
   else
-    lcov_msg="To enable code coverage reporting you must have one of the following lcov versions installed: $lcov_version_list"
-    AC_MSG_ERROR([$lcov_msg])
+    AM_CONDITIONAL(HAVE_LCOV, false)
   fi
 
   case $glib_cv_lcov_version in
     ""|invalid[)]
-      lcov_msg="You must have one of the following versions of lcov: $lcov_version_list (found: $lcov_version)."
-      AC_MSG_ERROR([$lcov_msg])
-      LCOV="exit 0;"
+	  AM_CONDITIONAL(HAVE_LCOV, false)
       ;;
   esac
 
   if test -z "$GENHTML"; then
-    AC_MSG_ERROR([Could not find genhtml from the lcov package])
+	AM_CONDITIONAL(HAVE_LCOV, false)
   fi
 
   # Remove all optimization flags from CFLAGS

@@ -14,7 +14,7 @@
 
 # Coverage targets
 
-if HAVE_GCOV
+if HAVE_LCOV
 
 .PHONY: clean-gcda
 clean-gcda:
@@ -37,4 +37,10 @@ clean-coverage-html: clean-gcda
 
 clean-local: clean-coverage-html
 
-endif # HAVE_GCOV
+else
+
+coverage-html:
+	@echo "lcov not available"
+	@exit 1
+
+endif # HAVE_LCOV
