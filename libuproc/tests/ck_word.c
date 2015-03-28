@@ -10,7 +10,7 @@ uproc_alphabet *alpha;
 void setup(void)
 {
     alpha = uproc_alphabet_create("AGSTPKRQEDNHYWFMLIVC");
-    ck_assert_ptr_ne(alpha, NULL);
+    ck_assert(alpha);
 }
 
 void teardown(void)
@@ -24,7 +24,7 @@ START_TEST(test_from_to_string)
     struct uproc_word word;
     char old[] = "SPKQPETATKRQEDYWMG", new[UPROC_WORD_LEN + 1];
 
-    ck_assert_uint_eq(sizeof old, sizeof new);
+    ck_assert_int_eq(sizeof old, sizeof new);
 
     res = uproc_word_from_string(&word, old, alpha);
     ck_assert_int_eq(res, 0);
@@ -150,7 +150,7 @@ START_TEST(test_worditer)
     do {                                                     \
         res = uproc_worditer_next(iter, &index, &fwd, &rev); \
         ck_assert_int_eq(res, 0);                            \
-        ck_assert_uint_eq(index, IDX);                       \
+        ck_assert_int_eq(index, IDX);                       \
         uproc_word_to_string(new, &fwd, alpha);              \
         ck_assert_str_eq(new, FWD);                          \
         uproc_word_to_string(new, &rev, alpha);              \

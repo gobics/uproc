@@ -10,7 +10,7 @@ START_TEST(test_init)
                      2.2, 3.0, 3.1, 3.2, 4.0, 4.1, 4.2};
 
     uproc_matrix *mat = uproc_matrix_create(5, 3, data);
-    ck_assert_ptr_ne(mat, NULL);
+    ck_assert(mat);
 
     ck_assert(uproc_matrix_get(mat, 0, 0) == 0.0);
     ck_assert(uproc_matrix_get(mat, 0, 2) == 0.2);
@@ -29,14 +29,14 @@ START_TEST(test_init_vector)
     uproc_matrix *mat;
     mat = uproc_matrix_create(42, 1, NULL);
     uproc_matrix_dimensions(mat, &rows, &cols);
-    ck_assert_uint_eq(rows, 42);
-    ck_assert_uint_eq(cols, 1);
+    ck_assert_int_eq(rows, 42);
+    ck_assert_int_eq(cols, 1);
     uproc_matrix_destroy(mat);
 
     mat = uproc_matrix_create(1, 42, NULL);
     uproc_matrix_dimensions(mat, &rows, &cols);
-    ck_assert_uint_eq(rows, 42);
-    ck_assert_uint_eq(cols, 1);
+    ck_assert_int_eq(rows, 42);
+    ck_assert_int_eq(cols, 1);
     uproc_matrix_destroy(mat);
 }
 END_TEST
@@ -53,12 +53,12 @@ START_TEST(test_store_load)
     uproc_matrix_destroy(mat);
 
     mat = uproc_matrix_load(UPROC_IO_GZIP, TMPDATADIR "test_matrix.tmp");
-    ck_assert_ptr_ne(mat, NULL);
+    ck_assert(mat);
 
     size_t rows, cols;
     uproc_matrix_dimensions(mat, &rows, &cols);
-    ck_assert_uint_eq(rows, 2);
-    ck_assert_uint_eq(cols, 4);
+    ck_assert_int_eq(rows, 2);
+    ck_assert_int_eq(cols, 4);
 
     ck_assert(uproc_matrix_get(mat, 0, 0) == 0.0);
     ck_assert(uproc_matrix_get(mat, 0, 2) == 0.2);
@@ -74,16 +74,16 @@ START_TEST(test_load_invalid)
 {
     uproc_matrix *mat;
     mat = uproc_matrix_load(UPROC_IO_GZIP, DATADIR "no_such_file");
-    ck_assert_ptr_eq(mat, NULL);
+    ck_assert(!mat);
     ck_assert_int_eq(uproc_errno, UPROC_ERRNO);
     ck_assert_int_eq(errno, ENOENT);
 
     mat = uproc_matrix_load(UPROC_IO_GZIP, DATADIR "missing_header.matrix");
-    ck_assert_ptr_eq(mat, NULL);
+    ck_assert(!mat);
     ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
     mat = uproc_matrix_load(UPROC_IO_GZIP, DATADIR "invalid_header.matrix");
-    ck_assert_ptr_eq(mat, NULL);
+    ck_assert(!mat);
     ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 }
 END_TEST

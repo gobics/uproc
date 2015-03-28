@@ -33,7 +33,7 @@ START_TEST(test_list)
     int res, i;
     struct test_data value;
 
-    ck_assert_uint_eq(uproc_list_size(list), 0);
+    ck_assert_int_eq(uproc_list_size(list), 0);
 
 #define APPEND(X, C)                               \
     do {                                           \
@@ -46,11 +46,11 @@ START_TEST(test_list)
     for (i = 0; i < 10000; i++) {
         APPEND(i, '0' + i % 10);
     }
-    ck_assert_uint_eq(uproc_list_size(list), 10000);
+    ck_assert_int_eq(uproc_list_size(list), 10000);
     APPEND(42, 'a');
     APPEND(7, 'c');
 
-    ck_assert_uint_eq(uproc_list_size(list), 10002);
+    ck_assert_int_eq(uproc_list_size(list), 10002);
 
     for (i = 0; i < 10000; i++) {
         res = uproc_list_get(list, i, &value);

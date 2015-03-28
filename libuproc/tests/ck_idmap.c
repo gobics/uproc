@@ -79,7 +79,7 @@ START_TEST(test_store_load)
 
     uproc_idmap_destroy(map);
     map = uproc_idmap_load(UPROC_IO_GZIP, TMPDATADIR "test_idmap.tmp");
-    ck_assert_ptr_ne(map, NULL);
+    ck_assert(map);
 
     fam = uproc_idmap_family(map, "bar");
     ck_assert_int_eq(fam, 1);
@@ -96,20 +96,20 @@ START_TEST(test_load_invalid)
 {
     uproc_idmap_destroy(map);
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "no_such_file");
-    ck_assert_ptr_eq(map, NULL);
+    ck_assert(!map);
     ck_assert_int_eq(uproc_errno, UPROC_ERRNO);
     ck_assert_int_eq(errno, ENOENT);
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "invalid_header.idmap");
-    ck_assert_ptr_eq(map, NULL);
+    ck_assert(!map);
     ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "duplicate.idmap");
-    ck_assert_ptr_eq(map, NULL);
+    ck_assert(!map);
     ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 
     map = uproc_idmap_load(UPROC_IO_GZIP, DATADIR "missing_entry.idmap");
-    ck_assert_ptr_eq(map, NULL);
+    ck_assert(!map);
     ck_assert_int_eq(uproc_errno, UPROC_EINVAL);
 }
 END_TEST

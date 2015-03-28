@@ -159,7 +159,8 @@ START_TEST(test_iter)
         res = uproc_bstiter_next(iter, &key, &value);
         ck_assert_int_eq(res, 0);
         if (i) {
-            ck_assert_uint_gt(key.uint, last_key);
+            ck_assert_msg(key.uint > last_key,
+                          "key.uint: %ju, lat_key: %ju", key.uint, last_key);
         }
         last_key = key.uint;
     }
@@ -168,7 +169,7 @@ START_TEST(test_iter)
     res = uproc_bstiter_next(iter, &key, &value);
     ck_assert_int_eq(res, 1);
 
-    ck_assert_uint_eq(key.uint, last_key);
+    ck_assert_int_eq(key.uint, last_key);
     ck_assert_int_eq(value.x, last_value.x);
     ck_assert_int_eq(value.c, last_value.c);
 
