@@ -52,7 +52,7 @@ AC_CHECK_FUNCS([clock_gettime])
 AC_OPENMP
 
 # Check for the "check" unit testing library.
-PKG_CHECK_MODULES([CHECK], [check >= 0.9.4], [have_check=yes], [have_check=no])
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.6], [have_check=yes], [have_check=no])
 AM_CONDITIONAL([HAVE_CHECK], [test x$have_check = xyes])
 
 AC_ARG_ENABLE([shared],

@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <check.h>
+#include "check_workaround.h"
 #include "uproc.h"
 
 uproc_matrix *m;

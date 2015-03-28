@@ -1,4 +1,4 @@
-#include <check.h>
+#include "check_workaround.h"
 #include "uproc.h"
 
 #define ELEMENTS(x) (sizeof(x) / sizoef(x)[0])

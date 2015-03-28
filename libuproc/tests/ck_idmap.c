@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <errno.h>
-#include <check.h>
+#include "check_workaround.h"
 #include "uproc.h"
 #undef UPROC_FAMILY_MAX
 #define UPROC_FAMILY_MAX 100
