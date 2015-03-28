@@ -48,10 +48,10 @@ START_TEST(test_string_keys)
 
     // verify their stored value
     ck_assert_int_eq(uproc_dict_get(dict, "spam", &value), 0);
-    ck_assert_int_eq(value, 42);
+    ck_assert_uint_eq(value, 42);
 
     ck_assert_int_eq(uproc_dict_get(dict, "egg", &value), 0);
-    ck_assert_int_eq(value, 1337);
+    ck_assert_uint_eq(value, 1337);
 
     // remove spam
     ck_assert_int_eq(uproc_dict_remove(dict, "spam"), 0);
@@ -62,7 +62,7 @@ START_TEST(test_string_keys)
     ck_assert_int_eq(uproc_dict_get(dict, "egg", &value), 0);
 
     uproc_dict_clear(dict);
-    ck_assert_int_eq(uproc_dict_size(dict), 0);
+    ck_assert_uint_eq(uproc_dict_size(dict), 0);
     ck_assert_int_eq(uproc_dict_get(dict, "egg", &value),
                      UPROC_DICT_KEY_NOT_FOUND);
     uproc_dict_destroy(dict);
@@ -91,7 +91,7 @@ START_TEST(test_many_values)
             value++;
         }
         uproc_io_close(f);
-        ck_assert_int_eq(uproc_dict_size(dict), value);
+        ck_assert_uint_eq(uproc_dict_size(dict), value);
     }
 
     // Retrieve all the keys
@@ -104,7 +104,7 @@ START_TEST(test_many_values)
             *strchr(line, '\n') = '\0';
             uint64_t tmp;
             ck_assert_int_eq(uproc_dict_get(dict, line, &tmp), 0);
-            ck_assert_int_eq(tmp, value);
+            ck_assert_uint_eq(tmp, value);
             value++;
         }
         uproc_io_close(f);
@@ -118,7 +118,7 @@ START_TEST(test_many_values)
         uproc_dict_set(dict, "wombat", &value);
         value = 114151;
         uproc_dict_get(dict, "wombat", &value);
-        ck_assert_int_eq(value, 1);
+        ck_assert_uint_eq(value, 1);
         ck_assert_int_eq(uproc_dict_size(dict), old_size);
     }
 
@@ -203,7 +203,7 @@ void map_func(void *key, void *value, void *opaque)
 {
     int *k = key;
     uint64_t *v = value, *o = opaque;
-    ck_assert_int_eq(o[*k], *v);
+    ck_assert_uint_eq(o[*k], *v);
     o[*k] = 0;
 }
 
@@ -221,7 +221,7 @@ START_TEST(test_map)
     uproc_dict_map(dict, map_func, values);
 
     for (int key = 0; key < 3; key++) {
-        ck_assert_int_eq(values[key], 0);
+        ck_assert_uint_eq(values[key], 0);
     }
     uproc_dict_destroy(dict);
 }
@@ -255,7 +255,7 @@ START_TEST(test_store_load)
     uproc_dict_set(dict, "egg", &value);
     value = 1337;
     uproc_dict_set(dict, "bacon", &value);
-    ck_assert_int_eq(uproc_dict_size(dict), 3);
+    ck_assert_uint_eq(uproc_dict_size(dict), 3);
 
     int res = uproc_dict_store(dict, format, NULL, UPROC_IO_GZIP,
                                TMPDATADIR "test_dict.tmp");
@@ -265,13 +265,13 @@ START_TEST(test_store_load)
     dict = uproc_dict_load(0, sizeof value, scan, NULL, UPROC_IO_GZIP,
                            TMPDATADIR "test_dict.tmp");
     ck_assert(dict);
-    ck_assert_int_eq(uproc_dict_size(dict), 3);
+    ck_assert_uint_eq(uproc_dict_size(dict), 3);
     uproc_dict_get(dict, "spam", &value);
-    ck_assert_int_eq(value, 0);
+    ck_assert_uint_eq(value, 0);
     uproc_dict_get(dict, "egg", &value);
-    ck_assert_int_eq(value, 42);
+    ck_assert_uint_eq(value, 42);
     uproc_dict_get(dict, "bacon", &value);
-    ck_assert_int_eq(value, 1337);
+    ck_assert_uint_eq(value, 1337);
 
     uproc_dict_destroy(dict);
 }
