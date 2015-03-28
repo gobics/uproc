@@ -2,6 +2,9 @@
 UProC Version 1.2.0 2015-03-09 README
 #####################################
 
+.. image:: https://coveralls.io/repos/gobics/uproc/badge.svg :target:
+https://coveralls.io/r/gobics/uproc
+
 .. This document is formatted using reStructuredText
    (http://docutils.sourceforge.net/rst.html). You can either view it as plain
    text or use the python ``docutils`` package to render it to a prettier

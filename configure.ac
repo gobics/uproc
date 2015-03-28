@@ -88,6 +88,11 @@ if test "x$enable_mmap" = "xyes"; then
 AC_DEFINE([USE_MMAP], [1], [Define to 1 if you want to use the mmap database format])
 fi
 
+AC_TDD_GCOV
+AC_SUBST(COVERAGE_CFLAGS)
+AC_SUBST(COVERAGE_CXXFLAGS)
+AC_SUBST(COVERAGE_LDFLAGS)
+
 # Check for Doxygen
 test -z "$DOXYGEN" && AC_CHECK_PROGS([DOXYGEN], [doxygen])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])

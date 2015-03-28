@@ -10,8 +10,9 @@ else
 noinst_LTLIBRARIES = libuproc.la
 endif
 
-AM_CFLAGS = $(OPENMP_CFLAGS)
+AM_CFLAGS = $(OPENMP_CFLAGS) $(COVERAGE_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
+AM_LDFLAGS = $(COVERAGE_LDFLAGS)
 
 libuproc_la_SOURCES = alphabet.c \
 					bst.c \

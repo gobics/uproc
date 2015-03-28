@@ -12,9 +12,10 @@ TESTS = ck_common \
 
 check_PROGRAMS = $(TESTS)
 
-AM_CFLAGS = @CHECK_CFLAGS@
+AM_CFLAGS = @CHECK_CFLAGS@ $(COVERAGE_FLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include \
 				-DDATADIR=\"$(abs_top_srcdir)/libuproc/tests/data/\" \
 				-DTMPDATADIR=\"$(abs_top_builddir)/libuproc/tests/data/\"
 LDADD = $(top_builddir)/libuproc/libuproc.la @CHECK_LIBS@
+AM_LDFLAGS =  $(COVERAGE_LDFLAGS)
 endif

@@ -3,6 +3,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = libuproc
 
+include $(top_srcdir)/Makefile.am.coverage
+
 bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf uproc-makedb
 noinst_LTLIBRARIES = libcommon.la
 
