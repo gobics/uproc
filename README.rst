@@ -2,8 +2,9 @@
 UProC Version 1.2.0 2015-03-09 README
 #####################################
 
-.. image:: https://coveralls.io/repos/gobics/uproc/badge.svg :target:
-https://coveralls.io/r/gobics/uproc
+.. image:: https://coveralls.io/repos/gobics/uproc/badge.svg?branch=devel
+  :target: https://coveralls.io/r/gobics/uproc?branch=devel
+
 
 .. This document is formatted using reStructuredText
    (http://docutils.sourceforge.net/rst.html). You can either view it as plain
