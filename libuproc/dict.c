@@ -394,40 +394,6 @@ int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size)
     return dict_remove(dict, key);
 }
 
-static int dict_pop(uproc_dict *dict, void *key, void *value)
-{
-    if (!dict->size) {
-        return UPROC_DICT_KEY_NOT_FOUND;
-    }
-
-    for (long i = 0; i < bucket_count(dict); i++) {
-        if (!uproc_list_size(dict->buckets[i])) {
-            continue;
-        }
-        key_value_buffer buf;
-        uproc_assert(!uproc_list_pop_safe(dict->buckets[i], buf,
-                                          bucket_item_size(dict)));
-        buf_to_kv(dict, key, value, buf);
-        dict->size -= 1;
-        if (dict->size * 4 < bucket_count(dict)) {
-            return resize(dict, false);
-        }
-        return 0;
-    }
-
-    uproc_assert_msg(false, "dict state corrupt");
-    return -1;
-}
-
-int uproc_dict_pop_safe(uproc_dict *dict, void *key, size_t key_size,
-                        void *value, size_t value_size)
-{
-    if (check_sizes(dict, NULL, key_size, NULL, value_size)) {
-        return -1;
-    }
-    return dict_pop(dict, key, value);
-}
-
 long uproc_dict_size(const uproc_dict *dict)
 {
     return dict->size;

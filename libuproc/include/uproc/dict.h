@@ -117,17 +117,6 @@ int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size);
 #define uproc_dict_remove(dict, key) \
     uproc_dict_remove_safe((dict), (key), sizeof *(key))
 
-int uproc_dict_pop_safe(uproc_dict *dict, void *key, size_t key_size,
-                        void *value, size_t value_size);
-
-/** Get and remove an item
- *
- * NOTE: \c key AND \c value WILL BE EVALUATED TWICE.
- *
- * */
-#define uproc_dict_pop(dict, key, value) \
-    uproc_dict_pop_safe((dict), (key), sizeof *(key), (value), sizeof *(value))
-
 /** Return the number of items */
 long uproc_dict_size(const uproc_dict *dict);
 
