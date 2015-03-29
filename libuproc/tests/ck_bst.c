@@ -13,6 +13,7 @@ struct test_data
 {
     int x;
     char c;
+    bool visited;
 };
 
 struct
@@ -139,6 +140,33 @@ START_TEST(test_update)
 }
 END_TEST
 
+START_TEST(test_remove)
+{
+    int res, i, k;
+    for (k = 0; k < N_TESTS; k++) {
+        for (i = 0; i < k; i++) {
+            key.uint = test_data[idx[i]].key;
+            value = test_data[idx[i]].value;
+            res = uproc_bst_update(bst, key, &value);
+            ck_assert_int_eq(res, 0);
+            ck_assert(!value.visited);
+        }
+        ck_assert_int_eq(uproc_bst_size(bst), k);
+
+        for (i = 0; i < N_TESTS; i++) {
+            key.uint = test_data[idx[i]].key;
+            res = uproc_bst_remove(bst, key, &value);
+            if (i < k) {
+                ck_assert_int_eq(res, 0);
+            } else {
+                ck_assert_int_eq(res, UPROC_BST_KEY_NOT_FOUND);
+            }
+        }
+        ck_assert(uproc_bst_isempty(bst));
+    }
+}
+END_TEST
+
 START_TEST(test_iter)
 {
     int res, i;
@@ -176,6 +204,31 @@ START_TEST(test_iter)
 }
 END_TEST
 
+void test_map_func(union uproc_bst_key key, void *value, void *opaque)
+{
+    (void)key;
+    (void)opaque;
+    struct test_data *v = value;
+    v->visited = true;
+}
+
+START_TEST(test_map)
+{
+    for (int i = 0; i < N_TESTS; i++) {
+        key.uint = test_data[idx[i]].key;
+        value = test_data[idx[i]].value;
+        uproc_bst_update(bst, key, &value);
+    }
+    uproc_bst_map(bst, test_map_func, NULL);
+
+    uproc_bstiter *iter = uproc_bstiter_create(bst);
+    while (!uproc_bstiter_next(iter, &key, &value)) {
+        ck_assert(value.visited);
+    }
+    uproc_bstiter_destroy(iter);
+}
+END_TEST
+
 int main(void)
 {
     Suite *s = suite_create("bst");
@@ -183,7 +236,9 @@ int main(void)
     TCase *tc = tcase_create("bst operations");
     tcase_add_test(tc, test_insert);
     tcase_add_test(tc, test_update);
+    tcase_add_test(tc, test_remove);
     tcase_add_test(tc, test_iter);
+    tcase_add_test(tc, test_map);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
 
