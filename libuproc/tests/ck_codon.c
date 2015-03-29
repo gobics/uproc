@@ -16,31 +16,81 @@ uproc_codon codon_from_str(const char *s)
     return c;
 }
 
+START_TEST(test_append_prepend)
+{
+    uproc_codon c1 = 0, c2 = 0;
+    uproc_codon_append(&c1, CHAR_TO_NT('T'));
+    uproc_codon_append(&c1, CHAR_TO_NT('C'));
+    uproc_codon_append(&c1, CHAR_TO_NT('G'));
+
+    uproc_codon_prepend(&c2, CHAR_TO_NT('G'));
+    uproc_codon_prepend(&c2, CHAR_TO_NT('C'));
+    uproc_codon_prepend(&c2, CHAR_TO_NT('T'));
+
+    ck_assert(c1 == c2);
+}
+END_TEST
+
 START_TEST(test_match)
 {
-#define TEST(codon, mask) \
-    ck_assert(uproc_codon_match(codon_from_str(codon), codon_from_str(mask)))
-    TEST("ACG", "ACN");
-    TEST("AAG", "ARG");
-    TEST("AGG", "ARG");
-    TEST("ATG", "AYG");
-    TEST("ACG", "AYG");
-    TEST("AAA", "NRW");
-#undef TEST
+    struct test_match {
+        char *codon, *mask;
+        bool match;
+    } tests[] = {
+        {"ACG", "ACN", true},
+        {"AAG", "ARG", true},
+        {"AGG", "ARG", true},
+        {"ATG", "AYG", true},
+        {"ACG", "AYG", true},
+        {"AAA", "NRW", true},
+        {"ACG", "ACT", false},
+        {"ACN", "ACG", false},
+    };
+
+    for (int i = 0; i < sizeof tests / sizeof(struct test_match); i++) {
+        struct test_match t = tests[i];
+        bool m =
+            uproc_codon_match(codon_from_str(t.codon), codon_from_str(t.mask));
+        if (t.match) {
+            ck_assert_msg(m, "%s matches %s", t.codon, t.mask);
+        } else {
+            ck_assert_msg(!m, "%s doesn't match %s", t.codon, t.mask);
+        }
+    }
 }
 END_TEST
 
 START_TEST(test_complement)
 {
-#define TEST(a, b)                                                       \
-    ck_assert(codon_from_str(a) == CODON_COMPLEMENT(codon_from_str(b))); \
-    ck_assert(codon_from_str(b) == CODON_COMPLEMENT(codon_from_str(a)))
+    struct test_complement {
+        char *c1, *c2;
+        bool result;
+    } tests[] = {
+        {"ACG", "CGT", true},
+        {"ARG", "CYT", true},
+        {"NNA", "TNN", true},
+        {"AAA", "TTT", true},
+        {"CCC", "GGG", true},
+        {"AAT", "TTA", false},
+        {"GCG", "CCG", false},
+    };
 
-    TEST("ACG", "CGT");
-    TEST("ARG", "CYT");
-    TEST("NNA", "TNN");
-    TEST("AAA", "TTT");
-    TEST("CCC", "GGG");
+    for (int i = 0; i < sizeof tests / sizeof(struct test_complement); i++) {
+        struct test_complement t = tests[i];
+        uproc_codon c1 = codon_from_str(t.c1), c2 = codon_from_str(t.c2);
+
+        if (t.result) {
+            ck_assert_msg(c1 == CODON_COMPLEMENT(c2),
+                          "%s is the complement of %s", t.c1, t.c2);
+            ck_assert_msg(c2 == CODON_COMPLEMENT(c1),
+                          "%s is the complement of %s", t.c2, t.c1);
+        } else {
+            ck_assert_msg(c1 != CODON_COMPLEMENT(c2),
+                          "%s is NOT the complement of %s", t.c1, t.c2);
+            ck_assert_msg(c2 != CODON_COMPLEMENT(c1),
+                          "%s is NOT the complement of %s", t.c2, t.c1);
+        }
+    }
 #undef TEST
 }
 END_TEST
@@ -52,13 +102,11 @@ int main(void)
 
     Suite *s = suite_create("codon");
 
-    TCase *tc_compl = tcase_create("complement");
-    tcase_add_test(tc_compl, test_complement);
-    suite_add_tcase(s, tc_compl);
-
-    TCase *tc_match = tcase_create("match");
-    tcase_add_test(tc_match, test_match);
-    suite_add_tcase(s, tc_match);
+    TCase *tc = tcase_create("codon");
+    tcase_add_test(tc, test_append_prepend);
+    tcase_add_test(tc, test_complement);
+    tcase_add_test(tc, test_match);
+    suite_add_tcase(s, tc);
 
     SRunner *sr = srunner_create(s);
     srunner_run_all(sr, CK_NORMAL);
