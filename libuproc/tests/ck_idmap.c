@@ -2,9 +2,6 @@
 #include <errno.h>
 #include "check_workaround.h"
 #include "uproc.h"
-#undef UPROC_FAMILY_MAX
-#define UPROC_FAMILY_MAX 100
-#include "../idmap.c"
 
 uproc_idmap *map;
 
@@ -42,24 +39,6 @@ START_TEST(test_usage)
 
     fam2 = uproc_idmap_family(map, "bar");
     ck_assert_int_eq(fam1, fam2);
-}
-END_TEST
-
-START_TEST(test_exhaust)
-{
-    uproc_family fam, i;
-    char foo[1024];
-    for (i = 0; i < UPROC_FAMILY_MAX; i++) {
-        sprintf(foo, "%" UPROC_FAMILY_PRI, i);
-        fam = uproc_idmap_family(map, foo);
-        ck_assert_int_eq(fam, i);
-    }
-    fam = uproc_idmap_family(map, "test1");
-    ck_assert_int_eq(fam, UPROC_FAMILY_INVALID);
-    fam = uproc_idmap_family(map, "test2");
-    ck_assert_int_eq(fam, UPROC_FAMILY_INVALID);
-    fam = uproc_idmap_family(map, "test3");
-    ck_assert_int_eq(fam, UPROC_FAMILY_INVALID);
 }
 END_TEST
 
@@ -120,7 +99,6 @@ int main(void)
     TCase *tc = tcase_create("idmap operations");
     tcase_add_checked_fixture(tc, setup, teardown);
     tcase_add_test(tc, test_usage);
-    tcase_add_test(tc, test_exhaust);
     tcase_add_test(tc, test_store_load);
     tcase_add_test(tc, test_load_invalid);
     suite_add_tcase(s, tc);
