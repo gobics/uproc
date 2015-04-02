@@ -62,7 +62,7 @@ bool flag_dna_short_read_mode_ = false;
 bool flag_output_counts_ = false;
 bool flag_output_summary_ = false;
 bool flag_output_predictions_ = false;
-bool flag_output_matched_words_ = false;
+bool flag_output_mosaicwords_ = false;
 const char *flag_output_format_ = NULL;
 
 uproc_io_stream *output_stream_ = NULL;
@@ -193,11 +193,11 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
 }
 
 /* Invoked if -p or -m is used. With -m it will call itself for each
- * element in the result->matched_words list */
+ * element in the result->mosaicwords list */
 void print_result_or_match(unsigned long seq_num, const char *header,
                            unsigned long seq_len,
                            const struct clfresult *result,
-                           const struct uproc_matchedword *matched_word)
+                           const struct uproc_mosaicword *mosaicword)
 {
     const char *format = flag_output_format_;
     if (!format) {
@@ -205,13 +205,13 @@ void print_result_or_match(unsigned long seq_num, const char *header,
     }
     const struct uproc_protresult *protresult = PROTRESULT(result);
 
-    if (!matched_word && flag_output_matched_words_) {
-        uproc_assert(protresult->matched_words);
-        for (long i = 0; i < uproc_list_size(protresult->matched_words); i++) {
-            struct uproc_matchedword matched_word;
-            uproc_list_get(protresult->matched_words, i, &matched_word);
+    if (!mosaicword && flag_output_mosaicwords_) {
+        uproc_assert(protresult->mosaicwords);
+        for (long i = 0; i < uproc_list_size(protresult->mosaicwords); i++) {
+            struct uproc_mosaicword mosaicword;
+            uproc_list_get(protresult->mosaicwords, i, &mosaicword);
             print_result_or_match(seq_num, header, seq_len, result,
-                                  &matched_word);
+                                  &mosaicword);
         }
         return;
     }
@@ -251,17 +251,17 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                 break;
             case OUTFMT_MATCH_WORD: {
                 char w[UPROC_WORD_LEN + 1] = "";
-                uproc_word_to_string(w, &matched_word->word,
+                uproc_word_to_string(w, &mosaicword->word,
                                      uproc_database_alphabet(database_));
                 uproc_io_puts(w, output_stream_);
             } break;
             case OUTFMT_MATCH_REVERSE:
-                uproc_io_puts(matched_word->reverse ? "rev" : "fwd",
+                uproc_io_puts(mosaicword->reverse ? "rev" : "fwd",
                               output_stream_);
                 break;
             case OUTFMT_MATCH_INDEX:
                 uproc_io_printf(output_stream_, "%lu",
-                                (unsigned long)matched_word->index + 1);
+                                (unsigned long)mosaicword->index + 1);
                 break;
 
             default:
@@ -279,8 +279,8 @@ void print_matches(unsigned long seq_num, const char *header,
 {
     const struct uproc_protresult *protresult = PROTRESULT(result);
 
-    if (!protresult->matched_words) {
-        fprintf(stderr, "programmer is daft, matched_words is NULL\n");
+    if (!protresult->mosaicwords) {
+        fprintf(stderr, "programmer is daft, mosaicwords is NULL\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -303,7 +303,7 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
             counts[PROTRESULT(&result)->family] += 1;
-            if (flag_output_predictions_ || flag_output_matched_words_) {
+            if (flag_output_predictions_ || flag_output_mosaicwords_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
             }
@@ -381,7 +381,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
             struct clfresult result;
             uproc_list_get(results, i, &result);
             counts[PROTRESULT(&result)->family] += 1;
-            if (flag_output_predictions_ || flag_output_matched_words_) {
+            if (flag_output_predictions_ || flag_output_mosaicwords_) {
                 print_result_or_match(*n_seqs, buf->seqs[i].header,
                                       strlen(buf->seqs[i].data), &result, NULL);
             }
@@ -574,7 +574,7 @@ int main(int argc, char **argv)
                 flag_output_format_ = optarg;
                 break;
             case 'm':
-                flag_output_matched_words_ = true;
+                flag_output_mosaicwords_ = true;
                 flag_output_format_ = optarg;
                 break;
             case 'c':
@@ -642,13 +642,13 @@ int main(int argc, char **argv)
     }
 
     // if no output mode was selected, set a default
-    if (!flag_output_predictions_ && !flag_output_matched_words_ &&
+    if (!flag_output_predictions_ && !flag_output_mosaicwords_ &&
         !flag_output_counts_ && !flag_output_summary_) {
         flag_output_summary_ = true;
     }
 
     // verify that all format string characters are valid
-    if (flag_output_predictions_ || flag_output_matched_words_) {
+    if (flag_output_predictions_ || flag_output_mosaicwords_) {
         const char *valid =
             flag_output_predictions_ ? OUTFMT_PREDICTIONS : OUTFMT_MATCHES;
         size_t spn = strspn(flag_output_format_, valid);
@@ -678,7 +678,7 @@ int main(int argc, char **argv)
     uproc_dnaclass *dc;
 
     create_classifiers(&pc, &dc, database_, model_, flag_prot_thresh_level_,
-                       flag_dna_short_read_mode_, flag_output_matched_words_);
+                       flag_dna_short_read_mode_, flag_output_mosaicwords_);
 #if MAIN_DNA
     classifier_ = dc;
 #else

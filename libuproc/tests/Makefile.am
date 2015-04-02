@@ -8,7 +8,10 @@ TESTS = ck_common \
 		ck_idmap \
 		ck_list \
 		ck_matrix \
+		ck_mosaic \
+		ck_util \
 		ck_word
+
 
 check_PROGRAMS = $(TESTS)
 

@@ -29,6 +29,7 @@
 #include "uproc/error.h"
 #include "uproc/bst.h"
 #include "uproc/list.h"
+#include "uproc/mosaic.h"
 #include "uproc/protclass.h"
 
 struct uproc_protclass_s
@@ -47,135 +48,25 @@ struct uproc_protclass_s
     } trace;
 };
 
-/*********************
- * score computation *
- *********************/
-
-struct sc
-{
-    size_t index;
-    double total, dist[UPROC_WORD_LEN];
-    uproc_list *matched_words;
-};
-
-static void reverse_array(void *p, size_t n, size_t sz)
-{
-    unsigned char *s = p, tmp;
-    size_t i, k, i1, i2;
-
-    for (i = 0; i < n / 2; i++) {
-        for (k = 0; k < sz; k++) {
-            i1 = sz * i + k;
-            i2 = sz * (n - i - 1) + k;
-            tmp = s[i1];
-            s[i1] = s[i2];
-            s[i2] = tmp;
-        }
-    }
-}
-
-static void sc_init(struct sc *s)
-{
-    size_t i;
-    s->index = -1;
-    s->total = 0.0;
-    for (i = 0; i < UPROC_WORD_LEN; i++) {
-        s->dist[i] = -INFINITY;
-    }
-    s->matched_words = NULL;
-}
-
-static void sc_add(struct sc *score, size_t index,
-                   double dist[static UPROC_SUFFIX_LEN], bool reverse)
-{
-    size_t i, diff;
-    double tmp[UPROC_WORD_LEN];
-
-    for (i = 0; i < UPROC_PREFIX_LEN; i++) {
-        tmp[i] = -INFINITY;
-    }
-    memcpy(tmp + UPROC_PREFIX_LEN, dist, sizeof *dist * UPROC_SUFFIX_LEN);
-    if (reverse) {
-        reverse_array(tmp, UPROC_WORD_LEN, sizeof *tmp);
-    }
-
-    if (score->index != (size_t)-1) {
-        diff = index - score->index;
-        if (diff > UPROC_WORD_LEN) {
-            diff = UPROC_WORD_LEN;
-        }
-        for (i = 0; i < diff; i++) {
-            if (isfinite(score->dist[i])) {
-                score->total += score->dist[i];
-                score->dist[i] = -INFINITY;
-            }
-        }
-    } else {
-        diff = 0;
-    }
-
-    for (i = 0; i + diff < UPROC_WORD_LEN; i++) {
-#define MAX(a, b) (a > b ? a : b)
-        score->dist[i] = MAX(score->dist[i + diff], tmp[i]);
-    }
-    for (; i < UPROC_WORD_LEN; i++) {
-        score->dist[i] = tmp[i];
-    }
-    score->index = index;
-}
-
-static void map_list_matchedword_free(void *value, void *opaque)
-{
-    (void)opaque;
-    uproc_matchedword_free(value);
-}
-
-static void sc_free(struct sc *s)
-{
-    if (s->matched_words) {
-        uproc_list_map(s->matched_words, map_list_matchedword_free, NULL);
-        uproc_list_destroy(s->matched_words);
-    }
-}
-
-static double sc_finalize(struct sc *score)
-{
-    size_t i;
-    for (i = 0; i < UPROC_WORD_LEN; i++) {
-        if (isfinite(score->dist[i])) {
-            score->total += score->dist[i];
-        }
-    }
-    return score->total;
-}
-
 static int scores_add(uproc_bst *scores, const struct uproc_word *word,
                       uproc_family family, size_t index,
                       double dist[static UPROC_SUFFIX_LEN], bool reverse,
                       bool detailed)
 {
-    struct sc sc;
+    uproc_mosaic *m;
     union uproc_bst_key key = {.uint = family};
-    sc_init(&sc);
-    int res = uproc_bst_get(scores, key, &sc);
-    if (res == UPROC_BST_KEY_NOT_FOUND && detailed) {
-        sc.matched_words = uproc_list_create(sizeof(struct uproc_matchedword));
-        if (!sc.matched_words) {
+    int res = uproc_bst_get(scores, key, &m);
+    if (res == UPROC_BST_KEY_NOT_FOUND) {
+        m = uproc_mosaic_create(detailed);
+        if (!m) {
             return -1;
         }
-    }
-    sc_add(&sc, index, dist, reverse);
-    if (sc.matched_words) {
-        struct uproc_matchedword matched_word = {*word, index, reverse, 0.0};
-        for (int i = 0; i < UPROC_SUFFIX_LEN; i++) {
-            matched_word.score += dist[i];
-        }
-        int res = uproc_list_append(sc.matched_words, &matched_word);
+        res = uproc_bst_update(scores, key, &m);
         if (res) {
             return -1;
         }
     }
-    return uproc_bst_update(scores, key, &sc);
+    return uproc_mosaic_add(m, word, index, dist, reverse);
 }
 
 static int scores_add_word(const uproc_protclass *pc, uproc_bst *scores,
@@ -257,7 +148,7 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
     int res = 0;
     uproc_bstiter *iter;
     union uproc_bst_key key;
-    struct sc value;
+    uproc_mosaic *mosaic;
     size_t seq_len = strlen(seq);
     struct uproc_protresult pred_max = {.score = -INFINITY};
 
@@ -265,18 +156,19 @@ static int scores_finalize(const struct uproc_protclass_s *pc, const char *seq,
     if (!iter) {
         return -1;
     }
-    while (!uproc_bstiter_next(iter, &key, &value)) {
+    while (!uproc_bstiter_next(iter, &key, &mosaic)) {
         uproc_family family = key.uint;
-        double score = sc_finalize(&value);
+        double score = uproc_mosaic_finalize(mosaic);
         if (pc->filter &&
             !pc->filter(seq, seq_len, family, score, pc->filter_arg)) {
-            sc_free(&value);
+            uproc_mosaic_destroy(mosaic);
             continue;
         }
-        struct uproc_protresult pred = {.score = score,
-                                        .family = family,
-                                        .matched_words = value.matched_words};
-        value.matched_words = NULL;
+        struct uproc_protresult pred = {
+            .score = score,
+            .family = family,
+            .mosaicwords = uproc_mosaic_words_mv(mosaic),
+        };
         if (pc->mode == UPROC_PROTCLASS_MAX) {
             if (!uproc_list_size(results)) {
                 pred_max = pred;
@@ -363,7 +255,7 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
         uproc_list_clear(*results);
     }
 
-    scores = uproc_bst_create(UPROC_BST_UINT, sizeof(struct sc));
+    scores = uproc_bst_create(UPROC_BST_UINT, sizeof(uproc_mosaic*));
     if (!scores) {
         return -1;
     }
@@ -408,10 +300,7 @@ void uproc_protresult_init(struct uproc_protresult *results)
 
 void uproc_protresult_free(struct uproc_protresult *results)
 {
-    if (results->matched_words) {
-        uproc_list_map(results->matched_words, map_list_matchedword_free, NULL);
-        uproc_list_destroy(results->matched_words);
-    }
+    uproc_list_destroy(results->mosaicwords);
 }
 
 int uproc_protresult_copy(struct uproc_protresult *dest,
@@ -419,17 +308,17 @@ int uproc_protresult_copy(struct uproc_protresult *dest,
 {
     *dest = *src;
     // if there was a details list, make a deep copy
-    if (src->matched_words) {
-        dest->matched_words =
+    if (src->mosaicwords) {
+        dest->mosaicwords =
             uproc_list_create(sizeof(struct uproc_matchedword));
-        if (!dest->matched_words) {
+        if (!dest->mosaicwords) {
             return -1;
         }
-        for (long i = 0; i < uproc_list_size(src->matched_words); i++) {
+        for (long i = 0; i < uproc_list_size(src->mosaicwords); i++) {
             struct uproc_matchedword src_word, dest_word;
-            uproc_list_get(src->matched_words, i, &src_word);
+            uproc_list_get(src->mosaicwords, i, &src_word);
             uproc_matchedword_copy(&dest_word, &src_word);
-            uproc_list_append(dest->matched_words, &dest_word);
+            uproc_list_append(dest->mosaicwords, &dest_word);
         }
     }
     return 0;

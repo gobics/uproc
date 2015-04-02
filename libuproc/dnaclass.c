@@ -149,7 +149,7 @@ int uproc_dnaclass_classify(const uproc_dnaclass *dc, const char *seq,
 
                 // Make a shallow copy and take ownership of the allocated list
                 pred.protresult = pp;
-                pp.matched_words = NULL;
+                pp.mosaicwords = NULL;
                 uproc_list_set(pc_results, i, &pp);
 
                 res = uproc_orf_copy(&pred.orf, &orf);

@@ -188,6 +188,7 @@
 #include <uproc/io.h>
 #include <uproc/list.h>
 #include <uproc/matrix.h>
+#include <uproc/mosaic.h>
 #include <uproc/orf.h>
 #include <uproc/protclass.h>
 #include <uproc/substmat.h>

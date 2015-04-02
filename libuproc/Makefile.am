@@ -29,6 +29,7 @@ libuproc_la_SOURCES = alphabet.c \
 					io.c \
 					list.c \
 					matrix.c \
+					mosaic.c \
 					orf.c \
 					protclass.c \
 					seqio.c \

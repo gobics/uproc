@@ -89,10 +89,10 @@ struct uproc_protresult
     /** Prediction score */
     double score;
 
-    /** List of \ref struct_matchedword objects holding all matched
+    /** List of \ref struct_mosaicword objects holding all matched
      * words for this family. Only set to non-NULL if the protein classifier
      * was used in "detailed" mode . */
-    uproc_list *matched_words;
+    uproc_list *mosaicwords;
 };
 
 /** Initializer for ::uproc_protresult structs */
