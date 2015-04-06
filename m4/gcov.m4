@@ -28,6 +28,7 @@ AC_DEFUN([AC_TDD_GCOV],
   [use_gcov=yes], [use_gcov=no])
 
   AM_CONDITIONAL(HAVE_GCOV, test "x$use_gcov" = "xyes")
+  AM_CONDITIONAL(HAVE_LCOV, false)
 
   if test "x$use_gcov" = "xyes"; then
   # we need gcc:
