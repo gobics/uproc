@@ -78,7 +78,7 @@ uproc_model *model_;
 #define OUTFMT_DNA ""
 #endif
 #define OUTFMT_PREDICTIONS OUTFMT_ALL OUTFMT_DNA
-#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wri"
+#define OUTFMT_MATCHES OUTFMT_PREDICTIONS "wdi"
 
 enum {
     OUTFMT_SEQ_NUMBER = 'n',
@@ -92,7 +92,7 @@ enum {
     OUTFMT_ORF_LENGTH = 'L',
 #endif
     OUTFMT_MATCH_WORD = 'w',
-    OUTFMT_MATCH_REVERSE = 'r',
+    OUTFMT_MATCH_DIRECTION = 'd',
     OUTFMT_MATCH_INDEX = 'i',
 };
 
@@ -255,10 +255,10 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                                      uproc_database_alphabet(database_));
                 uproc_io_puts(w, output_stream_);
             } break;
-            case OUTFMT_MATCH_REVERSE:
-                uproc_io_puts(mosaicword->reverse ? "rev" : "fwd",
-                              output_stream_);
-                break;
+            case OUTFMT_MATCH_DIRECTION: {
+                char *s = mosaicword->dir == UPROC_ECURVE_FWD ? "fwd" : "rev";
+                uproc_io_puts(s, output_stream_);
+            } break;
             case OUTFMT_MATCH_INDEX:
                 uproc_io_printf(output_stream_, "%lu",
                                 (unsigned long)mosaicword->index + 1);
@@ -495,6 +495,7 @@ string FORMAT. Available characters are:\n\
     f: predicted protein family\n\
     s: classification score");
 
+    // TODO: write
     O('m', "matches", "FORMAT", "XXX WRITEME");
 
     O('f', "stats", "",

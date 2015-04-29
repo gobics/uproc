@@ -66,6 +66,20 @@ struct uproc_ecurve_suffixentry
     uproc_family family;
 };
 
+/** Ecurve direction
+ *
+ * There are generally two types of ecurves, one where words have been inserted
+ * as they appeared originally (or in "forward" order) and one where they've
+ * been reversed before inserting.
+ */
+enum uproc_ecurve_direction {
+    /** Forward */
+    UPROC_ECURVE_FWD,
+
+    /** Reverse */
+    UPROC_ECURVE_REV,
+};
+
 /** Storage format */
 enum uproc_ecurve_format {
     /** Portable plain text file */

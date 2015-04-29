@@ -29,7 +29,7 @@ START_TEST(test_add)
         struct test_add_word{
             size_t index;
             double d[UPROC_SUFFIX_LEN];
-            bool reverse;
+            enum uproc_ecurve_direction dir;
         } *words;
         size_t n_words;
         double expected;
@@ -39,7 +39,7 @@ START_TEST(test_add)
             .words = (struct test_add_word[]){
                 {
                     .d = { 1.0, 2.0, 3.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
             },
             .n_words = 1,
@@ -50,12 +50,12 @@ START_TEST(test_add)
             .words = (struct test_add_word[]) {
                 {
                     .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
                 {
                     .index = 42,
                     .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
             },
             .n_words = 2,
@@ -70,12 +70,12 @@ START_TEST(test_add)
                 {
                     .index = 2,
                     .d = { 1.0, -2.0, 3.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
                 {
                     .index = 3,
                     .d = { -1.0, 2.0, 3.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
             },
             .n_words = 2,
@@ -92,12 +92,12 @@ START_TEST(test_add)
                 {
                     .index = 0,
                     .d = { 1.0, 2.0, 3.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                 },
                 {
                     .index = 5,
                     .d = { [9] = 1.0, 2.0, 3.0 },
-                    .reverse = true,
+                    .dir = UPROC_ECURVE_REV,
                 },
             },
             .n_words = 2,
@@ -109,7 +109,7 @@ START_TEST(test_add)
         uproc_mosaic *m = uproc_mosaic_create(true);
         for (int w = 0; w < test->n_words; w++) {
             struct test_add_word *word = &test->words[w];
-            uproc_mosaic_add(m, NULL, word->index, word->d, word->reverse);
+            uproc_mosaic_add(m, NULL, word->index, word->d, word->dir);
         }
         assert_dbl_eq(uproc_mosaic_finalize(m), test->expected, test->name);
         uproc_mosaic_destroy(m);
@@ -125,7 +125,7 @@ START_TEST(test_detailed)
             char *str;
             size_t index;
             double d[UPROC_SUFFIX_LEN];
-            bool reverse;
+            enum uproc_ecurve_direction dir;
             double expected_score;
         } *words;
         size_t n_words;
@@ -137,7 +137,7 @@ START_TEST(test_detailed)
                     .str = "AAAAAAAAAAAAAAAAAA",
                     .index = 3,
                     .d = { 1.0, 2.0, 3.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                     .expected_score = 6.0,
                 },
             },
@@ -149,14 +149,14 @@ START_TEST(test_detailed)
                 {
                     .str = "AAAAAAAAAAAAAAAAAA",
                     .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                     .expected_score = 21.0,
                 },
                 {
                     .str = "PETERPETERPETERPET",
                     .index = 1,
                     .d = { 1.0, },
-                    .reverse = false,
+                    .dir = UPROC_ECURVE_FWD,
                     .expected_score = 1.0,
                 },
             },
@@ -171,7 +171,7 @@ START_TEST(test_detailed)
             struct test_detailed_word *word = &test->words[w];
             struct uproc_word w;
             uproc_word_from_string(&w, word->str, alpha);
-            uproc_mosaic_add(m, &w, word->index, word->d, word->reverse);
+            uproc_mosaic_add(m, &w, word->index, word->d, word->dir);
         }
         uproc_list *mwords = uproc_mosaic_words_mv(m);
         ck_assert(mwords);
@@ -186,7 +186,7 @@ START_TEST(test_detailed)
             uproc_word_to_string(tmp, &mw.word, alpha);
             ck_assert_str_eq(tmp, test_word->str);
             ck_assert_int_eq(mw.index, test_word->index);
-            ck_assert_int_eq(mw.reverse, test_word->reverse);
+            ck_assert_int_eq(mw.dir, test_word->dir);
             assert_dbl_eq(mw.score, test_word->expected_score, test->name);
         }
         uproc_mosaic_destroy(m);

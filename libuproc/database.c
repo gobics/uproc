@@ -244,30 +244,25 @@ void uproc_database_destroy(uproc_database *db)
     free(db);
 }
 
-uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db)
+uproc_ecurve *uproc_database_ecurve(uproc_database *db,
+                                    enum uproc_ecurve_direction dir)
 {
     uproc_assert(db);
-    return db->fwd;
+    return dir == UPROC_ECURVE_FWD ? db->fwd : db->rev;
 }
 
-void uproc_database_set_ecurve_forward(uproc_database *db, uproc_ecurve *ecurve)
+void uproc_database_set_ecurve(uproc_database *db,
+                               enum uproc_ecurve_direction dir,
+                               uproc_ecurve *ecurve)
 {
     uproc_assert(db);
-    uproc_ecurve_destroy(db->fwd);
-    db->fwd = ecurve;
-}
-
-uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db)
-{
-    uproc_assert(db);
-    return db->rev;
-}
-
-void uproc_database_set_ecurve_reverse(uproc_database *db, uproc_ecurve *ecurve)
-{
-    uproc_assert(db);
-    uproc_ecurve_destroy(db->rev);
-    db->rev = ecurve;
+    if (dir == UPROC_ECURVE_FWD) {
+        uproc_ecurve_destroy(db->fwd);
+        db->fwd = ecurve;
+    } else {
+        uproc_ecurve_destroy(db->rev);
+        db->rev = ecurve;
+    }
 }
 
 uproc_idmap *uproc_database_idmap(uproc_database *db)

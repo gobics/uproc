@@ -5,21 +5,22 @@
 #include <stdio.h>
 
 #include "uproc/common.h"
-#include "uproc/mosaic.h"
+#include "uproc/ecurve.h"
 #include "uproc/error.h"
 #include "uproc/list.h"
+#include "uproc/mosaic.h"
 #include "util.h"
 
 void uproc_mosaicword_init(struct uproc_mosaicword *mw,
                            const struct uproc_word *word,
                            size_t index,
                            double dist[static UPROC_SUFFIX_LEN],
-                           bool reverse)
+                           enum uproc_ecurve_direction dir)
 {
     *mw = (struct uproc_mosaicword){
         .word = *word,
         .index = index,
-        .reverse = reverse,
+        .dir = dir,
     };
     for (int i = 0; i < UPROC_SUFFIX_LEN; i++) {
         mw->score += dist[i];
@@ -65,11 +66,12 @@ void uproc_mosaic_destroy(uproc_mosaic *m)
 }
 
 int uproc_mosaic_add(uproc_mosaic *m, const struct uproc_word *w, size_t index,
-                     double dist[static UPROC_SUFFIX_LEN], bool reverse)
+                     double dist[static UPROC_SUFFIX_LEN],
+                     enum uproc_ecurve_direction dir)
 {
     if (m->words && w) {
         struct uproc_mosaicword mw;
-        uproc_mosaicword_init(&mw, w, index, dist, reverse);
+        uproc_mosaicword_init(&mw, w, index, dist, dir);
         int res = uproc_list_append(m->words, &mw);
         if (res) {
             return res;
@@ -100,7 +102,7 @@ int uproc_mosaic_add(uproc_mosaic *m, const struct uproc_word *w, size_t index,
     double ninf = -INFINITY, tmp[UPROC_WORD_LEN];
     array_set(tmp, UPROC_PREFIX_LEN, sizeof *tmp, &ninf);
     memcpy(tmp + UPROC_PREFIX_LEN, dist, sizeof *dist * UPROC_SUFFIX_LEN);
-    if (reverse) {
+    if (dir == UPROC_ECURVE_REV) {
         array_reverse(tmp, UPROC_WORD_LEN, sizeof *tmp);
     }
 

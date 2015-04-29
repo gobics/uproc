@@ -203,8 +203,8 @@ int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
         uproc_database_protein_threshold(db, prot_thresh_level);
 
     *pc = uproc_protclass_create(
-        pc_mode, detailed_mode, uproc_database_ecurve_forward(db),
-        uproc_database_ecurve_reverse(db),
+        pc_mode, detailed_mode, uproc_database_ecurve(db, UPROC_ECURVE_FWD),
+        uproc_database_ecurve(db, UPROC_ECURVE_REV),
         uproc_model_substitution_matrix(model), prot_filter, prot_thresh);
     if (!*pc) {
         return -1;

@@ -34,6 +34,7 @@
 #include <stdlib.h>
 
 #include "uproc/common.h"
+#include "uproc/ecurve.h"
 #include "uproc/list.h"
 #include "uproc/word.h"
 
@@ -53,8 +54,8 @@ struct uproc_mosaicword {
     /** Position of the looked up word in the input sequence this word. */
     size_t index;
 
-    /** Whether this was found in the reverse ecurve or forward. */
-    bool reverse;
+    /** Whether this word matched in the forward or reverse ecurve */
+    enum uproc_ecurve_direction dir;
 
     /** Score of this single word.
      *
@@ -69,7 +70,7 @@ void uproc_mosaicword_init(struct uproc_mosaicword *mw,
                            const struct uproc_word *word,
                            size_t index,
                            double dist[static UPROC_SUFFIX_LEN],
-                           bool reverse);
+                           enum uproc_ecurve_direction dir);
 /** \} */
 
 /** \defgroup obj_mosaic object uproc_mosaic
@@ -104,7 +105,8 @@ void uproc_mosaic_destroy(uproc_mosaic *m);
 
 /** Add word to mosaic */
 int uproc_mosaic_add(uproc_mosaic *m, const struct uproc_word *w, size_t index,
-                     double dist[static UPROC_SUFFIX_LEN], bool reverse);
+                     double dist[static UPROC_SUFFIX_LEN],
+                     enum uproc_ecurve_direction dir);
 
 /** Get final score
  *

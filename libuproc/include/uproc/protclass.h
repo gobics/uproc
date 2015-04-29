@@ -49,7 +49,7 @@ struct uproc_matchedword
     size_t index;
 
     /** Whether this word matched in the forward or reverse ecurve */
-    bool reverse;
+    enum uproc_ecurve_direction dir;
 
     /** Sum of the scores of all positions of this word, independent of whether
      * they contribute to the mosaic score or not.
@@ -206,7 +206,8 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
  */
 typedef void uproc_protclass_trace_cb(const struct uproc_word *word,
                                       uproc_family family, size_t index,
-                                      bool reverse, const double *scores,
+                                      enum uproc_ecurve_direction dir,
+                                      const double *scores,
                                       void *opaque);
 
 /** Set trace callback

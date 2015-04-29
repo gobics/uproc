@@ -69,31 +69,20 @@ uproc_database *uproc_database_load(const char *path);
 int uproc_database_store(const uproc_database *db, const char *path,
                          void (*progress)(double));
 
-/** Get the forward matching ecurve of the database.
+/** Get ecurve.
  *
  * The database retains ownership of the returned object.
  */
-uproc_ecurve *uproc_database_ecurve_forward(uproc_database *db);
+uproc_ecurve *uproc_database_ecurve(uproc_database *db,
+                                    enum uproc_ecurve_direction dir);
 
-/** Set forward ecurve.
+/** Set ecurve.
  *
  * The database takes ownership of \c ecurve
  */
-void uproc_database_set_ecurve_forward(uproc_database *db,
-                                       uproc_ecurve *ecurve);
-
-/** Get the reverse matching ecurve of the database.
- *
- * The database retains ownership of the returned object.
- */
-uproc_ecurve *uproc_database_ecurve_reverse(uproc_database *db);
-
-/** Set reverse ecurve.
- *
- * The database takes ownership of \c ecurve
- */
-void uproc_database_set_ecurve_reverse(uproc_database *db,
-                                       uproc_ecurve *ecurve);
+void uproc_database_set_ecurve(uproc_database *db,
+                               enum uproc_ecurve_direction dir,
+                               uproc_ecurve *ecurve);
 
 /** Returns the mapping from numerical to string IDs of the database
  *
