@@ -2,6 +2,7 @@
 #include "../util.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 
 START_TEST(test_array_reverse)
 {
