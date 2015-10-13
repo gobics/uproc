@@ -368,7 +368,7 @@ static void map_list_protresult_max(void *value, void *opaque)
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
                              uproc_list **results)
 {
-    int res;
+    int res = 0;
     uproc_bst *scores[UPROC_RANKS_MAX] = {0};
 
     int ranks_count = get_ranks_count(pc);
@@ -413,6 +413,7 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
     error:
         uproc_list_destroy(*results);
         *results = NULL;
+        res = -1;
     }
     for (int i = 0; i < ranks_count; i++) {
         uproc_bst_destroy(scores[i]);

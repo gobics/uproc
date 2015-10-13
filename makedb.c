@@ -505,7 +505,7 @@ void calib(void)
 
 uproc_alphabet *load_alphabet(void)
 {
-    char alphabet[UPROC_ALPHABET_SIZE + 2];
+    char alphabet[UPROC_ALPHABET_SIZE + 2];  // +2 for "\n\0"
     uproc_io_stream *stream =
         uproc_io_open("r", UPROC_IO_GZIP, "%s/alphabet", modeldir_);
     if (!uproc_io_gets(alphabet, sizeof alphabet, stream)) {
@@ -514,7 +514,7 @@ uproc_alphabet *load_alphabet(void)
     }
     uproc_io_close(stream);
     alphabet[UPROC_ALPHABET_SIZE] = '\0';
-    memcpy(alphabet_str_, alphabet, sizeof alphabet);
+    memcpy(alphabet_str_, alphabet, UPROC_ALPHABET_SIZE + 1);
     return uproc_alphabet_create(alphabet);
 }
 
