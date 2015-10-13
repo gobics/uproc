@@ -70,6 +70,11 @@ struct ecurve_entry
     uproc_class classes[UPROC_RANKS_MAX];
 };
 
+int ecurve_entry_cmp(const void *p1, const void *p2) {
+    const struct ecurve_entry *e1 = p1, *e2 = p2;
+    return uproc_word_cmp(&e1->word, &e2->word);
+}
+
 char *crop_first_word(char *s)
 {
     char *p1, *p2;
@@ -113,8 +118,8 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
 
     uproc_class classes[UPROC_RANKS_MAX] = {0};
 
-    union uproc_bst_key tree_key;
-    uproc_bst *tree = uproc_bst_create(UPROC_BST_WORD, sizeof classes);
+    uproc_dict *words = uproc_dict_create(sizeof (struct uproc_word),
+                                          sizeof classes);
 
     uproc_seqiter *rd = uproc_seqiter_create(stream);
     while (!uproc_seqiter_next(rd, &seq)) {
@@ -138,44 +143,36 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
             if (!uproc_word_startswith(&fwd_word, first)) {
                 continue;
             }
-            tree_key.word = fwd_word;
             uproc_class tmp_classes[UPROC_RANKS_MAX];
 
             /* if the word was already present -> mark as duplicate for each
              * stored class that differs */
-            if (uproc_bst_get(tree, tree_key, &tmp_classes)) {
+            if (uproc_dict_get(words, &fwd_word, &tmp_classes)) {
                 for (int i = 0; i < ranks_count_; i++) {
                     uproc_class cls = classes[i], tmp_class = tmp_classes[i];
                     if (tmp_class != cls) {
                         tmp_classes[i] = UPROC_CLASS_INVALID;
                     }
                 }
-                uproc_bst_update(tree, tree_key, &tmp_classes);
+                uproc_dict_set(words, &fwd_word, &tmp_classes);
             } else {
-                uproc_bst_update(tree, tree_key, &classes);
+                uproc_dict_set(words, &fwd_word, &classes);
             }
         }
         uproc_worditer_destroy(iter);
     }
     uproc_seqiter_destroy(rd);
 
-    uproc_bstiter *tree_iter = uproc_bstiter_create(tree);
-
-    struct ecurve_entry ecurve_entry;
-    uproc_list *entries = uproc_list_create(sizeof ecurve_entry);
-    while (!uproc_bstiter_next(tree_iter, &tree_key, &classes)) {
-        for (int i = 0; i < ranks_count_; i++) {
-            if (classes[i] != UPROC_CLASS_INVALID) {
-                ecurve_entry.word = tree_key.word;
-                memcpy(ecurve_entry.classes, classes, sizeof classes);
-                uproc_list_append(entries, &ecurve_entry);
-                break;
-            }
-        }
+    struct ecurve_entry entry = { UPROC_WORD_INITIALIZER, { 0 } };
+    uproc_list *entries = uproc_list_create(sizeof entry);
+    uproc_dictiter *iter = uproc_dictiter_create(words);
+    while (!uproc_dictiter_next(iter, &entry.word, &entry.classes)) {
+        uproc_list_append(entries, &entry);
     }
-    uproc_bstiter_destroy(tree_iter);
-    uproc_bst_destroy(tree);
+    uproc_dictiter_destroy(iter);
+    uproc_dict_destroy(words);
 
+    uproc_list_sort(entries, ecurve_entry_cmp);
     return entries;
 }
 
