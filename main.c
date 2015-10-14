@@ -43,17 +43,6 @@
 #define PROGNAME "uproc-prot"
 #endif
 
-// Before you condemn me for using "global" variables, let me clarify:
-// The code in this file is for the main executable and thus has no practical
-// value for re-use anyway. Most of the globals are controlled by command-line
-// flags, and while I could define a struct that holds all of them, this would
-// make setting the default values quite cumbersome.
-//
-// If you like C++ or Java, just imagine I had wrapped a "class GodObject"
-// around the whole file ;)
-//
-// Robin
-
 // Options controlled by command line arguments.
 int flag_prot_thresh_level_ = 3;
 int flag_orf_thresh_level_ = 2;
