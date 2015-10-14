@@ -11,4 +11,5 @@
 #define ck_assert_ptr_ne(X, Y) ck_assert(X != Y)
 #define ck_assert_uint_eq(X, Y) ck_assert(X == Y)
 #define ck_assert_uint_gt(X, Y) ck_assert(X > Y)
+#define ck_assert_int_le(X, Y) ck_assert(X <= Y)
 #endif
