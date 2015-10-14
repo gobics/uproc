@@ -540,6 +540,9 @@ int uproc_dict_stores(const uproc_dict *dict,
             break;
         }
         res = uproc_io_puts(buf, stream);
+        if (res >= 0) {
+            res = uproc_io_putc('\n', stream);
+        }
         if (res < 0) {
             break;
         }
