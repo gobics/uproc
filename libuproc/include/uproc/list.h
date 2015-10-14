@@ -170,7 +170,8 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
 
 /** Filter list
  *
- * Removes all items from the list for which \c func returns false.
+ * Removes all items from the list for which \c func(item, opaque) returns
+ * false.
  *
  * \param list      list instance
  * \param func      function to call
@@ -179,6 +180,10 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
 void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
                        void *opaque);
 
+/** Sort list
+ *
+ * Sorts the list by calling \c qsort(3) on its contents.
+ */
 void uproc_list_sort(uproc_list *list,
                      int (*compare)(const void *, const void *));
 /** \} */
