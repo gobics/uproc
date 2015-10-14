@@ -12,7 +12,7 @@ doxygen.stamp : doxyfile
 	$(DOXYGEN) $(DOXYFLAGS) $<
 	echo Timestamp > $@
 
-CLEANFILES = doxywarn.txt doxygen.stamp $(docpkg)
+CLEANFILES = doxywarn.txt doxygen.stamp doxygen_sqlite3.db $(docpkg)
 
 clean-local :
 	-rm -rf

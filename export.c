@@ -1,4 +1,4 @@
-/* uproc-import
+/* uproc-export
  * Convert database from portable to 'native' format and vice-versa.
  *
  * Copyright 2014 Peter Meinicke, Robin Martinjak
@@ -33,24 +33,22 @@
 
 #include "ppopts.h"
 
-#define PROGNAME "uproc-import"
+#define PROGNAME "uproc-export"
 
 void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
     ppopts_add_text(o, PROGNAME ", version " UPROC_VERSION);
-    ppopts_add_text(o, "USAGE: %s [options] SRC DESTDIR", progname);
-    ppopts_add_text(o,
-                    "Import database from SRC to DESTDIR"
-#if !defined(HAVE_MKDIR) && !defined(HAVE__MKDIR)
-                    " (which must already exist)"
-#endif
-                    ".");
+    ppopts_add_text(o, "USAGE: %s [options] SRCDIR DEST", progname);
+    ppopts_add_text(o, "Export database from SRCDIR to DEST.");
 
     ppopts_add_header(o, "GENERAL OPTIONS:");
     O('h', "help", "", "Print this message and exit.");
     O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
+    if (uproc_features_zlib()) {
+        O('n', "nocompress", "", "Store without gzip compression.");
+    }
 #undef O
 }
 
@@ -64,6 +62,8 @@ enum nonopt_args { SOURCE, DEST, ARGC };
 int main(int argc, char **argv)
 {
     uproc_error_set_handler(errhandler_bail, NULL);
+
+    enum uproc_io_type iotype = UPROC_IO_GZIP;
 
     int opt;
     struct ppopts opts = PPOPTS_INITIALIZER;
@@ -79,6 +79,9 @@ int main(int argc, char **argv)
             case 'V':
                 uproc_features_print(uproc_stdout);
                 return EXIT_SUCCESS;
+            case 'n':
+                iotype = UPROC_IO_STDIO;
+                break;
             case '?':
                 return EXIT_FAILURE;
         }
@@ -87,22 +90,20 @@ int main(int argc, char **argv)
         ppopts_print(&opts, stdout, 80, 0);
         return EXIT_FAILURE;
     }
-#define IMEX "im"
-    char *dir = argv[optind + DEST];
-    make_dir(dir);
-    char *file = argv[optind + SOURCE];
+    char *dir = argv[optind + SOURCE];
+    char *file = argv[optind + DEST];
 
     char msg[1024];
-    snprintf(msg, sizeof msg, "Loading %s", file);
+    snprintf(msg, sizeof msg, "Loading %s", dir);
     progress(uproc_stderr, msg, -1);
-    uproc_io_stream *stream = open_read(file);
-    uproc_database *db = uproc_database_unmarshal(stream, progress_cb, NULL);
-    uproc_io_close(stream);
+    uproc_database *db = uproc_database_load(dir, progress_cb, NULL);
 
-    snprintf(msg, sizeof msg, "Storing %s", dir);
+    snprintf(msg, sizeof msg, "Storing %s", file);
     progress(uproc_stderr, msg, -1);
-    uproc_database_store(db, dir, progress_cb, NULL);
+    uproc_io_stream *stream = open_write(file, iotype);
+    uproc_database_marshal(db, stream, progress_cb, NULL);
 
     uproc_database_destroy(db);
+    uproc_io_close(stream);
     return EXIT_SUCCESS;
 }

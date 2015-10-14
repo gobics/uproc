@@ -83,8 +83,11 @@ int uproc_matchedword_copy(struct uproc_matchedword *dest,
 /** \copybrief struct_protresult */
 struct uproc_protresult
 {
-    /** Predicted family */
-    uproc_family family;
+    /** The rank to which `class` belongs to */
+    uproc_rank rank;
+
+    /** Predicted class */
+    uproc_class class;
 
     /** Prediction score */
     double score;
@@ -98,7 +101,7 @@ struct uproc_protresult
 /** Initializer for ::uproc_protresult structs */
 #define UPROC_PROTRESULT_INITIALIZER \
     {                                \
-        0, 0, NULL                   \
+        0, 0, 0, NULL                \
     }
 
 /** Initialize a ::uproc_protresult struct */
@@ -110,6 +113,9 @@ void uproc_protresult_free(struct uproc_protresult *results);
 /** Deep-copy a ::uproc_protresult struct */
 int uproc_protresult_copy(struct uproc_protresult *dest,
                           const struct uproc_protresult *src);
+
+int uproc_protresult_cmp(const struct uproc_protresult *p1,
+                         const struct uproc_protresult *p2);
 /** \} */
 
 /** \defgroup obj_protclass object uproc_protclass
@@ -134,13 +140,13 @@ typedef struct uproc_protclass_s uproc_protclass;
  *
  * \param seq       classified sequence
  * \param seq_len   length of the classified sequence
- * \param family    predicted family
- * \param score     total score for this family
+ * \param class     predicted class
+ * \param score     total score for this class
  * \param arg       user-supplied argument
  *
  */
 typedef bool uproc_protfilter(const char *seq, size_t seq_len,
-                              uproc_family family, double score, void *arg);
+                              uproc_class class, double score, void *arg);
 
 /** Classification mode
  *
@@ -198,17 +204,16 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
  * ecurves while classifying a protein sequence.
  *
  * \param word      the word found in the ecurve
- * \param family    the corresponding family entry
+ * \param classes   the corresponding classes entry
  * \param index     position in the protein sequence
  * \param reverse   whether the word was found in the "reverse" ecurve
  * \param scores    scores of this match (array of size ::UPROC_SUFFIX_LEN)
  * \param arg       user-supplied argument
  */
-typedef void uproc_protclass_trace_cb(const struct uproc_word *word,
-                                      uproc_family family, size_t index,
-                                      enum uproc_ecurve_direction dir,
-                                      const double *scores,
-                                      void *opaque);
+typedef void uproc_protclass_trace_cb(
+    const struct uproc_word *word,
+    const uproc_class classes[static UPROC_RANKS_MAX], size_t index,
+    bool reverse, const double *scores, void *opaque);
 
 /** Set trace callback
  *

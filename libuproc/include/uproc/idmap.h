@@ -34,7 +34,7 @@
 
 /** \defgroup obj_idmap object uproc_idmap
  *
- * Map between protein family name and its numeric identifier
+ * Map between protein class name and its numeric identifier
  *
  * \{
  */
@@ -52,31 +52,31 @@ uproc_idmap *uproc_idmap_create(void);
 /** Destroy idmap object */
 void uproc_idmap_destroy(uproc_idmap *map);
 
-/** Get family number
+/** Get class number
  *
- * Returns the family number for \c name.
+ * Returns the class number for \c name.
  *
  * If needed, a copy of \c name is inserted into the map. If the number of
- * families reaches ::UPROC_FAMILY_MAX, no more names can be added.
+ * classes reaches ::UPROC_CLASS_MAX, no more names can be added.
  *
  * This is currently implemented as linear search, so it will slow down with
  * a growing number of entries.
  *
  * \return
- * Returns a number in <tt>[0, ::UPROC_FAMILY_MAX]</tt> that maps to \c name,
- * or ::UPROC_FAMILY_INVALID if an error occurs or the limit was reached while
+ * Returns a number in <tt>[0, ::UPROC_CLASS_MAX]</tt> that maps to \c name,
+ * or ::UPROC_CLASS_INVALID if an error occurs or the limit was reached while
  * trying to insert a new name.
  */
-uproc_family uproc_idmap_family(uproc_idmap *map, const char *name);
+uproc_class uproc_idmap_class(uproc_idmap *map, const char *name);
 
-/** Get family string
+/** Get class string
  *
- * Returns the family name associated with the family number \c family.
+ * Returns the class name associated with the class number \c class.
  * If there is none, returns NULL.
  *
  * Modifying the returned string will affect the stored value.
  */
-char *uproc_idmap_str(const uproc_idmap *map, uproc_family family);
+char *uproc_idmap_str(const uproc_idmap *map, uproc_class class);
 
 /** Load idmap from stream */
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);

@@ -186,24 +186,31 @@ static inline int ecurve_realloc(struct uproc_ecurve_s *ec, size_t suffix_count)
     }
     ec->suffixes = tmp;
 
-    tmp = realloc(ec->families, sizeof *ec->families * alloc);
+    tmp = realloc(ec->classes, ec->ranks_count * sizeof *ec->classes * alloc);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
-    ec->families = tmp;
+    ec->classes = tmp;
 
     ec->suffix_alloc = alloc;
     ec->suffix_count = suffix_count;
     return 0;
 }
 
-uproc_ecurve *uproc_ecurve_create(const char *alphabet, size_t suffix_count)
+uproc_ecurve *uproc_ecurve_create(const char *alphabet, uproc_rank ranks_count,
+                                  size_t suffix_count)
 {
     struct uproc_ecurve_s *ec;
     if (suffix_count > PFXTAB_SUFFIX_MAX) {
         uproc_error_msg(UPROC_EINVAL, "too many suffixes");
         return NULL;
     }
+
+    if (!ranks_count) {
+        uproc_error_msg(UPROC_EINVAL, "ranks_count may not be zero");
+        return NULL;
+    }
+
     ec = malloc(sizeof *ec);
     if (!ec) {
         uproc_error(UPROC_ENOMEM);
@@ -224,19 +231,14 @@ uproc_ecurve *uproc_ecurve_create(const char *alphabet, size_t suffix_count)
         return NULL;
     }
 
+    ec->ranks_count = ranks_count;
     if (suffix_count) {
-        ec->suffixes = malloc(sizeof *ec->suffixes * suffix_count);
-        ec->families = malloc(sizeof *ec->families * suffix_count);
-        if (!ec->suffixes || !ec->families) {
+        int res = ecurve_realloc(ec, suffix_count);
+        if (res) {
             uproc_ecurve_destroy(ec);
-            uproc_error(UPROC_ENOMEM);
             return NULL;
         }
-    } else {
-        ec->suffixes = NULL;
-        ec->families = NULL;
     }
-    ec->suffix_count = suffix_count;
 
     ec->mmap_fd = -1;
     ec->mmap_ptr = NULL;
@@ -256,7 +258,7 @@ void uproc_ecurve_destroy(uproc_ecurve *ecurve)
     } else {
         free(ecurve->prefixes);
         free(ecurve->suffixes);
-        free(ecurve->families);
+        free(ecurve->classes);
     }
     free(ecurve);
 }
@@ -311,7 +313,7 @@ int uproc_ecurve_add_prefix(uproc_ecurve *ecurve, uproc_prefix pfx,
         struct uproc_ecurve_suffixentry entry;
         uproc_list_get(suffixes, i, &entry);
         ecurve->suffixes[old_suffix_count + i] = entry.suffix;
-        ecurve->families[old_suffix_count + i] = entry.family;
+        uproc_ecurve_set_classes(ecurve, old_suffix_count + i, entry.classes);
     }
 
     ecurve->last_nonempty = pfx;
@@ -336,21 +338,22 @@ int uproc_ecurve_finalize(uproc_ecurve *ecurve)
     }
     ecurve->suffixes = tmp;
 
-    tmp = realloc(ecurve->families,
-                  sizeof *ecurve->families * ecurve->suffix_count);
+    tmp = realloc(
+        ecurve->classes,
+        sizeof *ecurve->classes * ecurve->suffix_count * ecurve->ranks_count);
     if (!tmp) {
         return uproc_error(UPROC_ENOMEM);
     }
-    ecurve->families = tmp;
+    ecurve->classes = tmp;
     return 0;
 }
 
 int uproc_ecurve_lookup(const uproc_ecurve *ecurve,
                         const struct uproc_word *word,
                         struct uproc_word *lower_neighbour,
-                        uproc_family *lower_class,
+                        uproc_class lower_classes[UPROC_RANKS_MAX],
                         struct uproc_word *upper_neighbour,
-                        uproc_family *upper_class)
+                        uproc_class upper_classes[UPROC_RANKS_MAX])
 {
     int res;
     uproc_prefix p_lower, p_upper;
@@ -375,13 +378,13 @@ int uproc_ecurve_lookup(const uproc_ecurve *ecurve,
     lower += index;
     upper += index;
 
-    /* populate output variables */
     lower_neighbour->prefix = p_lower;
     lower_neighbour->suffix = ecurve->suffixes[lower];
-    *lower_class = ecurve->families[lower];
+    uproc_ecurve_get_classes(ecurve, lower, lower_classes);
+
     upper_neighbour->prefix = p_upper;
     upper_neighbour->suffix = ecurve->suffixes[upper];
-    *upper_class = ecurve->families[upper];
+    uproc_ecurve_get_classes(ecurve, lower, upper_classes);
 
     return res;
 }

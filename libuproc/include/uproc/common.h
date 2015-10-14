@@ -89,20 +89,23 @@ typedef uint_least64_t uproc_suffix;
 /** scanf() format for suffixes */
 #define UPROC_SUFFIX_SCN SCNu64
 
-/** Identifier of a protein family */
-typedef uint_least16_t uproc_family;
+typedef uint_least8_t uproc_rank;
+#define UPROC_RANKS_MAX 6
 
-/** Maximum value for #uproc_family */
-#define UPROC_FAMILY_MAX (UINT_LEAST16_MAX - 1)
+/** Identifier of a protein class */
+typedef uint_least16_t uproc_class;
 
-/** Denotes an invalid protein family */
-#define UPROC_FAMILY_INVALID (UINT_LEAST16_MAX)
+/** Maximum value for #uproc_class */
+#define UPROC_CLASS_MAX (UINT_LEAST16_MAX - 1)
 
-/** printf() format for #uproc_family */
-#define UPROC_FAMILY_PRI PRIu16
+/** Denotes an invalid protein class */
+#define UPROC_CLASS_INVALID (UINT_LEAST16_MAX)
 
-/** scanf() format for #uproc_family */
-#define UPROC_FAMILY_SCN SCNu16
+/** printf() format for #uproc_class */
+#define UPROC_CLASS_PRI PRIu16
+
+/** scanf() format for #uproc_class */
+#define UPROC_CLASS_SCN SCNu16
 
 /**
  * \}

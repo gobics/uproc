@@ -12,6 +12,7 @@ TESTS = ck_common \
 		ck_util \
 		ck_word
 
+EXTRA_DIST = check_workaround.h
 
 check_PROGRAMS = $(TESTS)
 

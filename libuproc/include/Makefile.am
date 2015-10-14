@@ -12,6 +12,7 @@ nobase_include_HEADERS = uproc.h \
 	uproc/io.h \
 	uproc/list.h \
 	uproc/matrix.h \
+	uproc/mosaic.h \
 	uproc/orf.h \
 	uproc/protclass.h \
 	uproc/seqio.h \

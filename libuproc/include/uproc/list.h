@@ -35,6 +35,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 /** \defgroup obj_list object uproc_list
  *
@@ -91,6 +92,13 @@ size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
  */
 #define uproc_list_get_all(list, buf, sz) \
     uproc_list_get_all_safe((list), (buf), (sz), sizeof *(buf))
+
+/** Get pointer to data
+ *
+ * Returns a pointer to the underlying data. Use this pointer at your own risk,
+ * whenever the list is modified, this pointer could become invalid.
+ */
+void *uproc_list_get_all_ptr(uproc_list *list);
 
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
                         size_t value_size);
@@ -159,6 +167,25 @@ long uproc_list_size(const uproc_list *list);
  */
 void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
                     void *opaque);
+
+/** Filter list
+ *
+ * Removes all items from the list for which \c func(item, opaque) returns
+ * false.
+ *
+ * \param list      list instance
+ * \param func      function to call
+ * \param opaque    second argument to \c function
+ */
+void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
+                       void *opaque);
+
+/** Sort list
+ *
+ * Sorts the list by calling \c qsort(3) on its contents.
+ */
+void uproc_list_sort(uproc_list *list,
+                     int (*compare)(const void *, const void *));
 /** \} */
 
 /**

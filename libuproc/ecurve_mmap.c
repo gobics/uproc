@@ -43,6 +43,7 @@
 struct mmap_header
 {
     char alphabet_str[UPROC_ALPHABET_SIZE];
+    uproc_rank ranks_count;
     size_t suffix_count;
 };
 
@@ -52,10 +53,11 @@ static const uint64_t magic_number = 0xd2eadfUL;
 #define SIZE_PREFIXES \
     ((UPROC_PREFIX_MAX + 1) * sizeof(struct uproc_ecurve_pfxtable))
 #define SIZE_SUFFIXES(suffix_count) ((suffix_count) * sizeof(uproc_suffix))
-#define SIZE_CLASSES(suffix_count) ((suffix_count) * sizeof(uproc_family))
-#define SIZE_TOTAL(suffix_count)                                 \
+#define SIZE_CLASSES(ranks_count, suffix_count) \
+    ((suffix_count) * (ranks_count) * sizeof(uproc_class))
+#define SIZE_TOTAL(ranks_count, suffix_count)                    \
     (SIZE_HEADER + SIZE_PREFIXES + SIZE_SUFFIXES(suffix_count) + \
-     SIZE_CLASSES(suffix_count) + (3 * sizeof magic_number))
+     SIZE_CLASSES((ranks_count), (suffix_count)) + (3 * sizeof magic_number))
 
 #define OFFSET_PREFIXES (SIZE_HEADER)
 #define OFFSET_MAGIC1 (OFFSET_PREFIXES + SIZE_PREFIXES)
@@ -64,8 +66,8 @@ static const uint64_t magic_number = 0xd2eadfUL;
     (OFFSET_SUFFIXES + SIZE_SUFFIXES(suffix_count))
 #define OFFSET_CLASSES(suffix_count) \
     (OFFSET_MAGIC2(suffix_count) + (sizeof magic_number))
-#define OFFSET_MAGIC3(suffix_count) \
-    (OFFSET_CLASSES(suffix_count) + SIZE_CLASSES(suffix_count))
+#define OFFSET_MAGIC3(ranks_count, suffix_count) \
+    (OFFSET_CLASSES(suffix_count) + SIZE_CLASSES((ranks_count), (suffix_count)))
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -118,10 +120,12 @@ static uproc_ecurve *ecurve_map(const char *path)
 #endif
 
     header = ec->mmap_ptr;
-    if (ec->mmap_size != SIZE_TOTAL(header->suffix_count)) {
+    if (ec->mmap_size !=
+        SIZE_TOTAL(header->ranks_count, header->suffix_count)) {
         uproc_error(UPROC_EINVAL);
         goto error_munmap;
     }
+    ec->ranks_count = header->ranks_count;
     ec->suffix_count = header->suffix_count;
 
     memcpy(alphabet_str, header->alphabet_str, UPROC_ALPHABET_SIZE);
@@ -133,11 +137,12 @@ static uproc_ecurve *ecurve_map(const char *path)
 
     ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
     ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
-    ec->families = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
+    ec->classes = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
     uint64_t *m1, *m2, *m3;
     m1 = (void *)(ec->mmap_ptr + OFFSET_MAGIC1);
     m2 = (void *)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
-    m3 = (void *)(ec->mmap_ptr + OFFSET_MAGIC3(ec->suffix_count));
+    m3 = (void *)(ec->mmap_ptr +
+                  OFFSET_MAGIC3(ec->ranks_count, ec->suffix_count));
     if (*m1 != magic_number || *m2 != magic_number || *m3 != magic_number) {
         uproc_error_msg(UPROC_EINVAL, "inconsistent magic number");
         goto error_munmap;
@@ -207,9 +212,8 @@ static int mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
     int fd, res = 0;
     size_t size;
     char *region;
-    struct mmap_header header;
 
-    size = SIZE_TOTAL(ecurve->suffix_count);
+    size = SIZE_TOTAL(ecurve->ranks_count, ecurve->suffix_count);
 
     fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (fd == -1) {
@@ -227,7 +231,8 @@ static int mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
         goto error_close;
     }
 
-    header.suffix_count = ecurve->suffix_count;
+    struct mmap_header header = {.ranks_count = ecurve->ranks_count,
+                                 .suffix_count = ecurve->suffix_count};
     memcpy(&header.alphabet_str, uproc_alphabet_str(ecurve->alphabet),
            UPROC_ALPHABET_SIZE);
 
@@ -238,10 +243,10 @@ static int mmap_store(const struct uproc_ecurve_s *ecurve, const char *path)
            SIZE_SUFFIXES(ecurve->suffix_count));
     memcpy(region + OFFSET_MAGIC2(ecurve->suffix_count), &magic_number,
            sizeof magic_number);
-    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->families,
-           SIZE_CLASSES(ecurve->suffix_count));
-    memcpy(region + OFFSET_MAGIC3(ecurve->suffix_count), &magic_number,
-           sizeof magic_number);
+    memcpy(region + OFFSET_CLASSES(ecurve->suffix_count), ecurve->classes,
+           SIZE_CLASSES(ecurve->ranks_count, ecurve->suffix_count));
+    memcpy(region + OFFSET_MAGIC3(ecurve->ranks_count, ecurve->suffix_count),
+           &magic_number, sizeof magic_number);
 
     munmap(region, size);
     close(fd);

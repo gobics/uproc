@@ -426,13 +426,7 @@ int uproc_io_puts(const char *s, uproc_io_stream *stream)
     switch (stream->type) {
         case UPROC_IO_GZIP:
 #if HAVE_ZLIB_H
-        {
-            int res = gzputs(stream->s.gz, s);
-            if (gzputc(stream->s.gz, '\n') == -1) {
-                return -1;
-            }
-            return res + 1;
-        }
+            return gzputs(stream->s.gz, s);
 #endif
         case UPROC_IO_STDIO:
             return fputs(s, stream->s.fp);

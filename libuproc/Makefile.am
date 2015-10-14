@@ -34,11 +34,11 @@ libuproc_la_SOURCES = alphabet.c \
 					protclass.c \
 					seqio.c \
 					substmat.c \
+					util.h \
 					word.c \
 					codon_tables.h \
 					database.c \
 					model.c
-
 libuproc_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 BUILT_SOURCES = codon_tables.h

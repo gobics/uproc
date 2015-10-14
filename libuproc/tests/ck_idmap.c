@@ -19,25 +19,25 @@ void teardown(void)
 
 START_TEST(test_usage)
 {
-    uproc_family fam1, fam2;
+    uproc_class fam1, fam2;
 
-    fam1 = uproc_idmap_family(map, "foo");
-    fam2 = uproc_idmap_family(map, "foo");
+    fam1 = uproc_idmap_class(map, "foo");
+    fam2 = uproc_idmap_class(map, "foo");
     ck_assert_int_eq(fam1, fam2);
 
-    fam2 = uproc_idmap_family(map, "bar");
+    fam2 = uproc_idmap_class(map, "bar");
     ck_assert_int_ne(fam1, fam2);
 
-    fam2 = uproc_idmap_family(map, "herp derp");
+    fam2 = uproc_idmap_class(map, "herp derp");
     ck_assert_int_ne(fam1, fam2);
 
-    fam1 = uproc_idmap_family(map, "herp");
+    fam1 = uproc_idmap_class(map, "herp");
     ck_assert_int_ne(fam1, fam2);
 
-    fam1 = uproc_idmap_family(map, "bar");
+    fam1 = uproc_idmap_class(map, "bar");
     ck_assert_int_ne(fam1, fam2);
 
-    fam2 = uproc_idmap_family(map, "bar");
+    fam2 = uproc_idmap_class(map, "bar");
     ck_assert_int_eq(fam1, fam2);
 }
 END_TEST
@@ -45,14 +45,14 @@ END_TEST
 START_TEST(test_store_load)
 {
     int res;
-    uproc_family fam;
+    uproc_class fam;
 
-    uproc_idmap_family(map, "foo");
-    uproc_idmap_family(map, "bar");
-    uproc_idmap_family(map, "baz");
-    uproc_idmap_family(map, "quux");
-    uproc_idmap_family(map, "42");
-    uproc_idmap_family(map, "herp derp");
+    uproc_idmap_class(map, "foo");
+    uproc_idmap_class(map, "bar");
+    uproc_idmap_class(map, "baz");
+    uproc_idmap_class(map, "quux");
+    uproc_idmap_class(map, "42");
+    uproc_idmap_class(map, "herp derp");
     res = uproc_idmap_store(map, UPROC_IO_GZIP, TMPDATADIR "test_idmap.tmp");
     ck_assert_msg(res == 0, "storing idmap failed");
 
@@ -60,13 +60,13 @@ START_TEST(test_store_load)
     map = uproc_idmap_load(UPROC_IO_GZIP, TMPDATADIR "test_idmap.tmp");
     ck_assert_ptr_ne(map, NULL);
 
-    fam = uproc_idmap_family(map, "bar");
+    fam = uproc_idmap_class(map, "bar");
     ck_assert_int_eq(fam, 1);
 
-    fam = uproc_idmap_family(map, "quux");
+    fam = uproc_idmap_class(map, "quux");
     ck_assert_int_eq(fam, 3);
 
-    fam = uproc_idmap_family(map, "derp");
+    fam = uproc_idmap_class(map, "derp");
     ck_assert_int_eq(fam, 6);
 }
 END_TEST

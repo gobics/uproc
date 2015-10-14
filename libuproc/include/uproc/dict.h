@@ -40,8 +40,8 @@
  * Dictionary container (also known as "hash table" or "hash map").
  *
  * \note Keys are hashed and compared bytewise, be careful about padding when
- * you use structs as keys, e.g. use \code memset(&s, 0, s) \endcode to make
- * sure all padding bytes are zero.
+ * you use structs as keys, e.g. use \code memset(&s, 0, sizeof s) \endcode to
+ * make sure all padding bytes are zero.
  *
  * \{
  */
@@ -55,6 +55,7 @@ typedef struct uproc_dict_s uproc_dict;
 
 /** Dict specific return codes */
 enum {
+    /** The requested key isn't present in the dict */
     UPROC_DICT_KEY_NOT_FOUND = -404,
 };
 

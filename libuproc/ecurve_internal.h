@@ -22,9 +22,12 @@ struct uproc_ecurve_s
     /** Number of suffixes */
     size_t suffix_count;
 
-    /** While building: number of elements `#suffixes` and `#families` are
+    /** While building: number of elements `#suffixes` and `#classes` are
      * allocated to hold */
     size_t suffix_alloc;
+
+    // Number of distinguished ranks, i.e. classes stored per suffix.
+    uproc_rank ranks_count;
 
     /** Table of suffixes
      *
@@ -32,11 +35,11 @@ struct uproc_ecurve_s
      */
     uproc_suffix *suffixes;
 
-    /** Table of families associated with the suffixes
+    /** Table of classes associated with the suffixes
      *
-     * Will be allocated to hold `#suffix_count` objects
+     * Will be allocated to hold `#suffix_count * #ranks_count` objects
      */
-    uproc_family *families;
+    uproc_class *classes;
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
     struct uproc_ecurve_pfxtable
@@ -91,5 +94,26 @@ struct uproc_ecurve_s
     /** Size of the `mmap()`ed region */
     size_t mmap_size;
 };
+
+static inline void uproc_ecurve_copy_classes(const uproc_ecurve *ecurve,
+                                             uproc_class *dest,
+                                             const uproc_class *src)
+{
+    memcpy(dest, src, ecurve->ranks_count * sizeof *ecurve->classes);
+}
+
+static inline void uproc_ecurve_get_classes(const uproc_ecurve *ecurve,
+                                            size_t index, uproc_class *dest)
+{
+    uproc_ecurve_copy_classes(ecurve, dest,
+                              &ecurve->classes[index * ecurve->ranks_count]);
+}
+
+static inline void uproc_ecurve_set_classes(uproc_ecurve *ecurve, size_t index,
+                                            const uproc_class *src)
+{
+    uproc_ecurve_copy_classes(
+        ecurve, &ecurve->classes[index * ecurve->ranks_count], src);
+}
 
 #endif

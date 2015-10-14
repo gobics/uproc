@@ -137,11 +137,11 @@ void make_dir(const char *path)
 #endif
 }
 
-static bool prot_filter(const char *seq, size_t len, uproc_family family,
+static bool prot_filter(const char *seq, size_t len, uproc_class class,
                         double score, void *opaque)
 {
     (void)seq;
-    (void)family;
+    (void)class;
     unsigned long rows, cols;
     uproc_matrix *thresh = opaque;
     if (!thresh) {

@@ -181,6 +181,11 @@ size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
     return list_get_all(list, buf, sz);
 }
 
+void *uproc_list_get_all_ptr(uproc_list *list)
+{
+    return list->data;
+}
+
 static int list_set(uproc_list *list, long index, const void *value)
 {
     long idx = index;
@@ -272,6 +277,9 @@ int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size)
 
 long uproc_list_size(const uproc_list *list)
 {
+    if (!list) {
+        return 0;
+    }
     return list->size;
 }
 
@@ -281,4 +289,27 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
     for (long i = 0; i < list->size; i++) {
         func(list->data + i * list->value_size, opaque);
     }
+}
+
+void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
+                       void *opaque)
+{
+    long new_size = 0;
+    for (long i = 0; i < list->size; i++) {
+        void *src = list->data + i * list->value_size,
+             *dest = list->data + new_size * list->value_size;
+
+        if (!func(src, opaque)) {
+            continue;
+        }
+        memmove(dest, src, list->value_size);
+        new_size++;
+    }
+    list->size = new_size;
+}
+
+void uproc_list_sort(uproc_list *list,
+                     int (*compare)(const void *, const void *))
+{
+    qsort(list->data, list->size, list->value_size, compare);
 }
