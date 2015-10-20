@@ -264,6 +264,34 @@ bool filter_no_valid_class(const void *p, void *opaque)
     return false;
 }
 
+uintmax_t djb2(const char *str) {
+    uintmax_t hash = 5381;
+    int c;
+
+    while ((c = (unsigned char)*str++) != '\0') {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
+}
+
+// This is a pretty bad way to hash a file, but at least we're not pulling
+// another dependency. Do not use something like this if you even need the
+// tiniest bit of security.
+uintmax_t hash_file(const char *path) {
+    uproc_io_stream *stream = uproc_io_open("r", UPROC_IO_GZIP, path);
+    char data[257] = { 0 };
+    size_t n;
+    uintmax_t hash = 0;
+    do {
+        n = uproc_io_read(data, 1, sizeof data - 1, stream);
+        data[n] = '\0';
+        hash ^= djb2(data);
+    } while (n == sizeof data - 1);
+    uproc_io_close(stream);
+    return hash;
+}
+
 uproc_ecurve *build_ecurve(bool reverse)
 {
     uproc_ecurve *ecurve = uproc_ecurve_create(alphabet_str_, ranks_count_, 0);
@@ -649,9 +677,15 @@ int main(int argc, char **argv)
         idmaps_[0] = uproc_idmap_create();
         uproc_database_set_idmap(database_, 0, idmaps_[0]);
 
+        uintmax_t id = hash_file(sourcefile_);
         if (flags_ranks_file_) {
             load_ranks_mapping(flags_ranks_file_);
+            id ^= hash_file(flags_ranks_file_);
         }
+
+        char id_str[17] = "";
+        snprintf(id_str, sizeof id_str, "%jx", id);
+        uproc_database_metadata_set_str(database_, "id", id_str);
 
         uproc_database_set_ecurve(database_, UPROC_ECURVE_FWD,
                                   build_ecurve(false));
