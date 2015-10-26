@@ -38,7 +38,7 @@
 
 uproc_io_stream *open_read(const char *path)
 {
-    if (!strcmp(path, "-")) {
+    if (!path || !strcmp(path, "-")) {
         return uproc_stdin;
     }
     return uproc_io_open("r", UPROC_IO_GZIP, "%s", path);
@@ -46,7 +46,7 @@ uproc_io_stream *open_read(const char *path)
 
 uproc_io_stream *open_write(const char *path, enum uproc_io_type type)
 {
-    if (!strcmp(path, "-")) {
+    if (!path || !strcmp(path, "-")) {
         return type == UPROC_IO_GZIP ? uproc_stdout_gz : uproc_stdout;
     }
     return uproc_io_open("w", type, "%s", path);

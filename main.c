@@ -48,13 +48,20 @@ int flag_prot_thresh_level_ = 3;
 int flag_orf_thresh_level_ = 2;
 int flag_num_threads_ = 8;
 bool flag_dna_short_read_mode_ = false;
+
 bool flag_output_counts_ = false;
 bool flag_output_summary_ = false;
-bool flag_output_predictions_ = false;
-bool flag_output_mosaicwords_ = false;
-const char *flag_output_format_ = NULL;
+const char *flag_format_predictions_ = NULL;
+const char *flag_format_mosaicwords_ = NULL;
 
-uproc_io_stream *output_stream_ = NULL;
+bool flag_output_gz_ = false;
+const char *flag_output_filename_ = NULL;
+
+uproc_io_stream *outstream_counts_ = NULL,
+                *outstream_summary_ = NULL,
+                *outstream_predictions_ = NULL,
+                *outstream_mosaicwords_ = NULL;
+
 uproc_database *database_;
 uproc_rank ranks_count_;
 uproc_model *model_;
@@ -203,52 +210,39 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     return buf->n > 0;
 }
 
-/* Invoked if -p or -m is used. With -m it will call itself for each
- * element in the result->mosaicwords list */
-void print_result_or_match(unsigned long seq_num, const char *header,
-                           unsigned long seq_len,
-                           const struct clfresult *result,
-                           const struct uproc_mosaicword *mosaicword)
+void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
+                                unsigned long seq_num, const char *header,
+                                unsigned long seq_len,
+                                const struct clfresult *result,
+                                const struct uproc_mosaicword *mosaicword)
 {
-    const char *format = flag_output_format_;
-    if (!format) {
-        return;
-    }
-    const struct uproc_protresult *protresult = PROTRESULT(result);
+    uproc_assert(stream);
+    uproc_assert(format);
 
-    if (!mosaicword && flag_output_mosaicwords_) {
-        uproc_assert(protresult->mosaicwords);
-        for (long i = 0; i < uproc_list_size(protresult->mosaicwords); i++) {
-            struct uproc_mosaicword mosaicword;
-            uproc_list_get(protresult->mosaicwords, i, &mosaicword);
-            print_result_or_match(seq_num, header, seq_len, result,
-                                  &mosaicword);
-        }
-        return;
-    }
+    const struct uproc_protresult *protresult = PROTRESULT(result);
 
     while (*format) {
         // increment here so we know if theres another item
         switch (*format++) {
             case OUTFMT_SEQ_NUMBER:
-                uproc_io_printf(output_stream_, "%lu", seq_num);
+                uproc_io_printf(stream, "%lu", seq_num);
                 break;
             case OUTFMT_SEQ_HEADER:
-                uproc_io_puts(header, output_stream_);
+                uproc_io_puts(header, stream);
                 break;
             case OUTFMT_SEQ_LENGTH:
-                uproc_io_printf(output_stream_, "%lu", seq_len);
+                uproc_io_printf(stream, "%lu", seq_len);
                 break;
 #if MAIN_DNA
             case OUTFMT_ORF_FRAME:
-                uproc_io_printf(output_stream_, "%u", result->orf.frame + 1);
+                uproc_io_printf(stream, "%u", result->orf.frame + 1);
                 break;
             case OUTFMT_ORF_INDEX:
-                uproc_io_printf(output_stream_, "%lu",
+                uproc_io_printf(stream, "%lu",
                                 (unsigned long)result->orf.start + 1);
                 break;
             case OUTFMT_ORF_LENGTH:
-                uproc_io_printf(output_stream_, "%lu",
+                uproc_io_printf(stream, "%lu",
                                 (unsigned long)result->orf.length);
                 break;
 #endif
@@ -256,50 +250,68 @@ void print_result_or_match(unsigned long seq_num, const char *header,
                 uproc_idmap *idmap =
                     uproc_database_idmap(database_, protresult->rank);
                 uproc_io_puts(uproc_idmap_str(idmap, protresult->class),
-                              output_stream_);
+                              stream);
             } break;
             case OUTFMT_RANK:
-                uproc_io_printf(output_stream_, "%u", protresult->rank + 1);
+                uproc_io_printf(stream, "%u", protresult->rank + 1);
                 break;
             case OUTFMT_SCORE:
-                uproc_io_printf(output_stream_, "%1.3f", protresult->score);
+                uproc_io_printf(stream, "%1.3f", protresult->score);
                 break;
             case OUTFMT_MATCH_WORD: {
                 char w[UPROC_WORD_LEN + 1] = "";
+                uproc_assert(mosaicword);
                 uproc_word_to_string(w, &mosaicword->word,
                                      uproc_database_alphabet(database_));
-                uproc_io_puts(w, output_stream_);
+                uproc_io_puts(w, stream);
             } break;
             case OUTFMT_MATCH_DIRECTION: {
+                uproc_assert(mosaicword);
                 char *s = mosaicword->dir == UPROC_ECURVE_FWD ? "fwd" : "rev";
-                uproc_io_puts(s, output_stream_);
+                uproc_io_puts(s, stream);
             } break;
             case OUTFMT_MATCH_INDEX:
-                uproc_io_printf(output_stream_, "%lu",
+                uproc_assert(mosaicword);
+                uproc_io_printf(stream, "%lu",
                                 (unsigned long)mosaicword->index + 1);
                 break;
             case OUTFMT_MATCH_SCORE:
-                uproc_io_printf(output_stream_, "%1.3f", mosaicword->score);
+                uproc_assert(mosaicword);
+                uproc_io_printf(stream, "%1.3f", mosaicword->score);
                 break;
 
             default:
                 uproc_assert_msg(false, "default case should not be reached");
         }
         if (*format) {
-            uproc_io_putc(',', output_stream_);
+            uproc_io_putc(',', stream);
         }
     }
-    uproc_io_putc('\n', output_stream_);
+    uproc_io_putc('\n', stream);
 }
 
-void print_matches(unsigned long seq_num, const char *header,
-                   unsigned long seq_len, const struct clfresult *result)
-{
-    const struct uproc_protresult *protresult = PROTRESULT(result);
+void print_result(unsigned long seq_num, const char *header,
+                  unsigned long seq_len, const struct clfresult *result)
 
-    if (!protresult->mosaicwords) {
-        fprintf(stderr, "programmer is daft, mosaicwords is NULL\n");
-        exit(EXIT_FAILURE);
+{
+    if (flag_format_predictions_) {
+        uproc_assert(outstream_predictions_);
+        print_result_or_mosaicword(outstream_predictions_,
+                                   flag_format_predictions_, seq_num, header,
+                                   seq_len, result, NULL);
+    }
+
+    if (flag_format_mosaicwords_) {
+        const struct uproc_protresult *protresult = PROTRESULT(result);
+        uproc_assert(protresult->mosaicwords);
+
+        for (long i = 0; i < uproc_list_size(protresult->mosaicwords); i++) {
+            struct uproc_mosaicword mosaicword;
+            uproc_list_get(protresult->mosaicwords, i, &mosaicword);
+            print_result_or_mosaicword(outstream_mosaicwords_,
+                                       flag_format_mosaicwords_, seq_num,
+                                       header, seq_len, result, &mosaicword);
+        }
     }
 }
 
@@ -319,10 +331,8 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
         struct clfresult result;
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
-            if (flag_output_predictions_ || flag_output_mosaicwords_) {
-                print_result_or_match(*n_seqs, buf->seqs[i].header,
-                                      strlen(buf->seqs[i].data), &result, NULL);
-            }
+            print_result(*n_seqs, buf->seqs[i].header,
+                         strlen(buf->seqs[i].data), &result);
             struct uproc_protresult *p = PROTRESULT(&result);
             counts_increment(p->rank, p->class);
         }
@@ -396,10 +406,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
         for (long i = 0; i < n_results; i++) {
             struct clfresult result;
             uproc_list_get(results, i, &result);
-            if (flag_output_predictions_ || flag_output_mosaicwords_) {
-                print_result_or_match(*n_seqs, seq.header, strlen(seq.data),
-                                      &result, NULL);
-            }
+            print_result(*n_seqs, seq.header, strlen(seq.data), &result);
             struct uproc_protresult *p = PROTRESULT(&result);
             counts_increment(p->rank, p->class);
         }
@@ -461,9 +468,22 @@ void counts_print(void)
 
         for (i = 0; i < n; i++) {
             uproc_idmap *idmap = uproc_database_idmap(database_, rank);
-            uproc_io_puts(uproc_idmap_str(idmap, c[i].class), output_stream_);
-            uproc_io_printf(output_stream_, ",%lu\n", c[i].n);
+            uproc_io_puts(uproc_idmap_str(idmap, c[i].class),
+                          outstream_counts_);
+            uproc_io_printf(outstream_counts_, ",%lu\n", c[i].n);
         }
+    }
+}
+
+
+void validate_format_string(const char *progname, const char *fmt,
+                            const char *valid)
+{
+    size_t spn = strspn(fmt, valid);
+    if (spn != strlen(fmt)) {
+        fprintf(stderr, "%s: invalid format string character -- "
+                "'%c' is not in '%s'\n", progname, fmt[spn], valid);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -498,7 +518,7 @@ void make_opts(struct ppopts *o, const char *progname)
       flag_num_threads_);
 #endif
 
-    ppopts_add_header(o, "OUTPUT FORMAT:");
+    ppopts_add_header(o, "OUTPUT MODES:");
     O('p', "predictions", "FORMAT",
       "\
 Print all classifications as CSV with the fields specified by the format\n\
@@ -536,6 +556,11 @@ are recognized:\n\
         o,
         "If none of the above is specified, -c is used. If multiple of them "
         "are specified, they are printed in the same order as above.");
+    ppopts_add_text(
+        o,
+        "If multiple of the above are specified, one of -o or -z (see below) "
+        "is required, and the file name for each one is determined by adding "
+        "a corresponding suffix.");
 
     ppopts_add_header(o, "OUTPUT OPTIONS:");
     O('o', "output", "FILE",
@@ -600,12 +625,12 @@ int main(int argc, char **argv)
                 uproc_features_print(uproc_stdout);
                 exit(EXIT_SUCCESS);
             case 'p':
-                flag_output_predictions_ = true;
-                flag_output_format_ = optarg;
+                validate_format_string(argv[0], optarg, OUTFMT_PREDICTIONS);
+                flag_format_predictions_ = optarg;
                 break;
             case 'm':
-                flag_output_mosaicwords_ = true;
-                flag_output_format_ = optarg;
+                validate_format_string(argv[0], optarg, OUTFMT_MATCHES);
+                flag_format_mosaicwords_ = optarg;
                 break;
             case 'c':
                 flag_output_counts_ = true;
@@ -614,10 +639,9 @@ int main(int argc, char **argv)
                 flag_output_summary_ = true;
                 break;
             case 'o':
-                output_stream_ = open_write(optarg, UPROC_IO_STDIO);
-                break;
             case 'z':
-                output_stream_ = open_write(optarg, UPROC_IO_GZIP);
+                flag_output_filename_ = optarg;
+                flag_output_gz_ = opt == 'z';
                 break;
             case 'P':
                 if (parse_prot_thresh_level(optarg, &flag_prot_thresh_level_)) {
@@ -639,7 +663,6 @@ int main(int argc, char **argv)
 #else
                 fputs("UProC was compiled without OpenMP; -t ignored\n",
                       stderr);
-                exit(EXIT_FAILURE);
 #endif
             break;
 #if MAIN_DNA
@@ -667,26 +690,49 @@ int main(int argc, char **argv)
     omp_set_num_threads(flag_num_threads_);
 #endif
 
-    if (!output_stream_) {
-        output_stream_ = uproc_stdout;
+    bool multiple_outputs = (flag_output_counts_ + flag_output_summary_ +
+                             !!flag_format_predictions_ +
+                             !! flag_format_mosaicwords_);
+
+    if (multiple_outputs) {
+        if (!flag_output_filename_) {
+            fputs("-o or -z required if multiple output modes are selected\n",
+                  stderr);
+            exit(EXIT_FAILURE);
+        }
+        enum uproc_io_type io_type = UPROC_IO_STDIO;
+        const char *gz_suffix = "";
+        if (flag_output_gz_) {
+            io_type = UPROC_IO_GZIP;
+            gz_suffix = ".gz";
+        }
+
+#define OPEN(suffix) uproc_io_open("w", io_type, "%s.%s%s", \
+                                   flag_output_filename_, (suffix), gz_suffix)
+        if (flag_output_counts_) {
+            outstream_counts_ = OPEN("counts");
+        }
+        if (flag_output_summary_) {
+            outstream_summary_ = OPEN("summary");
+        }
+        if (flag_format_predictions_) {
+            outstream_predictions_ = OPEN("predictions");
+        }
+        if (flag_format_mosaicwords_) {
+            outstream_mosaicwords_ = OPEN("mosaicwords");
+        }
+#undef OPEN
+    } else {
+        enum uproc_io_type io_type =
+            flag_output_gz_ ? UPROC_IO_GZIP : UPROC_IO_STDIO;
+        outstream_counts_ = outstream_summary_ = outstream_predictions_ =
+            outstream_mosaicwords_= open_write(flag_output_filename_, io_type);
     }
 
     // if no output mode was selected, set a default
-    if (!flag_output_predictions_ && !flag_output_mosaicwords_ &&
+    if (!flag_format_predictions_ && !flag_format_mosaicwords_ &&
         !flag_output_counts_ && !flag_output_summary_) {
         flag_output_summary_ = true;
-    }
-
-    // verify that all format string characters are valid
-    if (flag_output_predictions_ || flag_output_mosaicwords_) {
-        const char *valid =
-            flag_output_predictions_ ? OUTFMT_PREDICTIONS : OUTFMT_MATCHES;
-        size_t spn = strspn(flag_output_format_, valid);
-        if (spn != strlen(flag_output_format_)) {
-            fprintf(stderr, "%s: invalid format string character -- '%c'\n",
-                    argv[0], flag_output_format_[spn]);
-            return EXIT_FAILURE;
-        }
     }
 
     if (argc < optind + ARGC - 1) {
@@ -711,7 +757,7 @@ int main(int argc, char **argv)
     uproc_dnaclass *dc;
 
     create_classifiers(&pc, &dc, database_, model_, flag_prot_thresh_level_,
-                       flag_dna_short_read_mode_, flag_output_mosaicwords_);
+                       flag_dna_short_read_mode_, flag_format_mosaicwords_);
 #if MAIN_DNA
     classifier_ = dc;
 #else
@@ -730,15 +776,19 @@ int main(int argc, char **argv)
     }
 
     if (flag_output_summary_) {
-        uproc_io_printf(output_stream_, "%lu,", n_seqs - n_seqs_unexplained);
-        uproc_io_printf(output_stream_, "%lu,", n_seqs_unexplained);
-        uproc_io_printf(output_stream_, "%lu\n", n_seqs);
+        uproc_io_printf(outstream_summary_, "%lu,",
+                        n_seqs - n_seqs_unexplained);
+        uproc_io_printf(outstream_summary_, "%lu,", n_seqs_unexplained);
+        uproc_io_printf(outstream_summary_, "%lu\n", n_seqs);
     }
     if (flag_output_counts_) {
         counts_print();
     }
 
-    uproc_io_close(output_stream_);
+    uproc_io_close(outstream_counts_);
+    uproc_io_close(outstream_summary_);
+    uproc_io_close(outstream_predictions_);
+    uproc_io_close(outstream_mosaicwords_);
 
     uproc_protclass_destroy(pc);
     uproc_dnaclass_destroy(dc);
