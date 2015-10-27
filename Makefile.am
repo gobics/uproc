@@ -11,7 +11,7 @@ noinst_LTLIBRARIES = libcommon.la
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
 LDADD = libcommon.la libuproc/libuproc.la
 
-libcommon_la_SOURCES = common.c common.h ppopts.c ppopts.h
+libcommon_la_SOURCES = common.c common.h ppopts.c ppopts.h devmode.c devmode.h
 
 uproc_dna_SOURCES = main.c
 uproc_dna_CPPFLAGS = $(AM_CPPFLAGS) -DMAIN_DNA=1
