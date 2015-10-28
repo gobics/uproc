@@ -69,9 +69,6 @@ static int iter_next(uproc_dictiter *iter, void *key, void *value);
 
 static inline long bucket_count(const uproc_dict *dict)
 {
-    if (!dict->buckets) {
-        return 0;
-    }
     return bucket_count_values[dict->bucket_count_index];
 }
 
@@ -273,7 +270,9 @@ int uproc_dict_clear(uproc_dict *dict)
     if (!new_buckets) {
         return -1;
     }
-    free_buckets(dict->buckets, bucket_count(dict));
+    if (dict->buckets) {
+        free_buckets(dict->buckets, bucket_count(dict));
+    }
     dict->size = 0;
     dict->bucket_count_index = 0;
     dict->buckets = new_buckets;
