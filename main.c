@@ -36,6 +36,7 @@
 #include <uproc.h>
 
 #include "ppopts.h"
+#include "devmode.h"
 
 #if MAIN_DNA
 #define PROGNAME "uproc-dna"
@@ -53,6 +54,10 @@ bool flag_output_summary_ = false;
 bool flag_output_predictions_ = false;
 bool flag_output_mosaicwords_ = false;
 const char *flag_output_format_ = NULL;
+
+// Devmode flags
+bool flag_print_times_ = false;
+bool flag_fake_results_ = false;
 
 uproc_io_stream *output_stream_ = NULL;
 uproc_database *database_;
@@ -329,6 +334,31 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
     }
 }
 
+void classify_fake_results(unsigned long *n_seqs,
+                           unsigned long *n_seqs_unexplained)
+{
+    uproc_list *results = fake_results();
+    for (long i = 0, n = uproc_list_size(results); i < n; i++) {
+        struct uproc_dnaresult result;
+        uproc_list_get(results, i, &result);
+#if MAIN_DNA
+        struct clfresult r = result;
+#else
+        struct clfresult r = result.protresult;
+#endif
+        char s[32];
+        snprintf(s, sizeof s, "fake sequence %li", i);
+        print_result_or_match(*n_seqs, s, 22, &r, NULL);
+        struct uproc_protresult *p = PROTRESULT(&r);
+        counts_increment(p->rank, p->class);
+        *n_seqs += 1;
+        uproc_protresult_free(p);
+    }
+    *n_seqs_unexplained += 3;
+    *n_seqs += 3;
+    uproc_list_destroy(results);
+}
+
 void classify_file_mt(const char *path, unsigned long *n_seqs,
                       unsigned long *n_seqs_unexplained)
 {
@@ -373,6 +403,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
         return classify_file_mt(path, n_seqs, n_seqs_unexplained);
     }
 #endif
+
     timeit_start(&t_tot);
     uproc_io_stream *stream = open_read(path);
     uproc_seqiter *seqit = uproc_seqiter_create(stream);
@@ -574,6 +605,16 @@ Allowed values:\n\
 Default is %d.",
       flag_orf_thresh_level_);
 #endif
+
+#ifdef DEVMODE
+    ppopts_add_header(o, "DEVELOPER FLAGS:");
+#if HAVE_TIMEIT
+    O('T', "time", "",
+      "Print stats about elapsed wallclock time(s)");
+#endif
+    O('R', "fake-results", "",
+      "Ignore input file(s), load some fake results instead.");
+#endif
 #undef O
 }
 
@@ -657,6 +698,15 @@ int main(int argc, char **argv)
                 break;
 
 #endif
+
+#ifdef DEVMODE
+            case 'T':
+                flag_print_times_ = true;
+                break;
+            case 'R':
+                flag_fake_results_ = true;
+                break;
+#endif
             case '?':
                 exit(EXIT_FAILURE);
         }
@@ -718,15 +768,19 @@ int main(int argc, char **argv)
     classifier_ = pc;
 #endif
 
-    /* use stdin if no input file specified */
-    if (argc < optind + ARGC) {
-        argv[argc++] = "-";
-    }
-
     unsigned long n_seqs = 0, n_seqs_unexplained = 0;
 
-    for (; optind + INFILES < argc; optind++) {
-        classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained);
+    if (flag_fake_results_) {
+        classify_fake_results(&n_seqs, &n_seqs_unexplained);
+    } else {
+        for (; optind + INFILES < argc; optind++) {
+            /* use stdin if no input file specified */
+            if (argc < optind + ARGC) {
+                argv[argc++] = "-";
+            }
+
+            classify_file(argv[optind + INFILES], &n_seqs, &n_seqs_unexplained);
+        }
     }
 
     if (flag_output_summary_) {
@@ -747,10 +801,12 @@ int main(int argc, char **argv)
     buffer_free(&buf[0]);
     buffer_free(&buf[1]);
 
-    timeit_print(&t_in, "in ");
-    timeit_print(&t_out, "out");
-    timeit_print(&t_clf, "clf");
-    timeit_print(&t_tot, "tot");
+    if (flag_print_times_) {
+        timeit_print(&t_in, "in ");
+        timeit_print(&t_out, "out");
+        timeit_print(&t_clf, "clf");
+        timeit_print(&t_tot, "tot");
+    }
 
     return EXIT_SUCCESS;
 }

@@ -225,38 +225,6 @@ int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
     return 0;
 }
 
-#if defined(TIMEIT) && HAVE_CLOCK_GETTIME
-void timeit_start(timeit *t)
-{
-    if (t->running) {
-        return;
-    }
-    clock_gettime(CLOCK_REALTIME, &t->start);
-    t->running = 1;
-}
-
-void timeit_stop(timeit *t)
-{
-    struct timespec stop;
-    if (!t->running) {
-        return;
-    }
-    clock_gettime(CLOCK_REALTIME, &stop);
-    t->total += (stop.tv_sec - t->start.tv_sec) +
-                (stop.tv_nsec - t->start.tv_nsec) / 1e9;
-    t->running = 0;
-}
-
-void timeit_print(timeit *t, const char *s)
-{
-    if (s && *s) {
-        fputs(s, stderr);
-        fputs(": ", stderr);
-    }
-    fprintf(stderr, "%.5f\n", t->total);
-}
-#endif
-
 void progress(uproc_io_stream *stream, const char *new_label, double percent)
 {
     static const char *label;

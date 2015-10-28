@@ -72,33 +72,5 @@ int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
                        int prot_thresh_level, bool short_read_mode,
                        bool detailed_mode);
 
-#if defined(TIMEIT) && HAVE_CLOCK_GETTIME
-#include <time.h>
-typedef struct
-{
-    int running;
-    double total;
-    struct timespec start;
-} timeit;
-
-#define TIMEIT_INITIALIZER \
-    {                      \
-        0, 0,              \
-        {                  \
-            0, 0           \
-        }                  \
-    }
-
-void timeit_start(timeit *t);
-void timeit_stop(timeit *t);
-void timeit_print(timeit *t, const char *s);
-#else
-typedef int timeit;
-#define TIMEIT_INITIALIZER 0
-#define timeit_start(...) ((void)0)
-#define timeit_stop(...) ((void)0)
-#define timeit_print(...) ((void)0)
-#endif
-
 void progress(uproc_io_stream *stream, const char *new_label, double percent);
 #endif
