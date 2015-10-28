@@ -517,7 +517,7 @@ string FORMAT. Available characters are:\n\
     r: rank of predicted class (1 is the lowest, e.g. protein family)\n\
     s: classification score");
 
-    O('m', "matches", "FORMAT",
+    O('w', "words", "FORMAT",
       "\
 Like -p, but additionally collect and print information about every matched\n\
 word. In addition to the format characters of -p (see above), the following\n\
@@ -603,7 +603,7 @@ int main(int argc, char **argv)
                 flag_output_predictions_ = true;
                 flag_output_format_ = optarg;
                 break;
-            case 'm':
+            case 'w':
                 flag_output_mosaicwords_ = true;
                 flag_output_format_ = optarg;
                 break;
