@@ -193,36 +193,6 @@ void uproc_protclass_destroy(uproc_protclass *pc);
  */
 int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
                              uproc_list **results);
-
-/** Tracing callback type
- *
- * Additionally to the normal classification, it's possible to get information
- * about every matched word by installing a tracing callback function with
- * uproc_protclass_trace_cb().
- *
- * This function will be called for every word match that was found in the
- * ecurves while classifying a protein sequence.
- *
- * \param word      the word found in the ecurve
- * \param classes   the corresponding classes entry
- * \param index     position in the protein sequence
- * \param reverse   whether the word was found in the "reverse" ecurve
- * \param scores    scores of this match (array of size ::UPROC_SUFFIX_LEN)
- * \param arg       user-supplied argument
- */
-typedef void uproc_protclass_trace_cb(
-    const struct uproc_word *word,
-    const uproc_class classes[static UPROC_RANKS_MAX], size_t index,
-    bool reverse, const double *scores, void *opaque);
-
-/** Set trace callback
- *
- * \param pc        protein classifier
- * \param cb        callback function
- * \param cb_arg    additional argument to \c cb
- */
-void uproc_protclass_set_trace(uproc_protclass *pc,
-                               uproc_protclass_trace_cb *cb, void *cb_arg);
 /** \} */
 
 /**

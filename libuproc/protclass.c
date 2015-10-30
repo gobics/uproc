@@ -43,11 +43,6 @@ struct uproc_protclass_s
     const uproc_ecurve *rev;
     uproc_protfilter *filter;
     void *filter_arg;
-    struct uproc_protclass_trace
-    {
-        uproc_protclass_trace_cb *cb;
-        void *cb_arg;
-    } trace;
 };
 
 static inline uproc_rank get_ranks_count(const uproc_protclass *pc)
@@ -109,10 +104,6 @@ static int scores_add_word(const uproc_protclass *pc,
          i++) {
         uproc_substmat_align_suffixes(substmat, word->suffix,
                                       nb_words[i].suffix, dist);
-        if (pc->trace.cb) {
-            pc->trace.cb(&nb_words[i], nb_classes[i], index, reverse, dist,
-                         pc->trace.cb_arg);
-        }
         for (int k = 0; !res && k < ranks_count; k++) {
             uproc_assert(scores[k]);
             res = scores_add(scores[k], &nb_words[i], nb_classes[i][k], index,
@@ -228,9 +219,6 @@ uproc_protclass *uproc_protclass_create(enum uproc_protclass_mode mode,
         .rev = rev,
         .filter = filter,
         .filter_arg = filter_arg,
-        .trace = {
-            .cb = NULL, .cb_arg = NULL,
-        },
     };
     return pc;
 }
@@ -314,13 +302,6 @@ int uproc_protclass_classify(const uproc_protclass *pc, const char *seq,
     }
 
     return res;
-}
-
-void uproc_protclass_set_trace(uproc_protclass *pc,
-                               uproc_protclass_trace_cb *cb, void *cb_arg)
-{
-    pc->trace.cb = cb;
-    pc->trace.cb_arg = cb_arg;
 }
 
 void uproc_matchedword_init(struct uproc_matchedword *word)
