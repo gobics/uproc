@@ -59,6 +59,7 @@ START_TEST(test_init_valid)
     uproc_alphabet *a;
     ck_assert_msg((a = uproc_alphabet_create("AGSTPKRQEDNHYWFMLIVC")) != NULL,
                   "success if string is valid");
+    ck_assert_str_eq("AGSTPKRQEDNHYWFMLIVC", uproc_alphabet_str(a));
     uproc_alphabet_destroy(a);
 }
 END_TEST
