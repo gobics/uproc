@@ -24,21 +24,29 @@ START_TEST(test_usage)
     fam1 = uproc_idmap_class(map, "foo");
     fam2 = uproc_idmap_class(map, "foo");
     ck_assert_int_eq(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam1), "foo");
 
     fam2 = uproc_idmap_class(map, "bar");
     ck_assert_int_ne(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam2), "bar");
 
     fam2 = uproc_idmap_class(map, "herp derp");
     ck_assert_int_ne(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam2), "herp derp");
 
     fam1 = uproc_idmap_class(map, "herp");
     ck_assert_int_ne(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam1), "herp");
 
     fam1 = uproc_idmap_class(map, "bar");
     ck_assert_int_ne(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam1), "bar");
 
     fam2 = uproc_idmap_class(map, "bar");
     ck_assert_int_eq(fam1, fam2);
+    ck_assert_str_eq(uproc_idmap_str(map, fam2), "bar");
+    ck_assert_str_eq(uproc_idmap_str(map, fam1),
+                     uproc_idmap_str(map, fam2));
 }
 END_TEST
 
