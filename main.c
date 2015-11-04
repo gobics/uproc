@@ -55,6 +55,7 @@ bool flag_output_summary_ = false;
 const char *flag_format_predictions_ = NULL;
 const char *flag_format_mosaicwords_ = NULL;
 
+bool flag_output_headerline_ = false;
 bool flag_output_gz_ = false;
 const char *flag_output_filename_ = NULL;
 
@@ -213,6 +214,41 @@ int buffer_read(struct buffer *buf, uproc_seqiter *seqit)
     }
     buf->n = i;
     return buf->n > 0;
+}
+
+void print_result_header(uproc_io_stream *stream, const char *format)
+{
+    if (!stream) {
+        return;
+    }
+    uproc_assert(format);
+
+    const char *labels[] = {
+        [OUTFMT_SEQ_NUMBER] = "seq_number",
+        [OUTFMT_SEQ_HEADER] = "seq_header",
+        [OUTFMT_SEQ_LENGTH] = "seq_length",
+#ifdef MAIN_DNA
+        [OUTFMT_ORF_FRAME] = "orf_frame",
+        [OUTFMT_ORF_INDEX] = "orf_index",
+        [OUTFMT_ORF_LENGTH] = "orf_length",
+#endif
+        [OUTFMT_CLASS] = "pred_class",
+        [OUTFMT_RANK] = "pred_rank",
+        [OUTFMT_SCORE] = "pred_score",
+        [OUTFMT_MATCH_WORD] = "word",
+        [OUTFMT_MATCH_DIRECTION] = "word_direction",
+        [OUTFMT_MATCH_INDEX] = "word_index",
+        [OUTFMT_MATCH_SCORE] = "word_score",
+    };
+    while (*format) {
+        // increment here so we know if theres another item
+        int c = *format++;
+        uproc_io_puts(labels[c], stream);
+        if (*format) {
+            uproc_io_putc(',', stream);
+        }
+    }
+    uproc_io_putc('\n', stream);
 }
 
 void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
@@ -479,10 +515,13 @@ int compare_count(const void *p1, const void *p2)
     return 0;
 }
 
-void counts_print(void)
+void print_counts(void)
 {
     if (!counts_) {
         return;
+    }
+    if (flag_output_headerline_) {
+        uproc_io_puts("class,count\n", outstream_counts_);
     }
     for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
         struct count c[UPROC_CLASS_MAX + 1];
@@ -598,6 +637,9 @@ are recognized:\n\
       "Write output to FILE instead of standard output.");
     O('z', "zoutput", "FILE",
       "Write gzipped output to FILE (use - for standard output).");
+    O('H', "header", "",
+      "Print a header line containing column names at the beginning of the "
+      "output(s).");
     O('n', "numeric", "",
       "If used with -p or -c, print the internal numeric representation of "
       "the protein families instead of their names.");
@@ -683,6 +725,9 @@ int main(int argc, char **argv)
             case 'z':
                 flag_output_filename_ = optarg;
                 flag_output_gz_ = opt == 'z';
+                break;
+            case 'H':
+                flag_output_headerline_= true;
                 break;
             case 'P':
                 if (parse_prot_thresh_level(optarg, &flag_prot_thresh_level_)) {
@@ -825,6 +870,11 @@ int main(int argc, char **argv)
     classifier_ = pc;
 #endif
 
+    if (flag_output_headerline_) {
+        print_result_header(outstream_predictions_, flag_format_predictions_);
+        print_result_header(outstream_mosaicwords_, flag_format_mosaicwords_);
+    }
+
     unsigned long n_seqs = 0, n_seqs_unexplained = 0;
 
     if (flag_fake_results_) {
@@ -841,13 +891,16 @@ int main(int argc, char **argv)
     }
 
     if (flag_output_summary_) {
+        if (flag_output_headerline_) {
+            uproc_io_puts("classified,unclassified,total\n", outstream_summary_);
+        }
         uproc_io_printf(outstream_summary_, "%lu,",
                         n_seqs - n_seqs_unexplained);
         uproc_io_printf(outstream_summary_, "%lu,", n_seqs_unexplained);
         uproc_io_printf(outstream_summary_, "%lu\n", n_seqs);
     }
     if (flag_output_counts_) {
-        counts_print();
+        print_counts();
     }
 
     uproc_io_close(outstream_counts_);
