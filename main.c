@@ -740,9 +740,15 @@ int main(int argc, char **argv)
     omp_set_num_threads(flag_num_threads_);
 #endif
 
+    // if no output mode was selected, set a default
+    if (!flag_format_predictions_ && !flag_format_mosaicwords_ &&
+        !flag_output_counts_ && !flag_output_summary_) {
+        flag_output_summary_ = true;
+    }
+
     bool multiple_outputs = (flag_output_counts_ + flag_output_summary_ +
                              !!flag_format_predictions_ +
-                             !! flag_format_mosaicwords_) >= 2;
+                             !!flag_format_mosaicwords_) >= 2;
 
     if (multiple_outputs) {
         if (!flag_output_filename_) {
@@ -788,12 +794,6 @@ int main(int argc, char **argv)
         if (flag_format_mosaicwords_) {
             outstream_mosaicwords_ = s;
         }
-    }
-
-    // if no output mode was selected, set a default
-    if (!flag_format_predictions_ && !flag_format_mosaicwords_ &&
-        !flag_output_counts_ && !flag_output_summary_) {
-        flag_output_summary_ = true;
     }
 
     if (argc < optind + ARGC - 1) {
