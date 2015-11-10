@@ -483,10 +483,10 @@ void calib(void)
 
             unsigned long i, seq_count;
             size_t seq_len;
-            uproc_protclass *pc;
+            uproc_clf *pc;
             uproc_list *results = NULL;
-            pc = uproc_protclass_create(UPROC_PROTCLASS_ALL, false, fwd, rev,
-                                        substmat, prot_filter, NULL);
+            pc = uproc_clf_create_protein(UPROC_CLF_ALL, false, fwd, rev,
+                                          substmat, prot_filter, NULL);
 
             seq_len = 1 << power;
             seq_count = (1 << (POW_MAX - power)) * SEQ_COUNT_MULTIPLIER;
@@ -501,9 +501,9 @@ void calib(void)
                     }
                 }
                 randseq(seq, seq_len, aa_probs);
-                uproc_protclass_classify(pc, seq, &results);
+                uproc_clf_classify(pc, seq, &results);
                 for (long i = 0, n = uproc_list_size(results); i < n; i++) {
-                    struct uproc_protresult result;
+                    struct uproc_result result;
                     uproc_list_get(results, i, &result);
                     uproc_list_append(all_scores, &result.score);
                 }
@@ -519,7 +519,7 @@ void calib(void)
             uproc_list_get(all_scores, MIN(seq_count / 1000, n - 1), &tmp);
             thresh3[power - POW_MIN] = tmp;
             uproc_list_destroy(all_scores);
-            uproc_protclass_destroy(pc);
+            uproc_clf_destroy(pc);
         }
     }
     progress(uproc_stderr, NULL, 100.0);

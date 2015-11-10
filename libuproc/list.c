@@ -299,6 +299,13 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
     }
 }
 
+void uproc_list_map2(const uproc_list *list, void (*func)(void *))
+{
+    for (long i = 0; i < list->size; i++) {
+        func(ELEM(list, i));
+    }
+}
+
 void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
                        void *opaque)
 {
