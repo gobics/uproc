@@ -276,6 +276,27 @@ START_TEST(test_sort)
 }
 END_TEST
 
+START_TEST(test_max)
+{
+    srand(time(NULL));
+
+    uproc_list *list = uproc_list_create(sizeof(int));
+
+    for (int i = 0; i < 1337; i++) {
+        int val = rand() / 2;
+        uproc_list_append(list, &val);
+    }
+
+    int max;
+    uproc_list_max(list, compare_int, &max);
+    for (long i = 0, n = uproc_list_size(list); i < n; i++) {
+        int val;
+        uproc_list_get(list, i, &val);
+        ck_assert_int_le(val, max);
+    }
+}
+END_TEST
+
 int main(void)
 {
     Suite *s = suite_create("list");
@@ -291,6 +312,7 @@ int main(void)
     tcase_add_test(tc, test_value_size_check);
     tcase_add_test(tc, test_filter);
     tcase_add_test(tc, test_sort);
+    tcase_add_test(tc, test_max);
     tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
 

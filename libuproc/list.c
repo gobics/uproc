@@ -32,6 +32,8 @@
 #define MIN_CAPACITY 32
 #define MAX_SIZE (LONG_MAX)
 
+#define ELEM(list, index) ((list)->data + (index) * (list)->value_size)
+
 struct uproc_list_s
 {
     /* Number of stored values */
@@ -152,7 +154,7 @@ static int list_get(const uproc_list *list, long index, void *value)
         return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
                                index);
     }
-    memcpy(value, list->data + idx * list->value_size, list->value_size);
+    memcpy(value, ELEM(list, idx), list->value_size);
     return 0;
 }
 
@@ -196,7 +198,7 @@ static int list_set(uproc_list *list, long index, const void *value)
         return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
                                index);
     }
-    memcpy(list->data + idx * list->value_size, value, list->value_size);
+    memcpy(ELEM(list, idx), value, list->value_size);
     return 0;
 }
 
@@ -236,8 +238,7 @@ static int list_extend(uproc_list *list, const void *values, long n)
     if (res) {
         return res;
     }
-    memcpy(list->data + list->size * list->value_size, values,
-           n * list->value_size);
+    memcpy(ELEM(list, list->size), values, n * list->value_size);
     list->size += n;
     return 0;
 }
@@ -287,7 +288,7 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
                     void *opaque)
 {
     for (long i = 0; i < list->size; i++) {
-        func(list->data + i * list->value_size, opaque);
+        func(ELEM(list, i), opaque);
     }
 }
 
@@ -296,8 +297,7 @@ void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
 {
     long new_size = 0;
     for (long i = 0; i < list->size; i++) {
-        void *src = list->data + i * list->value_size,
-             *dest = list->data + new_size * list->value_size;
+        void *src = ELEM(list, i), *dest = ELEM(list, new_size);
 
         if (!func(src, opaque)) {
             continue;
@@ -312,4 +312,20 @@ void uproc_list_sort(uproc_list *list,
                      int (*compare)(const void *, const void *))
 {
     qsort(list->data, list->size, list->value_size, compare);
+}
+
+int uproc_list_max_safe(const uproc_list *list,
+                        int (*compare)(const void *, const void *),
+                        void *value, size_t value_size)
+{
+    if (check_value_size(list, value_size)) {
+        return -1;
+    }
+    for (long i = 0; i < list->size; i++) {
+        void *e = ELEM(list, i);
+        if (!i || compare(e, value) > 0) {
+            memcpy(value, e, list->value_size);
+        }
+    }
+    return 0;
 }

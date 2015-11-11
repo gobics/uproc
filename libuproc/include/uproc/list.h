@@ -168,6 +168,12 @@ long uproc_list_size(const uproc_list *list);
 void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
                     void *opaque);
 
+/** Apply function to all items
+ *
+ * Like ::uproc_list_map but without the \opaque pointer.
+ */
+void uproc_list_map2(const uproc_list *list, void (*func)(void *));
+
 /** Filter list
  *
  * Removes all items from the list for which \c func(item, opaque) returns
@@ -186,6 +192,20 @@ void uproc_list_filter(uproc_list *list, bool (*func)(const void *, void *),
  */
 void uproc_list_sort(uproc_list *list,
                      int (*compare)(const void *, const void *));
+
+int uproc_list_max_safe(const uproc_list *list,
+                        int (*compare)(const void *, const void *), void *value,
+                        size_t value_size);
+
+/* Get greatest item according to \c compare
+ *
+ * The semantics of \c compare correspond to those expected by \c qsort(3).
+ *
+ * NOTE: \c value WILL BE EVALUATED TWICE.
+ */
+#define uproc_list_max(list, compare, value) \
+    uproc_list_max_safe((list), (compare), (value), sizeof *(value))
+
 /** \} */
 
 /**
