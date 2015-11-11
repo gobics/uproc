@@ -71,27 +71,38 @@ static int list_realloc(struct uproc_list_s *list, long n)
  * Fails if the size is already (MAX_SIZE / value_size).  */
 static int list_grow(struct uproc_list_s *list, long n)
 {
-    long cap_req, cap_new, cap_max;
-
-    cap_req = list->size + n;
+    long cap_req = list->size + n;
     if (cap_req < list->capacity) {
         return 0;
     }
 
-    cap_max = MAX_SIZE / list->value_size;
+    long cap_max = MAX_SIZE / list->value_size;
     if (list->capacity == cap_max || cap_req > cap_max) {
         return uproc_error_msg(UPROC_EINVAL, "list too big");
     }
 
+    long cap_new = cap_max;
     if (cap_max / 2 > list->capacity) {
         cap_new = list->capacity * 2;
-    } else {
-        cap_new = cap_max;
     }
     if (cap_new < cap_req) {
         cap_new = cap_req;
     }
     return list_realloc(list, cap_new);
+}
+
+static int check_size(const uproc_list *list, size_t value_size,
+                      const char *operation, const char *func, const char *file,
+                      int line)
+{
+    uintmax_t got = (value_size), want = (list)->value_size;
+    if (got && got != want) {
+        uproc_error_(UPROC_EINVAL, func, file, line,
+                     "%s: object size (%ju) doesn't match list "
+                     "element size (%ju)", operation, got, want);
+        return -1;
+    }
+    return 0;
 }
 
 uproc_list *uproc_list_create(size_t value_size)
@@ -127,24 +138,12 @@ void uproc_list_destroy(uproc_list *list)
     free(list);
 }
 
-static int check_value_size(const uproc_list *list, size_t value_size)
-{
-    if (value_size && value_size != list->value_size) {
-        return uproc_error_msg(UPROC_EINVAL,
-                               "list value size %lu (possibly) doesn't match "
-                               "size of passed object %lu",
-                               (unsigned long)list->value_size,
-                               (unsigned long)value_size);
-    }
-    return 0;
-}
-
 void uproc_list_clear(uproc_list *list)
 {
     list->size = 0;
 }
 
-static int list_get(const uproc_list *list, long index, void *value)
+int uproc_list_get_unsafe(const uproc_list *list, long index, void *value)
 {
     long idx = index;
     if (idx < 0) {
@@ -152,79 +151,80 @@ static int list_get(const uproc_list *list, long index, void *value)
     }
     if (idx < 0 || idx >= list->size) {
         return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
-                               index);
+                               idx);
     }
     memcpy(value, ELEM(list, idx), list->value_size);
     return 0;
 }
 
-int uproc_list_get_safe(const uproc_list *list, long index, void *value,
-                        size_t value_size)
+int uproc_list_get_safe(uproc_list *list, long index, void *value,
+                        size_t value_size, const char *func,
+                        const char *file, int line)
 {
-    return check_value_size(list, value_size) || list_get(list, index, value);
-}
-
-static size_t list_get_all(const uproc_list *list, void *buf, size_t sz)
-{
-    size_t needed = list->value_size * list->size;
-    if (needed < sz) {
-        sz = needed;
+    if (check_size(list, value_size, __func__, func, file, line)) {
+        return -1;
     }
-    memcpy(buf, list->data, sz);
-    return needed;
-}
-
-size_t uproc_list_get_all_safe(const uproc_list *list, void *buf, size_t sz,
-                               size_t value_size)
-{
-    if (check_value_size(list, value_size)) {
-        return 0;
-    }
-    return list_get_all(list, buf, sz);
-}
-
-void *uproc_list_get_all_ptr(uproc_list *list)
-{
-    return list->data;
-}
-
-static int list_set(uproc_list *list, long index, const void *value)
-{
     long idx = index;
     if (idx < 0) {
         idx += list->size;
     }
     if (idx < 0 || idx >= list->size) {
-        return uproc_error_msg(UPROC_EINVAL, "list index %ld out of range",
-                               index);
+        return uproc_error_(UPROC_EINVAL, func, file, line,
+                            "list index %ld out of range", index);
     }
-    memcpy(ELEM(list, idx), value, list->value_size);
+    return uproc_list_get_unsafe(list, idx, value);
+}
+
+void *uproc_list_get_ptr(uproc_list *list)
+{
+    return list->data;
+}
+
+int uproc_list_set_unsafe(uproc_list *list, long index, const void *value)
+{
+    memcpy(ELEM(list, index), value, list->value_size);
     return 0;
 }
+#include    <stdio.h>
 
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
-                        size_t value_size)
+                        size_t value_size, const char *func,
+                        const char *file, int line)
 {
-    return check_value_size(list, value_size) || list_set(list, index, value);
+    if (check_size(list, value_size, __func__, func, file, line)) {
+        return -1;
+    }
+    long idx = index;
+    if (idx < 0) {
+        idx += list->size;
+    }
+    if (idx < 0 || idx >= list->size) {
+        fprintf(stderr, "%ld\n", index);
+        return uproc_error_(UPROC_EINVAL, func, file, line,
+                            "list index %ld out of range", index);
+    }
+    return uproc_list_set_unsafe(list, idx, value);
 }
 
-static int list_append(uproc_list *list, const void *value)
+int uproc_list_append_unsafe(uproc_list *list, const void *value)
 {
     int res = list_grow(list, 1);
     if (res) {
         return res;
     }
     list->size++;
-    return list_set(list, list->size - 1, value);
+    return uproc_list_set_unsafe(list, list->size - 1, value);
 }
 
 int uproc_list_append_safe(uproc_list *list, const void *value,
-                           size_t value_size)
+                           size_t value_size, const char *func,
+                           const char *file, int line)
 {
-    return check_value_size(list, value_size) || list_append(list, value);
+    return check_size(list, value_size, __func__, func, file, line) ||
+        uproc_list_append_unsafe(list, value);
 }
 
-static int list_extend(uproc_list *list, const void *values, long n)
+int uproc_list_extend_unsafe(uproc_list *list, const void *values, long n)
 {
     int res;
     if (n < 0) {
@@ -244,26 +244,33 @@ static int list_extend(uproc_list *list, const void *values, long n)
 }
 
 int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
-                           size_t value_size)
+                           size_t value_size, const char *func,
+                           const char *file, int line)
 {
-    return check_value_size(list, value_size) || list_extend(list, values, n);
+    return check_size(list, value_size, __func__, func, file, line) ||
+        uproc_list_extend_unsafe(list, values, n);
 }
 
-int uproc_list_add(uproc_list *list, const uproc_list *src)
+int uproc_list_add_unsafe(uproc_list *list, const uproc_list *src)
 {
-    if (list->value_size != src->value_size) {
-        return uproc_error_msg(UPROC_EINVAL,
-                               "can't add lists with different value sizes");
-    }
-    return list_extend(list, src->data, src->size);
+    return uproc_list_extend_unsafe(list, src->data, src->size);
 }
 
-static int list_pop(uproc_list *list, void *value)
+int uproc_list_add_safe(uproc_list *list, const uproc_list *src,
+                        const char *func, const char *file, int line)
+{
+    return check_size(list, src->value_size, __func__, func, file, line) ||
+        uproc_list_add_unsafe(list, src);
+}
+
+int uproc_list_pop_unsafe(uproc_list *list, void *value)
 {
     if (list->size < 1) {
         return uproc_error_msg(UPROC_EINVAL, "pop from empty list");
     }
-    list_get(list, list->size - 1, value);
+    int res = uproc_list_get_unsafe(list, list->size - 1, value);
+    uproc_assert(!res);
+
     list->size--;
     if (list->size > list->capacity / 4) {
         return 0;
@@ -271,9 +278,11 @@ static int list_pop(uproc_list *list, void *value)
     return list_realloc(list, list->capacity / 2);
 }
 
-int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size)
+int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size,
+                        const char *func, const char *file, int line)
 {
-    return check_value_size(list, value_size) || list_pop(list, value);
+    return check_size(list, value_size, __func__, func, file, line) ||
+        uproc_list_pop_unsafe(list, value);
 }
 
 long uproc_list_size(const uproc_list *list)
@@ -314,13 +323,10 @@ void uproc_list_sort(uproc_list *list,
     qsort(list->data, list->size, list->value_size, compare);
 }
 
-int uproc_list_max_safe(const uproc_list *list,
-                        int (*compare)(const void *, const void *),
-                        void *value, size_t value_size)
+int uproc_list_max_unsafe(const uproc_list *list,
+                          int (*compare)(const void *, const void *),
+                          void *value)
 {
-    if (check_value_size(list, value_size)) {
-        return -1;
-    }
     for (long i = 0; i < list->size; i++) {
         void *e = ELEM(list, i);
         if (!i || compare(e, value) > 0) {
@@ -328,4 +334,13 @@ int uproc_list_max_safe(const uproc_list *list,
         }
     }
     return 0;
+}
+
+int uproc_list_max_safe(const uproc_list *list,
+                        int (*compare)(const void *, const void *),
+                        void *value, size_t value_size,
+                        const char *func, const char *file, int line)
+{
+    return check_size(list, value_size, __func__, func, file, line) ||
+        uproc_list_max_unsafe(list, compare, value);
 }

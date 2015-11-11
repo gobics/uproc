@@ -65,8 +65,6 @@ struct uproc_dictiter_s
     long bucket_item_index;
 };
 
-static int iter_next(uproc_dictiter *iter, void *key, void *value);
-
 static inline long bucket_count(const uproc_dict *dict)
 {
     return bucket_count_values[dict->bucket_count_index];
@@ -114,7 +112,7 @@ static long find_in_bucket(const uproc_dict *dict, uproc_list *bucket,
     key_value_buffer buf;
     long res = -1;
     for (long i = 0; i < uproc_list_size(bucket); i++) {
-        (void)uproc_list_get_safe(bucket, i, buf, bucket_item_size(dict));
+        (void)uproc_list_get_unsafe(bucket, i, buf);
         if (!compare_bucket_items(key, buf, dict->key_size)) {
             res = i;
             break;
@@ -133,39 +131,44 @@ static long hash(const unsigned char *key, size_t key_size)
     return hash % LONG_MAX;
 }
 
-static int check_sizes(const uproc_dict *dict, const void *key, size_t key_size,
-                       const void *value, size_t value_size)
-{
-    if ((dict->key_size && key_size != dict->key_size) ||
-        (!dict->key_size && !key && key_size != UPROC_DICT_KEY_SIZE_MAX)) {
-        return uproc_error_msg(
-            UPROC_EINVAL,
-            "dict key size %lu (possibly) doesn't match "
-            "size of passed object %lu",
-            (unsigned long)(dict->key_size ? dict->key_size
-                                           : UPROC_DICT_KEY_SIZE_MAX),
-            (unsigned long)key_size);
-    }
-    if (!dict->key_size && key && strlen(key) >= UPROC_DICT_KEY_SIZE_MAX) {
-        return uproc_error_msg(UPROC_EINVAL, "dict key string too long");
-    }
 
-    if ((dict->value_size && value_size != dict->value_size) ||
-        (!dict->value_size && !value &&
-         value_size != UPROC_DICT_VALUE_SIZE_MAX)) {
-        return uproc_error_msg(
-            UPROC_EINVAL,
-            "dict value size %lu (possibly) doesn't match "
-            "size of passed object %lu",
-            (unsigned long)(dict->value_size ? dict->value_size
-                                             : UPROC_DICT_VALUE_SIZE_MAX),
-            (unsigned long)value_size);
+/* If `want` is 0, this means the key/value is a string of length
+ * less than UPROC_DICT_{KEY,VALUE}_SIZE_MAX, if `val` is NULL, the
+ * calling function only reads it, and doesn't require checking
+ * the string's length.
+ * */
+static int check_size(uintmax_t got, uintmax_t want, const void *val,
+                      bool is_key, const char *operation, const char *func,
+                      const char *file, int line)
+{
+    const char *kv = is_key ? "key" : "val";
+    uintmax_t max =
+        is_key ? UPROC_DICT_KEY_SIZE_MAX : UPROC_DICT_VALUE_SIZE_MAX;
+
+    if ((want && got != want) || (!want && !val && got != max)) {
+        return uproc_error_(
+            UPROC_EINVAL, func, file, line,
+            "%s: object size (%ju) doesn't match dict %s size (%ju)",
+            operation, got, kv, want ? want : max);
     }
-    if (!dict->value_size && value &&
-        strlen(value) >= UPROC_DICT_VALUE_SIZE_MAX) {
-        return uproc_error_msg(UPROC_EINVAL, "dict value string too long");
+    if (!want && val && strlen(val) >= max) {
+        return uproc_error_(UPROC_EINVAL, func, file, line,
+                            "dict %s string too long (>= %ju)", kv, max);
     }
     return 0;
+}
+
+static int check_sizes(const uproc_dict *dict, const void *key, size_t key_size,
+                       const void *value, size_t value_size,
+                       const char *operation, const char *func,
+                       const char *file, int line)
+{
+    uproc_assert(dict);
+
+    return check_size(key_size, dict->key_size, key, true,
+                   operation, func, file, line) ||
+    check_size(value_size, dict->value_size, key, false,
+                      operation, func, file, line);
 }
 
 static void free_buckets(uproc_list **buckets, long bucket_count)
@@ -219,15 +222,13 @@ static int resize(uproc_dict *dict, bool grow)
     for (long i = 0; i < bucket_count(dict); i++) {
         for (long k = 0; k < uproc_list_size(dict->buckets[i]); k++) {
             int res;
-            res = uproc_list_get_safe(dict->buckets[i], k, buf,
-                                      bucket_item_size(dict));
+            res = uproc_list_get_unsafe(dict->buckets[i], k, buf);
             // This should never fail.
             uproc_assert(!res);
 
             unsigned long new_bucket_index =
                 hash(buf, dict->key_size) % new_bucket_count;
-            res = uproc_list_append_safe(new_buckets[new_bucket_index], buf,
-                                         bucket_item_size(dict));
+            res = uproc_list_append_unsafe(new_buckets[new_bucket_index], buf);
             if (res) {
                 free_buckets(new_buckets, new_bucket_count);
                 return -1;
@@ -288,7 +289,7 @@ void uproc_dict_destroy(uproc_dict *dict)
     free(dict);
 }
 
-static int dict_set(uproc_dict *dict, const void *key, const void *value)
+int uproc_dict_set_unsafe(uproc_dict *dict, const void *key, const void *value)
 {
     int res = 0;
     unsigned long bucket_index = hash(key, dict->key_size) % bucket_count(dict);
@@ -303,7 +304,7 @@ static int dict_set(uproc_dict *dict, const void *key, const void *value)
 
     long index = find_in_bucket(dict, bucket, key);
     if (index < 0) {
-        res = uproc_list_append_safe(bucket, buf, bucket_item_size(dict));
+        res = uproc_list_append_unsafe(bucket, buf);
         if (res) {
             return -1;
         }
@@ -318,22 +319,24 @@ static int dict_set(uproc_dict *dict, const void *key, const void *value)
             }
         }
     } else {
-        res = uproc_list_set_safe(bucket, index, buf, bucket_item_size(dict));
+        res = uproc_list_set_unsafe(bucket, index, buf);
         uproc_assert(!res);
     }
     return 0;
 }
 
 int uproc_dict_set_safe(uproc_dict *dict, const void *key, size_t key_size,
-                        const void *value, size_t value_size)
+                        const void *value, size_t value_size,
+                        const char *func, const char *file, int line)
 {
-    if (check_sizes(dict, key, key_size, value, value_size)) {
+    if (check_sizes(dict, key, key_size, value, value_size,
+                    __func__, func, file, line)) {
         return -1;
     }
-    return dict_set(dict, key, value);
+    return uproc_dict_set_unsafe(dict, key, value);
 }
 
-static int dict_get(const uproc_dict *dict, const void *key, void *value)
+int uproc_dict_get_unsafe(const uproc_dict *dict, const void *key, void *value)
 {
     unsigned long bucket_index = hash(key, dict->key_size) % bucket_count(dict);
     uproc_list *bucket = dict->buckets[bucket_index];
@@ -342,21 +345,23 @@ static int dict_get(const uproc_dict *dict, const void *key, void *value)
         return UPROC_DICT_KEY_NOT_FOUND;
     }
     key_value_buffer buf;
-    (void)uproc_list_get_safe(bucket, index, buf, bucket_item_size(dict));
+    (void)uproc_list_get_unsafe(bucket, index, buf);
     buf_to_kv(dict, NULL, value, buf);
     return 0;
 }
 
 int uproc_dict_get_safe(const uproc_dict *dict, const void *key,
-                        size_t key_size, void *value, size_t value_size)
+                        size_t key_size, void *value, size_t value_size,
+                        const char *func, const char *file, int line)
 {
-    if (check_sizes(dict, key, key_size, NULL, value_size)) {
+    if (check_sizes(dict, key, key_size, NULL, value_size,
+                    __func__, func, file, line)) {
         return -1;
     }
-    return dict_get(dict, key, value);
+    return uproc_dict_get_unsafe(dict, key, value);
 }
 
-static int dict_remove(uproc_dict *dict, const void *key)
+int uproc_dict_remove_unsafe(uproc_dict *dict, const void *key)
 {
     unsigned long bucket_index = hash(key, dict->key_size) % bucket_count(dict);
     uproc_list *bucket = dict->buckets[bucket_index];
@@ -365,15 +370,15 @@ static int dict_remove(uproc_dict *dict, const void *key)
         return UPROC_DICT_KEY_NOT_FOUND;
     }
     key_value_buffer buf;
-    (void)uproc_list_get_safe(bucket, index, buf, bucket_item_size(dict));
+    (void)uproc_list_get_unsafe(bucket, index, buf);
     // Delete the element at `index` by swapping it with the last one.
     // This changes the order, but that's not an issue.
-    (void)uproc_list_pop_safe(bucket, buf, bucket_item_size(dict));
+    (void)uproc_list_pop_unsafe(bucket, buf);
     if (index == uproc_list_size(bucket)) {
         // The element to be removed was at the end of the list, nothing to do.
     } else {
         int res =
-            uproc_list_set_safe(bucket, index, buf, bucket_item_size(dict));
+            uproc_list_set_unsafe(bucket, index, buf);
         uproc_assert(!res);
     }
     uproc_assert(dict->size > 0);
@@ -385,12 +390,14 @@ static int dict_remove(uproc_dict *dict, const void *key)
     return 0;
 }
 
-int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size)
+int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size,
+                           const char *func, const char *file, int line)
 {
-    if (check_sizes(dict, key, key_size, NULL, dict->value_size)) {
+    if (check_sizes(dict, key, key_size, NULL, dict->value_size,
+                    __func__, func, file, line)) {
         return -1;
     }
-    return dict_remove(dict, key);
+    return uproc_dict_remove_unsafe(dict, key);
 }
 
 long uproc_dict_size(const uproc_dict *dict)
@@ -439,7 +446,7 @@ uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
         if (res) {
             break;
         }
-        res = uproc_dict_set_safe(dict, key, key_size, value, value_size);
+        res = uproc_dict_set_unsafe(dict, key, value);
         if (res) {
             break;
         }
@@ -498,7 +505,7 @@ int uproc_dict_stores(const uproc_dict *dict,
         return -1;
     }
 
-    while (res = iter_next(iter, key, value), !res) {
+    while (res = uproc_dictiter_next_unsafe(iter, key, value), !res) {
         res = format(buf, key, value, opaque);
         if (res) {
             res = -1;
@@ -553,7 +560,7 @@ void uproc_dict_map(const uproc_dict *dict,
     int res;
     key_value_buffer buf;
     void *key = buf, *value = buf + UPROC_DICT_KEY_SIZE_MAX;
-    while (res = iter_next(&iter, key, value), !res) {
+    while (res = uproc_dictiter_next_unsafe(&iter, key, value), !res) {
         func(key, value, opaque);
     }
 }
@@ -571,7 +578,7 @@ uproc_dictiter *uproc_dictiter_create(const uproc_dict *dict)
     return iter;
 }
 
-static int iter_next(uproc_dictiter *iter, void *key, void *value)
+int uproc_dictiter_next_unsafe(uproc_dictiter *iter, void *key, void *value)
 {
     if (iter->bucket_index == bucket_count(iter->dict)) {
         return 1;
@@ -580,23 +587,24 @@ static int iter_next(uproc_dictiter *iter, void *key, void *value)
     if (iter->bucket_item_index == uproc_list_size(bucket)) {
         iter->bucket_index++;
         iter->bucket_item_index = 0;
-        return iter_next(iter, key, value);
+        return uproc_dictiter_next_unsafe(iter, key, value);
     }
     key_value_buffer buf;
-    uproc_list_get_safe(bucket, iter->bucket_item_index, buf,
-                        bucket_item_size(iter->dict));
+    uproc_list_get_unsafe(bucket, iter->bucket_item_index, buf);
     buf_to_kv(iter->dict, key, value, buf);
     iter->bucket_item_index++;
     return 0;
 }
 
 int uproc_dictiter_next_safe(uproc_dictiter *iter, void *key, size_t key_size,
-                             void *value, size_t value_size)
+                             void *value, size_t value_size,
+                             const char *func, const char *file, int line)
 {
-    if (check_sizes(iter->dict, NULL, key_size, NULL, value_size)) {
+    if (check_sizes(iter->dict, NULL, key_size, NULL, value_size,
+                    __func__, func, file, line)) {
         return -1;
     }
-    return iter_next(iter, key, value);
+    return uproc_dictiter_next_unsafe(iter, key, value);
 }
 
 void uproc_dictiter_destroy(uproc_dictiter *iter)

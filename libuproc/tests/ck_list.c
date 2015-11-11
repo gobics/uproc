@@ -84,19 +84,6 @@ START_TEST(test_list)
 }
 END_TEST
 
-START_TEST(test_get_all)
-{
-    struct test_data values[] = {{1, '!'}, {42, 'A'}, {3, 'Z'}};
-    uproc_list_append(list, &values[0]);
-    uproc_list_append(list, &values[1]);
-    memset(values, 0, sizeof values);
-    uproc_list_get_all(list, values, sizeof values);
-    ck_assert_int_eq(values[0].x, 1);
-    ck_assert_int_eq(values[1].x, 42);
-    ck_assert_int_eq(values[2].x, 0);
-}
-END_TEST
-
 START_TEST(test_extend)
 {
     int res;
@@ -166,7 +153,10 @@ START_TEST(test_negative_index)
     ck_assert_int_ne(res, 0);
 
     value.x = 1337;
-    uproc_list_set(list, -3, &value);
+    res = uproc_list_set(list, -3, &value);
+    uproc_perror("");
+    ck_assert_int_eq(res, 0);
+    TEST(-3, 1337);
     TEST(39, 1337);
 #undef TEST
 }
@@ -212,8 +202,11 @@ START_TEST(test_value_size_check)
 
     ck_assert_int_eq(uproc_list_set(tmp, 0, &foo), 0);
     ck_assert_int_eq(uproc_list_get(tmp, 0, &foo), 0);
-    ck_assert_int_eq(uproc_list_get_all(tmp, &foo, sizeof foo), sizeof foo);
+    ck_assert_int_eq(uproc_list_pop(tmp, &foo), 0);
+
+    ck_assert_int_ne(uproc_list_get(tmp, 0, &bar), 0);
     ck_assert_int_ne(uproc_list_set(tmp, 0, &bar), 0);
+    ck_assert_int_ne(uproc_list_append(tmp, &bar), 0);
     uproc_list_destroy(tmp);
 }
 END_TEST
@@ -302,8 +295,8 @@ int main(void)
     Suite *s = suite_create("list");
 
     TCase *tc = tcase_create("list operations");
+    tcase_add_checked_fixture(tc, setup, teardown);
     tcase_add_test(tc, test_list);
-    tcase_add_test(tc, test_get_all);
     tcase_add_test(tc, test_extend);
     tcase_add_test(tc, test_add);
     tcase_add_test(tc, test_pop);
@@ -313,7 +306,6 @@ int main(void)
     tcase_add_test(tc, test_filter);
     tcase_add_test(tc, test_sort);
     tcase_add_test(tc, test_max);
-    tcase_add_checked_fixture(tc, setup, teardown);
     suite_add_tcase(s, tc);
 
     SRunner *sr = srunner_create(s);

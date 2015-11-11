@@ -16,7 +16,7 @@ EXTRA_DIST = check_workaround.h
 
 check_PROGRAMS = $(TESTS)
 
-AM_CFLAGS = @CHECK_CFLAGS@ $(COVERAGE_FLAGS)
+AM_CFLAGS = @CHECK_CFLAGS@ $(COVERAGE_FLAGS) -Wno-unused-variable
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include \
 				-DDATADIR=\"$(abs_top_srcdir)/libuproc/tests/data/\" \
 				-DTMPDATADIR=\"$(abs_top_builddir)/libuproc/tests/data/\"

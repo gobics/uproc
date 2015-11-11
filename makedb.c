@@ -306,14 +306,14 @@ uproc_ecurve *build_ecurve(bool reverse)
         uproc_list *entries = extract_uniques(stream, first, reverse);
         uproc_io_close(stream);
 
-        mark_singletons(uproc_list_get_all_ptr(entries),
+        mark_singletons(uproc_list_get_ptr(entries),
                         uproc_list_size(entries));
 
         if (flags_purge_) {
             uproc_list_filter(entries, filter_no_valid_class, NULL);
         }
 
-        insert_entries(ecurve, uproc_list_get_all_ptr(entries),
+        insert_entries(ecurve, uproc_list_get_ptr(entries),
                        uproc_list_size(entries));
         uproc_list_destroy(entries);
     }
