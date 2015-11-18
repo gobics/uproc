@@ -7,4 +7,19 @@ before_install:
 script:
   - autoreconf -i && ./configure --enable-gcov && make && make check
 after_success:
-  - coveralls --exclude libuproc/tests --exclude libuproc/gen_codon_tables.c --exclude config.h --gcov-options '\-lp'
+  - >
+      coveralls
+      --gcov-options '\-lp'
+      --exclude common.h
+      --exclude common.c
+      --exclude devmode.h
+      --exclude devmode.c
+      --exclude ppopts.c
+      --exclude main.c
+      --exclude makedb.c
+      --exclude import.c
+      --exclude export.c
+      --exclude orf.c
+      --exclude libuproc/tests
+      --exclude libuproc/gen_codon_tables.c
+      --exclude config.h
