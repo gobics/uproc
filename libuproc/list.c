@@ -185,7 +185,6 @@ int uproc_list_set_unsafe(uproc_list *list, long index, const void *value)
     memcpy(ELEM(list, index), value, list->value_size);
     return 0;
 }
-#include    <stdio.h>
 
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
                         size_t value_size, const char *func,
@@ -199,7 +198,6 @@ int uproc_list_set_safe(uproc_list *list, long index, const void *value,
         idx += list->size;
     }
     if (idx < 0 || idx >= list->size) {
-        fprintf(stderr, "%ld\n", index);
         return uproc_error_(UPROC_EINVAL, func, file, line,
                             "list index %ld out of range", index);
     }
@@ -298,6 +296,13 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
 {
     for (long i = 0; i < list->size; i++) {
         func(ELEM(list, i), opaque);
+    }
+}
+
+void uproc_list_map2(const uproc_list *list, void (*func)(void *))
+{
+    for (long i = 0; i < list->size; i++) {
+        func(ELEM(list, i));
     }
 }
 

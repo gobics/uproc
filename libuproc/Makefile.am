@@ -17,8 +17,11 @@ AM_LDFLAGS = $(COVERAGE_LDFLAGS)
 libuproc_la_SOURCES = alphabet.c \
 					bst.c \
 					codon.c \
+					classifier.c \
+					classifier_dna.c \
+					classifier_internal.h \
+					classifier_protein.c \
 					dict.c \
-					dnaclass.c \
 					ecurve.c \
 					ecurve_internal.h \
 					ecurve_mmap.c \
@@ -31,7 +34,6 @@ libuproc_la_SOURCES = alphabet.c \
 					matrix.c \
 					mosaic.c \
 					orf.c \
-					protclass.c \
 					seqio.c \
 					substmat.c \
 					util.h \

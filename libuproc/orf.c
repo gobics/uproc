@@ -160,12 +160,15 @@ void uproc_orf_free(struct uproc_orf *orf)
 
 int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src)
 {
-    char *d = strdup(src->data);
-    if (!d) {
-        return uproc_error(UPROC_ENOMEM);
-    }
     *dest = *src;
-    dest->data = d;
+    dest->data = NULL;
+    if (src->data) {
+        char *d = strdup(src->data);
+        if (!d) {
+            return uproc_error(UPROC_ENOMEM);
+        }
+        dest->data = d;
+    }
     return 0;
 }
 

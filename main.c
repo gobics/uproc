@@ -71,6 +71,7 @@ bool flag_fake_results_ = false;
 uproc_database *database_;
 uproc_rank ranks_count_;
 uproc_model *model_;
+uproc_clf *classifier_;
 
 unsigned long (*counts_)[UPROC_CLASS_MAX + 1];
 void counts_increment(uproc_rank rank, uproc_class class)
@@ -120,19 +121,6 @@ enum {
     OUTFMT_MATCH_SCORE = 'S',
 };
 
-#if MAIN_DNA
-#define clf uproc_dnaclass
-#define clf_classify uproc_dnaclass_classify
-#define clfresult uproc_dnaresult
-#define PROTRESULT(result) (&(result)->protresult)
-#else
-#define clf uproc_protclass
-#define clf_classify uproc_protclass_classify
-#define clfresult uproc_protresult
-#define PROTRESULT(result) (result)
-#endif
-clf *classifier_;
-
 #define CHUNK_SIZE_DEFAULT (1 << 10)
 #define CHUNK_SIZE_MAX (1 << 14)
 
@@ -148,11 +136,7 @@ struct buffer
 static void map_list_result_free(void *value, void *opaque)
 {
     (void)opaque;
-#if MAIN_DNA
-    uproc_dnaresult_free(value);
-#else
-    uproc_protresult_free(value);
-#endif
+    uproc_result_free(value);
 }
 
 void buffer_free(struct buffer *buf)
@@ -190,7 +174,7 @@ void buffer_classify(struct buffer *buf)
     long long i;
 #pragma omp parallel for private(i) shared(buf, classifier_) schedule(static)
     for (i = 0; i < buf->n; i++) {
-        clf_classify(classifier_, buf->seqs[i].data, &buf->results[i]);
+        uproc_clf_classify(classifier_, buf->seqs[i].data, &buf->results[i]);
     }
 }
 
@@ -254,13 +238,11 @@ void print_result_header(uproc_io_stream *stream, const char *format)
 void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
                                 unsigned long seq_num, const char *header,
                                 unsigned long seq_len,
-                                const struct clfresult *result,
+                                const struct uproc_result *result,
                                 const struct uproc_mosaicword *mosaicword)
 {
     uproc_assert(stream);
     uproc_assert(format);
-
-    const struct uproc_protresult *protresult = PROTRESULT(result);
 
     while (*format) {
         // increment here so we know if theres another item
@@ -289,15 +271,15 @@ void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
 #endif
             case OUTFMT_CLASS: {
                 uproc_idmap *idmap =
-                    uproc_database_idmap(database_, protresult->rank);
-                uproc_io_puts(uproc_idmap_str(idmap, protresult->class),
+                    uproc_database_idmap(database_, result->rank);
+                uproc_io_puts(uproc_idmap_str(idmap, result->class),
                               stream);
             } break;
             case OUTFMT_RANK:
-                uproc_io_printf(stream, "%u", protresult->rank + 1);
+                uproc_io_printf(stream, "%u", result->rank + 1);
                 break;
             case OUTFMT_SCORE:
-                uproc_io_printf(stream, "%1.3f", protresult->score);
+                uproc_io_printf(stream, "%1.3f", result->score);
                 break;
             case OUTFMT_MATCH_WORD: {
                 char w[UPROC_WORD_LEN + 1] = "";
@@ -332,7 +314,7 @@ void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
 }
 
 void print_result(unsigned long seq_num, const char *header,
-                  unsigned long seq_len, const struct clfresult *result)
+                  unsigned long seq_len, const struct uproc_result *result)
 
 {
     if (flag_format_predictions_) {
@@ -343,12 +325,11 @@ void print_result(unsigned long seq_num, const char *header,
     }
 
     if (flag_format_mosaicwords_) {
-        const struct uproc_protresult *protresult = PROTRESULT(result);
-        uproc_assert(protresult->mosaicwords);
+        uproc_assert(result->mosaicwords);
 
-        for (long i = 0; i < uproc_list_size(protresult->mosaicwords); i++) {
+        for (long i = 0; i < uproc_list_size(result->mosaicwords); i++) {
             struct uproc_mosaicword mosaicword;
-            uproc_list_get(protresult->mosaicwords, i, &mosaicword);
+            uproc_list_get(result->mosaicwords, i, &mosaicword);
             print_result_or_mosaicword(outstream_mosaicwords_,
                                        flag_format_mosaicwords_, seq_num,
                                        header, seq_len, result, &mosaicword);
@@ -369,13 +350,12 @@ void buffer_process(struct buffer *buf, unsigned long *n_seqs,
             continue;
         }
 
-        struct clfresult result;
+        struct uproc_result result;
         for (long k = 0; k < n_results; k++) {
             uproc_list_get(results, k, &result);
             print_result(*n_seqs, buf->seqs[i].header,
                          strlen(buf->seqs[i].data), &result);
-            struct uproc_protresult *p = PROTRESULT(&result);
-            counts_increment(p->rank, p->class);
+            counts_increment(result.rank, result.class);
         }
     }
 }
@@ -385,20 +365,14 @@ void classify_fake_results(unsigned long *n_seqs,
 {
     uproc_list *results = fake_results();
     for (long i = 0, n = uproc_list_size(results); i < n; i++) {
-        struct uproc_dnaresult result;
+        struct uproc_result result;
         uproc_list_get(results, i, &result);
-#if MAIN_DNA
-        struct clfresult r = result;
-#else
-        struct clfresult r = result.protresult;
-#endif
         char s[32];
         snprintf(s, sizeof s, "fake sequence %li", i);
-        print_result(*n_seqs, s, 22, &r);
-        struct uproc_protresult *p = PROTRESULT(&r);
-        counts_increment(p->rank, p->class);
+        print_result(*n_seqs, s, 22, &result);
+        counts_increment(result.rank, result.class);
         *n_seqs += 1;
-        uproc_protresult_free(p);
+        uproc_result_free(&result);
     }
     *n_seqs_unexplained += 3;
     *n_seqs += 3;
@@ -461,7 +435,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
         trim_header(seq.header);
 
         timeit_start(&t_clf);
-        clf_classify(classifier_, seq.data, &results);
+        uproc_clf_classify(classifier_, seq.data, &results);
         timeit_stop(&t_clf);
 
         timeit_start(&t_out);
@@ -471,11 +445,10 @@ void classify_file(const char *path, unsigned long *n_seqs,
             *n_seqs_unexplained += 1;
         }
         for (long i = 0; i < n_results; i++) {
-            struct clfresult result;
+            struct uproc_result result;
             uproc_list_get(results, i, &result);
             print_result(*n_seqs, seq.header, strlen(seq.data), &result);
-            struct uproc_protresult *p = PROTRESULT(&result);
-            counts_increment(p->rank, p->class);
+            counts_increment(result.rank, result.class);
         }
         timeit_stop(&t_out);
 
@@ -545,6 +518,46 @@ void print_counts(void)
     }
 }
 
+bool prot_filter(const char *seq, size_t len, uproc_class class,
+                 double score, void *opaque)
+{
+    (void)seq;
+    (void)class;
+    unsigned long rows, cols;
+    uproc_matrix *thresh = opaque;
+    if (!thresh) {
+        return score > UPROC_EPSILON;
+    }
+    uproc_matrix_dimensions(thresh, &rows, &cols);
+    if (len >= rows) {
+        len = rows - 1;
+    }
+    return score >= uproc_matrix_get(thresh, len, 0);
+}
+
+bool orf_filter(const struct uproc_orf *orf, const char *seq, size_t seq_len,
+                double seq_gc, void *opaque)
+{
+    unsigned long r, c, rows, cols;
+    uproc_matrix *thresh = opaque;
+    (void)seq;
+    if (orf->length < 20) {
+        return false;
+    }
+    if (!thresh) {
+        return true;
+    }
+    uproc_matrix_dimensions(thresh, &rows, &cols);
+    r = seq_gc * 100;
+    c = seq_len;
+    if (r >= rows) {
+        r = rows - 1;
+    }
+    if (c >= cols) {
+        c = cols - 1;
+    }
+    return orf->score >= uproc_matrix_get(thresh, r, c);
+}
 
 void validate_format_string(const char *progname, const char *fmt,
                             const char *valid)
@@ -859,16 +872,32 @@ int main(int argc, char **argv)
     uproc_database_metadata_get_uint(database_, "ranks", &tmp);
     ranks_count_ = tmp;
 
-    uproc_protclass *pc;
-    uproc_dnaclass *dc;
-
-    create_classifiers(&pc, &dc, database_, model_, flag_prot_thresh_level_,
-                       flag_dna_short_read_mode_, flag_format_mosaicwords_);
+    enum uproc_clf_mode mode = UPROC_CLF_ALL;
 #if MAIN_DNA
-    classifier_ = dc;
-#else
-    classifier_ = pc;
+    if (flag_dna_short_read_mode_) {
+        mode = UPROC_CLF_MAX;
+    }
 #endif
+    uproc_matrix *prot_thresh =
+        uproc_database_protein_threshold(database_, flag_prot_thresh_level_);
+
+    classifier_ = uproc_clf_create_protein(
+        mode, !!flag_format_mosaicwords_,
+        uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
+        uproc_database_ecurve(database_, UPROC_ECURVE_REV),
+        uproc_model_substitution_matrix(model_), prot_filter, prot_thresh);
+
+
+#if MAIN_DNA
+    uproc_matrix *orf_thresholds =
+        flag_dna_short_read_mode_ ? NULL : uproc_model_orf_threshold(model_);
+
+    classifier_ = uproc_clf_create_dna(
+        mode, classifier_,
+        uproc_model_codon_scores(model_),
+        orf_filter, orf_thresholds);
+#endif
+
 
     if (flag_output_headerline_) {
         print_result_header(outstream_predictions_, flag_format_predictions_);
@@ -908,8 +937,7 @@ int main(int argc, char **argv)
     uproc_io_close(outstream_predictions_);
     uproc_io_close(outstream_mosaicwords_);
 
-    uproc_protclass_destroy(pc);
-    uproc_dnaclass_destroy(dc);
+    uproc_clf_destroy(classifier_);
     uproc_model_destroy(model_);
     uproc_database_destroy(database_);
     buffer_free(&buf[0]);

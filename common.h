@@ -63,14 +63,5 @@ void trim_header(char *s);
 /* Create dir (or fail silently) */
 void make_dir(const char *path);
 
-/* Create classifiers
- *
- * `dc` may be NULL if no DNA classifier is needed
- * */
-int create_classifiers(uproc_protclass **pc, uproc_dnaclass **dc,
-                       uproc_database *db, uproc_model *model,
-                       int prot_thresh_level, bool short_read_mode,
-                       bool detailed_mode);
-
 void progress(uproc_io_stream *stream, const char *new_label, double percent);
 #endif

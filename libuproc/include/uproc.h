@@ -101,14 +101,11 @@
 /**
  * \defgroup grp_clf Sequence classification
  * \{
- *   \defgroup grp_clf_prot Protein classification
- *     <!-- protclass.h -->
+ *   \defgroup grp_clf Sequence classification
+ *     <!-- classifier.h -->
  *
  *   \defgroup grp_clf_orf ORF translation
  *     <!-- orf.h -->
- *
- *   \defgroup grp_clf_dna DNA classification
- *     <!-- dnaclass.h -->
  * \}
  *
  *
@@ -177,10 +174,10 @@
 
 #include <uproc/alphabet.h>
 #include <uproc/bst.h>
+#include <uproc/classifier.h>
 #include <uproc/codon.h>
 #include <uproc/common.h>
 #include <uproc/dict.h>
-#include <uproc/dnaclass.h>
 #include <uproc/ecurve.h>
 #include <uproc/error.h>
 #include <uproc/features.h>
@@ -190,7 +187,6 @@
 #include <uproc/matrix.h>
 #include <uproc/mosaic.h>
 #include <uproc/orf.h>
-#include <uproc/protclass.h>
 #include <uproc/substmat.h>
 #include <uproc/seqio.h>
 #include <uproc/word.h>

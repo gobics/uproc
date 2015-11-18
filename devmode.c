@@ -68,7 +68,7 @@ static uproc_list *make_mosaicword_list(struct uproc_mosaicword *words, size_t n
 
 uproc_list *fake_results(void)
 {
-    struct uproc_dnaresult fake_results[] = {
+    struct uproc_result fake_results[] = {
         {
             .orf = {
                 .data = "QTLDNTKHQMWPHYSLQYRFTK",
@@ -77,24 +77,22 @@ uproc_list *fake_results(void)
                 .score = 13.37,
                 .frame = 0,
             },
-            .protresult = {
-                .rank = 0,
-                .class = 2,
-                .score = 3.14,
-                .mosaicwords = make_mosaicword_list(
-                    (struct uproc_mosaicword[]) {
-                        {
-                            .word = { 0, 0 },
-                            .index = 0,
-                            .score = 3,
-                        },
-                        {
-                            .word = { 61414151, 74614151 },
-                            .index = 2,
-                            .score = 0.14,
-                        },
-                    }, 2),
-            },
+            .rank = 0,
+            .class = 2,
+            .score = 3.14,
+            .mosaicwords = make_mosaicword_list(
+                (struct uproc_mosaicword[]) {
+                {
+                .word = { 0, 0 },
+                .index = 0,
+                .score = 3,
+                },
+                {
+                .word = { 61414151, 74614151 },
+                .index = 2,
+                .score = 0.14,
+                },
+                }, 2),
         },
         {
             .orf = {
@@ -104,32 +102,30 @@ uproc_list *fake_results(void)
                 .score = 77.34,
                 .frame = 5,
             },
-            .protresult = {
-                .rank = 0,
-                .class = 1,
-                .score = 6.28,
-                .mosaicwords = make_mosaicword_list(
-                    (struct uproc_mosaicword[]) {
-                        {
-                            .word = { 61414151, 0 },
-                            .index = 0,
-                            .score = 77,
-                        },
-                        {
-                            .word = { 1461, 74614151 },
-                            .index = 2,
-                            .score = 0.34,
-                        },
-                    }, 2),
-            },
+            .rank = 0,
+            .class = 1,
+            .score = 6.28,
+            .mosaicwords = make_mosaicword_list(
+                (struct uproc_mosaicword[]) {
+                {
+                .word = { 61414151, 0 },
+                .index = 0,
+                .score = 77,
+                },
+                {
+                .word = { 1461, 74614151 },
+                .index = 2,
+                .score = 0.34,
+                },
+                }, 2),
         },
     };
 
-    uproc_list *results = uproc_list_create(sizeof (struct uproc_dnaresult));
+    uproc_list *results = uproc_list_create(sizeof (struct uproc_result));
 
     int n = sizeof(fake_results) / sizeof(fake_results[0]);
     for (int i = 0; i < n; i++) {
-        struct uproc_dnaresult result = fake_results[i];
+        struct uproc_result result = fake_results[i];
         uproc_list_append(results, &result);
     }
     return results;

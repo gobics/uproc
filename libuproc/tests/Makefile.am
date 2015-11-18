@@ -3,6 +3,7 @@ SUBDIRS = data
 TESTS = ck_common \
 		ck_alphabet \
 		ck_bst \
+		ck_classifier \
 		ck_codon \
 		ck_dict \
 		ck_idmap \
