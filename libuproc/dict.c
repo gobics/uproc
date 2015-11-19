@@ -166,9 +166,9 @@ static int check_sizes(const uproc_dict *dict, const void *key, size_t key_size,
     uproc_assert(dict);
 
     return check_size(key_size, dict->key_size, key, true,
-                   operation, func, file, line) ||
-    check_size(value_size, dict->value_size, key, false,
-                      operation, func, file, line);
+                      operation, func, file, line) ||
+    check_size(value_size, dict->value_size, value, false,
+               operation, func, file, line);
 }
 
 static void free_buckets(uproc_list **buckets, long bucket_count)
