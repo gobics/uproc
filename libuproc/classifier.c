@@ -72,7 +72,7 @@ static int result_cmpv(const void *p1, const void *p2)
 
 static int filter_results_to_max(uproc_list *results) {
     if (!uproc_list_size(results)) {
-        return;
+        return 0;
     }
     struct uproc_result shallow, deep;
     uproc_list_max(results, result_cmpv, &shallow);
