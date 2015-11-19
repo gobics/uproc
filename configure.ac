@@ -39,7 +39,7 @@ AC_FUNC_MMAP
 AC_FUNC_VPRINTF
 AX_FUNC_MKDIR
 
-AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long])
+AC_CHECK_FUNCS([atexit munmap pow strchr strerror posix_madvise getopt_long getline])
 
 # Checks for libraries
 AC_SEARCH_LIBS([log2], [m])
