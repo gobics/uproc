@@ -19,7 +19,7 @@ cp -r ${prefix}/include ${zipdir}
 
 cp -r ${docdir}/libuproc ${zipdir}/libuproc-docs
 
-unix2dos -n ${docdir}/README.rst ${zipdir}/README.txt
+perl -p -e 's/\n/\r\n/' ${docdir}/README.rst > ${zipdir}/README.txt
 rst2html ${docdir}/README.rst > ${zipdir}/README.html
 
 zip -r ${zipdir}.zip ${zipdir}
