@@ -11,7 +11,6 @@ if [[ -z "$2" ]]; then
 else
 	destdir=$2
 fi
-destdir=$(realpath "${destdir}")
 
 mkdir ${destdir} 2>/dev/null
 

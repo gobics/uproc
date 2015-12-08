@@ -6,7 +6,7 @@ scriptdir=$(dirname "$0")
 
 package () {
 	arch=$1
-	destdir=prefix-${arch}
+	destdir=${PWD}/prefix-${arch}
 
 	scripts=('hostlibs' 'zlib' 'winpthreads' 'uproc' 'package')
 
