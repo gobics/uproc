@@ -28,6 +28,6 @@ mkdir -p ${bindir} 2>/dev/null
 
 for lib in ${libs[@]}; do
 	echo cp ${hostdir}/lib${lib}.dll ${bindir}/
-	cp ${hostdir}/lib${lib}.dll ${bindir}/
+	cp ${hostdir}/lib${lib}.dll ${bindir}/ || exit 1
 done
 
