@@ -15,7 +15,9 @@ grep -s -q 'ID=ubuntu' /etc/os-release && distro=ubuntu
 
 case $distro in
 	ubuntu)
-		hostdir=/usr/lib/gcc/${host}/4.9-win32
+		base=/usr/lib/gcc/${host}
+		dir=$(find ${base}/* -maxdepth 0 | grep -v 'posix$' | sort -n | tail -n 1)
+		hostdir=${dir}
 		;;
 	archlinux)
 		echo implement me >&2
@@ -30,4 +32,3 @@ for lib in ${libs[@]}; do
 	echo cp ${hostdir}/lib${lib}.dll ${bindir}/
 	cp ${hostdir}/lib${lib}.dll ${bindir}/ || exit 1
 done
-
