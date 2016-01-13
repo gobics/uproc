@@ -71,6 +71,9 @@ uproc_matrix *uproc_matrix_create(unsigned long rows, unsigned long cols,
 /** Destroy matrix object */
 void uproc_matrix_destroy(uproc_matrix *matrix);
 
+/** Create a copy */
+uproc_matrix *uproc_matrix_copy(const uproc_matrix *m);
+
 /** Set the value of matrix[row, col] */
 void uproc_matrix_set(uproc_matrix *matrix, unsigned long row,
                       unsigned long col, double value);
@@ -87,6 +90,23 @@ double uproc_matrix_get(const uproc_matrix *matrix, unsigned long row,
  */
 void uproc_matrix_dimensions(const uproc_matrix *matrix, unsigned long *rows,
                              unsigned long *cols);
+
+/** Create scaled square identity matrix
+ *
+ * Returns a NxN matrix with \c factor on the main diagonal and zeroes elsewhere
+ */
+uproc_matrix *uproc_matrix_eye(unsigned long size, double factor);
+
+/** Add to single element, i.e. \code m[row, col] += val \endcode */
+void uproc_matrix_add_elem(uproc_matrix *matrix, unsigned long row,
+                           unsigned long col, double val);
+
+/** Addition */
+uproc_matrix *uproc_matrix_add(const uproc_matrix *a, const uproc_matrix *b);
+
+/** Left division */
+uproc_matrix *uproc_matrix_ldivide(const uproc_matrix *a,
+                                   const uproc_matrix *b);
 
 /** Load matrix from stream */
 uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream);

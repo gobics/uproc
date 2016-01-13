@@ -27,6 +27,10 @@
 #include <string.h>
 #include <limits.h>
 
+#if HAVE_LAPACKE_H
+#include <lapacke.h>
+#endif
+
 #include "uproc/matrix.h"
 #include "uproc/error.h"
 #include "uproc/common.h"
@@ -99,6 +103,11 @@ void uproc_matrix_destroy(uproc_matrix *matrix)
     free(matrix);
 }
 
+uproc_matrix *uproc_matrix_copy(const uproc_matrix *m)
+{
+    return uproc_matrix_create(m->rows, m->cols, m->values);
+}
+
 void uproc_matrix_set(uproc_matrix *matrix, unsigned long row,
                       unsigned long col, double value)
 {
@@ -116,6 +125,111 @@ void uproc_matrix_dimensions(const uproc_matrix *matrix, unsigned long *rows,
 {
     *rows = matrix->rows;
     *cols = matrix->cols;
+}
+
+uproc_matrix *uproc_matrix_eye(unsigned long size, double factor)
+{
+    uproc_matrix *m = uproc_matrix_create(size, size, NULL);
+    if (!m) {
+        return NULL;
+    }
+    for (unsigned long i = 0; factor != 0.0 && i < size; i++) {
+        uproc_matrix_set(m, i, i, factor);
+    }
+    return m;
+}
+
+void uproc_matrix_add_elem(uproc_matrix *matrix, unsigned long row,
+                           unsigned long col, double val)
+{
+    matrix->values[row * matrix->cols + col] += val;
+}
+
+uproc_matrix *uproc_matrix_add(const uproc_matrix *a, const uproc_matrix *b)
+{
+    if (a->rows != b->rows || a->cols != b->cols) {
+        uproc_error_msg(UPROC_EINVAL,
+                        "dimension mismatch: [%lu, %lu] != [%lu, %lu]",
+                        a->rows, a->cols, b->rows, b->cols);
+        return NULL;
+    }
+
+    uproc_matrix *c = uproc_matrix_create(a->rows, a->cols, a->values);
+    if (!c) {
+        return NULL;
+    }
+    for (unsigned long row = 0; row < a->rows; row++) {
+        for (unsigned long col = 0; col < a->cols; col++) {
+            double va = uproc_matrix_get(a, row, col),
+                   vb = uproc_matrix_get(b, row, col);
+            uproc_matrix_set(c, row, col, va + vb);
+        }
+    }
+    return c;
+}
+
+uproc_matrix *uproc_matrix_ldivide(const uproc_matrix *a, const uproc_matrix *b)
+{
+#if !HAVE_LAPACKE_DGESV
+    uproc_error_msg(UPROC_ENOTSUP, "not supported");
+    return NULL;
+#else
+    if (a->rows != a->cols) {
+        uproc_error_msg(UPROC_EINVAL,
+                        "invalid dimensions [%lu, %lu], square matrix required",
+                        a->rows, a->cols);
+        return NULL;
+    }
+    if (a->rows != b->rows) {
+        uproc_error_msg(UPROC_EINVAL,
+                        "dimension mismatch: [%lu, %lu] vs. [%lu, %lu]",
+                        a->rows, a->cols, b->rows, b->cols);
+        return NULL;
+    }
+
+    lapack_int n;
+    if (sizeof (lapack_int) == sizeof(int)) {
+        if (a->rows > INT_MAX) {
+            uproc_error_msg(UPROC_EINVAL,
+                            "matrix too big, %lu > %d", a->rows, INT_MAX);
+            return NULL;
+        }
+        n = (int)a->rows;
+    }
+    if (sizeof (lapack_int) == sizeof(long)) {
+        if (a->rows > LONG_MAX) {
+            uproc_error_msg(UPROC_EINVAL,
+                            "matrix too big, %lu > %ld", a->rows, LONG_MAX);
+            return NULL;
+        }
+        n = (long)a->rows;
+    }
+
+    uproc_matrix *x = uproc_matrix_copy(b);
+    if (!x) {
+        return NULL;
+    }
+    lapack_int *ipiv = malloc(n * sizeof *ipiv);
+    if (!ipiv) {
+        uproc_error(UPROC_ENOMEM);
+        goto error;
+    }
+
+    lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, a->values, n, ipiv,
+                                    x->values, 1);
+    if (info != 0) {
+        uproc_error_msg(UPROC_FAILURE,
+                        "lapack returned error: %ld", (long)info);
+        goto error;
+    }
+    free(ipiv);
+    return x;
+
+error:
+    free(ipiv);
+    uproc_matrix_destroy(x);
+    return NULL;
+#endif
 }
 
 uproc_matrix *uproc_matrix_loads(uproc_io_stream *stream)

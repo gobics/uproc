@@ -28,7 +28,7 @@ AX_CFLAGS_WARN_ALL
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h])
-AC_CHECK_HEADERS([unistd.h zlib.h getopt.h time.h])
+AC_CHECK_HEADERS([unistd.h zlib.h getopt.h time.h lapacke.h])
 
 AC_HEADER_STDBOOL
 AC_C_CONST
@@ -48,6 +48,9 @@ AC_SEARCH_LIBS([gzopen], [z])
 # Checks for clock_gettime()
 AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_CHECK_FUNCS([clock_gettime])
+
+AC_SEARCH_LIBS([LAPACKE_dgesv], [lapacke])
+AC_CHECK_FUNCS([LAPACKE_dgesv])
 
 AC_OPENMP
 

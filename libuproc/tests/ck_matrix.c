@@ -2,6 +2,13 @@
 #include <check.h>
 #include "uproc.h"
 
+#define assert_dbl_eq(a, b, name) do { \
+    double _a = a, _b = b; \
+    ck_assert_msg(fabs(_a - _b) <= UPROC_EPSILON, \
+        "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
+        "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b, UPROC_EPSILON); \
+    } while (0)
+
 uproc_matrix *m;
 
 START_TEST(test_init)
@@ -88,6 +95,76 @@ START_TEST(test_load_invalid)
 }
 END_TEST
 
+START_TEST(test_add)
+{
+    struct {
+        unsigned long rows, cols;
+        double *a, *b, *want;
+    } tests[] = {
+        {
+            1, 1,
+            (double[]) { 1 },
+            (double[]) { 2 },
+            (double[]) { 3 },
+        },
+        {
+            2, 1,
+            (double[]) { 1, 40 },
+            (double[]) { 2, 2 },
+            (double[]) { 3, 42 },
+        },
+    };
+    for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        unsigned long rows = tests[i].rows, cols = tests[i].cols;
+
+        uproc_matrix *a = uproc_matrix_create(rows, cols, tests[i].a),
+                     *b = uproc_matrix_create(rows, cols, tests[i].b),
+                     *want = uproc_matrix_create(rows, cols, tests[i].want),
+                     *got = uproc_matrix_add(a, b);
+        for (unsigned long row = 0; i < rows; i++) {
+            for (unsigned long col = 0; i < cols; i++) {
+                assert_dbl_eq(uproc_matrix_get(got, row, col),
+                              uproc_matrix_get(want, row, col),
+                              "test_add");
+            }
+        }
+        uproc_matrix_destroy(a);
+        uproc_matrix_destroy(b);
+        uproc_matrix_destroy(got);
+        uproc_matrix_destroy(want);
+    }
+}
+END_TEST
+
+START_TEST(test_ldivide)
+{
+    double va[] = {
+        17,  24,   1,   8,  15,
+        23,   5,   7,  14,  16,
+        4,   6,  13,  20,  22,
+        10,  12,  19,  21,   3,
+        11,  18,  25,   2,   9,
+    }, vb[] = { 65, 65, 65, 65, 65 };
+
+    uproc_matrix *a = uproc_matrix_create(5, 5, va),
+                 *b = uproc_matrix_create(5, 1, vb),
+                 *x = uproc_matrix_ldivide(a, b);
+
+    if (!x) {
+        uproc_perror("");
+        ck_assert(0);
+    }
+
+    for (unsigned long i = 0; i < 5; i++) {
+        double val = uproc_matrix_get(x, i, 0);
+        assert_dbl_eq(val, 1.0, "test_ldivide");
+    }
+    uproc_matrix_destroy(a);
+    uproc_matrix_destroy(b);
+    uproc_matrix_destroy(x);
+}
+END_TEST
+
 int main(void)
 {
     Suite *s = suite_create("matrix");
@@ -97,6 +174,8 @@ int main(void)
     tcase_add_test(tc, test_init_vector);
     tcase_add_test(tc, test_store_load);
     tcase_add_test(tc, test_load_invalid);
+    tcase_add_test(tc, test_add);
+    tcase_add_test(tc, test_ldivide);
     suite_add_tcase(s, tc);
 
     SRunner *sr = srunner_create(s);
