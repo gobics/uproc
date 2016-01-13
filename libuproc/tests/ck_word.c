@@ -1,7 +1,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "check_workaround.h"
+#include <check.h>
 #include "uproc.h"
 #include "../codon_tables.h"
 

@@ -1,4 +1,4 @@
-#include "check_workaround.h"
+#include <check.h>
 #include "../util.h"
 
 #include <stdlib.h>

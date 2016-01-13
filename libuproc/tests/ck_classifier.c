@@ -1,4 +1,4 @@
-#include "check_workaround.h"
+#include <check.h>
 #include <limits.h>
 #include <string.h>
 #include <inttypes.h>

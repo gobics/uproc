@@ -1,4 +1,4 @@
-#include "check_workaround.h"
+#include <check.h>
 #include "uproc.h"
 
 uproc_alphabet *alpha;

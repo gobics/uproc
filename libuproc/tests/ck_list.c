@@ -1,4 +1,4 @@
-#include "check_workaround.h"
+#include <check.h>
 #include <limits.h>
 #include <time.h>
 #include "uproc.h"
