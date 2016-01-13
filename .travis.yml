@@ -1,7 +1,10 @@
+sudo: required
+dist: trusty
 language: cpp
 compiler:
   - gcc
 before_install:
+  - sudo apt-get update
   - sudo apt-get install check
   - sudo pip install cpp-coveralls
 script:
