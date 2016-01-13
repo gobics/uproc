@@ -61,6 +61,9 @@ uproc_substmat *uproc_substmat_create(void);
 /** Destroy substmat object */
 void uproc_substmat_destroy(uproc_substmat *mat);
 
+/** Create identity substitution matrix */
+uproc_substmat *uproc_substmat_eye(void);
+
 /** Get distance of two amino acids
  *
  * Retrieves distance between two amino acids \c x and \c y at the suffix

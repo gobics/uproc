@@ -10,6 +10,7 @@ TESTS = ck_common \
 		ck_list \
 		ck_matrix \
 		ck_mosaic \
+		ck_substmat \
 		ck_util \
 		ck_word
 

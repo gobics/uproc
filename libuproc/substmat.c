@@ -57,6 +57,20 @@ void uproc_substmat_destroy(uproc_substmat *mat)
     free(mat);
 }
 
+uproc_substmat *uproc_substmat_eye(void)
+{
+    uproc_substmat *mat = uproc_substmat_create();
+    if (!mat) {
+        return NULL;
+    }
+    for (unsigned pos = 0; pos < UPROC_SUFFIX_LEN; pos++) {
+        for (uproc_amino a = 0; a < UPROC_ALPHABET_SIZE; a++) {
+            uproc_substmat_set(mat, pos, a, a, 1.0);
+        }
+    }
+    return mat;
+}
+
 double uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
                           uproc_amino x, uproc_amino y)
 {
