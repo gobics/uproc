@@ -99,8 +99,7 @@ void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
     }
 }
 
-uproc_substmat *uproc_substmat_loadv(enum uproc_io_type iotype,
-                                     const char *pathfmt, va_list ap)
+uproc_substmat *uproc_substmat_loads(uproc_io_stream *stream)
 {
     struct uproc_substmat_s *mat;
     unsigned long i, j, k, rows, cols, sz, required_sz;
@@ -111,7 +110,7 @@ uproc_substmat *uproc_substmat_loadv(enum uproc_io_type iotype,
         return NULL;
     }
 
-    matrix = uproc_matrix_loadv(iotype, pathfmt, ap);
+    matrix = uproc_matrix_loads(stream);
     if (!matrix) {
         uproc_substmat_destroy(mat);
         return NULL;
@@ -130,10 +129,10 @@ uproc_substmat *uproc_substmat_loadv(enum uproc_io_type iotype,
     for (i = 0; i < UPROC_SUFFIX_LEN; i++) {
         for (j = 0; j < UPROC_ALPHABET_SIZE; j++) {
             for (k = 0; k < UPROC_ALPHABET_SIZE; k++) {
-                /* treat `matrix` like a vector of length SUBSTMAT_REQUIRED
+                /* treat `matrix` like a vector of length required_sz
                  * (this assumes uproc_matrix uses a linear representation) */
-                size_t idx;
-                idx = (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
+                size_t idx =
+                    (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
                 uproc_substmat_set(mat, i, k, j,
                                    uproc_matrix_get(matrix, 0, idx));
             }
@@ -144,13 +143,70 @@ error:
     return mat;
 }
 
+uproc_substmat *uproc_substmat_loadv(enum uproc_io_type iotype,
+                                     const char *pathfmt, va_list ap)
+{
+    uproc_io_stream *stream = uproc_io_openv("r", iotype, pathfmt, ap);
+    if (!stream) {
+        return NULL;
+    }
+    uproc_substmat *mat = uproc_substmat_loads(stream);
+    (void)uproc_io_close(stream);
+    return mat;
+}
+
 uproc_substmat *uproc_substmat_load(enum uproc_io_type iotype,
                                     const char *pathfmt, ...)
 {
-    struct uproc_substmat_s *mat;
     va_list ap;
     va_start(ap, pathfmt);
-    mat = uproc_substmat_loadv(iotype, pathfmt, ap);
+    uproc_substmat *mat = uproc_substmat_loadv(iotype, pathfmt, ap);
     va_end(ap);
     return mat;
+}
+
+int uproc_substmat_stores(const uproc_substmat *mat, uproc_io_stream *stream)
+{
+    unsigned long sz = UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE;
+    uproc_matrix *matrix = uproc_matrix_create(sz, 1, NULL);
+    if (!matrix) {
+        return -1;
+    }
+    for (unsigned i = 0; i < UPROC_SUFFIX_LEN; i++) {
+        for (unsigned j = 0; j < UPROC_ALPHABET_SIZE; j++) {
+            for (unsigned k = 0; k < UPROC_ALPHABET_SIZE; k++) {
+                size_t idx =
+                    (i * UPROC_ALPHABET_SIZE + j) * UPROC_ALPHABET_SIZE + k;
+                uproc_matrix_set(matrix, 0, idx,
+                                 uproc_substmat_get(mat, i, k, j));
+            }
+        }
+    }
+    int res = uproc_matrix_stores(matrix, stream);
+    uproc_matrix_destroy(matrix);
+    return res;
+}
+
+int uproc_substmat_storev(const uproc_substmat *mat, enum uproc_io_type iotype,
+                          const char *pathfmt, va_list ap)
+{
+    int res;
+    uproc_io_stream *stream = uproc_io_openv("w", iotype, pathfmt, ap);
+    if (!stream) {
+        return -1;
+    }
+    res = uproc_substmat_stores(mat, stream);
+    uproc_io_close(stream);
+    return res;
+}
+
+int uproc_substmat_store(const uproc_substmat *mat, enum uproc_io_type iotype,
+                       const char *pathfmt, ...)
+{
+    int res;
+    va_list ap;
+    va_start(ap, pathfmt);
+    res = uproc_substmat_storev(mat, iotype, pathfmt, ap);
+    va_end(ap);
+    return res;
 }

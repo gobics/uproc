@@ -7,4 +7,4 @@ dist_check_DATA = \
 		dict_english_wordlist.txt \
 		dict_single_words.txt
 
-CLEANFILES = test_idmap.tmp test_matrix.tmp test_dict.tmp
+CLEANFILES = test_idmap.tmp test_matrix.tmp test_dict.tmp test_substmat.tmp
