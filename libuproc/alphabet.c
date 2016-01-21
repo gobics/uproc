@@ -53,8 +53,8 @@ uproc_alphabet *uproc_alphabet_create(const char *s)
 
     if (strlen(s) != UPROC_ALPHABET_SIZE) {
         uproc_error_msg(UPROC_EINVAL,
-                        "string too short: %lu characters instead of %d",
-                        (unsigned long)strlen(s), UPROC_ALPHABET_SIZE);
+                        "string \"%s\" too short: %lu characters instead of %d",
+                        s, (unsigned long)strlen(s), UPROC_ALPHABET_SIZE);
         goto error;
     }
     strcpy(a->str, s);

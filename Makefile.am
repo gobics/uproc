@@ -5,7 +5,7 @@ SUBDIRS = libuproc
 
 include $(top_srcdir)/Makefile.am.coverage
 
-bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf uproc-makedb
+bin_PROGRAMS = uproc-dna uproc-prot uproc-import uproc-export uproc-orf uproc-makedb train-substmat-test uproc-makedb-test
 noinst_LTLIBRARIES = libcommon.la
 
 AM_CPPFLAGS = -I$(top_srcdir)/libuproc/include
@@ -29,8 +29,14 @@ uproc_export_SOURCES = export.c
 
 uproc_orf_SOURCES = orf.c
 
-uproc_makedb_SOURCES = makedb.c
+uproc_makedb_SOURCES = makedb.c makedb_train_substmat.c
 #uproc_makedb_CFLAGS = $(OPENMP_CFLAGS)
+
+uproc_makedb_test_SOURCES = makedb.c
+uproc_makedb_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST
+
+train_substmat_test_SOURCES = makedb_train_substmat.c
+train_substmat_test_CPPFLAGS = $(AM_CPPFLAGS) -DTEST
 
 dist_doc_DATA = README.rst
 

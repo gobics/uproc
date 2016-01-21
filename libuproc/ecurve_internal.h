@@ -109,6 +109,18 @@ static inline void uproc_ecurve_get_classes(const uproc_ecurve *ecurve,
                               &ecurve->classes[index * ecurve->ranks_count]);
 }
 
+static inline uproc_class uproc_ecurve_get_class(const uproc_ecurve *ecurve,
+                                                 size_t index, uproc_rank rank)
+{
+    return ecurve->classes[index * ecurve->ranks_count + rank];
+}
+
+static inline void uproc_ecurve_set_class(uproc_ecurve *ecurve,
+                                          size_t index, uproc_rank rank,
+                                          uproc_class cls) {
+    ecurve->classes[index * ecurve->ranks_count + rank] = cls;
+}
+
 static inline void uproc_ecurve_set_classes(uproc_ecurve *ecurve, size_t index,
                                             const uproc_class *src)
 {

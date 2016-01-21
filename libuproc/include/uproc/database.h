@@ -34,6 +34,7 @@
 #include "uproc/dict.h"
 #include "uproc/idmap.h"
 #include "uproc/matrix.h"
+#include "uproc/substmat.h"
 
 /** \defgroup obj_database object uproc_database
  *
@@ -149,6 +150,11 @@ uproc_matrix *uproc_database_protein_threshold(uproc_database *db, int level);
  */
 int uproc_database_set_protein_threshold(uproc_database *db, int level,
                                          uproc_matrix *prot_thresh);
+
+uproc_substmat *uproc_database_substitution_matrix(uproc_database *db);
+
+void uproc_database_set_substitution_matrix(uproc_database *db,
+                                            uproc_substmat *substmat);
 
 uproc_alphabet *uproc_database_alphabet(uproc_database *db);
 

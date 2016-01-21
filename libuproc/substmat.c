@@ -74,6 +74,11 @@ uproc_substmat *uproc_substmat_eye(void)
 double uproc_substmat_get(const uproc_substmat *mat, unsigned pos,
                           uproc_amino x, uproc_amino y)
 {
+    uproc_assert(pos < UPROC_SUFFIX_LEN);
+    uproc_assert(x < UPROC_ALPHABET_SIZE);
+    uproc_assert(x >= 0);
+    uproc_assert(y < UPROC_ALPHABET_SIZE);
+    uproc_assert(y >= 0);
     return mat->dists[pos][SUBSTMAT_INDEX(x, y)];
 }
 

@@ -31,6 +31,7 @@
 #include "uproc/dict.h"
 #include "uproc/matrix.h"
 #include "uproc/idmap.h"
+#include "uproc/substmat.h"
 
 /** Struct defining a database **/
 struct uproc_database_s
@@ -58,6 +59,8 @@ struct uproc_database_s
      * Matrices containing protein thresholds.
      */
     uproc_matrix *prot_thresh_e2, *prot_thresh_e3;
+
+    uproc_substmat *substmat;
 };
 
 // Formats into "t key: value" where t is a one-character type identifier
@@ -511,6 +514,24 @@ uproc_alphabet *uproc_database_alphabet(uproc_database *db)
         return uproc_ecurve_alphabet(db->fwd);
     }
     return uproc_ecurve_alphabet(db->rev);
+}
+
+void uproc_database_set_substitution_matrix(uproc_database *db,
+                                            uproc_substmat *substmat)
+{
+    uproc_assert(db);
+    uproc_assert(substmat);
+    uproc_substmat_destroy(db->substmat);
+    db->substmat = substmat;
+}
+
+uproc_substmat *uproc_database_substitution_matrix(uproc_database *db)
+{
+    if (!db) {
+        uproc_error_msg(UPROC_EINVAL, "db parameter must not be NULL");
+        return NULL;
+    }
+    return db->substmat;
 }
 
 int metadata_get(const uproc_database *db, const char *key,

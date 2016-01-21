@@ -35,13 +35,19 @@
 #endif
 
 #include <uproc.h>
+#include "libuproc/ecurve_internal.h"
 #include "ppopts.h"
 
 #define PROGNAME "uproc-makedb"
 
 bool flags_no_calib_ = false;
 bool flags_calib_only_ = false;
-bool flags_purge_ = false;
+bool flags_no_purge_ = false;
+bool flags_train_substmat_only_ = false;
+bool flags_no_build_ = false;
+bool flags_no_train_substmat_ = false;
+bool flags_purge_before_training_substmat_ = false;
+bool flags_no_mark_singletons_ = false;
 char *flags_ranks_file_ = NULL;
 
 char *modeldir_;
@@ -176,59 +182,6 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
     return entries;
 }
 
-void mark_singletons(struct ecurve_entry *entries, size_t entries_count)
-{
-    enum { SINGLE, CLUSTER, BRIDGED, CROSSOVER };
-    unsigned char *types = calloc(entries_count, 1);
-    if (!types) {
-        uproc_error(UPROC_ENOMEM);
-        uproc_perror("");
-        exit(EXIT_FAILURE);
-    }
-
-    for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
-        for (size_t i = 0; i < entries_count; i++) {
-            struct ecurve_entry *e = &entries[i];
-            unsigned char *t = &types[i];
-
-            /* |AA..| */
-            if (i < entries_count - 1 &&
-                e[0].classes[rank] == e[1].classes[rank]) {
-                t[0] = t[1] = CLUSTER;
-            }
-            /* |ABA.| */
-            else if (entries_count >= 2 && i < entries_count - 2 &&
-                     e[0].classes[rank] == e[2].classes[rank]) {
-                /* B|ABA.| */
-                if (t[1] == BRIDGED || t[1] == CROSSOVER) {
-                    t[0] = t[1] = t[2] = CROSSOVER;
-                }
-                /* |ABAB| */
-                else if (entries_count >= 3 && i < entries_count - 3 &&
-                         t[0] != CLUSTER &&
-                         e[1].classes[rank] == e[3].classes[rank]) {
-                    t[0] = t[1] = t[2] = t[3] = CROSSOVER;
-                }
-                /* A|ABA.| or .|ABA.| */
-                else {
-                    if (t[0] != CLUSTER && t[0] != CROSSOVER) {
-                        t[0] = BRIDGED;
-                    }
-                    if (entries_count >= 2 && i < entries_count - 2) {
-                        t[2] = BRIDGED;
-                    }
-                }
-            }
-        }
-        for (size_t i = 0; i < entries_count; i++) {
-            if (types[i] == SINGLE || types[i] == CROSSOVER) {
-                entries[i].classes[rank] = UPROC_CLASS_INVALID;
-            }
-        }
-    }
-    free(types);
-}
-
 void insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
                     size_t entries_count)
 {
@@ -250,18 +203,6 @@ void insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
     }
     uproc_ecurve_add_prefix(ecurve, current_prefix, suffix_list);
     uproc_list_destroy(suffix_list);
-}
-
-bool filter_no_valid_class(const void *p, void *opaque)
-{
-    (void)opaque;
-    const struct ecurve_entry *entry = p;
-    for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
-        if (entry->classes[rank] != UPROC_CLASS_INVALID) {
-            return true;
-        }
-    }
-    return false;
 }
 
 uintmax_t djb2(const char *str) {
@@ -306,13 +247,6 @@ uproc_ecurve *build_ecurve(bool reverse)
         uproc_list *entries = extract_uniques(stream, first, reverse);
         uproc_io_close(stream);
 
-        mark_singletons(uproc_list_get_ptr(entries),
-                        uproc_list_size(entries));
-
-        if (flags_purge_) {
-            uproc_list_filter(entries, filter_no_valid_class, NULL);
-        }
-
         insert_entries(ecurve, uproc_list_get_ptr(entries),
                        uproc_list_size(entries));
         uproc_list_destroy(entries);
@@ -320,6 +254,115 @@ uproc_ecurve *build_ecurve(bool reverse)
     uproc_ecurve_finalize(ecurve);
     progress(uproc_stderr, NULL, 100);
     return ecurve;
+}
+
+void mark_singletons(uproc_ecurve *ec)
+{
+    uproc_assert(ec->suffix_count >= 1);
+
+    enum { SINGLE, CLUSTER, BRIDGED, CROSSOVER };
+    unsigned char *types = calloc(ec->suffix_count,
+                                                     sizeof *types);
+    if (!types) {
+        uproc_error(UPROC_ENOMEM);
+        uproc_perror("");
+        exit(EXIT_FAILURE);
+    }
+
+    for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
+        for (size_t i = 0, n = ec->suffix_count; i < n - 1; i++) {
+            unsigned char *t = &types[i];
+#define cls(idx) uproc_ecurve_get_class(ec, i + (idx), rank)
+            /* |AA..| */
+            if (cls(0) == cls(1)) {
+                t[0] = t[1] = CLUSTER;
+                continue;
+            }
+
+            /* Continue unless we have |ABA.| */
+            if (n < 2 || i == n - 2 || cls(0) != cls(2)) {
+                continue;
+            }
+
+            /* B|ABA.| */
+            if (t[1] == BRIDGED || t[1] == CROSSOVER) {
+                t[0] = t[1] = t[2] = CROSSOVER;
+            }
+            /* |ABAB| */
+            else if (n >= 3 && i < n - 3 &&
+                     t[0] != CLUSTER &&
+                     cls(1) == cls(3)) {
+                t[0] = t[1] = t[2] = t[3] = CROSSOVER;
+            }
+            /* A|ABA.| or .|ABA.| */
+            else {
+                if (t[0] != CLUSTER && t[0] != CROSSOVER) {
+                    t[0] = BRIDGED;
+                }
+                t[2] = BRIDGED;
+            }
+#undef cls
+        }
+        for (size_t i = 0; i < ec->suffix_count; i++) {
+            if (types[i] == SINGLE || types[i] == CROSSOVER) {
+                uproc_ecurve_set_class(ec, i, rank, UPROC_CLASS_INVALID);
+            }
+        }
+    }
+    free(types);
+}
+
+/* removes all entries that have no valid class on any rank */
+uproc_ecurve *purge_ecurve(const uproc_ecurve *ecurve) {
+    uproc_ecurve *new = uproc_ecurve_create(alphabet_str_, ranks_count_, 0);
+
+
+    struct uproc_ecurve_suffixentry suffix_entry;
+    uproc_list *suffix_list = uproc_list_create(sizeof suffix_entry);
+
+    const struct uproc_ecurve_pfxtable *table = ecurve->prefixes;
+
+    for (uproc_prefix p = 0; p <= UPROC_PREFIX_MAX; p++) {
+        if (ECURVE_ISEDGE(table[p]) || table[p].count == 0) {
+            continue;
+        }
+
+        uproc_list_clear(suffix_list);
+        for (pfxtab_count i = 0; i < table[p].count; i++) {
+            size_t s = table[p].first + i;
+            suffix_entry.suffix = ecurve->suffixes[s];
+            uproc_ecurve_get_classes(ecurve, s, suffix_entry.classes);
+
+            for (uproc_rank rank = 0; rank < ranks_count_; rank++) {
+                if (suffix_entry.classes[rank] != UPROC_CLASS_INVALID) {
+                    uproc_list_append(suffix_list, &suffix_entry);
+                    break;
+                }
+            }
+        }
+
+        if (uproc_list_size(suffix_list)) {
+            uproc_ecurve_add_prefix(new, p, suffix_list);
+        }
+    }
+    uproc_ecurve_finalize(new);
+
+    return new;
+}
+
+void purge_db_ecurves(void) {
+    uproc_ecurve *ec;
+
+    progress(uproc_stderr, "purging ecurves", -1.0);
+    mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_FWD));
+    ec = purge_ecurve(uproc_database_ecurve(database_, UPROC_ECURVE_FWD));
+    uproc_database_set_ecurve(database_, UPROC_ECURVE_FWD, ec);
+    progress(uproc_stderr, NULL, 50.0);
+
+    mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_REV));
+    ec = purge_ecurve(uproc_database_ecurve(database_, UPROC_ECURVE_REV));
+    uproc_database_set_ecurve(database_, UPROC_ECURVE_REV, ec);
+    progress(uproc_stderr, NULL, 100.0);
 }
 
 // For calibration
@@ -458,8 +501,10 @@ void calib(void)
 {
     double thresh2[POW_DIFF + 1], thresh3[POW_DIFF + 1];
 
-    uproc_substmat *substmat =
-        uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", modeldir_);
+    uproc_substmat *substmat = uproc_database_substitution_matrix(database_);
+    if (!substmat) {
+        substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", modeldir_);
+    }
     uproc_matrix *aa_probs =
         uproc_matrix_load(UPROC_IO_GZIP, "%s/aa_probs", modeldir_);
 
@@ -603,12 +648,15 @@ void make_opts(struct ppopts *o, const char *progname)
     O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
     O('r', "ranks", "FILE", /* XXX */ "WRITE ME");
-    O('n', "no-calib", "", "Do not calibrate created database.");
-    O('c', "calib", "",
-      "Re-calibrate existing database (SOURCEFILE will be ignored).");
-    O('p', "purge", "",
-      "Don't include words in the ecurves which don't match \
+    O('B', "no-build", "", "Do not build db (SOURCEFILE will be ignored).");
+    O('S', "no-substmat", "", "Do not train substitution matrix.");
+    O('C', "no-calib", "", "Do not calibrate protein scoring thresholds.");
+    O('P', "no-purge", "",
+      "Include words in the ecurves which don't match \
       to a distinct class on at least one rank.");
+
+    O('p', "purge-first", "", "XXX REMOVE ME");
+    O('M', "no-mark-singletons", "", "XXX REMOVE ME");
 #undef O
 }
 
@@ -616,6 +664,12 @@ void progress_cb(double p, void *arg)
 {
     progress(uproc_stderr, NULL, p);
 }
+
+// from makedb_train_substmat.c
+uproc_substmat *train_substmat(const uproc_ecurve *fwd,
+                               const uproc_ecurve *rev);
+
+#ifndef TEST
 
 int main(int argc, char **argv)
 {
@@ -635,25 +689,45 @@ int main(int argc, char **argv)
             case 'V':
                 uproc_features_print(uproc_stdout);
                 return EXIT_SUCCESS;
-            case 'n':
+            case 'B':
+                flags_no_build_ = true;
+                break;
+            case 'S':
+                flags_no_train_substmat_ = true;
+                break;
+            case 'C':
                 flags_no_calib_ = true;
                 break;
-            case 'c':
-                flags_calib_only_ = true;
-                break;
-            case 'p':
-                flags_purge_ = true;
+            case 'P':
+                flags_no_purge_ = true;
                 break;
             case 'r':
                 flags_ranks_file_ = optarg;
                 break;
+
+            /* XXX remove the following two: */
+            case 'p':
+                flags_purge_before_training_substmat_ = true;
+                break;
+            case 'M':
+                flags_no_mark_singletons_ = true;
+                break;
+
             case '?':
                 return EXIT_FAILURE;
         }
     }
 
     if (flags_no_calib_ && flags_calib_only_) {
-        fprintf(stderr, "-n and -c together don't make sense.\n");
+        fprintf(stderr, "-c and -C together don't make sense.\n");
+        return EXIT_FAILURE;
+    }
+    if (flags_no_train_substmat_ && flags_train_substmat_only_) {
+        fprintf(stderr, "-s and -S together don't make sense.\n");
+        return EXIT_FAILURE;
+    }
+    if (flags_calib_only_ && flags_train_substmat_only_) {
+        fprintf(stderr, "-c and -s together don't make sense.\n");
         return EXIT_FAILURE;
     }
 
@@ -668,7 +742,7 @@ int main(int argc, char **argv)
 
     alphabet_ = load_alphabet();
 
-    if (flags_calib_only_) {
+    if (flags_no_build_) {
         int which = UPROC_DATABASE_LOAD_ALL & ~UPROC_DATABASE_LOAD_PROT_THRESH;
         database_ = uproc_database_load_some(destdir_, which, NULL, NULL);
     } else {
@@ -701,11 +775,31 @@ int main(int argc, char **argv)
         uproc_database_metadata_set_str(database_, "inputfile", sourcefile_);
     }
 
-    if (!flags_no_calib_ || flags_calib_only_) {
+    if (!flags_no_train_substmat_) {
+        if (!flags_no_purge_ && flags_purge_before_training_substmat_) {
+            purge_db_ecurves();
+        }
+        uproc_substmat *s = train_substmat(
+            uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
+            uproc_database_ecurve(database_, UPROC_ECURVE_REV));
+        uproc_database_set_substitution_matrix(database_, s);
+
+        if (!flags_no_purge_ && !flags_purge_before_training_substmat_) {
+            purge_db_ecurves();
+        }
+    }
+
+    // if DB is "purged", this is done in purge_db_ecurves.
+    if (flags_no_purge_ && !flags_no_mark_singletons_) {
+        mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_FWD));
+        mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_REV));
+    }
+
+    if (!flags_no_calib_) {
         calib();
     }
 
-    if (flags_calib_only_) {
+    if (flags_no_build_) {
         // The database is already on disk, avoid storing the ecurves again
         // as this can take a while.
         uproc_database_set_ecurve(database_, UPROC_ECURVE_FWD, NULL);
@@ -717,3 +811,156 @@ int main(int argc, char **argv)
     progress(uproc_stderr, NULL, 100.0);
     return EXIT_SUCCESS;
 }
+
+#else
+
+
+#define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
+uproc_alphabet *alpha_;
+
+struct entry {
+    char w[UPROC_WORD_LEN + 2];
+    uproc_class cls;
+};
+
+void add_entries(struct uproc_ecurve_s *ec, struct entry *entries, size_t n)
+{
+    ec->ranks_count = 1;
+
+    struct uproc_ecurve_suffixentry suffix_entry = {0};
+    uproc_list *suffixes = uproc_list_create(sizeof suffix_entry);
+
+    for (size_t i = 0; i < n; i++) {
+        struct uproc_word w = { 0, 0 };
+        uproc_word_from_string(&w, entries[i].w, alpha_);
+        suffix_entry.suffix = w.suffix;
+        suffix_entry.classes[0] = entries[i].cls;
+        uproc_list_append(suffixes, &suffix_entry);
+    }
+
+    uproc_ecurve_add_prefix(ec, 1337, suffixes);
+    uproc_ecurve_finalize(ec);
+}
+
+void test_mark_singletons(void)
+{
+    struct {
+        const char *name;
+        size_t n;
+        struct entry *entries;
+        uproc_class *expected_classes;
+    } tests[] = {
+        {
+            .name = "two clusters, one singleton",
+            .n = 5,
+            .entries = (struct entry[]) {
+                {"PPPPPPAAAAAAAAAAAA", 0},
+                {"PPPPPPAAAAAAAAAAAG", 0},
+                {"PPPPPPGAAAAAAAAAGG", 1},
+                {"PPPPPPGAAAAAAAAAGG", 0},
+                {"PPPPPPGAAAAAAAAGGG", 0},
+            },
+            .expected_classes = (uproc_class[]) {
+                0, 0, UPROC_CLASS_INVALID, 0, 0,
+            },
+        },
+        {
+            .name = "cluster, singleton, bridged, singleton",
+            .n = 5,
+            .entries = (struct entry[]) {
+                {"PPPPPPAAAAAAAAAAAA", 0},
+                {"PPPPPPAAAAAAAAAAAG", 0},
+                {"PPPPPPGAAAAAAAAAGG", 1},
+                {"PPPPPPGAAAAAAAAAGG", 0},
+                {"PPPPPPGAAAAAAAAGGG", 2},
+            },
+            .expected_classes = (uproc_class[]) {
+                0, 0, UPROC_CLASS_INVALID, 0, UPROC_CLASS_INVALID,
+            },
+        },
+        {
+            .name = "2x cluster, 2x crossover, 2x cluster",
+            .n = 6,
+            .entries = (struct entry[]) {
+                {"PPPPPPAAAAAAAAAAAA", 0},
+                {"PPPPPPAAAAAAAAAAAG", 0},
+                {"PPPPPPGAAAAAAAAAGG", 1},
+                {"PPPPPPGAAAAAAAAAGG", 0},
+                {"PPPPPPGAAAAAAAAGGG", 1},
+                {"PPPPPPGAAAAAAAGGGG", 1},
+            },
+            .expected_classes = (uproc_class[]) {
+                0, 0, UPROC_CLASS_INVALID, UPROC_CLASS_INVALID, 1, 1,
+            },
+        },
+    };
+
+    for (size_t t = 0, n = ELEMENTS(tests); t < n; t++) {
+        uproc_ecurve *ec = uproc_ecurve_create(alphabet_str_, 1, 0);
+        add_entries(ec, tests[t].entries, tests[t].n);
+        mark_singletons(ec);
+
+        for (size_t i = 0; i < tests[t].n; i++) {
+            uproc_class got = ec->classes[i],
+                        want = tests[t].expected_classes[i];
+            if (got != want) {
+                fprintf(stderr,
+                        "%s: test \"%s\", entry %zu: got %ju, want %ju\n",
+                        __func__, tests[t].name, i, (uintmax_t)got,
+                        (uintmax_t)want);
+                exit(EXIT_FAILURE);
+            }
+        }
+        uproc_ecurve_destroy(ec);
+    }
+}
+
+void test_purge(void)
+{
+    struct entry entries_fwd[] = {
+        { "PPPPPPAAAAAAAAAAAA", 0 },
+        { "PPPPPPAAAAAAAAAAAG", 0 },
+        { "PPPPPPGAAAAAAAAAGG", 1 },
+        { "PPPPPPGAAAAAAAAAGG", 1 },
+        { "PPPPPPGAAAAAAAAGGG", 1 },
+    };
+    struct entry entries_rev[] = {
+        { "PPPPPPSSSSSSSSSSSS", 0 },
+        { "PPPPPPSSSSSSSSSSSG", 0 },
+        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
+        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
+        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
+        { "PPPPPPGSSSSSSSSSGG", 1 },
+        { "PPPPPPGTTTTTTTTGGG", 1 },
+    };
+
+    uproc_ecurve *fwd = uproc_ecurve_create(alphabet_str_, 1, 0),
+                 *rev = uproc_ecurve_create(alphabet_str_, 1, 0);
+
+#define ADD_ENTRIES(ec, entries) add_entries((ec), (entries), ELEMENTS((entries)))
+    ADD_ENTRIES(fwd, entries_fwd);
+    ADD_ENTRIES(rev, entries_rev);
+#undef ADD_ENTRIES
+
+    uproc_ecurve *ec;
+    uproc_assert(fwd->suffix_count == 5);
+    ec = purge_ecurve(fwd);
+    uproc_assert(ec->suffix_count == 5);
+
+    uproc_assert(rev->suffix_count == 7);
+    ec = purge_ecurve(rev);
+    uproc_assert(ec->suffix_count == 4);
+}
+
+int main(void)
+{
+    uproc_error_set_handler(errhandler_bail, NULL);
+    memcpy(alphabet_str_, "AGSTPKRQEDNHYWFMLIVC", sizeof alphabet_str_);
+    alpha_ = uproc_alphabet_create(alphabet_str_);
+
+    test_mark_singletons();
+    test_purge();
+    return 0;
+}
+
+#endif
