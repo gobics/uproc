@@ -424,6 +424,21 @@ uproc_ecurve *uproc_database_ecurve(uproc_database *db,
     return dir == UPROC_ECURVE_FWD ? db->fwd : db->rev;
 }
 
+uproc_ecurve *uproc_database_ecurve_mv(uproc_database *db,
+                                       enum uproc_ecurve_direction dir)
+{
+    uproc_assert(db);
+    uproc_ecurve *ec;
+    if (dir == UPROC_ECURVE_FWD) {
+        ec = db->fwd;
+        db->fwd = NULL;
+    } else {
+        ec = db->rev;
+        db->rev = NULL;
+    }
+    return ec;
+}
+
 void uproc_database_set_ecurve(uproc_database *db,
                                enum uproc_ecurve_direction dir,
                                uproc_ecurve *ecurve)

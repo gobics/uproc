@@ -109,6 +109,10 @@ int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
 uproc_ecurve *uproc_database_ecurve(uproc_database *db,
                                     enum uproc_ecurve_direction dir);
 
+/** Get ecurve and transfer ownership to the caller. */
+uproc_ecurve *uproc_database_ecurve_mv(uproc_database *db,
+                                       enum uproc_ecurve_direction dir);
+
 /** Set ecurve.
  *
  * The database takes ownership of \c ecurve
