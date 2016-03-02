@@ -90,7 +90,7 @@ static uproc_ecurve *ecurve_map(const char *path)
     }
     *ec = (struct uproc_ecurve_s){0};
 
-    ec->mmap_fd = open(path, O_RDONLY);
+    ec->mmap_fd = open(path, O_RDWR);
     if (ec->mmap_fd == -1) {
         uproc_error_msg(UPROC_ERRNO, "failed to open %s", path);
         goto error;
@@ -102,8 +102,8 @@ static uproc_ecurve *ecurve_map(const char *path)
     }
     ec->mmap_size = st.st_size;
     ec->mmap_ptr =
-        mmap(NULL, ec->mmap_size, PROT_READ,
-             MAP_PRIVATE | MAP_NORESERVE | MAP_POPULATE, ec->mmap_fd, 0);
+        mmap(NULL, ec->mmap_size, PROT_READ | PROT_WRITE,
+             MAP_SHARED | MAP_NORESERVE | MAP_POPULATE, ec->mmap_fd, 0);
 
     if (ec->mmap_ptr == MAP_FAILED) {
         uproc_error_msg(UPROC_ERRNO, "mmap failed");
