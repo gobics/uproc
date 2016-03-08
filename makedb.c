@@ -762,6 +762,10 @@ int main(int argc, char **argv)
             uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
             uproc_database_ecurve(database_, UPROC_ECURVE_REV));
         uproc_database_set_substitution_matrix(database_, s);
+    } else {
+        uproc_substmat *s = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat",
+                                                modeldir_);
+        uproc_database_set_substitution_matrix(database_, s);
     }
 
     if (!flags_no_purge_) {
