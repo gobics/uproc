@@ -554,7 +554,7 @@ void calib(void)
             uproc_list_sort(all_scores, double_cmp);
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
             double tmp;
-            long n = uproc_list_size(all_scores);
+            unsigned long n = uproc_list_size(all_scores);
             uproc_list_get(all_scores, MIN(seq_count / 100, n - 1), &tmp);
             thresh2[power - POW_MIN] = tmp;
             uproc_list_get(all_scores, MIN(seq_count / 1000, n - 1), &tmp);
@@ -657,6 +657,7 @@ void make_opts(struct ppopts *o, const char *progname)
 
 void progress_cb(double p, void *arg)
 {
+    (void) arg;
     progress(uproc_stderr, NULL, p);
 }
 
