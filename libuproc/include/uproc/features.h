@@ -52,6 +52,10 @@ bool uproc_features_mmap(void);
  * the value of \c _OPENMP, or 0 if compiled without OpenMP.
  */
 int uproc_features_openmp(void);
+
+/** Check LAPACK availability */
+bool uproc_features_lapack(void);
+
 /**
  * \}
  */

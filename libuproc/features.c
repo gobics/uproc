@@ -37,6 +37,8 @@ void uproc_features_print(uproc_io_stream *stream)
     uproc_io_printf(stream, "OpenMP: %d\n", uproc_features_openmp());
     uproc_io_printf(stream, "mmap:   %s\n",
                     uproc_features_mmap() ? "yes" : "no");
+    uproc_io_printf(stream, "LAPACK: %s\n",
+                    uproc_features_lapack() ? "yes" : "no");
 }
 
 const char *uproc_features_version(void)
@@ -73,5 +75,14 @@ int uproc_features_openmp(void)
     return _OPENMP;
 #else
     return 0;
+#endif
+}
+
+bool uproc_features_lapack(void)
+{
+#if HAVE_LAPACKE_DGESV
+    return true;
+#else
+    return false;
 #endif
 }
