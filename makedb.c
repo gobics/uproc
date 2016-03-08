@@ -705,6 +705,13 @@ int main(int argc, char **argv)
         }
     }
 
+    if (!uproc_features_lapack() && !flags_no_substmat_) {
+        fprintf(stderr,
+                "Can't train substmat without LAPACK support in libuproc. "
+                "Use -S to skip this step\n");
+        return EXIT_FAILURE;
+    }
+
     enum nonopt_args { MODELDIR, SOURCEFILE, DESTDIR, ARGC };
     if (argc < optind + ARGC) {
         ppopts_print(&opts, stdout, 80, 0);
@@ -755,7 +762,6 @@ int main(int argc, char **argv)
             uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
             uproc_database_ecurve(database_, UPROC_ECURVE_REV));
         uproc_database_set_substitution_matrix(database_, s);
-
     }
 
     if (!flags_no_purge_) {
