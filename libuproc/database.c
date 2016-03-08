@@ -67,6 +67,7 @@ struct uproc_database_s
 int metadata_format(char *buf, const void *key, const void *value, void *opaque)
 {
     uproc_assert(strlen(key) < UPROC_DICT_KEY_SIZE_MAX);
+    (void) opaque;
     const struct uproc_database_metadata *v = value;
     int bytes_left = UPROC_DICT_STORE_BUFFER_SIZE;
     int res = snprintf(buf, bytes_left, "%c %s: ", v->type, (const char *)key);
@@ -93,6 +94,7 @@ int metadata_format(char *buf, const void *key, const void *value, void *opaque)
 
 int metadata_scan(const char *s, void *key, void *value, void *opaque)
 {
+    (void) opaque;
     struct uproc_database_metadata *v = value;
 
     // determine type by looking at the first character
