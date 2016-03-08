@@ -757,7 +757,7 @@ int main(int argc, char **argv)
                     fprintf(stderr, "-t requires a positive integer\n");
                     return EXIT_FAILURE;
                 }
-                omp_set_num_threads(tmp);
+                flag_num_threads_ = tmp;
             }
 #else
                 fputs("UProC was compiled without OpenMP; -t ignored\n",
