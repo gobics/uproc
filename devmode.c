@@ -60,7 +60,7 @@ void timeit_print(timeit *t, const char *s)
 static uproc_list *make_mosaicword_list(struct uproc_mosaicword *words, size_t n)
 {
     uproc_list *mw = uproc_list_create(sizeof (struct uproc_mosaicword));
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         uproc_list_append(mw, &words[i]);
     }
     return mw;
