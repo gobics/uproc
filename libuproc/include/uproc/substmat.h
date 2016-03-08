@@ -107,6 +107,9 @@ void uproc_substmat_set(uproc_substmat *mat, unsigned pos, uproc_amino x,
 void uproc_substmat_align_suffixes(const uproc_substmat *mat, uproc_suffix s1,
                                    uproc_suffix s2, double *dist);
 
+/** Load substmat from stream */
+uproc_substmat *uproc_substmat_loads(uproc_io_stream *stream);
+
 /** Load substmat from file
  *
  * \param iotype    IO type, see ::uproc_io_type

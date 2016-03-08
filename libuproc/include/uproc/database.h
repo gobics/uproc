@@ -52,16 +52,26 @@ typedef struct uproc_database_s uproc_database;
 
 uproc_database *uproc_database_create(void);
 
-/** Load database from directory.
- *
- * Loads all required data of a UProC database from files in * the given
- * directory and returns a database object.
- *
- * \param path  existing directory containing a UProC database
- * \returns the object on success or %NULL on error
- */
-uproc_database *uproc_database_load(const char *path,
-                         void (*progress)(double, void *), void *progress_arg);
+/** Database format version */
+enum uproc_database_version {
+    /* Version 1:
+     *  - forward and reverse ecurve,
+     *  - protein thresholds for levels 1e-2 and 1e-3
+     *  - one idmap
+     */
+    UPROC_DATABASE_V1 = 1,
+
+    /** Version 2:
+     *  Same as version 1, with the following additions:
+     *  - metadata dictionary
+     *  - substitution matrix
+     *  - multiple idmaps for different ranks
+     */
+    UPROC_DATABASE_V2,
+
+    /** Alias for the latest version */
+    UPROC_DATABASE_LATEST = UPROC_DATABASE_V2,
+};
 
 /** Flags for :uproc_database_load_some */
 enum uproc_database_load_which {
@@ -77,13 +87,29 @@ enum uproc_database_load_which {
     /** Load ecurves */
     UPROC_DATABASE_LOAD_ECURVES = (1 << 3),
 
+    /** Load substitution matrix */
+    UPROC_DATABASE_LOAD_SUBSTMAT = (1 << 4),
+
     /** Load everything */
-    UPROC_DATABASE_LOAD_ALL = 0xff,
+    UPROC_DATABASE_LOAD_ALL = 0xffff,
 };
 
-/** Load some parts of a database from directory. */
-uproc_database *uproc_database_load_some(const char *path, int which,
+/** Load database from directory.
+ *
+ * Loads all required data of a UProC database from files in * the given
+ * directory and returns a database object.
+ *
+ * \param path  existing directory containing a UProC database
+ * \returns the object on success or %NULL on error
+ */
+uproc_database *uproc_database_load(const char *path, int version,
                          void (*progress)(double, void *), void *progress_arg);
+
+/** Load some parts of a database from directory. */
+uproc_database *uproc_database_load_some(const char *path, int version,
+                                         int which,
+                                         void (*progress)(double, void *),
+                                         void *progress_arg);
 
 /** Store database to directory.
  *
@@ -93,14 +119,15 @@ uproc_database *uproc_database_load_some(const char *path, int which,
  * current progress in percent.
  */
 int uproc_database_store(const uproc_database *db, const char *path,
-                         void (*progress)(double, void *), void *progress_arg);
+                         int version, void (*progress)(double, void *),
+                         void *progress_arg);
 
-uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
+uproc_database *uproc_database_unmarshal(uproc_io_stream *stream, int version,
                                          void (*progress)(double, void *),
                                          void *progress_arg);
 
 int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
-                           void (*progress)(double, void *),
+                           int version, void (*progress)(double, void *),
                            void *progress_arg);
 
 /** Get ecurve.

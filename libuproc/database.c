@@ -162,27 +162,28 @@ void db_progress(double percent, void *progress_arg)
     }
 }
 
-uproc_database *uproc_database_load(const char *path, void(*progress)(double, void*), void*progress_arg)
+uproc_database *uproc_database_load(const char *path, int version,
+                                    void(*progress)(double, void*), void*progress_arg)
 {
-    return uproc_database_load_some(path, UPROC_DATABASE_LOAD_ALL, progress, progress_arg);
+    return uproc_database_load_some(path, version, UPROC_DATABASE_LOAD_ALL, progress, progress_arg);
 }
 
-uproc_database *uproc_database_load_some(const char *path, int which,
+uproc_database *uproc_database_load_some(const char *path, int version, int which,
                                          void (*progress)(double, void*), void*progress_arg)
 {
     uproc_database *db = uproc_database_create();
     if (!db) {
         return NULL;
     }
-    // We'll allow old databases without metadata (for now)
-    uproc_error_disable_handler();
-    uproc_dict *new_metadata = uproc_dict_load(
-        0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
-        UPROC_IO_GZIP, "%s/metadata", path);
-    uproc_error_enable_handler();
-    if (new_metadata) {
-        uproc_dict_destroy(db->metadata);
-        db->metadata = new_metadata;
+
+    if (version >= UPROC_DATABASE_V2) {
+        uproc_dict *new_metadata = uproc_dict_load(
+            0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
+            UPROC_IO_GZIP, "%s/metadata", path);
+        if (new_metadata) {
+            uproc_dict_destroy(db->metadata);
+            db->metadata = new_metadata;
+        }
     } else {
         uproc_database_metadata_set_uint(db, "ranks", 1);
     }
@@ -201,18 +202,28 @@ uproc_database *uproc_database_load_some(const char *path, int which,
     }
 
     if (which & UPROC_DATABASE_LOAD_IDMAPS) {
-        uintmax_t ranks;
-        int res = uproc_database_metadata_get_uint(db, "ranks", &ranks);
-        if (res) {
-            goto error;
-        }
-        for (int i = 0; i < ranks; i++) {
-            db->idmaps[i] =
-                uproc_idmap_load(UPROC_IO_GZIP, "%s/rank%d.idmap", path, i);
-            if (!db->idmaps[i]) {
+        if (version == UPROC_DATABASE_V1) {
+            db->idmaps[0] =
+                uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
+        } else {
+            uintmax_t ranks;
+            int res = uproc_database_metadata_get_uint(db, "ranks", &ranks);
+            if (res) {
                 goto error;
             }
+            for (uintmax_t i = 0; i < ranks; i++) {
+                db->idmaps[i] = uproc_idmap_load(UPROC_IO_GZIP,
+                                                 "%s/rank%ju.idmap", path, i);
+                if (!db->idmaps[i]) {
+                    goto error;
+                }
+            }
         }
+    }
+
+    if (version >= UPROC_DATABASE_V2 &&
+        (which & UPROC_DATABASE_LOAD_SUBSTMAT)) {
+        db->substmat = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", path);
     }
 
     if (which & UPROC_DATABASE_LOAD_ECURVES) {
@@ -245,21 +256,29 @@ error:
 }
 
 int uproc_database_store(const uproc_database *db, const char *path,
-                         void (*progress)(double, void *), void *progress_arg)
+                         int version, void (*progress)(double, void *),
+                         void *progress_arg)
 {
     uproc_assert(db);
     uproc_assert(db->metadata);
 
-    if (uproc_dict_store(db->metadata, metadata_format, NULL, UPROC_IO_GZIP,
-                         "%s/metadata", path)) {
-        return -1;
-    }
-    for (int i = 0; i < UPROC_RANKS_MAX; i++) {
-        if (!db->idmaps[i]) {
-            continue;
+    if (version >= UPROC_DATABASE_V2) {
+        if (uproc_dict_store(db->metadata, metadata_format, NULL, UPROC_IO_GZIP,
+                             "%s/metadata", path)) {
+            return -1;
         }
-        if (uproc_idmap_store(db->idmaps[i], UPROC_IO_GZIP, "%s/rank%d.idmap",
-                              path, i)) {
+        for (int i = 0; i < UPROC_RANKS_MAX; i++) {
+            if (!db->idmaps[i]) {
+                continue;
+            }
+            if (uproc_idmap_store(db->idmaps[i], UPROC_IO_GZIP,
+                                  "%s/rank%d.idmap", path, i)) {
+                return -1;
+            }
+        }
+    } else {
+        if (uproc_idmap_store(db->idmaps[0], UPROC_IO_GZIP,
+                              "%s/idmap", path)) {
             return -1;
         }
     }
@@ -273,6 +292,13 @@ int uproc_database_store(const uproc_database *db, const char *path,
     if (db->prot_thresh_e3) {
         if (uproc_matrix_store(db->prot_thresh_e3, UPROC_IO_GZIP,
                                "%s/prot_thresh_e3", path)) {
+            return -1;
+        }
+    }
+
+    if (db->substmat) {
+        if (uproc_substmat_store(db->substmat, UPROC_IO_GZIP,
+                                 "%s/substmat", path)) {
             return -1;
         }
     }
@@ -301,6 +327,7 @@ int uproc_database_store(const uproc_database *db, const char *path,
 }
 
 uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
+                                         int version,
                                          void (*progress)(double, void *),
                                          void *progress_arg)
 {
@@ -308,9 +335,29 @@ uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
     if (!db) {
         return NULL;
     }
-    uproc_dict_destroy(db->metadata);
-    db->metadata = uproc_dict_loads(0, sizeof(struct uproc_database_metadata),
-                                    metadata_scan, NULL, stream);
+
+    if (version >= UPROC_DATABASE_V2) {
+        uproc_dict_destroy(db->metadata);
+        db->metadata =
+            uproc_dict_loads(0, sizeof(struct uproc_database_metadata),
+                             metadata_scan, NULL, stream);
+        db->substmat = uproc_substmat_loads(stream);
+        if (!db->substmat) {
+            goto error;
+        }
+        uintmax_t ranks_count = 1;
+        int res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
+        if (res) {
+            goto error;
+        }
+        for (uintmax_t i = 0; i < ranks_count; i++) {
+            db->idmaps[i] = uproc_idmap_loads(stream);
+            if (!db->idmaps[i]) {
+                goto error;
+            }
+        }
+    }
+
     if (!db->metadata) {
         goto error;
     }
@@ -323,17 +370,14 @@ uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
         goto error;
     }
 
-    uintmax_t ranks_count = 1;
-    int res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
-    if (res) {
-        goto error;
-    }
-    for (unsigned int i = 0; i < ranks_count; i++) {
-        db->idmaps[i] = uproc_idmap_loads(stream);
-        if (!db->idmaps[i]) {
+    // in v1, idmap is stored after protein thresholds
+    if (version == UPROC_DATABASE_V1) {
+        db->idmaps[0] = uproc_idmap_loads(stream);
+        if (!db->idmaps[0]) {
             goto error;
         }
     }
+
     struct db_progress_arg p_arg = {
         .parent_func = progress,
         .parent_arg = progress_arg,
@@ -358,13 +402,26 @@ error:
 }
 
 int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
-                           void (*progress)(double, void *), void *progress_arg)
+                           int version, void (*progress)(double, void *),
+                           void *progress_arg)
 {
     uproc_assert(db);
-    int res = uproc_dict_stores(db->metadata, metadata_format, NULL, stream);
-    if (res) {
-        goto error;
+    int res = 0;
+    if (version >= UPROC_DATABASE_V2) {
+        res = uproc_dict_stores(db->metadata, metadata_format, NULL, stream);
+        if (res) {
+            goto error;
+        }
+        uintmax_t ranks_count = 1;
+        res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
+        for (uintmax_t i = 0; !res && i < ranks_count; i++) {
+            res = uproc_idmap_stores(db->idmaps[i], stream);
+        }
+        if (res) {
+            goto error;
+        }
     }
+
     res = uproc_matrix_stores(db->prot_thresh_e2, stream);
     if (res) {
         goto error;
@@ -374,13 +431,12 @@ int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
         goto error;
     }
 
-    uintmax_t ranks_count = 1;
-    res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
-    for (unsigned int i = 0; !res && i < ranks_count; i++) {
-        res = uproc_idmap_stores(db->idmaps[i], stream);
-    }
-    if (res) {
-        goto error;
+    // in v1, idmap is stored after protein thresholds
+    if (version == UPROC_DATABASE_V1) {
+        res = uproc_idmap_stores(db->idmaps[0], stream);
+        if (res) {
+            goto error;
+        }
     }
 
     struct db_progress_arg p_arg = {
