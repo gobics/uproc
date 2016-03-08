@@ -46,6 +46,9 @@ bool flags_no_ecurves_ = false;
 bool flags_no_substmat_ = false;
 char *flags_ranks_file_ = NULL;
 
+int flag_num_threads_ = 8;
+bool flags_parallel_ = false;
+
 char *modeldir_;
 char *sourcefile_;
 char *destdir_;
@@ -234,18 +237,41 @@ uproc_ecurve *build_ecurve(bool reverse)
     uproc_ecurve *ecurve = uproc_ecurve_create(alphabet_str_, ranks_count_, 0);
 
     progress(uproc_stderr, reverse ? "rev.ecurve" : "fwd.ecurve", -1.0);
-    for (uproc_amino first = 0; first < UPROC_ALPHABET_SIZE; first++) {
-        uproc_io_stream *stream =
-            uproc_io_open("r", UPROC_IO_GZIP, sourcefile_);
-        progress(uproc_stderr, NULL, first * 100 / UPROC_ALPHABET_SIZE);
 
-        // list of struct ecurve_entry
-        uproc_list *entries = extract_uniques(stream, first, reverse);
-        uproc_io_close(stream);
+    if (!flags_parallel_) {
+        for (uproc_amino first = 0; first < UPROC_ALPHABET_SIZE; first++) {
+            uproc_io_stream *stream =
+                uproc_io_open("r", UPROC_IO_GZIP, sourcefile_);
+            progress(uproc_stderr, NULL, first * 100 / UPROC_ALPHABET_SIZE);
 
-        insert_entries(ecurve, uproc_list_get_ptr(entries),
-                       uproc_list_size(entries));
-        uproc_list_destroy(entries);
+            // list of struct ecurve_entry
+            uproc_list *entries = extract_uniques(stream, first, reverse);
+            uproc_io_close(stream);
+
+            insert_entries(ecurve, uproc_list_get_ptr(entries),
+                           uproc_list_size(entries));
+            uproc_list_destroy(entries);
+        }
+    } else {
+        uproc_list *entries[UPROC_ALPHABET_SIZE];
+        uproc_amino first, done = 0;
+#pragma omp parallel for private(first) shared(entries, done) schedule(static)
+        for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
+            uproc_io_stream *stream =
+                uproc_io_open("r", UPROC_IO_GZIP, sourcefile_);
+            entries[first] = extract_uniques(stream, first, reverse);
+            uproc_io_close(stream);
+#pragma omp critical
+            {
+                done++;
+                progress(uproc_stderr, NULL, done * 100 / UPROC_ALPHABET_SIZE);
+            }
+        }
+        for (first = 0; first < UPROC_ALPHABET_SIZE; first++) {
+            insert_entries(ecurve, uproc_list_get_ptr(entries[first]),
+                           uproc_list_size(entries[first]));
+            uproc_list_destroy(entries[first]);
+        }
     }
     uproc_ecurve_finalize(ecurve);
     progress(uproc_stderr, NULL, 100);
@@ -652,6 +678,13 @@ void make_opts(struct ppopts *o, const char *progname)
       to a distinct class on at least one rank.");
     O('C', "no-calib", "", "Do not calibrate protein scoring thresholds.");
 
+#if _OPENMP
+    O('p', "parallel", "",
+      "Build ecurves in parallel. WARNING: Requires a lot of RAM.");
+    O('t', "threads", "N", "Maximum number of threads to use (default: %d).",
+      flag_num_threads_);
+#endif
+
 #undef O
 }
 
@@ -700,6 +733,28 @@ int main(int argc, char **argv)
             case 'r':
                 flags_ranks_file_ = optarg;
                 break;
+#if _OPENMP
+            case 't':
+                {
+                    int res, tmp;
+                    res = parse_int(optarg, &tmp);
+                    if (res || tmp <= 0) {
+                        fprintf(stderr, "-t requires a positive integer\n");
+                        return EXIT_FAILURE;
+                    }
+                    flag_num_threads_ = tmp;
+                }
+                break;
+            case 'p':
+                flags_parallel_ = true;
+                break;
+#else
+            case 't':
+            case 'p':
+                fputs("UProC was compiled without OpenMP; -t ignored\n",
+                      stderr);
+            break;
+#endif
 
             case '?':
                 return EXIT_FAILURE;
@@ -712,6 +767,11 @@ int main(int argc, char **argv)
                 "Use -S to skip this step\n");
         return EXIT_FAILURE;
     }
+
+#if _OPENMP
+    omp_set_nested(1);
+    omp_set_num_threads(flag_num_threads_);
+#endif
 
     enum nonopt_args { MODELDIR, SOURCEFILE, DESTDIR, ARGC };
     if (argc < optind + ARGC) {
