@@ -79,6 +79,19 @@ int parse_int(const char *arg, int *x)
     return 0;
 }
 
+int parse_db_version(const char *arg, int *x)
+{
+    int tmp;
+    if (parse_int(arg, &tmp)) {
+        return -1;
+    }
+    if (tmp < UPROC_DATABASE_V1 || tmp > UPROC_DATABASE_LATEST) {
+        return -1;
+    }
+    *x = tmp;
+    return 0;
+}
+
 int parse_prot_thresh_level(const char *arg, int *x)
 {
     int tmp;

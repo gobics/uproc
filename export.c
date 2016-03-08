@@ -35,6 +35,9 @@
 
 #define PROGNAME "uproc-export"
 
+static int load_version_ = UPROC_DATABASE_LATEST;
+static int store_version_ = UPROC_DATABASE_LATEST;
+
 void make_opts(struct ppopts *o, const char *progname)
 {
 #define O(...) ppopts_add(o, __VA_ARGS__)
@@ -46,6 +49,14 @@ void make_opts(struct ppopts *o, const char *progname)
     O('h', "help", "", "Print this message and exit.");
     O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
+
+    O('L', "load-version", "VERSION",
+      "Use database format VERSION for loading, default: %d",
+      UPROC_DATABASE_LATEST);
+    O('S', "store-version", "VERSION",
+      "Use database format VERSION for storing, default: %d",
+      UPROC_DATABASE_LATEST);
+
     if (uproc_features_zlib()) {
         O('n', "nocompress", "", "Store without gzip compression.");
     }
@@ -54,6 +65,7 @@ void make_opts(struct ppopts *o, const char *progname)
 
 void progress_cb(double p, void *arg)
 {
+    (void) arg;
     progress(uproc_stderr, NULL, p);
 }
 
@@ -82,6 +94,20 @@ int main(int argc, char **argv)
             case 'n':
                 iotype = UPROC_IO_STDIO;
                 break;
+            case 'L':
+                if (parse_db_version(optarg, &load_version_)) {
+                    fprintf(stderr, "-L argument must be in range (1, %d)\n",
+                            UPROC_DATABASE_LATEST);
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'S':
+                if (parse_db_version(optarg, &store_version_)) {
+                    fprintf(stderr, "-S argument must be in range (1, %d)\n",
+                            UPROC_DATABASE_LATEST);
+                    return EXIT_FAILURE;
+                }
+                break;
             case '?':
                 return EXIT_FAILURE;
         }
@@ -96,12 +122,13 @@ int main(int argc, char **argv)
     char msg[1024];
     snprintf(msg, sizeof msg, "Loading %s", dir);
     progress(uproc_stderr, msg, -1);
-    uproc_database *db = uproc_database_load(dir, progress_cb, NULL);
+    uproc_database *db = uproc_database_load(dir, load_version_, progress_cb,
+                                             NULL);
 
     snprintf(msg, sizeof msg, "Storing %s", file);
     progress(uproc_stderr, msg, -1);
     uproc_io_stream *stream = open_write(file, iotype);
-    uproc_database_marshal(db, stream, progress_cb, NULL);
+    uproc_database_marshal(db, stream, store_version_, progress_cb, NULL);
 
     uproc_database_destroy(db);
     uproc_io_close(stream);

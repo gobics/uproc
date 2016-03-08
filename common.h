@@ -47,6 +47,9 @@ void print_version(const char *progname);
 /* Parse int from string */
 int parse_int(const char *arg, int *x);
 
+/* Parse int and check whether it is a valid DB version */
+int parse_db_version(const char *arg, int *x);
+
 /* Parse int and check whether it is 0, 2 or 3 */
 int parse_prot_thresh_level(const char *arg, int *x);
 
