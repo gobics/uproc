@@ -400,6 +400,28 @@ int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size,
     return uproc_dict_remove_unsafe(dict, key);
 }
 
+int uproc_dict_update(uproc_dict *dest, const uproc_dict *src)
+{
+    uproc_assert(dest->key_size == src->key_size);
+    uproc_assert(dest->value_size == src->value_size);
+
+    int res = 0;
+    uproc_dictiter *iter = uproc_dictiter_create(src);
+    unsigned char key[UPROC_DICT_KEY_SIZE_MAX],
+                  value[UPROC_DICT_VALUE_SIZE_MAX];
+
+    while (res = uproc_dictiter_next_unsafe(iter, key, value), !res) {
+        int res = uproc_dict_set_unsafe(dest, key, value);
+        if (res) {
+            goto error;
+        }
+    }
+    res = 0;
+error:
+    uproc_dictiter_destroy(iter);
+    return res;
+}
+
 long uproc_dict_size(const uproc_dict *dict)
 {
     return dict->size;

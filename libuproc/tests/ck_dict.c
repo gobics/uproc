@@ -147,6 +147,52 @@ START_TEST(test_many_values)
 }
 END_TEST
 
+START_TEST(test_update)
+{
+    struct {
+        const char *key, *value;
+    }
+    a[] = {
+        {"foo", "bar"},
+        {"bacon", "aarhgad"},
+    },
+        b[] = {
+            {"spam", "egg"},
+            {"bacon", "beans"},
+        },
+        want[] = {
+            {"foo", "bar"},
+            {"spam", "egg"},
+            {"bacon", "beans"},
+        };
+
+#define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
+
+    uproc_dict *dict_a = uproc_dict_create(0, 0),
+               *dict_b = uproc_dict_create(0, 0),
+               *dict_want = uproc_dict_create(0, 0);
+
+    for (size_t i = 0, n = ELEMENTS(a); i < n; i++) {
+        uproc_dict_set(dict_a, a[i].key, a[i].value);
+    }
+    for (size_t i = 0, n = ELEMENTS(b); i < n; i++) {
+        uproc_dict_set(dict_b, b[i].key, b[i].value);
+    }
+
+    uproc_dict_update(dict_a, dict_b);
+
+    for (size_t i = 0, n = ELEMENTS(want); i < n; i++) {
+        char value[UPROC_DICT_VALUE_SIZE_MAX];
+        int res = uproc_dict_get(dict_a, want[i].key, &value);
+        if (res) {
+            uproc_perror("");
+            ck_assert_int_eq(res, 0);
+        }
+        ck_assert_str_eq(value, want[i].value);
+    }
+}
+END_TEST
+
 START_TEST(test_iter)
 {
     struct uproc_word key;
@@ -284,6 +330,7 @@ int main(void)
     TCase *tc = tcase_create("dict stuff");
     tcase_add_test(tc, test_string_keys);
     tcase_add_test(tc, test_many_values);
+    tcase_add_test(tc, test_update);
     tcase_add_test(tc, test_iter);
     tcase_add_test(tc, test_map);
     tcase_add_test(tc, test_store_load);

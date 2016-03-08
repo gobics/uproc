@@ -127,6 +127,9 @@ int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size,
     uproc_dict_remove_safe((dict), (key), sizeof *(key), __func__, __FILE__, \
                            __LINE__)
 
+/** Insert all entries of src into dest */
+int uproc_dict_update(uproc_dict *dest, const uproc_dict *src);
+
 /** Return the number of items */
 long uproc_dict_size(const uproc_dict *dict);
 
