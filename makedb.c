@@ -41,13 +41,9 @@
 #define PROGNAME "uproc-makedb"
 
 bool flags_no_calib_ = false;
-bool flags_calib_only_ = false;
 bool flags_no_purge_ = false;
-bool flags_train_substmat_only_ = false;
-bool flags_no_build_ = false;
-bool flags_no_train_substmat_ = false;
-bool flags_purge_before_training_substmat_ = false;
-bool flags_no_mark_singletons_ = false;
+bool flags_no_ecurves_ = false;
+bool flags_no_substmat_ = false;
 char *flags_ranks_file_ = NULL;
 
 char *modeldir_;
@@ -648,15 +644,14 @@ void make_opts(struct ppopts *o, const char *progname)
     O('v', "version", "", "Print version and exit.");
     O('V', "libversion", "", "Print libuproc version/features and exit.");
     O('r', "ranks", "FILE", /* XXX */ "WRITE ME");
-    O('B', "no-build", "", "Do not build db (SOURCEFILE will be ignored).");
+    O('E', "no-ecurves", "",
+      "Do not build ecurves (SOURCEFILE will be ignored).");
     O('S', "no-substmat", "", "Do not train substitution matrix.");
-    O('C', "no-calib", "", "Do not calibrate protein scoring thresholds.");
     O('P', "no-purge", "",
       "Include words in the ecurves which don't match \
       to a distinct class on at least one rank.");
+    O('C', "no-calib", "", "Do not calibrate protein scoring thresholds.");
 
-    O('p', "purge-first", "", "XXX REMOVE ME");
-    O('M', "no-mark-singletons", "", "XXX REMOVE ME");
 #undef O
 }
 
@@ -689,11 +684,11 @@ int main(int argc, char **argv)
             case 'V':
                 uproc_features_print(uproc_stdout);
                 return EXIT_SUCCESS;
-            case 'B':
-                flags_no_build_ = true;
+            case 'E':
+                flags_no_ecurves_ = true;
                 break;
             case 'S':
-                flags_no_train_substmat_ = true;
+                flags_no_substmat_ = true;
                 break;
             case 'C':
                 flags_no_calib_ = true;
@@ -705,30 +700,9 @@ int main(int argc, char **argv)
                 flags_ranks_file_ = optarg;
                 break;
 
-            /* XXX remove the following two: */
-            case 'p':
-                flags_purge_before_training_substmat_ = true;
-                break;
-            case 'M':
-                flags_no_mark_singletons_ = true;
-                break;
-
             case '?':
                 return EXIT_FAILURE;
         }
-    }
-
-    if (flags_no_calib_ && flags_calib_only_) {
-        fprintf(stderr, "-c and -C together don't make sense.\n");
-        return EXIT_FAILURE;
-    }
-    if (flags_no_train_substmat_ && flags_train_substmat_only_) {
-        fprintf(stderr, "-s and -S together don't make sense.\n");
-        return EXIT_FAILURE;
-    }
-    if (flags_calib_only_ && flags_train_substmat_only_) {
-        fprintf(stderr, "-c and -s together don't make sense.\n");
-        return EXIT_FAILURE;
     }
 
     enum nonopt_args { MODELDIR, SOURCEFILE, DESTDIR, ARGC };
@@ -742,9 +716,10 @@ int main(int argc, char **argv)
 
     alphabet_ = load_alphabet();
 
-    if (flags_no_build_) {
+    if (flags_no_ecurves_) {
         int which = UPROC_DATABASE_LOAD_ALL & ~UPROC_DATABASE_LOAD_PROT_THRESH;
-        database_ = uproc_database_load_some(destdir_, which, NULL, NULL);
+        database_ = uproc_database_load_some(destdir_, UPROC_DATABASE_LATEST,
+                                             which, NULL, NULL);
     } else {
         database_ = uproc_database_create();
         make_dir(destdir_);
@@ -775,22 +750,18 @@ int main(int argc, char **argv)
         uproc_database_metadata_set_str(database_, "inputfile", sourcefile_);
     }
 
-    if (!flags_no_train_substmat_) {
-        if (!flags_no_purge_ && flags_purge_before_training_substmat_) {
-            purge_db_ecurves();
-        }
+    if (!flags_no_substmat_) {
         uproc_substmat *s = train_substmat(
             uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
             uproc_database_ecurve(database_, UPROC_ECURVE_REV));
         uproc_database_set_substitution_matrix(database_, s);
 
-        if (!flags_no_purge_ && !flags_purge_before_training_substmat_) {
-            purge_db_ecurves();
-        }
     }
 
-    // if DB is "purged", this is done in purge_db_ecurves.
-    if (flags_no_purge_ && !flags_no_mark_singletons_) {
+    if (!flags_no_purge_) {
+        purge_db_ecurves();
+    } else {
+        // if DB is "purged", this is done in purge_db_ecurves.
         mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_FWD));
         mark_singletons(uproc_database_ecurve(database_, UPROC_ECURVE_REV));
     }
@@ -799,15 +770,15 @@ int main(int argc, char **argv)
         calib();
     }
 
-    if (flags_no_build_) {
-        // The database is already on disk, avoid storing the ecurves again
-        // as this can take a while.
+    if (flags_no_ecurves_) {
+        // The ecurves are already mmapped from disk
         uproc_database_set_ecurve(database_, UPROC_ECURVE_FWD, NULL);
         uproc_database_set_ecurve(database_, UPROC_ECURVE_REV, NULL);
     }
 
     progress(uproc_stderr, "Storing database", -1);
-    uproc_database_store(database_, destdir_, progress_cb, NULL);
+    uproc_database_store(database_, destdir_, UPROC_DATABASE_LATEST,
+                         progress_cb, NULL);
     progress(uproc_stderr, NULL, 100.0);
     return EXIT_SUCCESS;
 }

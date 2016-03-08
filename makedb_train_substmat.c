@@ -36,14 +36,6 @@
 #define N_DIMS (UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE * UPROC_SUFFIX_LEN)
 #define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
 
-#if 1
-#define LOGF(fmt, ...) fprintf(stderr, fmt "\n", __VA_ARGS__)
-#define LOG(msg) fprintf(stderr, "%s\n", msg)
-#else
-#define LOGF(fmt, ...)
-#define LOG(msg)
-#endif
-
 uproc_class first_class(const uproc_ecurve *ec, size_t idx)
 {
     uproc_class cls[UPROC_RANKS_MAX];
@@ -126,7 +118,6 @@ static void count_features(const uproc_ecurve *ec, uproc_matrix *vec,
         add_feature(vec, mat, mid, lo, (ft == LO_DIFFERS ? -1 : 1));
         add_feature(vec, mat, mid, hi, (ft == HI_DIFFERS ? -1 : 1));
     }
-    LOGF("%lu features", n_features);
 }
 
 static uproc_substmat *vec_to_substmat(const uproc_matrix *vec)
@@ -156,7 +147,6 @@ static uproc_substmat *make_candidate(const uproc_matrix *features,
                                       const uproc_matrix *coocc,
                                       double lambda)
 {
-    LOGF("make_candidate(%g)", lambda);
     uproc_matrix *lambdas = uproc_matrix_eye(N_DIMS, lambda);
 
     uproc_matrix *A = uproc_matrix_add(coocc, lambdas);
@@ -226,14 +216,11 @@ static double score_candidate(const uproc_ecurve *fwd, const uproc_ecurve *rev,
     struct stats stats = { 0, 0, 0 };
     score_candidate_ec(fwd, substmat, &stats);
     score_candidate_ec(rev, substmat, &stats);
-    LOGF("tp: %lu\tfp: %lu\tfn: %lu", stats.tp, stats.fp, stats.fn);
     return (2.0 * stats.tp) / (2.0 * stats.tp + stats.fp + stats.fn);
 }
 
 uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
 {
-    LOG("hello");
-
     uproc_error_set_handler(NULL, NULL);
     uproc_matrix *coocc = uproc_matrix_load(UPROC_IO_GZIP, "coocc");
     uproc_matrix *features = uproc_matrix_load(UPROC_IO_GZIP, "features");
@@ -243,9 +230,7 @@ uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
         coocc = uproc_matrix_create(N_DIMS, N_DIMS, NULL);
         features = uproc_matrix_create(N_DIMS, 1, NULL);
 
-        LOG("counting features fwd");
         count_features(fwd, features, coocc);
-        LOG("counting features rev");
         count_features(rev, features, coocc);
         uproc_matrix_store(coocc, UPROC_IO_STDIO, "coocc");
         uproc_matrix_store(features, UPROC_IO_STDIO, "features");
@@ -262,7 +247,6 @@ uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
                                               lambdas[i]);
         uproc_substmat_store(cand, UPROC_IO_STDIO, "substmat_%g", lambdas[i]);
         double f1 = score_candidate(fwd, rev, cand);
-        LOGF("f1: %g", f1);
         if (f1 > f1_max || !best_candidate) {
             f1 = f1_max;
             uproc_substmat_destroy(best_candidate);
@@ -271,7 +255,6 @@ uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
             uproc_substmat_destroy(cand);
         }
     }
-    LOG("bye");
     return best_candidate;
 }
 
@@ -298,7 +281,6 @@ void add_entries(struct uproc_ecurve_s *ec, struct entry *entries, size_t n)
         ec->classes[i] = entries[i].cls;
     }
 }
-
 
 void test_count_features(void)
 {
@@ -339,7 +321,6 @@ void test_count_features(void)
     uproc_matrix_destroy(features);
     uproc_matrix_destroy(coocc);
 }
-
 
 int main(void) {
     uproc_error_set_handler(errhandler_bail, NULL);
