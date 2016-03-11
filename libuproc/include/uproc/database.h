@@ -54,7 +54,15 @@ uproc_database *uproc_database_create(void);
 
 /** Database format version */
 enum uproc_database_version {
+    /** Guess database version.
+     *
+     * Only valid when using ::uproc_database_load or
+     * ::uproc_database_load_some
+     */
+    UPROC_DATABASE_GUESS = -1,
+
     /* Version 1:
+     *
      *  - forward and reverse ecurve,
      *  - protein thresholds for levels 1e-2 and 1e-3
      *  - one idmap
@@ -62,6 +70,7 @@ enum uproc_database_version {
     UPROC_DATABASE_V1 = 1,
 
     /** Version 2:
+     *
      *  Same as version 1, with the following additions:
      *  - metadata dictionary
      *  - substitution matrix

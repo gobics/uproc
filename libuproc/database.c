@@ -164,6 +164,36 @@ void db_progress(double percent, void *progress_arg)
     }
 }
 
+static bool file_exists(const char *pathfmt, ...)
+{
+    bool exists = false;
+    uproc_error_disable_handler();
+
+    va_list ap;
+    va_start(ap, pathfmt);
+    uproc_io_stream *stream = uproc_io_openv("r", UPROC_IO_GZIP, pathfmt, ap);
+    if (stream) {
+        exists = true;
+        uproc_io_close(stream);
+    }
+    va_end(ap);
+
+    uproc_error_enable_handler();
+    return exists;
+}
+
+static int guess_db_version(const char *path)
+{
+    if (file_exists("%s/idmap", path)) {
+        return UPROC_DATABASE_V1;
+    }
+
+    if (file_exists("%s/rank0.idmap", path)) {
+        return UPROC_DATABASE_V2;
+    }
+    return -1;
+}
+
 uproc_database *uproc_database_load(const char *path, int version,
                                     void(*progress)(double, void*), void*progress_arg)
 {
@@ -173,9 +203,20 @@ uproc_database *uproc_database_load(const char *path, int version,
 uproc_database *uproc_database_load_some(const char *path, int version, int which,
                                          void (*progress)(double, void*), void*progress_arg)
 {
+    uproc_assert(version >= UPROC_DATABASE_V1 || version == UPROC_DATABASE_GUESS);
+    uproc_assert(version <= UPROC_DATABASE_LATEST);
+
     uproc_database *db = uproc_database_create();
     if (!db) {
         return NULL;
+    }
+
+    if (version == UPROC_DATABASE_GUESS) {
+        version = guess_db_version(path);
+        if (version == -1) {
+            uproc_error_msg(UPROC_EINVAL, "unknown database format");
+            return NULL;
+        }
     }
 
     if (version >= UPROC_DATABASE_V2) {
@@ -261,6 +302,9 @@ int uproc_database_store(const uproc_database *db, const char *path,
                          int version, void (*progress)(double, void *),
                          void *progress_arg)
 {
+    uproc_assert(version >= UPROC_DATABASE_V1);
+    uproc_assert(version <= UPROC_DATABASE_LATEST);
+
     uproc_assert(db);
     uproc_assert(db->metadata);
 
@@ -333,6 +377,9 @@ uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
                                          void (*progress)(double, void *),
                                          void *progress_arg)
 {
+    uproc_assert(version >= UPROC_DATABASE_V1);
+    uproc_assert(version <= UPROC_DATABASE_LATEST);
+
     uproc_database *db = uproc_database_create();
     if (!db) {
         return NULL;
@@ -408,6 +455,9 @@ int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
                            void *progress_arg)
 {
     uproc_assert(db);
+    uproc_assert(version >= UPROC_DATABASE_V1);
+    uproc_assert(version <= UPROC_DATABASE_LATEST);
+
     int res = 0;
     if (version >= UPROC_DATABASE_V2) {
         res = uproc_dict_stores(db->metadata, metadata_format, NULL, stream);
