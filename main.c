@@ -864,7 +864,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    database_ = uproc_database_load(argv[optind + DBDIR], UPROC_DATABASE_LATEST,
+    database_ = uproc_database_load(argv[optind + DBDIR], UPROC_DATABASE_GUESS,
                                     NULL, NULL);
     if (!database_) {
         return EXIT_FAILURE;
