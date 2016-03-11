@@ -882,11 +882,16 @@ int main(int argc, char **argv)
     uproc_matrix *prot_thresh =
         uproc_database_protein_threshold(database_, flag_prot_thresh_level_);
 
+    uproc_substmat *substmat = uproc_database_substitution_matrix(database_);
+    if (!substmat) {
+        substmat = uproc_model_substitution_matrix(model_);
+    }
+
     classifier_ = uproc_clf_create_protein(
         mode, !!flag_format_mosaicwords_,
         uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
         uproc_database_ecurve(database_, UPROC_ECURVE_REV),
-        uproc_model_substitution_matrix(model_), prot_filter, prot_thresh);
+        substmat, prot_filter, prot_thresh);
 
 
 #if MAIN_DNA
