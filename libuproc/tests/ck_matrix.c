@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <check.h>
+#include "config.h"
 #include "uproc.h"
 
 #define assert_dbl_eq(a, b, name) do { \
@@ -138,6 +139,7 @@ END_TEST
 
 START_TEST(test_ldivide)
 {
+#if HAVE_LAPACKE_DGESV
     double va[] = {
         17,  24,   1,   8,  15,
         23,   5,   7,  14,  16,
@@ -162,6 +164,7 @@ START_TEST(test_ldivide)
     uproc_matrix_destroy(a);
     uproc_matrix_destroy(b);
     uproc_matrix_destroy(x);
+#endif
 }
 END_TEST
 
