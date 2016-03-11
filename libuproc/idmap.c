@@ -29,10 +29,15 @@
 #include "uproc/io.h"
 #include "uproc/error.h"
 
+#define BUFSIZE_INITIAL (32 * 1024)
+#define BUFSIZE_INCREMENT (16 * 1024)
+
 struct uproc_idmap_s
 {
     uproc_class n;
-    char *s[UPROC_CLASS_MAX];
+    size_t offsets[UPROC_CLASS_MAX];
+    char *buf;
+    size_t buf_sz, insert_pos;
 };
 
 uproc_idmap *uproc_idmap_create(void)
@@ -42,7 +47,14 @@ uproc_idmap *uproc_idmap_create(void)
         uproc_error(UPROC_ENOMEM);
         return NULL;
     }
-    *map = (struct uproc_idmap_s){0, {NULL}};
+    char *buf = malloc(BUFSIZE_INITIAL);
+    if (!buf) {
+        free(map);
+        uproc_error(UPROC_ENOMEM);
+        return NULL;
+    }
+    *map = (struct uproc_idmap_s){0, {0}, buf, BUFSIZE_INITIAL, 0};
+
     return map;
 }
 
@@ -51,10 +63,7 @@ void uproc_idmap_destroy(uproc_idmap *map)
     if (!map) {
         return;
     }
-    uproc_class i;
-    for (i = 0; i < map->n; i++) {
-        free(map->s[i]);
-    }
+    free(map->buf);
     free(map);
 }
 
@@ -62,7 +71,8 @@ uproc_class uproc_idmap_class(uproc_idmap *map, const char *s)
 {
     uproc_class i;
     for (i = 0; i < map->n; i++) {
-        if (!strcmp(s, map->s[i])) {
+        size_t offset = map->offsets[i];
+        if (!strcmp(s, map->buf + offset)) {
             return i;
         }
     }
@@ -70,19 +80,29 @@ uproc_class uproc_idmap_class(uproc_idmap *map, const char *s)
         uproc_error_msg(UPROC_ENOENT, "idmap exhausted");
         return UPROC_CLASS_INVALID;
     }
-    size_t len = strlen(s);
-    map->s[map->n] = malloc(len + 1);
-    if (!map->s[map->n]) {
-        return uproc_error(UPROC_ENOMEM);
+    size_t len = strlen(s) + 1;
+    uproc_assert(SIZE_MAX - len > map->insert_pos);
+
+    while (len + map->insert_pos > map->buf_sz) {
+        size_t new_buf_sz = map->buf_sz + BUFSIZE_INCREMENT;
+        char *new_buf = realloc(map->buf, new_buf_sz);
+        if (!new_buf) {
+            return uproc_error(UPROC_ENOMEM);
+        }
+        map->buf = new_buf;
+        map->buf_sz = new_buf_sz;
     }
-    memcpy(map->s[map->n], s, len + 1);
-    map->n += 1;
+
+    map->offsets[map->n] = map->insert_pos;
+    memcpy(map->buf + map->insert_pos, s, len);
+    map->insert_pos += len;
+    map->n++;
     return i;
 }
 
-char *uproc_idmap_str(const uproc_idmap *map, uproc_class class)
+const char *uproc_idmap_str(const uproc_idmap *map, uproc_class class)
 {
-    return map->s[class];
+    return map->buf + map->offsets[class];
 }
 
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream)
@@ -171,7 +191,8 @@ int uproc_idmap_stores(const uproc_idmap *map, uproc_io_stream *stream)
     uproc_class i;
     uproc_io_printf(stream, "[%" UPROC_CLASS_PRI "]\n", map->n);
     for (i = 0; i < map->n; i++) {
-        if (uproc_io_printf(stream, "%s\n", map->s[i]) < 0) {
+        size_t offset = map->offsets[i];
+        if (uproc_io_printf(stream, "%s\n", map->buf + offset) < 0) {
             return -1;
         }
     }

@@ -73,10 +73,8 @@ uproc_class uproc_idmap_class(uproc_idmap *map, const char *name);
  *
  * Returns the class name associated with the class number \c class.
  * If there is none, returns NULL.
- *
- * Modifying the returned string will affect the stored value.
  */
-char *uproc_idmap_str(const uproc_idmap *map, uproc_class class);
+const char *uproc_idmap_str(const uproc_idmap *map, uproc_class class);
 
 /** Load idmap from stream */
 uproc_idmap *uproc_idmap_loads(uproc_io_stream *stream);
