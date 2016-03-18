@@ -49,8 +49,6 @@
  * \endcode
  *
  * Related modules:
- * \li \ref grp_clf_dna
- * \li \ref grp_clf_prot
  * \li \ref grp_clf_orf
  *
  * \{

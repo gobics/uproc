@@ -53,9 +53,8 @@ typedef struct uproc_model_s uproc_model;
   * Loads all required data of a UProC model from files in the given directory
   *and returns a corresponding object.
   *
-  * \param path an existing directory containing the UProC model files.
-  * \param orf_thres_level the ORF detection threshold to be used. Note that the
-  *corresponding file "orf_thresh_e%d" has to exist in the directory.
+  * \param path             existing directory containing the UProC model files
+  * \param orf_thresh_level ORF detection threshold to load, either 0, 1 or 2
   *
   * \returns the model object on success or %NULL on error
   */

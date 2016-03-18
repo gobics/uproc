@@ -48,6 +48,7 @@
  * \{
  */
 
+/** \copybrief struct_mosaicword */
 struct uproc_mosaicword {
     /** Found word (probably different from the looked up word). */
     struct uproc_word word;

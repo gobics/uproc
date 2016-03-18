@@ -139,9 +139,9 @@ long uproc_dict_size(const uproc_dict *dict);
  * key and value in the dict.
  * The third argument to \c func is the user-supplied \c opaque pointer.
  *
- * \param t         BST instance
+ * \param dict      dict instance
  * \param func      function to call
- * \param opaque    second argument to \c function
+ * \param opaque    third argument to \c function
  */
 void uproc_dict_map(const uproc_dict *dict,
                     void (*func)(void *, void *, void *), void *opaque);
@@ -164,6 +164,7 @@ uproc_dict *uproc_dict_loads(size_t key_size, size_t value_size,
  * \param value_size    size of the stored values (see ::uproc_dict_create)
  * \param scan          pointer to function converting string to key and value
  * \param opaque        fourth argument to \c scan
+ * \param iotype        IO type, see ::uproc_io_type
  * \param pathfmt       printf format string for file path
  * \param ...           format string arguments
  */
@@ -171,6 +172,7 @@ uproc_dict *uproc_dict_load(size_t key_size, size_t value_size,
                             int (*scan)(const char *, void *, void *, void *),
                             void *opaque, enum uproc_io_type iotype,
                             const char *pathfmt, ...);
+
 /** Load dict from file
  *
  * Like ::uproc_dict_load, but with a \c va_list instead of a variable
@@ -198,10 +200,10 @@ int uproc_dict_stores(const uproc_dict *dict,
  * The formatted key/value string should not contain newlines, because
  * :uproc_dict_load passes each line to its \c scan function.
  *
- * \param key_size      size of the stored keys (see ::uproc_dict_create)
- * \param value_size    size of the stored values (see ::uproc_dict_create)
+ * \param dict          dict to store
  * \param format        pointer to function converting key and value to string
  * \param opaque        fourth argument to \c scan
+ * \param iotype        IO type, see ::uproc_io_type
  * \param pathfmt       printf format string for file path
  * \param ...           format string arguments
  */

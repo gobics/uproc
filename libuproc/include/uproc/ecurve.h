@@ -53,11 +53,6 @@
  */
 typedef struct uproc_ecurve_s uproc_ecurve;
 
-struct uproc_classes {
-    uproc_class family;
-    uproc_class clan;
-};
-
 /** Pair of suffix and class
  *
  * uproc_ecurve_add_prefix() expects a \ref grp_datastructs_list  of these as
@@ -190,9 +185,9 @@ int uproc_ecurve_finalize(uproc_ecurve *ecurve);
  * \param ecurve            ecurve object
  * \param word              word to search
  * \param lower_neighbour   _OUT_: lower neighbour word
- * \param lower_class       _OUT_: class of the lower neighbour
+ * \param lower_classes     _OUT_: classes of the lower neighbour
  * \param upper_neighbour   _OUT_: upper neighbour word
- * \param upper_class       _OUT_: class of the upper neighbour
+ * \param upper_classes     _OUT_: classes of the upper neighbour
  *
  * \return ::UPROC_ECURVE_EXACT, ::UPROC_ECURVE_OOB or
  * ::UPROC_ECURVE_INEXACT as described above.

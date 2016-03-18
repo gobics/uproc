@@ -61,7 +61,7 @@ enum uproc_database_version {
      */
     UPROC_DATABASE_GUESS = -1,
 
-    /* Version 1:
+    /** Version 1:
      *
      *  - forward and reverse ecurve,
      *  - protein thresholds for levels 1e-2 and 1e-3
@@ -108,7 +108,11 @@ enum uproc_database_load_which {
  * Loads all required data of a UProC database from files in * the given
  * directory and returns a database object.
  *
- * \param path  existing directory containing a UProC database
+ * \param path      existing directory containing a UProC database
+ * \param version   database version to load.
+ *                  Most of the time, ::UPROC_DATABASE_GUESS should be fine
+ * \param progress  function poiner, will be called to report loading percentage
+ * \param progress_arg  additional argument to \c progress
  * \returns the object on success or %NULL on error
  */
 uproc_database *uproc_database_load(const char *path, int version,
@@ -206,6 +210,8 @@ void uproc_database_destroy(uproc_database *db);
 // with uintmax_t in the union)
 #define UPROC_DATABASE_METADATA_STR_SIZE \
     (UPROC_DICT_VALUE_SIZE_MAX - sizeof(uintmax_t))
+
+/** Tagged union for metadata */
 struct uproc_database_metadata {
     enum uproc_database_metadata_type {
         STR = 's',

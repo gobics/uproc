@@ -175,7 +175,7 @@ void uproc_list_map(const uproc_list *list, void (*func)(void *, void *),
 
 /** Apply function to all items
  *
- * Like ::uproc_list_map but without the \opaque pointer.
+ * Like ::uproc_list_map but without the \c opaque pointer.
  */
 void uproc_list_map2(const uproc_list *list, void (*func)(void *));
 
