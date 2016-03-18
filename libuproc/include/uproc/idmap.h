@@ -111,10 +111,10 @@ int uproc_idmap_storev(const uproc_idmap *map, enum uproc_io_type iotype,
 int uproc_idmap_store(const uproc_idmap *map, enum uproc_io_type iotype,
                       const char *pathfmt, ...);
 
-/** \} */
+/** \} obj_idmap */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_idmap
+ * \} grp_datastructs
  */
 #endif

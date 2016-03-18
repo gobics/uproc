@@ -217,10 +217,10 @@ int uproc_list_max_safe(const uproc_list *list,
     uproc_list_max_safe((list), (compare), (value), sizeof *(value), __func__, \
                         __FILE__, __LINE__)
 
-/** \} */
+/** \} obj_list */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_list
+ * \} grp_datastructs
  */
 #endif

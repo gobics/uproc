@@ -141,10 +141,10 @@ int uproc_substmat_store(const uproc_substmat *mat, enum uproc_io_type iotype,
  */
 int uproc_substmat_storev(const uproc_substmat *mat, enum uproc_io_type iotype,
                           const char *pathfmt, va_list ap);
-/** \} */
+/** \} obj_substmat */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_substmat
+ * \} grp_datastructs
  */
 #endif

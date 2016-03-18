@@ -116,7 +116,7 @@ bool uproc_word_startswith(const struct uproc_word *word, uproc_amino amino);
  * \return  -1, 0 or 1 if \c w1 is less than, equal to, or greater than \c w2.
  */
 int uproc_word_cmp(const struct uproc_word *w1, const struct uproc_word *w2);
-/** \} */
+/** \} struct_word */
 
 /** \defgroup obj_worditer object uproc_worditer
  * \{
@@ -173,10 +173,10 @@ int uproc_worditer_next(uproc_worditer *iter, size_t *index,
 
 /** Destroy worditer object */
 void uproc_worditer_destroy(uproc_worditer *iter);
-/** \} */
+/** \} obj_worditer */
 
 /**
- * \}
- * \}
+ * \} grp_intern_word
+ * \} grp_intern
  */
 #endif

@@ -117,7 +117,7 @@ int uproc_result_copy(struct uproc_result *dest,
 
 int uproc_result_cmp(const struct uproc_result *p1,
                      const struct uproc_result *p2);
-/** \} */
+/** \} struct_result */
 
 /** \defgroup obj_clf object uproc_clf
  *
@@ -204,10 +204,10 @@ uproc_clf *uproc_clf_create_dna(enum uproc_clf_mode mode, uproc_clf *protclass,
                                 uproc_orffilter *orf_filter,
                                 void *orf_filter_arg);
 
-/** \} */
+/** \} obj_clf */
 
 /**
- * \}
- * \}
+ * \} grp_clf_clf
+ * \} grp_clf
  */
 #endif

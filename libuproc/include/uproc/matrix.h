@@ -142,10 +142,10 @@ int uproc_matrix_store(const uproc_matrix *matrix, enum uproc_io_type iotype,
  */
 int uproc_matrix_storev(const uproc_matrix *matrix, enum uproc_io_type iotype,
                         const char *pathfmt, va_list ap);
-/** \} */
+/** \} obj_matrix */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_matrix
+ * \} grp_datastructs
  */
 #endif

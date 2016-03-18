@@ -97,10 +97,10 @@ int uproc_alphabet_amino_to_char(const uproc_alphabet *alpha, uproc_amino a);
  */
 const char *uproc_alphabet_str(const uproc_alphabet *alpha);
 
-/** \} */
+/** \} obj_alphabet */
 
 /**
- * \}
- * \}
+ * \} grp_intern_alpha
+ * \} grp_intern
  */
 #endif

@@ -18,12 +18,12 @@
 
 /** \file uproc/model.h
  *
- * Module: \ref grp_datastructs_model
+ * Module: \ref grp_datafiles_model
  *
- * \weakgroup grp_datastructs
+ * \weakgroup grp_datafiles
  * \{
  *
- * \weakgroup grp_datastructs_model
+ * \weakgroup grp_datafiles_model
  * \{
  */
 
@@ -102,4 +102,10 @@ uproc_matrix *uproc_model_orf_threshold(uproc_model *model);
   */
 void uproc_model_destroy(uproc_model *model);
 
+/** \} obj_model */
+
+/**
+ * \} grp_datafiles_model
+ * \} grp_datafiles
+ */
 #endif

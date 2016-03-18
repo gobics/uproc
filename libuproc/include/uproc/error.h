@@ -185,6 +185,6 @@ void uproc_error_enable_handler(void);
 void uproc_error_disable_handler(void);
 
 /**
- * \}
+ * \} grp_error
  */
 #endif

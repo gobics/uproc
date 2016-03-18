@@ -101,7 +101,7 @@
 /**
  * \defgroup grp_clf Sequence classification
  * \{
- *   \defgroup grp_clf Sequence classification
+ *   \defgroup grp_clf_clf DNA/Protein sequence classification
  *     <!-- classifier.h -->
  *
  *   \defgroup grp_clf_orf ORF translation
@@ -149,6 +149,15 @@
  *     <!-- idmap.h -->
  * \}
  *
+ * \defgroup grp_datafiles Data file collections
+ * \{
+ *   \defgroup grp_datafiles_db Database
+ *     <!-- database.h -->
+ *
+ *   \defgroup grp_datafiles_model Model
+ *     <!-- model.h -->
+ * \}
+ *
  * \defgroup grp_intern Lower-level modules
  * \{
  *   \defgroup grp_intern_common Common definitions
@@ -162,6 +171,9 @@
  *
  *   \defgroup grp_intern_word Amino acid words
  *     <!-- word.h -->
+ *
+ *   \defgroup grp_intern_mosaic Amino acid mosaic
+ *     <!-- mosaic.h -->
  * \}
  *
  */

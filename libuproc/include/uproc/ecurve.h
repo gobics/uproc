@@ -377,10 +377,10 @@ int uproc_ecurve_mmap_store(const uproc_ecurve *ecurve, const char *pathfmt,
  */
 int uproc_ecurve_mmap_storev(const uproc_ecurve *ecurve, const char *pathfmt,
                              va_list ap);
-/** \} */
+/** \} obj_ecurve */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_ecurve
+ * \} grp_datastructs
  */
 #endif

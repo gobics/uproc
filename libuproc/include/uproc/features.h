@@ -57,6 +57,6 @@ int uproc_features_openmp(void);
 bool uproc_features_lapack(void);
 
 /**
- * \}
+ * \} grp_features
  */
 #endif

@@ -187,7 +187,7 @@ int uproc_bst_remove(uproc_bst *t, union uproc_bst_key key, void *value);
 void uproc_bst_map(const uproc_bst *t,
                    void (*func)(union uproc_bst_key, void *, void *),
                    void *opaque);
-/** \} */
+/** \} obj_bst */
 
 /** \defgroup obj_bstiter object uproc_bstiter
  *
@@ -234,10 +234,10 @@ int uproc_bstiter_next(uproc_bstiter *iter, union uproc_bst_key *key,
 /** Destroy BST iterator */
 void uproc_bstiter_destroy(uproc_bstiter *iter);
 
-/** \} */
+/** \} obj_bstiter */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_bst
+ * \} grp_datastructs
  */
 #endif

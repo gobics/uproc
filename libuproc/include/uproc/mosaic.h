@@ -45,6 +45,7 @@
  * This struct contains information about what was found while looking up
  * a word in an ecurve.
  *
+ * \{
  */
 
 struct uproc_mosaicword {
@@ -70,7 +71,7 @@ void uproc_mosaicword_init(struct uproc_mosaicword *mw,
                            const struct uproc_word *word, size_t index,
                            double dist[static UPROC_SUFFIX_LEN],
                            enum uproc_ecurve_direction dir);
-/** \} */
+/** \} struct_mosaicword */
 
 /** \defgroup obj_mosaic object uproc_mosaic
  *
@@ -84,6 +85,8 @@ void uproc_mosaicword_init(struct uproc_mosaicword *mw,
  * sequence.
  * Optionally, a mosaic object can be instructed to store all added words in a
  * list (see \ref struct_mosaicword), which is of course less efficient.
+ *
+ * \{
  */
 
 /** \struct uproc_mosaic
@@ -127,4 +130,11 @@ double uproc_mosaic_finalize(uproc_mosaic *m);
  * NULL (i.e. ownership is transferred to the caller).
  */
 uproc_list *uproc_mosaic_words_mv(uproc_mosaic *m);
+
+/** \} obj_mosaic */
+
+/**
+ * \} grp_intern_mosaic
+ * \} grp_intern
+ */
 #endif

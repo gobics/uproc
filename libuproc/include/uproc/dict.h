@@ -220,7 +220,7 @@ int uproc_dict_storev(const uproc_dict *dict,
                       void *opaque, enum uproc_io_type iotype,
                       const char *pathfmt, va_list ap);
 
-/** \} */
+/** \} obj_dict */
 
 /** \defgroup obj_dictiter object uproc_dictiter
  *
@@ -274,10 +274,10 @@ int uproc_dictiter_next_safe(uproc_dictiter *iter, void *key, size_t key_size,
 /** Destroy dict iterator */
 void uproc_dictiter_destroy(uproc_dictiter *iter);
 
-/** \} */
+/** \} obj_dictiter */
 
 /**
- * \}
- * \}
+ * \} grp_datastructs_dict
+ * \} grp_datastructs
  */
 #endif

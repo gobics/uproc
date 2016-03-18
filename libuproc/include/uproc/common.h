@@ -108,7 +108,7 @@ typedef uint_least16_t uproc_class;
 #define UPROC_CLASS_SCN SCNu16
 
 /**
- * \}
- * \}
+ * \} grp_intern_common
+ * \} grp_intern
  */
 #endif

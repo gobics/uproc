@@ -141,7 +141,7 @@ long uproc_io_tell(uproc_io_stream *stream);
 
 /** Test end-of-file indicator */
 int uproc_io_eof(uproc_io_stream *stream);
-/** \} */
+/** \} obj_io_stream */
 
 /** \defgroup grp_io_io_stdstream Wrapped standard IO streams
  * \{
@@ -163,7 +163,7 @@ uproc_io_stream *uproc_io_stdstream(FILE *stream);
 
 /** stderr, uncompressed */
 #define uproc_stderr uproc_io_stdstream(stderr)
-/** \} */
+/** \} grp_io_io_stdstream */
 
 /** \defgroup grp_io_io_stdstream_gz Wrapped IO streams with gz compression
  *
@@ -189,10 +189,10 @@ uproc_io_stream *uproc_io_stdstream_gz(FILE *stream);
 
 /** stderr, gzip compressed */
 #define uproc_stderr_gz uproc_io_stdstream_gz(stderr)
-/** \} */
+/** \} grp_io_io_stdstream_gz */
 
 /**
- * \}
- * \}
+ * \} grp_io_io
+ * \} grp_io
  */
 #endif

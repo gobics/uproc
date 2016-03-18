@@ -82,7 +82,7 @@ void uproc_orf_free(struct uproc_orf *orf);
 
 /** Deep-copy function */
 int uproc_orf_copy(struct uproc_orf *dest, const struct uproc_orf *src);
-/** \} */
+/** \} struct_orf */
 
 /** ORF filter function
  *
@@ -151,10 +151,10 @@ void uproc_orfiter_destroy(uproc_orfiter *iter);
  * \param next  _OUT_: read ORF
  */
 int uproc_orfiter_next(uproc_orfiter *iter, struct uproc_orf *next);
-/** \} */
+/** \} obj_orfiter */
 
 /**
- * \}
- * \}
+ * \} grp_clf_orf
+ * \} grp_clf
  */
 #endif

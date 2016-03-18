@@ -18,12 +18,12 @@
 
 /** \file uproc/database.h
  *
- * Module: \ref grp_datastructs_database
+ * Module: \ref grp_datafiles_db
  *
- * \weakgroup grp_datastructs
+ * \weakgroup grp_datafiles
  * \{
  *
- * \weakgroup grp_datastructs_database
+ * \weakgroup grp_datafiles_db
  * \{
  */
 
@@ -201,8 +201,6 @@ uproc_alphabet *uproc_database_alphabet(uproc_database *db);
  */
 void uproc_database_destroy(uproc_database *db);
 
-/** \} */
-
 // The size of the largest primitive type in the union corresponds to its
 // alignment (unless the enum type would be larger, but that's not possible
 // with uintmax_t in the union)
@@ -231,4 +229,11 @@ int uproc_database_metadata_set_uint(uproc_database *db, const char *key,
 
 int uproc_database_metadata_set_str(uproc_database *db, const char *key,
                                     char *value);
+
+/** \} obj_database */
+
+/**
+ * \} grp_datafiles_db
+ * \} grp_datafiles
+ */
 #endif

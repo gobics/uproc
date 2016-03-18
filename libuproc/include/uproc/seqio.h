@@ -77,7 +77,7 @@ void uproc_sequence_free(struct uproc_sequence *seq);
 /** Deep-copy a ::uproc_sequence struct */
 int uproc_sequence_copy(struct uproc_sequence *dest,
                         const struct uproc_sequence *src);
-/** \} */
+/** \} struct_sequence */
 
 /** \defgroup obj_seqiter object uproc_seqiter
  *
@@ -94,13 +94,13 @@ uproc_seqiter *uproc_seqiter_create(uproc_io_stream *stream);
 void uproc_seqiter_destroy(uproc_seqiter *iter);
 
 int uproc_seqiter_next(uproc_seqiter *iter, struct uproc_sequence *seq);
-/** \} */
+/** \} obj_seqiter */
 
 void uproc_seqio_write_fasta(uproc_io_stream *stream, const char *header,
                              const char *seq, int width);
 
 /**
- * \}
- * \}
+ * \} grp_io_seqio
+ * \} grp_io
  */
 #endif
