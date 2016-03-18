@@ -37,8 +37,7 @@
 
 #define DATA_SIZE_INIT 8192
 
-struct uproc_seqiter_s
-{
+struct uproc_seqiter_s {
     /* associated I/O stream */
     uproc_io_stream *stream;
 

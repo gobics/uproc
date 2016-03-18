@@ -42,8 +42,7 @@
  */
 
 /** \copybrief struct_word */
-struct uproc_word
-{
+struct uproc_word {
     /** First few amino acids */
     uproc_prefix prefix;
 

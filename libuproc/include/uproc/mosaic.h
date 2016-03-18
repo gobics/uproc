@@ -67,8 +67,7 @@ struct uproc_mosaicword {
 
 /** Initializes a ::uproc_mosaicword struct from the given values. */
 void uproc_mosaicword_init(struct uproc_mosaicword *mw,
-                           const struct uproc_word *word,
-                           size_t index,
+                           const struct uproc_word *word, size_t index,
                            double dist[static UPROC_SUFFIX_LEN],
                            enum uproc_ecurve_direction dir);
 /** \} */

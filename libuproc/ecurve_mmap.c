@@ -40,8 +40,7 @@
 
 #include "ecurve_internal.h"
 
-struct mmap_header
-{
+struct mmap_header {
     char alphabet_str[UPROC_ALPHABET_SIZE];
     uproc_rank ranks_count;
     size_t suffix_count;

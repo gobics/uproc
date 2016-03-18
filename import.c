@@ -69,7 +69,7 @@ void make_opts(struct ppopts *o, const char *progname)
 
 void progress_cb(double p, void *arg)
 {
-    (void) arg;
+    (void)arg;
     progress(uproc_stderr, NULL, p);
 }
 
@@ -124,8 +124,8 @@ int main(int argc, char **argv)
     snprintf(msg, sizeof msg, "Loading %s", file);
     progress(uproc_stderr, msg, -1);
     uproc_io_stream *stream = open_read(file);
-    uproc_database *db = uproc_database_unmarshal(stream, load_version_,
-                                                  progress_cb, NULL);
+    uproc_database *db =
+        uproc_database_unmarshal(stream, load_version_, progress_cb, NULL);
     uproc_io_close(stream);
 
     snprintf(msg, sizeof msg, "Storing %s", dir);

@@ -69,13 +69,13 @@ uproc_dict *ranks_;
 
 uproc_idmap *idmaps_[UPROC_RANKS_MAX];
 
-struct ecurve_entry
-{
+struct ecurve_entry {
     struct uproc_word word;
     uproc_class classes[UPROC_RANKS_MAX];
 };
 
-int ecurve_entry_cmp(const void *p1, const void *p2) {
+int ecurve_entry_cmp(const void *p1, const void *p2)
+{
     const struct ecurve_entry *e1 = p1, *e2 = p2;
     return uproc_word_cmp(&e1->word, &e2->word);
 }
@@ -123,8 +123,8 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
 
     uproc_class classes[UPROC_RANKS_MAX] = {0};
 
-    uproc_dict *words = uproc_dict_create(sizeof (struct uproc_word),
-                                          sizeof classes);
+    uproc_dict *words =
+        uproc_dict_create(sizeof(struct uproc_word), sizeof classes);
 
     uproc_seqiter *rd = uproc_seqiter_create(stream);
     while (!uproc_seqiter_next(rd, &seq)) {
@@ -168,7 +168,7 @@ uproc_list *extract_uniques(uproc_io_stream *stream, uproc_amino first,
     }
     uproc_seqiter_destroy(rd);
 
-    struct ecurve_entry entry = { UPROC_WORD_INITIALIZER, { 0 } };
+    struct ecurve_entry entry = {UPROC_WORD_INITIALIZER, {0}};
     uproc_list *entries = uproc_list_create(sizeof entry);
     uproc_dictiter *iter = uproc_dictiter_create(words);
     while (!uproc_dictiter_next(iter, &entry.word, &entry.classes)) {
@@ -204,7 +204,8 @@ void insert_entries(uproc_ecurve *ecurve, struct ecurve_entry *entries,
     uproc_list_destroy(suffix_list);
 }
 
-uintmax_t djb2(const char *str) {
+uintmax_t djb2(const char *str)
+{
     uintmax_t hash = 5381;
     int c;
 
@@ -218,9 +219,10 @@ uintmax_t djb2(const char *str) {
 // This is a pretty bad way to hash a file, but at least we're not pulling
 // another dependency. Do not use something like this if you even need the
 // tiniest bit of security.
-uintmax_t hash_file(const char *path) {
+uintmax_t hash_file(const char *path)
+{
     uproc_io_stream *stream = uproc_io_open("r", UPROC_IO_GZIP, path);
-    char data[257] = { 0 };
+    char data[257] = {0};
     size_t n;
     uintmax_t hash = 0;
     do {
@@ -283,8 +285,7 @@ void mark_singletons(uproc_ecurve *ec)
     uproc_assert(ec->suffix_count >= 1);
 
     enum { SINGLE, CLUSTER, BRIDGED, CROSSOVER };
-    unsigned char *types = calloc(ec->suffix_count,
-                                                     sizeof *types);
+    unsigned char *types = calloc(ec->suffix_count, sizeof *types);
     if (!types) {
         uproc_error(UPROC_ENOMEM);
         uproc_perror("");
@@ -311,8 +312,7 @@ void mark_singletons(uproc_ecurve *ec)
                 t[0] = t[1] = t[2] = CROSSOVER;
             }
             /* |ABAB| */
-            else if (n >= 3 && i < n - 3 &&
-                     t[0] != CLUSTER &&
+            else if (n >= 3 && i < n - 3 && t[0] != CLUSTER &&
                      cls(1) == cls(3)) {
                 t[0] = t[1] = t[2] = t[3] = CROSSOVER;
             }
@@ -335,9 +335,9 @@ void mark_singletons(uproc_ecurve *ec)
 }
 
 /* removes all entries that have no valid class on any rank */
-uproc_ecurve *purge_ecurve(const uproc_ecurve *ecurve) {
+uproc_ecurve *purge_ecurve(const uproc_ecurve *ecurve)
+{
     uproc_ecurve *new = uproc_ecurve_create(alphabet_str_, ranks_count_, 0);
-
 
     struct uproc_ecurve_suffixentry suffix_entry;
     uproc_list *suffix_list = uproc_list_create(sizeof suffix_entry);
@@ -372,7 +372,8 @@ uproc_ecurve *purge_ecurve(const uproc_ecurve *ecurve) {
     return new;
 }
 
-void purge_db_ecurves(void) {
+void purge_db_ecurves(void)
+{
     uproc_ecurve *ec;
 
     progress(uproc_stderr, "purging ecurves", -1.0);
@@ -690,7 +691,7 @@ void make_opts(struct ppopts *o, const char *progname)
 
 void progress_cb(double p, void *arg)
 {
-    (void) arg;
+    (void)arg;
     progress(uproc_stderr, NULL, p);
 }
 
@@ -734,17 +735,15 @@ int main(int argc, char **argv)
                 flags_ranks_file_ = optarg;
                 break;
 #if _OPENMP
-            case 't':
-                {
-                    int res, tmp;
-                    res = parse_int(optarg, &tmp);
-                    if (res || tmp <= 0) {
-                        fprintf(stderr, "-t requires a positive integer\n");
-                        return EXIT_FAILURE;
-                    }
-                    flag_num_threads_ = tmp;
+            case 't': {
+                int res, tmp;
+                res = parse_int(optarg, &tmp);
+                if (res || tmp <= 0) {
+                    fprintf(stderr, "-t requires a positive integer\n");
+                    return EXIT_FAILURE;
                 }
-                break;
+                flag_num_threads_ = tmp;
+            } break;
             case 'p':
                 flags_parallel_ = true;
                 break;
@@ -753,7 +752,7 @@ int main(int argc, char **argv)
             case 'p':
                 fputs("UProC was compiled without OpenMP; -t ignored\n",
                       stderr);
-            break;
+                break;
 #endif
 
             case '?':
@@ -819,13 +818,13 @@ int main(int argc, char **argv)
     }
 
     if (!flags_no_substmat_) {
-        uproc_substmat *s = train_substmat(
-            uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
-            uproc_database_ecurve(database_, UPROC_ECURVE_REV));
+        uproc_substmat *s =
+            train_substmat(uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
+                           uproc_database_ecurve(database_, UPROC_ECURVE_REV));
         uproc_database_set_substitution_matrix(database_, s);
     } else {
-        uproc_substmat *s = uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat",
-                                                modeldir_);
+        uproc_substmat *s =
+            uproc_substmat_load(UPROC_IO_GZIP, "%s/substmat", modeldir_);
         uproc_database_set_substitution_matrix(database_, s);
     }
 
@@ -856,7 +855,6 @@ int main(int argc, char **argv)
 
 #else
 
-
 #define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
 uproc_alphabet *alpha_;
 
@@ -873,7 +871,7 @@ void add_entries(struct uproc_ecurve_s *ec, struct entry *entries, size_t n)
     uproc_list *suffixes = uproc_list_create(sizeof suffix_entry);
 
     for (size_t i = 0; i < n; i++) {
-        struct uproc_word w = { 0, 0 };
+        struct uproc_word w = {0, 0};
         uproc_word_from_string(&w, entries[i].w, alpha_);
         suffix_entry.suffix = w.suffix;
         suffix_entry.classes[0] = entries[i].cls;
@@ -895,45 +893,51 @@ void test_mark_singletons(void)
         {
             .name = "two clusters, one singleton",
             .n = 5,
-            .entries = (struct entry[]) {
-                {"PPPPPPAAAAAAAAAAAA", 0},
-                {"PPPPPPAAAAAAAAAAAG", 0},
-                {"PPPPPPGAAAAAAAAAGG", 1},
-                {"PPPPPPGAAAAAAAAAGG", 0},
-                {"PPPPPPGAAAAAAAAGGG", 0},
-            },
-            .expected_classes = (uproc_class[]) {
-                0, 0, UPROC_CLASS_INVALID, 0, 0,
-            },
+            .entries =
+                (struct entry[]){
+                    {"PPPPPPAAAAAAAAAAAA", 0},
+                    {"PPPPPPAAAAAAAAAAAG", 0},
+                    {"PPPPPPGAAAAAAAAAGG", 1},
+                    {"PPPPPPGAAAAAAAAAGG", 0},
+                    {"PPPPPPGAAAAAAAAGGG", 0},
+                },
+            .expected_classes =
+                (uproc_class[]){
+                    0, 0, UPROC_CLASS_INVALID, 0, 0,
+                },
         },
         {
             .name = "cluster, singleton, bridged, singleton",
             .n = 5,
-            .entries = (struct entry[]) {
-                {"PPPPPPAAAAAAAAAAAA", 0},
-                {"PPPPPPAAAAAAAAAAAG", 0},
-                {"PPPPPPGAAAAAAAAAGG", 1},
-                {"PPPPPPGAAAAAAAAAGG", 0},
-                {"PPPPPPGAAAAAAAAGGG", 2},
-            },
-            .expected_classes = (uproc_class[]) {
-                0, 0, UPROC_CLASS_INVALID, 0, UPROC_CLASS_INVALID,
-            },
+            .entries =
+                (struct entry[]){
+                    {"PPPPPPAAAAAAAAAAAA", 0},
+                    {"PPPPPPAAAAAAAAAAAG", 0},
+                    {"PPPPPPGAAAAAAAAAGG", 1},
+                    {"PPPPPPGAAAAAAAAAGG", 0},
+                    {"PPPPPPGAAAAAAAAGGG", 2},
+                },
+            .expected_classes =
+                (uproc_class[]){
+                    0, 0, UPROC_CLASS_INVALID, 0, UPROC_CLASS_INVALID,
+                },
         },
         {
             .name = "2x cluster, 2x crossover, 2x cluster",
             .n = 6,
-            .entries = (struct entry[]) {
-                {"PPPPPPAAAAAAAAAAAA", 0},
-                {"PPPPPPAAAAAAAAAAAG", 0},
-                {"PPPPPPGAAAAAAAAAGG", 1},
-                {"PPPPPPGAAAAAAAAAGG", 0},
-                {"PPPPPPGAAAAAAAAGGG", 1},
-                {"PPPPPPGAAAAAAAGGGG", 1},
-            },
-            .expected_classes = (uproc_class[]) {
-                0, 0, UPROC_CLASS_INVALID, UPROC_CLASS_INVALID, 1, 1,
-            },
+            .entries =
+                (struct entry[]){
+                    {"PPPPPPAAAAAAAAAAAA", 0},
+                    {"PPPPPPAAAAAAAAAAAG", 0},
+                    {"PPPPPPGAAAAAAAAAGG", 1},
+                    {"PPPPPPGAAAAAAAAAGG", 0},
+                    {"PPPPPPGAAAAAAAAGGG", 1},
+                    {"PPPPPPGAAAAAAAGGGG", 1},
+                },
+            .expected_classes =
+                (uproc_class[]){
+                    0, 0, UPROC_CLASS_INVALID, UPROC_CLASS_INVALID, 1, 1,
+                },
         },
     };
 
@@ -960,26 +964,25 @@ void test_mark_singletons(void)
 void test_purge(void)
 {
     struct entry entries_fwd[] = {
-        { "PPPPPPAAAAAAAAAAAA", 0 },
-        { "PPPPPPAAAAAAAAAAAG", 0 },
-        { "PPPPPPGAAAAAAAAAGG", 1 },
-        { "PPPPPPGAAAAAAAAAGG", 1 },
-        { "PPPPPPGAAAAAAAAGGG", 1 },
+        {"PPPPPPAAAAAAAAAAAA", 0}, {"PPPPPPAAAAAAAAAAAG", 0},
+        {"PPPPPPGAAAAAAAAAGG", 1}, {"PPPPPPGAAAAAAAAAGG", 1},
+        {"PPPPPPGAAAAAAAAGGG", 1},
     };
     struct entry entries_rev[] = {
-        { "PPPPPPSSSSSSSSSSSS", 0 },
-        { "PPPPPPSSSSSSSSSSSG", 0 },
-        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
-        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
-        { "PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID },
-        { "PPPPPPGSSSSSSSSSGG", 1 },
-        { "PPPPPPGTTTTTTTTGGG", 1 },
+        {"PPPPPPSSSSSSSSSSSS", 0},
+        {"PPPPPPSSSSSSSSSSSG", 0},
+        {"PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID},
+        {"PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID},
+        {"PPPPPPGSSSSSSSSSGG", UPROC_CLASS_INVALID},
+        {"PPPPPPGSSSSSSSSSGG", 1},
+        {"PPPPPPGTTTTTTTTGGG", 1},
     };
 
     uproc_ecurve *fwd = uproc_ecurve_create(alphabet_str_, 1, 0),
                  *rev = uproc_ecurve_create(alphabet_str_, 1, 0);
 
-#define ADD_ENTRIES(ec, entries) add_entries((ec), (entries), ELEMENTS((entries)))
+#define ADD_ENTRIES(ec, entries) \
+    add_entries((ec), (entries), ELEMENTS((entries)))
     ADD_ENTRIES(fwd, entries_fwd);
     ADD_ENTRIES(rev, entries_rev);
 #undef ADD_ENTRIES

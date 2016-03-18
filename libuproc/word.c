@@ -29,8 +29,7 @@
 #include "uproc/word.h"
 #include "uproc/error.h"
 
-struct uproc_worditer_s
-{
+struct uproc_worditer_s {
     /** Iterated sequence */
     const char *sequence;
 

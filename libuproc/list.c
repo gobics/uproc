@@ -34,8 +34,7 @@
 
 #define ELEM(list, index) ((list)->data + (index) * (list)->value_size)
 
-struct uproc_list_s
-{
+struct uproc_list_s {
     /* Number of stored values */
     long size;
 
@@ -99,7 +98,8 @@ static int check_size(const uproc_list *list, size_t value_size,
     if (got && got != want) {
         uproc_error_(UPROC_EINVAL, func, file, line,
                      "%s: object size (%ju) doesn't match list "
-                     "element size (%ju)", operation, got, want);
+                     "element size (%ju)",
+                     operation, got, want);
         return -1;
     }
     return 0;
@@ -158,8 +158,8 @@ int uproc_list_get_unsafe(const uproc_list *list, long index, void *value)
 }
 
 int uproc_list_get_safe(uproc_list *list, long index, void *value,
-                        size_t value_size, const char *func,
-                        const char *file, int line)
+                        size_t value_size, const char *func, const char *file,
+                        int line)
 {
     if (check_size(list, value_size, __func__, func, file, line)) {
         return -1;
@@ -187,8 +187,8 @@ int uproc_list_set_unsafe(uproc_list *list, long index, const void *value)
 }
 
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
-                        size_t value_size, const char *func,
-                        const char *file, int line)
+                        size_t value_size, const char *func, const char *file,
+                        int line)
 {
     if (check_size(list, value_size, __func__, func, file, line)) {
         return -1;
@@ -219,7 +219,7 @@ int uproc_list_append_safe(uproc_list *list, const void *value,
                            const char *file, int line)
 {
     return check_size(list, value_size, __func__, func, file, line) ||
-        uproc_list_append_unsafe(list, value);
+           uproc_list_append_unsafe(list, value);
 }
 
 int uproc_list_extend_unsafe(uproc_list *list, const void *values, long n)
@@ -246,7 +246,7 @@ int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
                            const char *file, int line)
 {
     return check_size(list, value_size, __func__, func, file, line) ||
-        uproc_list_extend_unsafe(list, values, n);
+           uproc_list_extend_unsafe(list, values, n);
 }
 
 int uproc_list_add_unsafe(uproc_list *list, const uproc_list *src)
@@ -258,7 +258,7 @@ int uproc_list_add_safe(uproc_list *list, const uproc_list *src,
                         const char *func, const char *file, int line)
 {
     return check_size(list, src->value_size, __func__, func, file, line) ||
-        uproc_list_add_unsafe(list, src);
+           uproc_list_add_unsafe(list, src);
 }
 
 int uproc_list_pop_unsafe(uproc_list *list, void *value)
@@ -280,7 +280,7 @@ int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size,
                         const char *func, const char *file, int line)
 {
     return check_size(list, value_size, __func__, func, file, line) ||
-        uproc_list_pop_unsafe(list, value);
+           uproc_list_pop_unsafe(list, value);
 }
 
 long uproc_list_size(const uproc_list *list)
@@ -342,10 +342,10 @@ int uproc_list_max_unsafe(const uproc_list *list,
 }
 
 int uproc_list_max_safe(const uproc_list *list,
-                        int (*compare)(const void *, const void *),
-                        void *value, size_t value_size,
-                        const char *func, const char *file, int line)
+                        int (*compare)(const void *, const void *), void *value,
+                        size_t value_size, const char *func, const char *file,
+                        int line)
 {
     return check_size(list, value_size, __func__, func, file, line) ||
-        uproc_list_max_unsafe(list, compare, value);
+           uproc_list_max_unsafe(list, compare, value);
 }

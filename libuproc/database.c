@@ -34,8 +34,7 @@
 #include "uproc/substmat.h"
 
 /** Struct defining a database **/
-struct uproc_database_s
-{
+struct uproc_database_s {
     /** Data describing the database.
      * Maps (string) -> (struct uproc_database_metadata) */
     uproc_dict *metadata;
@@ -67,7 +66,7 @@ struct uproc_database_s
 int metadata_format(char *buf, const void *key, const void *value, void *opaque)
 {
     uproc_assert(strlen(key) < UPROC_DICT_KEY_SIZE_MAX);
-    (void) opaque;
+    (void)opaque;
     const struct uproc_database_metadata *v = value;
     int bytes_left = UPROC_DICT_STORE_BUFFER_SIZE;
     int res = snprintf(buf, bytes_left, "%c %s: ", v->type, (const char *)key);
@@ -94,7 +93,7 @@ int metadata_format(char *buf, const void *key, const void *value, void *opaque)
 
 int metadata_scan(const char *s, void *key, void *value, void *opaque)
 {
-    (void) opaque;
+    (void)opaque;
     struct uproc_database_metadata *v = value;
 
     // determine type by looking at the first character
@@ -145,8 +144,7 @@ uproc_database *uproc_database_create(void)
     return db;
 }
 
-struct db_progress_arg
-{
+struct db_progress_arg {
     void (*parent_func)(double, void *);
     void *parent_arg;
     bool fwd_finished;
@@ -195,15 +193,20 @@ static int guess_db_version(const char *path)
 }
 
 uproc_database *uproc_database_load(const char *path, int version,
-                                    void(*progress)(double, void*), void*progress_arg)
+                                    void (*progress)(double, void *),
+                                    void *progress_arg)
 {
-    return uproc_database_load_some(path, version, UPROC_DATABASE_LOAD_ALL, progress, progress_arg);
+    return uproc_database_load_some(path, version, UPROC_DATABASE_LOAD_ALL,
+                                    progress, progress_arg);
 }
 
-uproc_database *uproc_database_load_some(const char *path, int version, int which,
-                                         void (*progress)(double, void*), void*progress_arg)
+uproc_database *uproc_database_load_some(const char *path, int version,
+                                         int which,
+                                         void (*progress)(double, void *),
+                                         void *progress_arg)
 {
-    uproc_assert(version >= UPROC_DATABASE_V1 || version == UPROC_DATABASE_GUESS);
+    uproc_assert(version >= UPROC_DATABASE_V1 ||
+                 version == UPROC_DATABASE_GUESS);
     uproc_assert(version <= UPROC_DATABASE_LATEST);
 
     uproc_database *db = uproc_database_create();
@@ -246,8 +249,7 @@ uproc_database *uproc_database_load_some(const char *path, int version, int whic
 
     if (which & UPROC_DATABASE_LOAD_IDMAPS) {
         if (version == UPROC_DATABASE_V1) {
-            db->idmaps[0] =
-                uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
+            db->idmaps[0] = uproc_idmap_load(UPROC_IO_GZIP, "%s/idmap", path);
         } else {
             uintmax_t ranks;
             int res = uproc_database_metadata_get_uint(db, "ranks", &ranks);
@@ -275,16 +277,16 @@ uproc_database *uproc_database_load_some(const char *path, int version, int whic
             .parent_arg = progress_arg,
             .fwd_finished = false,
         };
-        db->fwd = uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                     db_progress, &p_arg,
-                                    "%s/fwd.ecurve", path);
+        db->fwd =
+            uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, db_progress,
+                               &p_arg, "%s/fwd.ecurve", path);
         if (!db->fwd) {
             goto error;
         }
         p_arg.fwd_finished = true;
-        db->rev = uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP,
-                                     db_progress, &p_arg,
-                                    "%s/rev.ecurve", path);
+        db->rev =
+            uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, db_progress,
+                               &p_arg, "%s/rev.ecurve", path);
         if (!db->rev) {
             goto error;
         }
@@ -323,8 +325,7 @@ int uproc_database_store(const uproc_database *db, const char *path,
             }
         }
     } else {
-        if (uproc_idmap_store(db->idmaps[0], UPROC_IO_GZIP,
-                              "%s/idmap", path)) {
+        if (uproc_idmap_store(db->idmaps[0], UPROC_IO_GZIP, "%s/idmap", path)) {
             return -1;
         }
     }
@@ -343,8 +344,8 @@ int uproc_database_store(const uproc_database *db, const char *path,
     }
 
     if (db->substmat) {
-        if (uproc_substmat_store(db->substmat, UPROC_IO_GZIP,
-                                 "%s/substmat", path)) {
+        if (uproc_substmat_store(db->substmat, UPROC_IO_GZIP, "%s/substmat",
+                                 path)) {
             return -1;
         }
     }
@@ -372,8 +373,7 @@ int uproc_database_store(const uproc_database *db, const char *path,
     return 0;
 }
 
-uproc_database *uproc_database_unmarshal(uproc_io_stream *stream,
-                                         int version,
+uproc_database *uproc_database_unmarshal(uproc_io_stream *stream, int version,
                                          void (*progress)(double, void *),
                                          void *progress_arg)
 {

@@ -43,8 +43,7 @@
 #define MATRIX_HEADER_SCN "[%lu , %lu]"
 
 /** Matrix */
-struct uproc_matrix_s
-{
+struct uproc_matrix_s {
     /** Number of rows */
     unsigned long rows;
 
@@ -149,8 +148,8 @@ uproc_matrix *uproc_matrix_add(const uproc_matrix *a, const uproc_matrix *b)
 {
     if (a->rows != b->rows || a->cols != b->cols) {
         uproc_error_msg(UPROC_EINVAL,
-                        "dimension mismatch: [%lu, %lu] != [%lu, %lu]",
-                        a->rows, a->cols, b->rows, b->cols);
+                        "dimension mismatch: [%lu, %lu] != [%lu, %lu]", a->rows,
+                        a->cols, b->rows, b->cols);
         return NULL;
     }
 
@@ -188,18 +187,18 @@ uproc_matrix *uproc_matrix_ldivide(const uproc_matrix *a, const uproc_matrix *b)
     }
 
     lapack_int n;
-    if (sizeof (lapack_int) == sizeof(int)) {
+    if (sizeof(lapack_int) == sizeof(int)) {
         if (a->rows > INT_MAX) {
-            uproc_error_msg(UPROC_EINVAL,
-                            "matrix too big, %lu > %d", a->rows, INT_MAX);
+            uproc_error_msg(UPROC_EINVAL, "matrix too big, %lu > %d", a->rows,
+                            INT_MAX);
             return NULL;
         }
         n = (int)a->rows;
     }
-    if (sizeof (lapack_int) == sizeof(long)) {
+    if (sizeof(lapack_int) == sizeof(long)) {
         if (a->rows > LONG_MAX) {
-            uproc_error_msg(UPROC_EINVAL,
-                            "matrix too big, %lu > %ld", a->rows, LONG_MAX);
+            uproc_error_msg(UPROC_EINVAL, "matrix too big, %lu > %ld", a->rows,
+                            LONG_MAX);
             return NULL;
         }
         n = (long)a->rows;
@@ -215,11 +214,11 @@ uproc_matrix *uproc_matrix_ldivide(const uproc_matrix *a, const uproc_matrix *b)
         goto error;
     }
 
-    lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, a->values, n, ipiv,
-                                    x->values, 1);
+    lapack_int info =
+        LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, a->values, n, ipiv, x->values, 1);
     if (info != 0) {
-        uproc_error_msg(UPROC_FAILURE,
-                        "lapack returned error: %ld", (long)info);
+        uproc_error_msg(UPROC_FAILURE, "lapack returned error: %ld",
+                        (long)info);
         goto error;
     }
     free(ipiv);

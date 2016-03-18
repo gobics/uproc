@@ -3,11 +3,14 @@
 
 uproc_alphabet *alpha;
 
-#define assert_dbl_eq(a, b, name) do { \
-    double _a = a, _b = b; \
-    ck_assert_msg(fabs(_a - _b) <= UPROC_EPSILON, \
-        "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
-        "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b, UPROC_EPSILON); \
+#define assert_dbl_eq(a, b, name)                                     \
+    do {                                                              \
+        double _a = a, _b = b;                                        \
+        ck_assert_msg(                                                \
+            fabs(_a - _b) <= UPROC_EPSILON,                           \
+            "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
+            "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b,     \
+            UPROC_EPSILON);                                           \
     } while (0)
 
 void setup(void)
@@ -20,44 +23,45 @@ void teardown(void)
     uproc_alphabet_destroy(alpha);
 }
 
-#define LEN(a) (sizeof (a) / sizeof *(a))
+#define LEN(a) (sizeof(a) / sizeof *(a))
 
 START_TEST(test_add)
 {
     struct test_add {
         const char *name;
-        struct test_add_word{
+        struct test_add_word {
             size_t index;
             double d[UPROC_SUFFIX_LEN];
             enum uproc_ecurve_direction dir;
-        } *words;
+        } * words;
         size_t n_words;
         double expected;
     } tests[] = {
         {
             .name = "single word",
-            .words = (struct test_add_word[]){
-                {
-                    .d = { 1.0, 2.0, 3.0 },
-                    .dir = UPROC_ECURVE_FWD,
+            .words =
+                (struct test_add_word[]){
+                    {
+                        .d = {1.0, 2.0, 3.0}, .dir = UPROC_ECURVE_FWD,
+                    },
                 },
-            },
             .n_words = 1,
             .expected = 6.0,
         },
         {
             .name = "two non-overlapping",
-            .words = (struct test_add_word[]) {
-                {
-                    .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .dir = UPROC_ECURVE_FWD,
+            .words =
+                (struct test_add_word[]){
+                    {
+                        .d = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0},
+                        .dir = UPROC_ECURVE_FWD,
+                    },
+                    {
+                        .index = 42,
+                        .d = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0},
+                        .dir = UPROC_ECURVE_FWD,
+                    },
                 },
-                {
-                    .index = 42,
-                    .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .dir = UPROC_ECURVE_FWD,
-                },
-            },
             .n_words = 2,
             .expected = 42.0,
         },
@@ -66,18 +70,19 @@ START_TEST(test_add)
             //      [ 0.0, 0.0, 1.0, -2.0, 3.0, 0.0, 0.0, ... ]
             // MAX  [ 0.0, 0.0, 0.0, -1.0, 2.0, 3.0, 0.0, ... ]
             // =    [ 0.0, 0.0, 1.0, -1.0, 3.0, 3.0, 0.0, ... ] == 6.0
-            .words = (struct test_add_word[]) {
-                {
-                    .index = 2,
-                    .d = { 1.0, -2.0, 3.0 },
-                    .dir = UPROC_ECURVE_FWD,
+            .words =
+                (struct test_add_word[]){
+                    {
+                        .index = 2,
+                        .d = {1.0, -2.0, 3.0},
+                        .dir = UPROC_ECURVE_FWD,
+                    },
+                    {
+                        .index = 3,
+                        .d = {-1.0, 2.0, 3.0},
+                        .dir = UPROC_ECURVE_FWD,
+                    },
                 },
-                {
-                    .index = 3,
-                    .d = { -1.0, 2.0, 3.0 },
-                    .dir = UPROC_ECURVE_FWD,
-                },
-            },
             .n_words = 2,
             .expected = 6.0,
         },
@@ -88,18 +93,19 @@ START_TEST(test_add)
             //    [ 0.0,  0.0,  0.0,  0.0,  0.0,  3.0, 2.0, 1.0, 0.0, ..., -inf]
             // -> [ 0.0,  0.0,  0.0,  0.0,  0.0,  3.0, 2.0, 2.0, 3.0, 0.0,  ...]
             // == 10.0
-            .words = (struct test_add_word[]) {
-                {
-                    .index = 0,
-                    .d = { 1.0, 2.0, 3.0 },
-                    .dir = UPROC_ECURVE_FWD,
+            .words =
+                (struct test_add_word[]){
+                    {
+                        .index = 0,
+                        .d = {1.0, 2.0, 3.0},
+                        .dir = UPROC_ECURVE_FWD,
+                    },
+                    {
+                        .index = 5,
+                        .d = {[9] = 1.0, 2.0, 3.0},
+                        .dir = UPROC_ECURVE_REV,
+                    },
                 },
-                {
-                    .index = 5,
-                    .d = { [9] = 1.0, 2.0, 3.0 },
-                    .dir = UPROC_ECURVE_REV,
-                },
-            },
             .n_words = 2,
             .expected = 10.0,
         },
@@ -121,45 +127,50 @@ START_TEST(test_detailed)
 {
     struct test_detailed {
         const char *name;
-        struct test_detailed_word{
+        struct test_detailed_word {
             char *str;
             size_t index;
             double d[UPROC_SUFFIX_LEN];
             enum uproc_ecurve_direction dir;
             double expected_score;
-        } *words;
+        } * words;
         size_t n_words;
     } tests[] = {
         {
             .name = "single word",
-            .words = (struct test_detailed_word[]){
-                {
-                    .str = "AAAAAAAAAAAAAAAAAA",
-                    .index = 3,
-                    .d = { 1.0, 2.0, 3.0 },
-                    .dir = UPROC_ECURVE_FWD,
-                    .expected_score = 6.0,
+            .words =
+                (struct test_detailed_word[]){
+                    {
+                        .str = "AAAAAAAAAAAAAAAAAA",
+                        .index = 3,
+                        .d = {1.0, 2.0, 3.0},
+                        .dir = UPROC_ECURVE_FWD,
+                        .expected_score = 6.0,
+                    },
                 },
-            },
             .n_words = 1,
         },
         {
             .name = "two words",
-            .words = (struct test_detailed_word[]) {
-                {
-                    .str = "AAAAAAAAAAAAAAAAAA",
-                    .d = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 },
-                    .dir = UPROC_ECURVE_FWD,
-                    .expected_score = 21.0,
+            .words =
+                (struct test_detailed_word[]){
+                    {
+                        .str = "AAAAAAAAAAAAAAAAAA",
+                        .d = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0},
+                        .dir = UPROC_ECURVE_FWD,
+                        .expected_score = 21.0,
+                    },
+                    {
+                        .str = "PETERPETERPETERPET",
+                        .index = 1,
+                        .d =
+                            {
+                                1.0,
+                            },
+                        .dir = UPROC_ECURVE_FWD,
+                        .expected_score = 1.0,
+                    },
                 },
-                {
-                    .str = "PETERPETERPETERPET",
-                    .index = 1,
-                    .d = { 1.0, },
-                    .dir = UPROC_ECURVE_FWD,
-                    .expected_score = 1.0,
-                },
-            },
             .n_words = 2,
         },
     };

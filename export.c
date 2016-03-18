@@ -61,7 +61,7 @@ void make_opts(struct ppopts *o, const char *progname)
 
 void progress_cb(double p, void *arg)
 {
-    (void) arg;
+    (void)arg;
     progress(uproc_stderr, NULL, p);
 }
 
@@ -111,8 +111,8 @@ int main(int argc, char **argv)
     char msg[1024];
     snprintf(msg, sizeof msg, "Loading %s", dir);
     progress(uproc_stderr, msg, -1);
-    uproc_database *db = uproc_database_load(dir, UPROC_DATABASE_GUESS,
-                                             progress_cb, NULL);
+    uproc_database *db =
+        uproc_database_load(dir, UPROC_DATABASE_GUESS, progress_cb, NULL);
 
     snprintf(msg, sizeof msg, "Storing %s", file);
     progress(uproc_stderr, msg, -1);

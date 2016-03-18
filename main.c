@@ -59,10 +59,8 @@ bool flag_output_headerline_ = false;
 bool flag_output_gz_ = false;
 const char *flag_output_filename_ = NULL;
 
-uproc_io_stream *outstream_counts_ = NULL,
-                *outstream_summary_ = NULL,
-                *outstream_predictions_ = NULL,
-                *outstream_mosaicwords_ = NULL;
+uproc_io_stream *outstream_counts_ = NULL, *outstream_summary_ = NULL,
+                *outstream_predictions_ = NULL, *outstream_mosaicwords_ = NULL;
 
 // Devmode flags
 bool flag_print_times_ = false;
@@ -126,8 +124,7 @@ enum {
 
 timeit t_in, t_out, t_clf, t_tot;
 
-struct buffer
-{
+struct buffer {
     struct uproc_sequence seqs[CHUNK_SIZE_MAX];
     uproc_list *results[CHUNK_SIZE_MAX];
     long long n;
@@ -208,21 +205,21 @@ void print_result_header(uproc_io_stream *stream, const char *format)
     uproc_assert(format);
 
     const char *labels[] = {
-        [OUTFMT_SEQ_NUMBER] = "seq_number",
-        [OUTFMT_SEQ_HEADER] = "seq_header",
-        [OUTFMT_SEQ_LENGTH] = "seq_length",
+            [OUTFMT_SEQ_NUMBER] = "seq_number",
+            [OUTFMT_SEQ_HEADER] = "seq_header",
+            [OUTFMT_SEQ_LENGTH] = "seq_length",
 #ifdef MAIN_DNA
-        [OUTFMT_ORF_FRAME] = "orf_frame",
-        [OUTFMT_ORF_INDEX] = "orf_index",
-        [OUTFMT_ORF_LENGTH] = "orf_length",
+            [OUTFMT_ORF_FRAME] = "orf_frame",
+            [OUTFMT_ORF_INDEX] = "orf_index",
+            [OUTFMT_ORF_LENGTH] = "orf_length",
 #endif
-        [OUTFMT_CLASS] = "pred_class",
-        [OUTFMT_RANK] = "pred_rank",
-        [OUTFMT_SCORE] = "pred_score",
-        [OUTFMT_MATCH_WORD] = "word",
-        [OUTFMT_MATCH_DIRECTION] = "word_direction",
-        [OUTFMT_MATCH_INDEX] = "word_index",
-        [OUTFMT_MATCH_SCORE] = "word_score",
+            [OUTFMT_CLASS] = "pred_class",
+            [OUTFMT_RANK] = "pred_rank",
+            [OUTFMT_SCORE] = "pred_score",
+            [OUTFMT_MATCH_WORD] = "word",
+            [OUTFMT_MATCH_DIRECTION] = "word_direction",
+            [OUTFMT_MATCH_INDEX] = "word_index",
+            [OUTFMT_MATCH_SCORE] = "word_score",
     };
     while (*format) {
         // increment here so we know if theres another item
@@ -272,8 +269,7 @@ void print_result_or_mosaicword(uproc_io_stream *stream, const char *format,
             case OUTFMT_CLASS: {
                 uproc_idmap *idmap =
                     uproc_database_idmap(database_, result->rank);
-                uproc_io_puts(uproc_idmap_str(idmap, result->class),
-                              stream);
+                uproc_io_puts(uproc_idmap_str(idmap, result->class), stream);
             } break;
             case OUTFMT_RANK:
                 uproc_io_printf(stream, "%u", result->rank + 1);
@@ -462,8 +458,7 @@ void classify_file(const char *path, unsigned long *n_seqs,
     timeit_stop(&t_tot);
 }
 
-struct count
-{
+struct count {
     uproc_class class;
     unsigned long n;
 };
@@ -518,8 +513,8 @@ void print_counts(void)
     }
 }
 
-bool prot_filter(const char *seq, size_t len, uproc_class class,
-                 double score, void *opaque)
+bool prot_filter(const char *seq, size_t len, uproc_class class, double score,
+                 void *opaque)
 {
     (void)seq;
     (void)class;
@@ -564,8 +559,10 @@ void validate_format_string(const char *progname, const char *fmt,
 {
     size_t spn = strspn(fmt, valid);
     if (spn != strlen(fmt)) {
-        fprintf(stderr, "%s: invalid format string character -- "
-                "'%c' is not in '%s'\n", progname, fmt[spn], valid);
+        fprintf(stderr,
+                "%s: invalid format string character -- "
+                "'%c' is not in '%s'\n",
+                progname, fmt[spn], valid);
         exit(EXIT_FAILURE);
     }
 }
@@ -689,8 +686,7 @@ Default is %d.",
 #ifdef DEVMODE
     ppopts_add_header(o, "DEVELOPER FLAGS:");
 #if HAVE_TIMEIT
-    O('T', "time", "",
-      "Print stats about elapsed wallclock time(s)");
+    O('T', "time", "", "Print stats about elapsed wallclock time(s)");
 #endif
     O('R', "fake-results", "",
       "Ignore input file(s), load some fake results instead.");
@@ -740,7 +736,7 @@ int main(int argc, char **argv)
                 flag_output_gz_ = opt == 'z';
                 break;
             case 'H':
-                flag_output_headerline_= true;
+                flag_output_headerline_ = true;
                 break;
             case 'P':
                 if (parse_prot_thresh_level(optarg, &flag_prot_thresh_level_)) {
@@ -804,9 +800,9 @@ int main(int argc, char **argv)
         flag_output_summary_ = true;
     }
 
-    bool multiple_outputs = (flag_output_counts_ + flag_output_summary_ +
-                             !!flag_format_predictions_ +
-                             !!flag_format_mosaicwords_) >= 2;
+    bool multiple_outputs =
+        (flag_output_counts_ + flag_output_summary_ +
+         !!flag_format_predictions_ + !!flag_format_mosaicwords_) >= 2;
 
     if (multiple_outputs) {
         if (!flag_output_filename_) {
@@ -821,8 +817,9 @@ int main(int argc, char **argv)
             gz_suffix = ".gz";
         }
 
-#define OPEN(suffix) uproc_io_open("w", io_type, "%s.%s%s", \
-                                   flag_output_filename_, (suffix), gz_suffix)
+#define OPEN(suffix)                                                        \
+    uproc_io_open("w", io_type, "%s.%s%s", flag_output_filename_, (suffix), \
+                  gz_suffix)
         if (flag_output_counts_) {
             outstream_counts_ = OPEN("counts");
         }
@@ -890,20 +887,17 @@ int main(int argc, char **argv)
     classifier_ = uproc_clf_create_protein(
         mode, !!flag_format_mosaicwords_,
         uproc_database_ecurve(database_, UPROC_ECURVE_FWD),
-        uproc_database_ecurve(database_, UPROC_ECURVE_REV),
-        substmat, prot_filter, prot_thresh);
-
+        uproc_database_ecurve(database_, UPROC_ECURVE_REV), substmat,
+        prot_filter, prot_thresh);
 
 #if MAIN_DNA
     uproc_matrix *orf_thresholds =
         flag_dna_short_read_mode_ ? NULL : uproc_model_orf_threshold(model_);
 
-    classifier_ = uproc_clf_create_dna(
-        mode, classifier_,
-        uproc_model_codon_scores(model_),
-        orf_filter, orf_thresholds);
+    classifier_ = uproc_clf_create_dna(mode, classifier_,
+                                       uproc_model_codon_scores(model_),
+                                       orf_filter, orf_thresholds);
 #endif
-
 
     if (flag_output_headerline_) {
         print_result_header(outstream_predictions_, flag_format_predictions_);
@@ -927,7 +921,8 @@ int main(int argc, char **argv)
 
     if (flag_output_summary_) {
         if (flag_output_headerline_) {
-            uproc_io_puts("classified,unclassified,total\n", outstream_summary_);
+            uproc_io_puts("classified,unclassified,total\n",
+                          outstream_summary_);
         }
         uproc_io_printf(outstream_summary_, "%lu,",
                         n_seqs - n_seqs_unexplained);

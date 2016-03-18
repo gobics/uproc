@@ -35,8 +35,7 @@
 
 #define PROGNAME "uproc-orf"
 
-struct orf_filter_arg
-{
+struct orf_filter_arg {
     unsigned min_length;
     uproc_matrix *thresh;
 };

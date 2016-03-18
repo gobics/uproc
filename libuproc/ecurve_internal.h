@@ -14,8 +14,7 @@ typedef uint_least16_t pfxtab_count;
 #define ECURVE_ISEDGE(p) ((p).count == ECURVE_EDGE)
 
 /** Struct defining an ecurve */
-struct uproc_ecurve_s
-{
+struct uproc_ecurve_s {
     /** Translation alphabet */
     uproc_alphabet *alphabet;
 
@@ -42,16 +41,13 @@ struct uproc_ecurve_s
     uproc_class *classes;
 
     /** Table that maps prefixes to entries in the ecurve's suffix table */
-    struct uproc_ecurve_pfxtable
-    {
-        union
-        {
+    struct uproc_ecurve_pfxtable {
+        union {
             /** Index of the first associated entry in #suffixes */
             pfxtab_suffix first;
 
             /* indicates offsets towards the nearest non-empty neighbours */
-            struct
-            {
+            struct {
                 pfxtab_neigh prev, next;
             };
         };
@@ -66,14 +62,13 @@ struct uproc_ecurve_s
         pfxtab_count count;
     }
 #if HAVE___ATTRIBUTE__
-    __attribute__((packed))
+        __attribute__((packed))
 #endif
         /** Table of prefixes
          *
          * Will be allocated to hold `#UPROC_PREFIX_MAX + 1` objects
          */
-        *
-        prefixes;
+        * prefixes;
 
     /** Last non-empty prefix
      *
@@ -115,9 +110,9 @@ static inline uproc_class uproc_ecurve_get_class(const uproc_ecurve *ecurve,
     return ecurve->classes[index * ecurve->ranks_count + rank];
 }
 
-static inline void uproc_ecurve_set_class(uproc_ecurve *ecurve,
-                                          size_t index, uproc_rank rank,
-                                          uproc_class cls) {
+static inline void uproc_ecurve_set_class(uproc_ecurve *ecurve, size_t index,
+                                          uproc_rank rank, uproc_class cls)
+{
     ecurve->classes[index * ecurve->ranks_count + rank] = cls;
 }
 

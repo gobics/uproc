@@ -68,7 +68,6 @@
 #include "uproc/model.h"
 #include "uproc/orf.h"
 
-
 /** \defgroup struct_result struct uproc_result
  *
  * DNA classification result
@@ -77,8 +76,7 @@
  */
 
 /** \copybrief struct_result */
-struct uproc_result
-{
+struct uproc_result {
     /** The rank to which `class` belongs to */
     uproc_rank rank;
 
@@ -96,13 +94,12 @@ struct uproc_result
     /** If this is a result for a DNA/RAN sequence, the extracted ORF from
      * which the prediction was made */
     struct uproc_orf orf;
-
 };
 
 /** Initializer for ::uproc_result structs */
-#define UPROC_RESULT_INITIALIZER                            \
-    {                                                       \
-        .orf = UPROC_ORF_INITIALIZER,                       \
+#define UPROC_RESULT_INITIALIZER      \
+    {                                 \
+        .orf = UPROC_ORF_INITIALIZER, \
     }
 
 /** Initialize a ::uproc_result struct */
@@ -116,7 +113,7 @@ void uproc_result_freev(void *ptr);
 
 /** Deep-copy a ::uproc_result struct */
 int uproc_result_copy(struct uproc_result *dest,
-                         const struct uproc_result *src);
+                      const struct uproc_result *src);
 
 int uproc_result_cmp(const struct uproc_result *p1,
                      const struct uproc_result *p2);
@@ -196,15 +193,13 @@ int uproc_clf_classify(const uproc_clf *clf, const char *seq,
 typedef bool uproc_protfilter(const char *seq, size_t seq_len,
                               uproc_class class, double score, void *arg);
 
-uproc_clf *uproc_clf_create_protein(enum uproc_clf_mode mode,
-                                    bool detailed,
+uproc_clf *uproc_clf_create_protein(enum uproc_clf_mode mode, bool detailed,
                                     const uproc_ecurve *fwd,
                                     const uproc_ecurve *rev,
                                     const uproc_substmat *substmat,
                                     uproc_protfilter *filter, void *filter_arg);
 
-uproc_clf *uproc_clf_create_dna(enum uproc_clf_mode mode,
-                                uproc_clf *protclass,
+uproc_clf *uproc_clf_create_dna(enum uproc_clf_mode mode, uproc_clf *protclass,
                                 const uproc_matrix *codon_scores,
                                 uproc_orffilter *orf_filter,
                                 void *orf_filter_arg);

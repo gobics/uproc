@@ -53,8 +53,7 @@
  */
 typedef struct uproc_ecurve_s uproc_ecurve;
 
-struct uproc_classes
-{
+struct uproc_classes {
     uproc_class family;
     uproc_class clan;
 };
@@ -64,8 +63,7 @@ struct uproc_classes
  * uproc_ecurve_add_prefix() expects a \ref grp_datastructs_list  of these as
  * its \c suffixes argument.
  */
-struct uproc_ecurve_suffixentry
-{
+struct uproc_ecurve_suffixentry {
     /** Suffix */
     uproc_suffix suffix;
 

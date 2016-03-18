@@ -3,11 +3,14 @@
 #include "config.h"
 #include "uproc.h"
 
-#define assert_dbl_eq(a, b, name) do { \
-    double _a = a, _b = b; \
-    ck_assert_msg(fabs(_a - _b) <= UPROC_EPSILON, \
-        "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
-        "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b, UPROC_EPSILON); \
+#define assert_dbl_eq(a, b, name)                                     \
+    do {                                                              \
+        double _a = a, _b = b;                                        \
+        ck_assert_msg(                                                \
+            fabs(_a - _b) <= UPROC_EPSILON,                           \
+            "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
+            "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b,     \
+            UPROC_EPSILON);                                           \
     } while (0)
 
 uproc_matrix *m;
@@ -103,16 +106,10 @@ START_TEST(test_add)
         double *a, *b, *want;
     } tests[] = {
         {
-            1, 1,
-            (double[]) { 1 },
-            (double[]) { 2 },
-            (double[]) { 3 },
+            1, 1, (double[]){1}, (double[]){2}, (double[]){3},
         },
         {
-            2, 1,
-            (double[]) { 1, 40 },
-            (double[]) { 2, 2 },
-            (double[]) { 3, 42 },
+            2, 1, (double[]){1, 40}, (double[]){2, 2}, (double[]){3, 42},
         },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
@@ -125,8 +122,7 @@ START_TEST(test_add)
         for (unsigned long row = 0; i < rows; i++) {
             for (unsigned long col = 0; i < cols; i++) {
                 assert_dbl_eq(uproc_matrix_get(got, row, col),
-                              uproc_matrix_get(want, row, col),
-                              "test_add");
+                              uproc_matrix_get(want, row, col), "test_add");
             }
         }
         uproc_matrix_destroy(a);
@@ -140,13 +136,12 @@ END_TEST
 START_TEST(test_ldivide)
 {
 #if HAVE_LAPACKE_DGESV
-    double va[] = {
-        17,  24,   1,   8,  15,
-        23,   5,   7,  14,  16,
-        4,   6,  13,  20,  22,
-        10,  12,  19,  21,   3,
-        11,  18,  25,   2,   9,
-    }, vb[] = { 65, 65, 65, 65, 65 };
+    double va[] =
+        {
+            17, 24, 1,  8,  15, 23, 5, 7,  14, 16, 4, 6, 13,
+            20, 22, 10, 12, 19, 21, 3, 11, 18, 25, 2, 9,
+        },
+           vb[] = {65, 65, 65, 65, 65};
 
     uproc_matrix *a = uproc_matrix_create(5, 5, va),
                  *b = uproc_matrix_create(5, 1, vb),

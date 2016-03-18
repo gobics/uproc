@@ -15,7 +15,8 @@ static inline void array_reverse(void *p, size_t n, size_t sz)
         }
     }
 }
-#define ARRAY_REVERSE(a) array_reverse((a), sizeof (a) / sizeof *(a), sizeof *(a))
+#define ARRAY_REVERSE(a) \
+    array_reverse((a), sizeof(a) / sizeof *(a), sizeof *(a))
 
 static inline void array_set(void *p, size_t n, size_t sz, const void *v)
 {
@@ -26,10 +27,10 @@ static inline void array_set(void *p, size_t n, size_t sz, const void *v)
 }
 
 #define ARRAY_SET(a, v) \
-    array_set((a), sizeof (a) / sizeof *(a), sizeof *(a), (v))
+    array_set((a), sizeof(a) / sizeof *(a), sizeof *(a), (v))
 
-static inline void array_shiftleft(void *p, size_t n, size_t sz,
-                                   size_t shift, const void *pad)
+static inline void array_shiftleft(void *p, size_t n, size_t sz, size_t shift,
+                                   const void *pad)
 {
     size_t keep = n - shift;
     memmove(p, p + shift * sz, keep * sz);

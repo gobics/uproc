@@ -37,8 +37,7 @@
 
 #include "classifier_internal.h"
 
-struct context
-{
+struct context {
     uproc_clf *protclass;
     double codon_scores[UPROC_BINARY_CODON_COUNT];
     uproc_orffilter *orf_filter;
@@ -65,14 +64,13 @@ static int classify(const void *context, const char *seq, uproc_list *results)
     int res;
 
     // max_scores maps  (rank, class) -> result with the max score
-    struct
-    {
+    struct {
         uproc_rank rank;
         uproc_class class;
     } max_scores_key;
     memset(&max_scores_key, 0, sizeof max_scores_key);
-    uproc_dict *max_scores = uproc_dict_create(sizeof max_scores_key,
-                                               sizeof(struct uproc_result));
+    uproc_dict *max_scores =
+        uproc_dict_create(sizeof max_scores_key, sizeof(struct uproc_result));
     if (!max_scores) {
         return -1;
     }
@@ -161,8 +159,7 @@ static void destroy(void *context)
     free(ctx);
 }
 
-uproc_clf *uproc_clf_create_dna(enum uproc_clf_mode mode,
-                                uproc_clf *protclass,
+uproc_clf *uproc_clf_create_dna(enum uproc_clf_mode mode, uproc_clf *protclass,
                                 const uproc_matrix *codon_scores,
                                 uproc_orffilter *orf_filter,
                                 void *orf_filter_arg)

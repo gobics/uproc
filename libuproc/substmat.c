@@ -33,8 +33,7 @@
 #include "uproc/matrix.h"
 #include "uproc/substmat.h"
 
-struct uproc_substmat_s
-{
+struct uproc_substmat_s {
     /** Matrix containing distances */
     double dists[UPROC_SUFFIX_LEN][UPROC_ALPHABET_SIZE << UPROC_AMINO_BITS];
 };
@@ -172,7 +171,8 @@ uproc_substmat *uproc_substmat_load(enum uproc_io_type iotype,
 
 int uproc_substmat_stores(const uproc_substmat *mat, uproc_io_stream *stream)
 {
-    unsigned long sz = UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE;
+    unsigned long sz =
+        UPROC_SUFFIX_LEN * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE;
     uproc_matrix *matrix = uproc_matrix_create(sz, 1, NULL);
     if (!matrix) {
         return -1;
@@ -206,7 +206,7 @@ int uproc_substmat_storev(const uproc_substmat *mat, enum uproc_io_type iotype,
 }
 
 int uproc_substmat_store(const uproc_substmat *mat, enum uproc_io_type iotype,
-                       const char *pathfmt, ...)
+                         const char *pathfmt, ...)
 {
     int res;
     va_list ap;

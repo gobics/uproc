@@ -132,7 +132,7 @@ int uproc_substmat_stores(const uproc_substmat *mat, uproc_io_stream *stream);
 
 /** Store substitution matrix to file */
 int uproc_substmat_store(const uproc_substmat *mat, enum uproc_io_type iotype,
-                       const char *pathfmt, ...);
+                         const char *pathfmt, ...);
 
 /** Store substitution matrix to file
  *
@@ -140,7 +140,7 @@ int uproc_substmat_store(const uproc_substmat *mat, enum uproc_io_type iotype,
  * number of arguments.
  */
 int uproc_substmat_storev(const uproc_substmat *mat, enum uproc_io_type iotype,
-                        const char *pathfmt, va_list ap);
+                          const char *pathfmt, va_list ap);
 /** \} */
 
 /**

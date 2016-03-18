@@ -31,8 +31,7 @@
 #include "uproc/matrix.h"
 
 /* Struct representing the "model" */
-struct uproc_model_s
-{
+struct uproc_model_s {
     uproc_substmat *substmat;
     uproc_matrix *codon_scores, *orf_thresh;
 };

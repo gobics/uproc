@@ -82,8 +82,7 @@
 typedef struct uproc_bst_s uproc_bst;
 
 /** The BST key type */
-union uproc_bst_key
-{
+union uproc_bst_key {
     /** Unsigned integer */
     uintmax_t uint;
 

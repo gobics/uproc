@@ -13,8 +13,7 @@
 
 uproc_list *list;
 
-struct test_data
-{
+struct test_data {
     int x;
     char c;
 };
@@ -112,7 +111,7 @@ START_TEST(test_add)
     res = uproc_list_add(list, list);
     ck_assert_int_eq(res, 0);
     for (int i = 0; i < 3; i++) {
-    uproc_list_get(list, i+3, &v);
+        uproc_list_get(list, i + 3, &v);
         ck_assert_int_eq(v.x, values[i].x);
         ck_assert_int_eq(v.c, values[i].c);
     }
@@ -190,8 +189,7 @@ END_TEST
 
 START_TEST(test_value_size_check)
 {
-    struct foo
-    {
+    struct foo {
         int x[10];
     } foo = {{0}};
     int bar = 42;

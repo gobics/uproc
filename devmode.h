@@ -24,8 +24,7 @@
 #if defined(DEVMODE) && HAVE_CLOCK_GETTIME
 #define HAVE_TIMEIT 1
 #include <time.h>
-typedef struct
-{
+typedef struct {
     int running;
     double total;
     struct timespec start;

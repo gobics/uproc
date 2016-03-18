@@ -39,11 +39,9 @@
 
 #define GZIP_BUFSZ (512 * (1 << 10))
 
-struct uproc_io_stream
-{
+struct uproc_io_stream {
     enum uproc_io_type type;
-    union
-    {
+    union {
         FILE *fp;
 #if HAVE_ZLIB_H
         gzFile gz;
@@ -366,7 +364,8 @@ char *uproc_io_gets(char *s, int size, uproc_io_stream *stream)
 
 long uproc_io_getline(char **lineptr, size_t *n, uproc_io_stream *stream)
 {
-#if HAVE_GETLINE && (defined(_GNU_SOURCE) || _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700)
+#if HAVE_GETLINE && (defined(_GNU_SOURCE) || _POSIX_C_SOURCE >= 200809L || \
+                     _XOPEN_SOURCE >= 700)
     if (stream->type == UPROC_IO_STDIO) {
         ssize_t res = getline(lineptr, n, stream->s.fp);
         if (res == -1) {

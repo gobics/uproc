@@ -112,7 +112,8 @@ enum uproc_database_load_which {
  * \returns the object on success or %NULL on error
  */
 uproc_database *uproc_database_load(const char *path, int version,
-                         void (*progress)(double, void *), void *progress_arg);
+                                    void (*progress)(double, void *),
+                                    void *progress_arg);
 
 /** Load some parts of a database from directory. */
 uproc_database *uproc_database_load_some(const char *path, int version,
@@ -207,14 +208,12 @@ void uproc_database_destroy(uproc_database *db);
 // with uintmax_t in the union)
 #define UPROC_DATABASE_METADATA_STR_SIZE \
     (UPROC_DICT_VALUE_SIZE_MAX - sizeof(uintmax_t))
-struct uproc_database_metadata
-{
+struct uproc_database_metadata {
     enum uproc_database_metadata_type {
         STR = 's',
         UINT = 'u',
     } type;
-    union
-    {
+    union {
         char str[UPROC_DATABASE_METADATA_STR_SIZE];
         uintmax_t uint;
     } value;

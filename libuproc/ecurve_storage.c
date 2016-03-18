@@ -286,8 +286,8 @@ static int store_plain(const struct uproc_ecurve_s *ecurve,
 
 #if !(HAVE_MMAP && USE_MMAP)
 static uproc_ecurve *load_binary(uproc_io_stream *stream,
-                                 void (*progress)(double,
-                                                  void *), void *progress_arg)
+                                 void (*progress)(double, void *),
+                                 void *progress_arg)
 {
     size_t sz;
     char alpha[UPROC_ALPHABET_SIZE + 1];

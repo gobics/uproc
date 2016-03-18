@@ -151,20 +151,17 @@ START_TEST(test_update)
 {
     struct {
         const char *key, *value;
-    }
-    a[] = {
-        {"foo", "bar"},
-        {"bacon", "aarhgad"},
-    },
-        b[] = {
-            {"spam", "egg"},
-            {"bacon", "beans"},
+    } a[] =
+        {
+            {"foo", "bar"}, {"bacon", "aarhgad"},
         },
-        want[] = {
-            {"foo", "bar"},
-            {"spam", "egg"},
-            {"bacon", "beans"},
-        };
+      b[] =
+          {
+              {"spam", "egg"}, {"bacon", "beans"},
+          },
+      want[] = {
+          {"foo", "bar"}, {"spam", "egg"}, {"bacon", "beans"},
+      };
 
 #define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
 

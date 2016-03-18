@@ -32,8 +32,7 @@
 #include "uproc/alphabet.h"
 
 /** Struct defining an amino acid alphabet */
-struct uproc_alphabet_s
-{
+struct uproc_alphabet_s {
     /** Original alphabet string */
     char str[UPROC_ALPHABET_SIZE + 1];
 

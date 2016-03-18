@@ -7,11 +7,14 @@
 
 #define ELEMENTS(x) (sizeof(x) / sizeof(x)[0])
 
-#define assert_dbl_eq(a, b, name) do { \
-    double _a = a, _b = b; \
-    ck_assert_msg(fabs(_a - _b) <= UPROC_EPSILON, \
-        "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
-        "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b, UPROC_EPSILON); \
+#define assert_dbl_eq(a, b, name)                                     \
+    do {                                                              \
+        double _a = a, _b = b;                                        \
+        ck_assert_msg(                                                \
+            fabs(_a - _b) <= UPROC_EPSILON,                           \
+            "Assertion '%s' in test '%s' failed: %s == %g, %s == %g", \
+            "|(" #a ")-(" #b ")| <= eps", (name), #a, _a, #b, _b,     \
+            UPROC_EPSILON);                                           \
     } while (0)
 
 uproc_alphabet *alpha;
@@ -31,8 +34,7 @@ START_TEST(test_align_suffixes)
 {
     int res;
     struct uproc_word word;
-    char s1[] = "AAAAAAAAAAAAAAAAAA",
-         s2[] = "PPPPPPAAAAAAAAATAA";
+    char s1[] = "AAAAAAAAAAAAAAAAAA", s2[] = "PPPPPPAAAAAAAAATAA";
     struct uproc_word w1, w2;
 
     res = uproc_word_from_string(&w1, s1, alpha);
@@ -49,8 +51,8 @@ START_TEST(test_align_suffixes)
     for (int i = 0; i < UPROC_SUFFIX_LEN; i++) {
         double want = (i != 9);
         ck_assert_msg(dist[i] == want,
-                      "wrong distance at index %i: got %g, want %g",
-                      dist[i], want);
+                      "wrong distance at index %i: got %g, want %g", dist[i],
+                      want);
     }
 
     uproc_substmat_destroy(mat);
@@ -64,17 +66,10 @@ START_TEST(test_store_load)
         uproc_amino a, b;
         double value;
     } tests[] = {
-        {0, 0, 0, 51.5},
-        {0, 10, 12, 51.5},
-        {1, 11, 4, 29.2},
-        {1, 11, 19, -20.25},
-        {3, 11, 2, -2.5},
-        {3, 15, 8, -14.75},
-        {4, 1, 0, 57.3333},
-        {4, 9, 19, 178},
-        {8, 14, 19, -71},
-        {11, 6, 8, -44},
-        {11, 14, 9, 20.5},
+        {0, 0, 0, 51.5},     {0, 10, 12, 51.5}, {1, 11, 4, 29.2},
+        {1, 11, 19, -20.25}, {3, 11, 2, -2.5},  {3, 15, 8, -14.75},
+        {4, 1, 0, 57.3333},  {4, 9, 19, 178},   {8, 14, 19, -71},
+        {11, 6, 8, -44},     {11, 14, 9, 20.5},
     };
     uproc_substmat *mat = uproc_substmat_create();
 
@@ -86,7 +81,7 @@ START_TEST(test_store_load)
     }
 
     int res = uproc_substmat_store(mat, UPROC_IO_STDIO,
-                               TMPDATADIR "test_substmat.tmp");
+                                   TMPDATADIR "test_substmat.tmp");
     ck_assert_msg(res == 0, "storing failed");
     uproc_substmat_destroy(mat);
 
@@ -95,8 +90,7 @@ START_TEST(test_store_load)
 
     for (size_t i = 0; i < ELEMENTS(tests); i++) {
         struct test t = tests[i];
-        double got = uproc_substmat_get(mat, t.pos, t.a, t.b),
-               want = t.value;
+        double got = uproc_substmat_get(mat, t.pos, t.a, t.b), want = t.value;
 
         char testname[1024];
         sprintf(testname, "i = %zu", i);

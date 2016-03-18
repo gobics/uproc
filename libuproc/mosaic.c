@@ -12,23 +12,19 @@
 #include "util.h"
 
 void uproc_mosaicword_init(struct uproc_mosaicword *mw,
-                           const struct uproc_word *word,
-                           size_t index,
+                           const struct uproc_word *word, size_t index,
                            double dist[static UPROC_SUFFIX_LEN],
                            enum uproc_ecurve_direction dir)
 {
     *mw = (struct uproc_mosaicword){
-        .word = *word,
-        .index = index,
-        .dir = dir,
+        .word = *word, .index = index, .dir = dir,
     };
     for (int i = 0; i < UPROC_SUFFIX_LEN; i++) {
         mw->score += dist[i];
     }
 }
 
-struct uproc_mosaic_s
-{
+struct uproc_mosaic_s {
     size_t index;
     double total, dist[UPROC_WORD_LEN];
     uproc_list *words;  // (struct uproc_mosaicword)
@@ -48,7 +44,7 @@ uproc_mosaic *uproc_mosaic_create(bool store_words)
         m->dist[i] = -INFINITY;
     }
     if (store_words) {
-        m->words = uproc_list_create(sizeof (struct uproc_mosaicword));
+        m->words = uproc_list_create(sizeof(struct uproc_mosaicword));
         if (!m->words) {
             goto error;
         }

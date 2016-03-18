@@ -96,14 +96,14 @@ int uproc_dict_get_safe(const uproc_dict *dict, const void *key,
  * Copies the data of the item corresponding to key \c key into \c *value.
  * NOTE: \c key AND \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_dict_get(dict, key, value) \
-    uproc_dict_get_safe((dict), (key), sizeof *(key), (value),          \
+#define uproc_dict_get(dict, key, value)                       \
+    uproc_dict_get_safe((dict), (key), sizeof *(key), (value), \
                         sizeof *(value), __func__, __FILE__, __LINE__)
 
 int uproc_dict_set_unsafe(uproc_dict *dict, const void *key, const void *value);
 int uproc_dict_set_safe(uproc_dict *dict, const void *key, size_t key_size,
-                        const void *value, size_t value_size,
-                        const char *func, const char *file, int line);
+                        const void *value, size_t value_size, const char *func,
+                        const char *file, int line);
 
 /** Set value for key
  *
@@ -111,8 +111,8 @@ int uproc_dict_set_safe(uproc_dict *dict, const void *key, size_t key_size,
  * size of the dict.
  * NOTE: \c key AND \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_dict_set(dict, key, value) \
-    uproc_dict_set_safe((dict), (key), sizeof *(key), (value),  \
+#define uproc_dict_set(dict, key, value)                       \
+    uproc_dict_set_safe((dict), (key), sizeof *(key), (value), \
                         sizeof *(value), __func__, __FILE__, __LINE__)
 
 int uproc_dict_remove_unsafe(uproc_dict *dict, const void *key);
@@ -123,7 +123,7 @@ int uproc_dict_remove_safe(uproc_dict *dict, const void *key, size_t key_size,
  *
  * NOTE: \c key WILL BE EVALUATED TWICE.
  */
-#define uproc_dict_remove(dict, key) \
+#define uproc_dict_remove(dict, key)                                         \
     uproc_dict_remove_safe((dict), (key), sizeof *(key), __func__, __FILE__, \
                            __LINE__)
 
@@ -251,8 +251,8 @@ uproc_dictiter *uproc_dictiter_create(const uproc_dict *dict);
 
 int uproc_dictiter_next_unsafe(uproc_dictiter *iter, void *key, void *value);
 int uproc_dictiter_next_safe(uproc_dictiter *iter, void *key, size_t key_size,
-                             void *value, size_t value_size,
-                             const char *func, const char *file, int line);
+                             void *value, size_t value_size, const char *func,
+                             const char *file, int line);
 
 /** Obtain next key/value pair
  *
@@ -267,8 +267,8 @@ int uproc_dictiter_next_safe(uproc_dictiter *iter, void *key, size_t key_size,
  *  iterator is exhausted. If the returned value is not 0, \c *key and \c
  *  *value are not modified.
  */
-#define uproc_dictiter_next(iter, key, value)                               \
-    uproc_dictiter_next_safe((iter), (key), sizeof *(key), (value),         \
+#define uproc_dictiter_next(iter, key, value)                       \
+    uproc_dictiter_next_safe((iter), (key), sizeof *(key), (value), \
                              sizeof *(value), __func__, __FILE__, __LINE__)
 
 /** Destroy dict iterator */

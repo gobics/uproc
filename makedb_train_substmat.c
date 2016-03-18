@@ -53,8 +53,7 @@ enum ft {
 
 int feature_type(const uproc_ecurve *ec, size_t idx)
 {
-    uproc_class lo = first_class(ec, idx - 1),
-                mid = first_class(ec, idx),
+    uproc_class lo = first_class(ec, idx - 1), mid = first_class(ec, idx),
                 hi = first_class(ec, idx + 1);
 
     if (mid == UPROC_CLASS_INVALID) {
@@ -69,23 +68,22 @@ int feature_type(const uproc_ecurve *ec, size_t idx)
     return LO_DIFFERS;
 }
 
-#define AMINO_AT(x, n) \
-    (((x) >> (UPROC_AMINO_BITS * (UPROC_SUFFIX_LEN - (n) - 1))) \
-     & UPROC_BITMASK(UPROC_AMINO_BITS))
+#define AMINO_AT(x, n)                                          \
+    (((x) >> (UPROC_AMINO_BITS * (UPROC_SUFFIX_LEN - (n)-1))) & \
+     UPROC_BITMASK(UPROC_AMINO_BITS))
 
 static unsigned make_index(uproc_suffix a, uproc_suffix b, unsigned i)
 {
     uproc_amino aa = AMINO_AT(a, i);
     uproc_amino ab = AMINO_AT(b, i);
-    unsigned idx =
-        i*UPROC_ALPHABET_SIZE*UPROC_ALPHABET_SIZE +
-        aa*UPROC_ALPHABET_SIZE + ab;
+    unsigned idx = i * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE +
+                   aa * UPROC_ALPHABET_SIZE + ab;
     return idx;
 }
 
 static unsigned long n_features;
-static void add_feature(uproc_matrix *vec, uproc_matrix *mat,
-                        uproc_suffix a, uproc_suffix b, double increment)
+static void add_feature(uproc_matrix *vec, uproc_matrix *mat, uproc_suffix a,
+                        uproc_suffix b, double increment)
 {
     unsigned indices[UPROC_SUFFIX_LEN];
     n_features++;
@@ -112,9 +110,8 @@ static void count_features(const uproc_ecurve *ec, uproc_matrix *vec,
         if (ft != LO_DIFFERS && ft != HI_DIFFERS) {
             continue;
         }
-        uproc_suffix lo = ec->suffixes[i-1],
-                     mid = ec->suffixes[i],
-                     hi = ec->suffixes[i+1];
+        uproc_suffix lo = ec->suffixes[i - 1], mid = ec->suffixes[i],
+                     hi = ec->suffixes[i + 1];
         add_feature(vec, mat, mid, lo, (ft == LO_DIFFERS ? -1 : 1));
         add_feature(vec, mat, mid, hi, (ft == HI_DIFFERS ? -1 : 1));
     }
@@ -132,9 +129,8 @@ static uproc_substmat *vec_to_substmat(const uproc_matrix *vec)
     for (unsigned i = 0; i < UPROC_SUFFIX_LEN; i++) {
         for (uproc_amino a = 0; a < UPROC_ALPHABET_SIZE; a++) {
             for (uproc_amino b = 0; b < UPROC_ALPHABET_SIZE; b++) {
-                unsigned idx =
-                    i*UPROC_ALPHABET_SIZE*UPROC_ALPHABET_SIZE +
-                    a*UPROC_ALPHABET_SIZE + b;
+                unsigned idx = i * UPROC_ALPHABET_SIZE * UPROC_ALPHABET_SIZE +
+                               a * UPROC_ALPHABET_SIZE + b;
                 double v = uproc_matrix_get(vec, idx, 0);
                 uproc_substmat_set(substmat, i, a, b, v);
             }
@@ -144,8 +140,7 @@ static uproc_substmat *vec_to_substmat(const uproc_matrix *vec)
 }
 
 static uproc_substmat *make_candidate(const uproc_matrix *features,
-                                      const uproc_matrix *coocc,
-                                      double lambda)
+                                      const uproc_matrix *coocc, double lambda)
 {
     uproc_matrix *lambdas = uproc_matrix_eye(N_DIMS, lambda);
 
@@ -187,16 +182,15 @@ static void score_candidate_ec(const uproc_ecurve *ec,
         }
 
         double dist[UPROC_SUFFIX_LEN];
-        uproc_suffix lo = ec->suffixes[i-1],
-                     mid = ec->suffixes[i],
-                     hi = ec->suffixes[i+1];
+        uproc_suffix lo = ec->suffixes[i - 1], mid = ec->suffixes[i],
+                     hi = ec->suffixes[i + 1];
         uproc_substmat_align_suffixes(substmat, mid, lo, dist);
         double score_lo = dist_sum(dist);
         uproc_substmat_align_suffixes(substmat, mid, hi, dist);
         double score_hi = dist_sum(dist);
 
         if (score_lo > 0 || score_hi > 0) {
-            if (ft == BOTH_EQUAL)  {
+            if (ft == BOTH_EQUAL) {
                 stats->tp++;
             } else {
                 stats->fp++;
@@ -213,7 +207,7 @@ static void score_candidate_ec(const uproc_ecurve *ec,
 static double score_candidate(const uproc_ecurve *fwd, const uproc_ecurve *rev,
                               const uproc_substmat *substmat)
 {
-    struct stats stats = { 0, 0, 0 };
+    struct stats stats = {0, 0, 0};
     score_candidate_ec(fwd, substmat, &stats);
     score_candidate_ec(rev, substmat, &stats);
     return (2.0 * stats.tp) / (2.0 * stats.tp + stats.fp + stats.fn);
@@ -236,15 +230,16 @@ uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
         uproc_matrix_store(features, UPROC_IO_STDIO, "features");
     }
 
-    double lambdas[] = { 1e8, 1e7, 1e6, 1e5, 1e4, };
+    double lambdas[] = {
+        1e8, 1e7, 1e6, 1e5, 1e4,
+    };
 
     // the substitution matrix that obtains the best f1 score wins
     double f1_max = 0.0;
     uproc_substmat *best_candidate = NULL;
 
     for (unsigned i = 0; i < ELEMENTS(lambdas); i++) {
-        uproc_substmat *cand = make_candidate(features, coocc,
-                                              lambdas[i]);
+        uproc_substmat *cand = make_candidate(features, coocc, lambdas[i]);
         uproc_substmat_store(cand, UPROC_IO_STDIO, "substmat_%g", lambdas[i]);
         double f1 = score_candidate(fwd, rev, cand);
         if (f1 > f1_max || !best_candidate) {
@@ -275,7 +270,7 @@ void add_entries(struct uproc_ecurve_s *ec, struct entry *entries, size_t n)
     ec->suffix_count = n;
 
     for (size_t i = 0; i < n; i++) {
-        struct uproc_word w = { 0, 0 };
+        struct uproc_word w = {0, 0};
         uproc_word_from_string(&w, entries[i].w, alpha_);
         ec->suffixes[i] = w.suffix;
         ec->classes[i] = entries[i].cls;
@@ -284,24 +279,21 @@ void add_entries(struct uproc_ecurve_s *ec, struct entry *entries, size_t n)
 
 void test_count_features(void)
 {
-    struct uproc_ecurve_s fwd = { 0 }, rev = { 0 };
+    struct uproc_ecurve_s fwd = {0}, rev = {0};
 
     struct entry entries_fwd[] = {
-        { "PPPPPPAAAAAAAAAAAA", 0 },
-        { "PPPPPPAAAAAAAAAAAG", 0 },
-        { "PPPPPPGAAAAAAAAAGG", 1 },
-        { "PPPPPPGAAAAAAAAAGG", 1 },
-        { "PPPPPPGAAAAAAAAGGG", 1 },
+        {"PPPPPPAAAAAAAAAAAA", 0}, {"PPPPPPAAAAAAAAAAAG", 0},
+        {"PPPPPPGAAAAAAAAAGG", 1}, {"PPPPPPGAAAAAAAAAGG", 1},
+        {"PPPPPPGAAAAAAAAGGG", 1},
     };
     struct entry entries_rev[] = {
-        { "PPPPPPSSSSSSSSSSSS", 0 },
-        { "PPPPPPSSSSSSSSSSSG", 0 },
-        { "PPPPPPGSSSSSSSSSGG", 1 },
-        { "PPPPPPGSSSSSSSSSGG", 1 },
-        { "PPPPPPGTTTTTTTTGGG", 1 },
+        {"PPPPPPSSSSSSSSSSSS", 0}, {"PPPPPPSSSSSSSSSSSG", 0},
+        {"PPPPPPGSSSSSSSSSGG", 1}, {"PPPPPPGSSSSSSSSSGG", 1},
+        {"PPPPPPGTTTTTTTTGGG", 1},
     };
 
-#define ADD_ENTRIES(ec, entries) add_entries((ec), (entries), ELEMENTS((entries)))
+#define ADD_ENTRIES(ec, entries) \
+    add_entries((ec), (entries), ELEMENTS((entries)))
     ADD_ENTRIES(&fwd, entries_fwd);
     ADD_ENTRIES(&rev, entries_rev);
 #undef ADD_ENTRIES
@@ -309,20 +301,17 @@ void test_count_features(void)
     uproc_matrix *coocc = uproc_matrix_create(N_DIMS, N_DIMS, NULL);
     uproc_matrix *features = uproc_matrix_create(N_DIMS, 1, NULL);
     count_features(&fwd, features, coocc);
-    uproc_assert(
-        uproc_matrix_get(features, 0, 0) == +1);
-    uproc_assert(
-        uproc_matrix_get(features, 1, 0) == -1);
-    uproc_assert(
-        uproc_matrix_get(features, 20, 0) == -1);
-    uproc_assert(
-        uproc_matrix_get(features, 21, 0) == +1);
+    uproc_assert(uproc_matrix_get(features, 0, 0) == +1);
+    uproc_assert(uproc_matrix_get(features, 1, 0) == -1);
+    uproc_assert(uproc_matrix_get(features, 20, 0) == -1);
+    uproc_assert(uproc_matrix_get(features, 21, 0) == +1);
 
     uproc_matrix_destroy(features);
     uproc_matrix_destroy(coocc);
 }
 
-int main(void) {
+int main(void)
+{
     uproc_error_set_handler(errhandler_bail, NULL);
     alpha_ = uproc_alphabet_create("AGSTPKRQEDNHYWFMLIVC");
 

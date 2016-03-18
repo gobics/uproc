@@ -32,8 +32,7 @@
 #define BUFSIZE_INITIAL (32 * 1024)
 #define BUFSIZE_INCREMENT (16 * 1024)
 
-struct uproc_idmap_s
-{
+struct uproc_idmap_s {
     uproc_class n;
     size_t offsets[UPROC_CLASS_MAX];
     char *buf;

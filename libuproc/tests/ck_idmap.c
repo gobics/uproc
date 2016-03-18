@@ -45,8 +45,7 @@ START_TEST(test_usage)
     fam2 = uproc_idmap_class(map, "bar");
     ck_assert_int_eq(fam1, fam2);
     ck_assert_str_eq(uproc_idmap_str(map, fam2), "bar");
-    ck_assert_str_eq(uproc_idmap_str(map, fam1),
-                     uproc_idmap_str(map, fam2));
+    ck_assert_str_eq(uproc_idmap_str(map, fam1), uproc_idmap_str(map, fam2));
 }
 END_TEST
 

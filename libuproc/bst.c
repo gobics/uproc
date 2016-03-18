@@ -30,8 +30,7 @@
 #include "uproc/error.h"
 #include "uproc/bst.h"
 
-struct bstnode
-{
+struct bstnode {
     union uproc_bst_key key;
     struct bstnode *parent;
     struct bstnode *left;
@@ -39,8 +38,7 @@ struct bstnode
     unsigned char value[];
 };
 
-struct uproc_bst_s
-{
+struct uproc_bst_s {
     /** The root node */
     struct bstnode *root;
 
@@ -54,8 +52,7 @@ struct uproc_bst_s
     size_t value_size;
 };
 
-struct uproc_bstiter_s
-{
+struct uproc_bstiter_s {
     /** BST being iterated */
     const struct uproc_bst_s *t;
 

@@ -51,8 +51,7 @@
  */
 
 /** \copybrief struct_orf */
-struct uproc_orf
-{
+struct uproc_orf {
     /** Derived amino acid sequence as string */
     char *data;
 

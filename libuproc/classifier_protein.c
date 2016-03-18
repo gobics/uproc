@@ -35,8 +35,7 @@
 #include "classifier_internal.h"
 #include "ecurve_internal.h"
 
-struct context
-{
+struct context {
     bool detailed;
     const uproc_substmat *substmat;
     const uproc_ecurve *fwd, *rev;
@@ -196,7 +195,7 @@ static int classify(const void *context, const char *seq, uproc_list *results)
 
     int ranks_count = get_ranks_count(ctx);
     for (int i = 0; i < ranks_count; i++) {
-        scores[i] = uproc_bst_create(UPROC_BST_UINT, sizeof(uproc_mosaic*));
+        scores[i] = uproc_bst_create(UPROC_BST_UINT, sizeof(uproc_mosaic *));
         if (!scores[i]) {
             goto error;
         }

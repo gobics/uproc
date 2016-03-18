@@ -66,17 +66,17 @@ void uproc_list_clear(uproc_list *list);
 int uproc_list_get_unsafe(const uproc_list *list, long index, void *value);
 
 int uproc_list_get_safe(uproc_list *list, long index, void *value,
-                        size_t value_size, const char *func,
-                        const char *file, int line);
+                        size_t value_size, const char *func, const char *file,
+                        int line);
 
 /* Get item at index
  *
  * Copies the data of the item at \c index into \c *value.
  * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_list_get(list, index, value) \
-    uproc_list_get_safe((list), (index), (value), sizeof *(value),    \
-                        __func__, __FILE__, __LINE__)
+#define uproc_list_get(list, index, value)                                   \
+    uproc_list_get_safe((list), (index), (value), sizeof *(value), __func__, \
+                        __FILE__, __LINE__)
 
 /** Get pointer to data
  *
@@ -88,8 +88,8 @@ void *uproc_list_get_ptr(uproc_list *list);
 int uproc_list_set_unsafe(uproc_list *list, long index, const void *value);
 
 int uproc_list_set_safe(uproc_list *list, long index, const void *value,
-                        size_t value_size, const char *func,
-                        const char *file, int line);
+                        size_t value_size, const char *func, const char *file,
+                        int line);
 
 /** Set item at index
  *
@@ -97,24 +97,24 @@ int uproc_list_set_safe(uproc_list *list, long index, const void *value,
  * size of the list.
  * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_list_set(list, index, value) \
-    uproc_list_set_safe((list), (index), (value), sizeof *(value),  \
-                        __func__, __FILE__, __LINE__)
+#define uproc_list_set(list, index, value)                                   \
+    uproc_list_set_safe((list), (index), (value), sizeof *(value), __func__, \
+                        __FILE__, __LINE__)
 
 int uproc_list_append_unsafe(uproc_list *list, const void *value);
 
 int uproc_list_append_safe(uproc_list *list, const void *value,
-                           size_t value_size,
-                           const char *func, const char *file, int line);
+                           size_t value_size, const char *func,
+                           const char *file, int line);
 
 /** Append item to list
  *
  * Stores a copy of \c *value at the end of the list.
  * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_list_append(list, value) \
-    uproc_list_append_safe((list), (value), sizeof *(value),    \
-                           __func__, __FILE__, __LINE__)
+#define uproc_list_append(list, value)                                 \
+    uproc_list_append_safe((list), (value), sizeof *(value), __func__, \
+                           __FILE__, __LINE__)
 
 int uproc_list_extend_unsafe(uproc_list *list, const void *values, long n);
 
@@ -128,9 +128,9 @@ int uproc_list_extend_safe(uproc_list *list, const void *values, long n,
  *
  * NOTE: \c values WILL BE EVALUATED TWICE.
  */
-#define uproc_list_extend(list, values, n) \
-    uproc_list_extend_safe((list), (values), (n), sizeof *(values), \
-                           __func__, __FILE__, __LINE__)
+#define uproc_list_extend(list, values, n)                                    \
+    uproc_list_extend_safe((list), (values), (n), sizeof *(values), __func__, \
+                           __FILE__, __LINE__)
 
 int uproc_list_add_unsafe(uproc_list *list, const uproc_list *src);
 int uproc_list_add_safe(uproc_list *list, const uproc_list *src,
@@ -153,9 +153,9 @@ int uproc_list_pop_safe(uproc_list *list, void *value, size_t value_size,
  * NOTE: \c value WILL BE EVALUATED TWICE.
  *
  * */
-#define uproc_list_pop(list, value) \
-    uproc_list_pop_safe((list), (value), sizeof *(value),   \
-                        __func__, __FILE__, __LINE__)
+#define uproc_list_pop(list, value)                                           \
+    uproc_list_pop_safe((list), (value), sizeof *(value), __func__, __FILE__, \
+                        __LINE__)
 
 /** Returns the number of items */
 long uproc_list_size(const uproc_list *list);
@@ -203,9 +203,9 @@ int uproc_list_max_unsafe(const uproc_list *list,
                           void *value);
 
 int uproc_list_max_safe(const uproc_list *list,
-                        int (*compare)(const void *, const void *),
-                        void *value, size_t value_size,
-                        const char *func, const char *file, int line);
+                        int (*compare)(const void *, const void *), void *value,
+                        size_t value_size, const char *func, const char *file,
+                        int line);
 
 /* Get greatest item according to \c compare
  *
@@ -213,9 +213,9 @@ int uproc_list_max_safe(const uproc_list *list,
  *
  * NOTE: \c value WILL BE EVALUATED TWICE.
  */
-#define uproc_list_max(list, compare, value) \
-    uproc_list_max_safe((list), (compare), (value), sizeof *(value), \
-                        __func__, __FILE__, __LINE__)
+#define uproc_list_max(list, compare, value)                                   \
+    uproc_list_max_safe((list), (compare), (value), sizeof *(value), __func__, \
+                        __FILE__, __LINE__)
 
 /** \} */
 

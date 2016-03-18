@@ -69,10 +69,8 @@
 
 enum { PPOPTS_HEADER = SCHAR_MAX + 1, PPOPTS_TEXT };
 
-struct ppopts
-{
-    struct ppopts_opt
-    {
+struct ppopts {
+    struct ppopts_opt {
         int shortopt;
         char longopt[PPOPTS_LONGOPT_MAX + 1];
         char argname[PPOPTS_ARGNAME_MAX + 1];

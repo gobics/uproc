@@ -37,14 +37,9 @@ START_TEST(test_match)
         char *codon, *mask;
         bool match;
     } tests[] = {
-        {"ACG", "ACN", true},
-        {"AAG", "ARG", true},
-        {"AGG", "ARG", true},
-        {"ATG", "AYG", true},
-        {"ACG", "AYG", true},
-        {"AAA", "NRW", true},
-        {"ACG", "ACT", false},
-        {"ACN", "ACG", false},
+        {"ACG", "ACN", true},  {"AAG", "ARG", true},  {"AGG", "ARG", true},
+        {"ATG", "AYG", true},  {"ACG", "AYG", true},  {"AAA", "NRW", true},
+        {"ACG", "ACT", false}, {"ACN", "ACG", false},
     };
 
     for (int i = 0; i < sizeof tests / sizeof(struct test_match); i++) {
@@ -66,12 +61,8 @@ START_TEST(test_complement)
         char *c1, *c2;
         bool result;
     } tests[] = {
-        {"ACG", "CGT", true},
-        {"ARG", "CYT", true},
-        {"NNA", "TNN", true},
-        {"AAA", "TTT", true},
-        {"CCC", "GGG", true},
-        {"AAT", "TTA", false},
+        {"ACG", "CGT", true},  {"ARG", "CYT", true}, {"NNA", "TNN", true},
+        {"AAA", "TTT", true},  {"CCC", "GGG", true}, {"AAT", "TTA", false},
         {"GCG", "CCG", false},
     };
 

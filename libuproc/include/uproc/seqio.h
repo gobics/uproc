@@ -44,8 +44,7 @@
  */
 
 /** \copybrief struct_sequence */
-struct uproc_sequence
-{
+struct uproc_sequence {
     /** Sequence identifier */
     char *header;
 

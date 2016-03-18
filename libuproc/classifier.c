@@ -34,25 +34,24 @@
 
 #include "classifier_internal.h"
 
-struct uproc_clf_s
-{
+struct uproc_clf_s {
     enum uproc_clf_mode mode;
     void *context;
     int (*classify)(const void *context, const char *seq, uproc_list *results);
     void (*destroy)(void *context);
 };
 
-uproc_clf *uproc_clf_create(
-    enum uproc_clf_mode mode, void *context,
-    int (*classify)(const void*, const char*, uproc_list*),
-    void (*destroy)(void*))
+uproc_clf *uproc_clf_create(enum uproc_clf_mode mode, void *context,
+                            int (*classify)(const void *, const char *,
+                                            uproc_list *),
+                            void (*destroy)(void *))
 {
     struct uproc_clf_s *clf = malloc(sizeof *clf);
-    *clf = (struct uproc_clf_s) {
+    *clf = (struct uproc_clf_s){
         .mode = mode,
-            .context = context,
-            .classify = classify,
-            .destroy = destroy,
+        .context = context,
+        .classify = classify,
+        .destroy = destroy,
     };
     return clf;
 }
@@ -70,7 +69,8 @@ static int result_cmpv(const void *p1, const void *p2)
     return uproc_result_cmp(p1, p2);
 }
 
-static int filter_results_to_max(uproc_list *results) {
+static int filter_results_to_max(uproc_list *results)
+{
     if (!uproc_list_size(results)) {
         return 0;
     }
@@ -92,9 +92,8 @@ int uproc_clf_classify(const uproc_clf *clf, const char *seq,
     uproc_assert(clf->classify);
     uproc_assert(clf->destroy);
 
-
     if (!*results) {
-        *results = uproc_list_create(sizeof (struct uproc_result));
+        *results = uproc_list_create(sizeof(struct uproc_result));
         if (!*results) {
             return -1;
         }
@@ -116,7 +115,7 @@ int uproc_clf_classify(const uproc_clf *clf, const char *seq,
     }
 
     if (0) {
-error:
+    error:
         uproc_list_destroy(*results);
         *results = NULL;
         res = -1;
@@ -140,20 +139,19 @@ void uproc_result_freev(void *ptr)
     uproc_result_free(ptr);
 }
 
-int uproc_result_copy(struct uproc_result *dest,
-                      const struct uproc_result *src)
+int uproc_result_copy(struct uproc_result *dest, const struct uproc_result *src)
 {
     *dest = *src;
     if (src->orf.data) {
-      int res = uproc_orf_copy(&dest->orf, &src->orf);
-      if (res) {
-          return res;
-      }
+        int res = uproc_orf_copy(&dest->orf, &src->orf);
+        if (res) {
+            return res;
+        }
     }
     if (!src->mosaicwords) {
         return 0;
     }
-    dest->mosaicwords = uproc_list_create(sizeof (struct uproc_mosaicword));
+    dest->mosaicwords = uproc_list_create(sizeof(struct uproc_mosaicword));
     if (!dest->mosaicwords) {
         uproc_orf_free(&dest->orf);
         return -1;

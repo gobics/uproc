@@ -42,8 +42,7 @@
 #define BUFSZ_INIT 2
 #define BUFSZ_STEP 50
 
-struct uproc_orfiter_s
-{
+struct uproc_orfiter_s {
     /** DNA/RNA sequence being iterated */
     const char *seq;
 
