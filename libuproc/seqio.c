@@ -28,8 +28,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include <assert.h>
-
 #include "uproc/common.h"
 #include "uproc/error.h"
 #include "uproc/io.h"
@@ -155,7 +153,11 @@ static int read_fasta(struct uproc_seqiter_s *iter)
     memcpy(iter->header, iter->line + 1, len - 1);
     iter->header[len - 1] = '\0';
     iter->header_len = len - 1;
-    assert(iter->header_len == strlen(iter->header));
+    if (iter->header_len != strlen(iter->header)) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "input file contains NUL byte(s) in line %lu",
+                               iter->line_no);
+    }
 
     iter_getline(iter);
     if (iter->line_len == -1) {
@@ -186,7 +188,11 @@ static int read_fasta(struct uproc_seqiter_s *iter)
         iter->data[total_len] = '\0';
     }
     iter->seq_len = total_len;
-    assert(iter->seq_len == strlen(iter->data));
+    if (iter->seq_len != strlen(iter->data)) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "input file contains NUL byte(s) in line %lu",
+                               iter->line_no);
+    }
 
     return 0;
 }
@@ -205,7 +211,11 @@ static int read_fastq(struct uproc_seqiter_s *iter)
     memcpy(iter->header, iter->line + 1, len - 1);
     iter->header[len - 1] = '\0';
     iter->header_len = len - 1;
-    assert(iter->header_len == strlen(iter->header));
+    if (iter->header_len != strlen(iter->header)) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "input file contains NUL byte(s) in line %lu",
+                               iter->line_no);
+    }
 
     iter_getline(iter);
     if (iter->line_len == -1) {
@@ -223,6 +233,11 @@ static int read_fastq(struct uproc_seqiter_s *iter)
     memcpy(iter->data, iter->line, len);
     iter->data[len] = '\0';
     iter->seq_len = len;
+    if (iter->seq_len != strlen(iter->data)) {
+        return uproc_error_msg(UPROC_EINVAL,
+                               "input file contains NUL byte(s) in line %lu",
+                               iter->line_no);
+    }
 
     /* skip the '+' line that repeats the header */
     iter_getline(iter);
