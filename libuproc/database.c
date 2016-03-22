@@ -23,6 +23,7 @@
 #endif
 
 #include <stdlib.h>
+#include <limits.h>
 
 #include "uproc/error.h"
 #include "uproc/database.h"
@@ -218,7 +219,7 @@ uproc_database *uproc_database_load_some(const char *path, int version,
         version = guess_db_version(path);
         if (version == -1) {
             uproc_error_msg(UPROC_EINVAL, "unknown database format");
-            return NULL;
+            goto error;
         }
     }
 
@@ -226,12 +227,27 @@ uproc_database *uproc_database_load_some(const char *path, int version,
         uproc_dict *new_metadata = uproc_dict_load(
             0, sizeof(struct uproc_database_metadata), metadata_scan, NULL,
             UPROC_IO_GZIP, "%s/metadata", path);
-        if (new_metadata) {
-            uproc_dict_destroy(db->metadata);
-            db->metadata = new_metadata;
+        if (!new_metadata) {
+            goto error;
+        }
+        uproc_dict_destroy(db->metadata);
+        db->metadata = new_metadata;
+
+        uintmax_t stored_version_umax = 0;
+        int res = uproc_database_metadata_get_uint(db, "version",
+                                                   &stored_version_umax);
+        uproc_assert(stored_version_umax <= INT_MAX);
+        int stored_version = (int)stored_version_umax;
+        if (res == -1) {
+            uproc_database_metadata_set_uint(db, "version", version);
+        } else if (stored_version != version) {
+            uproc_error_msg(UPROC_EINVAL,
+                            "DB version differs, got %d instead of %d",
+                            (int)stored_version, version);
         }
     } else {
         uproc_database_metadata_set_uint(db, "ranks", 1);
+        uproc_database_metadata_set_uint(db, "version", UPROC_DATABASE_V1);
     }
 
     if (which & UPROC_DATABASE_LOAD_PROT_THRESH) {

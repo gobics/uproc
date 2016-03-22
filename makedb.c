@@ -808,6 +808,8 @@ int main(int argc, char **argv)
         uproc_database_set_ecurve(database_, UPROC_ECURVE_REV,
                                   build_ecurve(true));
 
+        uproc_database_metadata_set_uint(database_, "version",
+                                         UPROC_DATABASE_LATEST);
         uproc_database_metadata_set_uint(database_, "ranks", ranks_count_);
         uproc_database_metadata_set_str(database_, "alphabet", alphabet_str_);
 
