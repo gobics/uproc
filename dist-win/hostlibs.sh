@@ -10,8 +10,7 @@ libs=("gomp-1" "gcc*")
 
 distro=unknown
 
-grep -s -q 'ID=ubuntu' /etc/os-release && distro=ubuntu
-# TODO: test for archlinux (and maybe others)
+distro=$(grep '^ID=' /etc/os-release | cut -f2 -d= || echo UNKNOWN)
 
 case $distro in
 	ubuntu)
@@ -19,8 +18,11 @@ case $distro in
 		dir=$(find ${base}/* -maxdepth 0 | grep -v 'posix$' | sort -n | tail -n 1)
 		hostdir=${dir}
 		;;
-	archlinux)
-		echo implement me >&2
+	arch)
+		hostdir=/usr/${host}/bin
+		;;
+	*)
+		echo "No idea how to build windows package on distro \"$distro\""
 		exit 1
 		;;
 esac
