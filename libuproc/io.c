@@ -214,6 +214,7 @@ uproc_io_stream *uproc_io_openv(const char *mode, enum uproc_io_type type,
 
     buf = malloc(n + 1);
     if (!buf) {
+        uproc_error(UPROC_ENOMEM);
         return NULL;
     }
     vsprintf(buf, pathfmt, ap);
