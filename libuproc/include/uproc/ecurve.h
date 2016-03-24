@@ -87,6 +87,8 @@ enum uproc_ecurve_format {
 
     /** Machine-dependent binary format */
     UPROC_ECURVE_BINARY,
+
+    UPROC_ECURVE_BINARY_V1,
 };
 
 /** Lookup return codes */
@@ -341,9 +343,9 @@ int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
  */
 uproc_ecurve *uproc_ecurve_mmap(const char *pathfmt, ...);
 
-/** Store ecurve to file
+/** Map a file to an ecurve
  *
- * Like uproc_ecurve_store(), but with a \c va_list instead of a variable
+ * Like uproc_ecurve_mmap(), but with a \c va_list instead of a variable
  * number of arguments.
  */
 uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap);

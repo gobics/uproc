@@ -40,6 +40,11 @@
 
 #include "ecurve_internal.h"
 
+struct mmap_header_v1 {
+    char alphabet_str[UPROC_ALPHABET_SIZE];
+    size_t suffix_count;
+};
+
 struct mmap_header {
     char alphabet_str[UPROC_ALPHABET_SIZE];
     uproc_rank ranks_count;
@@ -75,11 +80,32 @@ static const uint64_t magic_number = 0xd2eadfUL;
 #define MAP_POPULATE 0
 #endif
 
-static uproc_ecurve *ecurve_map(const char *path)
+static void fill_header_v1(struct mmap_header *header, void *region,
+                           unsigned char **after_header)
+{
+    struct mmap_header_v1 *v1_header = region;
+    memcpy(header->alphabet_str, v1_header->alphabet_str,
+           sizeof header->alphabet_str);
+    header->ranks_count = 1;
+    header->suffix_count = v1_header->suffix_count;
+    *after_header = region + sizeof *v1_header;
+}
+
+static void fill_header_v2(struct mmap_header *header, void *region,
+                           unsigned char **after_header)
+{
+    struct mmap_header *v2_header = region;
+    memcpy(header->alphabet_str, v2_header->alphabet_str,
+           sizeof header->alphabet_str);
+    header->ranks_count = v2_header->ranks_count;
+    header->suffix_count = v2_header->suffix_count;
+    *after_header = region + sizeof *v2_header;
+}
+
+static uproc_ecurve *ecurve_map(const char *path, int version)
 {
 #if HAVE_MMAP && USE_MMAP
     struct stat st;
-    struct mmap_header *header;
     char alphabet_str[UPROC_ALPHABET_SIZE + 1];
     struct uproc_ecurve_s *ec = malloc(sizeof *ec);
 
@@ -118,34 +144,65 @@ static uproc_ecurve *ecurve_map(const char *path)
 #endif
 #endif
 
-    header = ec->mmap_ptr;
+    unsigned char *region = NULL;
+    struct mmap_header header;
+    if (version == 1) {
+        fill_header_v1(&header, ec->mmap_ptr, &region);
+    } else {
+        fill_header_v2(&header, ec->mmap_ptr, &region);
+    }
+
+#if 0
     if (ec->mmap_size !=
-        SIZE_TOTAL(header->ranks_count, header->suffix_count)) {
+        SIZE_TOTAL(header.ranks_count, header.suffix_count)) {
         uproc_error(UPROC_EINVAL);
         goto error_munmap;
     }
-    ec->ranks_count = header->ranks_count;
-    ec->suffix_count = header->suffix_count;
+#endif
 
-    memcpy(alphabet_str, header->alphabet_str, UPROC_ALPHABET_SIZE);
+    ec->ranks_count = header.ranks_count;
+    ec->suffix_count = header.suffix_count;
+
+    memcpy(alphabet_str, header.alphabet_str, UPROC_ALPHABET_SIZE);
     alphabet_str[UPROC_ALPHABET_SIZE] = '\0';
     ec->alphabet = uproc_alphabet_create(alphabet_str);
     if (!ec->alphabet) {
         goto error_munmap;
     }
 
-    ec->prefixes = (void *)(ec->mmap_ptr + OFFSET_PREFIXES);
-    ec->suffixes = (void *)(ec->mmap_ptr + OFFSET_SUFFIXES);
-    ec->classes = (void *)(ec->mmap_ptr + OFFSET_CLASSES(ec->suffix_count));
-    uint64_t *m1, *m2, *m3;
-    m1 = (void *)(ec->mmap_ptr + OFFSET_MAGIC1);
-    m2 = (void *)(ec->mmap_ptr + OFFSET_MAGIC2(ec->suffix_count));
-    m3 = (void *)(ec->mmap_ptr +
-                  OFFSET_MAGIC3(ec->ranks_count, ec->suffix_count));
-    if (*m1 != magic_number || *m2 != magic_number || *m3 != magic_number) {
-        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number");
+    ec->prefixes = (void *)region;
+    region += SIZE_PREFIXES;
+
+    uint64_t *magic;
+    magic = (void *)region;
+    if (*magic != magic_number) {
+        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number 1");
         goto error_munmap;
     }
+    region += sizeof magic_number;
+
+    ec->suffixes = (void *)region;
+    region += SIZE_SUFFIXES(ec->suffix_count);
+
+    magic = (void *)region;
+    if (*magic != magic_number) {
+        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number 2");
+        goto error_munmap;
+    }
+    region += sizeof magic_number;
+
+    ec->classes = (void *)region;
+    region += SIZE_CLASSES(ec->ranks_count, ec->suffix_count);
+
+    magic = (void *)region;
+    if (*magic != magic_number) {
+        uproc_error_msg(UPROC_EINVAL, "inconsistent magic number 3");
+        goto error_munmap;
+    }
+    region += sizeof magic_number;
+
+    uproc_assert(ec->mmap_ptr + ec->mmap_size == region);
+
     return ec;
 
 error_munmap:
@@ -172,7 +229,7 @@ uproc_ecurve *uproc_ecurve_mmap(const char *pathfmt, ...)
     return ec;
 }
 
-uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
+static uproc_ecurve *ecurve_mmapv(int version, const char *pathfmt, va_list ap)
 {
     struct uproc_ecurve_s *ec;
     char *buf;
@@ -190,9 +247,19 @@ uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
     }
     vsprintf(buf, pathfmt, ap);
 
-    ec = ecurve_map(buf);
+    ec = ecurve_map(buf, version);
     free(buf);
     return ec;
+}
+
+uproc_ecurve *uproc_ecurve_mmapv_v1(const char *pathfmt, va_list ap)
+{
+    return ecurve_mmapv(1, pathfmt, ap);
+}
+
+uproc_ecurve *uproc_ecurve_mmapv(const char *pathfmt, va_list ap)
+{
+    return ecurve_mmapv(2, pathfmt, ap);
 }
 
 void uproc_ecurve_munmap(struct uproc_ecurve_s *ecurve)

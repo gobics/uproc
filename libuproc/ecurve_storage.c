@@ -462,18 +462,28 @@ uproc_ecurve *uproc_ecurve_loadpv(enum uproc_ecurve_format format,
                                   void *progress_arg, const char *pathfmt,
                                   va_list ap)
 {
+    uproc_assert(format == UPROC_ECURVE_PLAIN ||
+                 format == UPROC_ECURVE_BINARY ||
+                 format == UPROC_ECURVE_BINARY_V1);
+
     struct uproc_ecurve_s *ec;
     va_list aq;
     uproc_io_stream *stream;
     const char *mode[] = {
-            [UPROC_ECURVE_BINARY] = "rb", [UPROC_ECURVE_PLAIN] = "r",
+            [UPROC_ECURVE_BINARY] = "rb", [UPROC_ECURVE_BINARY_V1] = "rb",
+            [UPROC_ECURVE_PLAIN] = "r",
     };
 
     va_copy(aq, ap);
 
 #if HAVE_MMAP && USE_MMAP
-    if (format == UPROC_ECURVE_BINARY) {
-        ec = uproc_ecurve_mmapv(pathfmt, aq);
+    if (format != UPROC_ECURVE_PLAIN) {
+        uproc_ecurve *ec = NULL;
+        if (format == UPROC_ECURVE_BINARY_V1) {
+            ec = uproc_ecurve_mmapv_v1(pathfmt, aq);
+        } else {
+            ec = uproc_ecurve_mmapv(pathfmt, aq);
+        }
         if (ec && progress) {
             progress(100.0, progress_arg);
         }
@@ -556,6 +566,8 @@ int uproc_ecurve_storepv(const uproc_ecurve *ecurve,
                          void (*progress)(double, void *), void *progress_arg,
                          const char *pathfmt, va_list ap)
 {
+    uproc_assert(format == UPROC_ECURVE_PLAIN || format == UPROC_ECURVE_BINARY);
+
     int res;
     va_list aq;
     uproc_io_stream *stream;

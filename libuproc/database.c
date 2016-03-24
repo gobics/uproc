@@ -288,21 +288,21 @@ uproc_database *uproc_database_load_some(const char *path, int version,
     }
 
     if (which & UPROC_DATABASE_LOAD_ECURVES) {
+        int ecurve_format =
+            (version == 1) ? UPROC_ECURVE_BINARY_V1 : UPROC_ECURVE_BINARY;
         struct db_progress_arg p_arg = {
             .parent_func = progress,
             .parent_arg = progress_arg,
             .fwd_finished = false,
         };
-        db->fwd =
-            uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, db_progress,
-                               &p_arg, "%s/fwd.ecurve", path);
+        db->fwd = uproc_ecurve_loadp(ecurve_format, UPROC_IO_GZIP, db_progress,
+                                     &p_arg, "%s/fwd.ecurve", path);
         if (!db->fwd) {
             goto error;
         }
         p_arg.fwd_finished = true;
-        db->rev =
-            uproc_ecurve_loadp(UPROC_ECURVE_BINARY, UPROC_IO_GZIP, db_progress,
-                               &p_arg, "%s/rev.ecurve", path);
+        db->rev = uproc_ecurve_loadp(ecurve_format, UPROC_IO_GZIP, db_progress,
+                                     &p_arg, "%s/rev.ecurve", path);
         if (!db->rev) {
             goto error;
         }

@@ -90,6 +90,9 @@ struct uproc_ecurve_s {
     size_t mmap_size;
 };
 
+/* Like uproc_ecurve_mmapv, but for backwards compatibility */
+uproc_ecurve *uproc_ecurve_mmapv_v1(const char *pathfmt, va_list ap);
+
 static inline void uproc_ecurve_copy_classes(const uproc_ecurve *ecurve,
                                              uproc_class *dest,
                                              const uproc_class *src)
