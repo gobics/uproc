@@ -27,14 +27,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include "uproc/error.h"
 
-static int error_num;
+static int error_num, error_errno;
 static char error_loc[256], error_msg[256];
 static bool error_handler_enabled;
 #if _OPENMP
-#pragma omp threadprivate(error_num, error_loc, error_msg, \
+#pragma omp threadprivate(error_num, error_errno, error_loc, error_msg, \
                           error_handler_enabled)
 #endif
 
@@ -61,7 +62,11 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
 {
     va_list ap;
     error_num = num;
-    snprintf(error_loc, sizeof error_loc - 1, "%s() [%s:%d]", func, file, line);
+    if (num == UPROC_ERRNO) {
+        error_errno = errno;
+    }
+    snprintf(error_loc, sizeof error_loc - 1, "[%s() at %s:%d]", func, file,
+             line);
     va_start(ap, fmt);
     if (fmt) {
         vsnprintf(error_msg, sizeof error_msg - 1, fmt, ap);
@@ -86,22 +91,26 @@ int *uproc_error_errno_(void)
 void uproc_perror(const char *fmt, ...)
 {
     va_list ap;
-#ifndef NDEBUG
-    fprintf(stderr, "%s: ", error_loc);
-#endif
     va_start(ap, fmt);
     if (fmt && *fmt) {
         vfprintf(stderr, fmt, ap);
-        fputs(": ", stderr);
+        fputs(" -- ", stderr);
     }
-    if (error_msg[0]) {
-        fprintf(stderr, "%s: ", error_msg);
-    }
+    char strerrbuf[256];
+    const char *err_str = strerrbuf;
     if (error_num == UPROC_ERRNO) {
-        perror("");
+        strerror_r(error_errno, strerrbuf, sizeof strerrbuf);
     } else {
-        fprintf(stderr, "%s\n", error_strs[error_num]);
+        err_str = error_strs[error_num];
     }
+    fprintf(stderr, "%s", err_str);
+    if (error_msg[0]) {
+        fprintf(stderr, ": %s", error_msg);
+    }
+#ifndef NDEBUG
+    fprintf(stderr, " %s", error_loc);
+#endif
+    fputc('\n', stderr);
     va_end(ap);
 }
 
