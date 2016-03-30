@@ -270,6 +270,8 @@ uproc_database *uproc_database_load_some(const char *path, int version,
             uintmax_t ranks;
             int res = uproc_database_metadata_get_uint(db, "ranks", &ranks);
             if (res) {
+                uproc_error_msg(UPROC_EINVAL,
+                                "\"ranks\" field missing in metadata");
                 goto error;
             }
             for (uintmax_t i = 0; i < ranks; i++) {
@@ -410,9 +412,11 @@ uproc_database *uproc_database_unmarshal(uproc_io_stream *stream, int version,
         if (!db->substmat) {
             goto error;
         }
-        uintmax_t ranks_count = 1;
+        uintmax_t ranks_count;
         int res = uproc_database_metadata_get_uint(db, "ranks", &ranks_count);
         if (res) {
+            uproc_error_msg(UPROC_EINVAL,
+                            "\"ranks\" field missing in metadata");
             goto error;
         }
         for (uintmax_t i = 0; i < ranks_count; i++) {
