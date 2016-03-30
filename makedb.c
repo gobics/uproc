@@ -666,11 +666,7 @@ void make_opts(struct ppopts *o, const char *progname)
         " (which must already exist)"
 #endif
         ".");
-    ppopts_add_header(o, "GENERAL OPTIONS:");
-    O('h', "help", "", "Print this message and exit.");
-    O('v', "version", "", "Print version and exit.");
-    O('V', "libversion", "", "Print libuproc version/features and exit.");
-    O('r', "ranks", "FILE", /* XXX */ "WRITE ME");
+    ppopts_add_header(o, "DEVELOPER OPTIONS (DO NOT USE):");
     O('E', "no-ecurves", "",
       "Do not build ecurves (SOURCEFILE will be ignored).");
     O('S', "no-substmat", "", "Do not train substitution matrix.");
@@ -679,9 +675,17 @@ void make_opts(struct ppopts *o, const char *progname)
       to a distinct class on at least one rank.");
     O('C', "no-calib", "", "Do not calibrate protein scoring thresholds.");
 
+    ppopts_add_header(o, "GENERAL OPTIONS:");
+    O('h', "help", "", "Print this message and exit.");
+    O('v', "version", "", "Print version and exit.");
+    O('V', "libversion", "", "Print libuproc version/features and exit.");
+    O('r', "ranks", "FILE", "CSV file containing ranks mappings.");
+
 #if _OPENMP
     O('p', "parallel", "",
-      "Build ecurves in parallel. WARNING: Requires a lot of RAM.");
+      "Build ecurves in parallel. WARNING: Requires a lot of RAM. \
+      And by a lot I mean A LOT, some hundreds of gigabytes. \
+      Seriously. I'm not kidding.");
     O('t', "threads", "N", "Maximum number of threads to use (default: %d).",
       flag_num_threads_);
 #endif
