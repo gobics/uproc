@@ -866,9 +866,7 @@ int main(int argc, char **argv)
     if (!database_) {
         return EXIT_FAILURE;
     }
-    uintmax_t tmp;
-    uproc_database_metadata_get_uint(database_, "ranks", &tmp);
-    ranks_count_ = tmp;
+    ranks_count_ = uproc_database_ranks_count(database_);
 
     enum uproc_clf_mode mode = UPROC_CLF_ALL;
 #if MAIN_DNA

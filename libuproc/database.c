@@ -532,6 +532,16 @@ error:
     return res;
 }
 
+uproc_rank uproc_database_ranks_count(const uproc_database *db)
+{
+    uintmax_t r = 1;
+    uproc_database_metadata_get_uint(db, "ranks", &r);
+
+    uproc_assert(r >= 1);
+    uproc_assert(r <= UPROC_RANKS_MAX);
+    return r;
+}
+
 void uproc_database_destroy(uproc_database *db)
 {
     if (!db) {

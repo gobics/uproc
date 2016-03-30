@@ -144,6 +144,9 @@ int uproc_database_marshal(const uproc_database *db, uproc_io_stream *stream,
                            int version, void (*progress)(double, void *),
                            void *progress_arg);
 
+/** Get number of ranks */
+uproc_rank uproc_database_ranks_count(const uproc_database *db);
+
 /** Get ecurve.
  *
  * The database retains ownership of the returned object.

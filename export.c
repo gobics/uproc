@@ -114,6 +114,13 @@ int main(int argc, char **argv)
     uproc_database *db =
         uproc_database_load(dir, UPROC_DATABASE_GUESS, progress_cb, NULL);
 
+    if (store_version_ == UPROC_DATABASE_V1 &&
+        uproc_database_ranks_count(db) > 1) {
+        fprintf(stderr, "can't store DB with %d ranks in V1 format\n",
+                (int)uproc_database_ranks_count(db));
+        return EXIT_FAILURE;
+    }
+
     snprintf(msg, sizeof msg, "Storing %s", file);
     progress(uproc_stderr, msg, -1);
     uproc_io_stream *stream = open_write(file, iotype);

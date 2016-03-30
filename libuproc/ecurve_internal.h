@@ -25,7 +25,7 @@ struct uproc_ecurve_s {
      * allocated to hold */
     size_t suffix_alloc;
 
-    // Number of distinguished ranks, i.e. classes stored per suffix.
+    /** Number of distinguished ranks, i.e. classes stored per suffix. */
     uproc_rank ranks_count;
 
     /** Table of suffixes
