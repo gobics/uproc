@@ -77,7 +77,7 @@ int uproc_error_(enum uproc_error_code num, const char *func, const char *file,
     if (num == UPROC_SUCCESS) {
         return 0;
     }
-    if (error_handler) {
+    if (error_handler && error_handler_enabled) {
         error_handler(num, error_msg, error_loc, error_context);
     }
     return -1;
@@ -138,5 +138,5 @@ void uproc_error_enable_handler(void)
 
 void uproc_error_disable_handler(void)
 {
-    error_handler_enabled = true;
+    error_handler_enabled = false;
 }
