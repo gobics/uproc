@@ -1,6 +1,6 @@
-########################################
-UProC Version 2.0.0-rc 2015-??-?? README
-########################################
+#########################################
+UProC Version 2.0.0-rc1 2015-??-?? README
+#########################################
 
 .. image:: https://coveralls.io/repos/gobics/uproc/badge.svg?branch=devel
   :target: https://coveralls.io/r/gobics/uproc?branch=devel
