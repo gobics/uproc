@@ -150,7 +150,6 @@ static uproc_substmat *make_candidate(const uproc_matrix *features,
     uproc_matrix *x = uproc_matrix_ldivide(A, features);
     uproc_matrix_destroy(A);
 
-    uproc_matrix_store(x, UPROC_IO_STDIO, "substmat_%g_as_matrix", lambda);
     uproc_substmat *substmat = vec_to_substmat(x);
     uproc_matrix_destroy(x);
     return substmat;
@@ -215,20 +214,11 @@ static double score_candidate(const uproc_ecurve *fwd, const uproc_ecurve *rev,
 
 uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
 {
-    uproc_error_set_handler(NULL, NULL);
-    uproc_matrix *coocc = uproc_matrix_load(UPROC_IO_GZIP, "coocc");
-    uproc_matrix *features = uproc_matrix_load(UPROC_IO_GZIP, "features");
-    uproc_error_set_handler(errhandler_bail, NULL);
+    uproc_matrix *coocc = uproc_matrix_create(N_DIMS, N_DIMS, NULL);
+    uproc_matrix *features = uproc_matrix_create(N_DIMS, 1, NULL);
 
-    if (!coocc) {
-        coocc = uproc_matrix_create(N_DIMS, N_DIMS, NULL);
-        features = uproc_matrix_create(N_DIMS, 1, NULL);
-
-        count_features(fwd, features, coocc);
-        count_features(rev, features, coocc);
-        uproc_matrix_store(coocc, UPROC_IO_STDIO, "coocc");
-        uproc_matrix_store(features, UPROC_IO_STDIO, "features");
-    }
+    count_features(fwd, features, coocc);
+    count_features(rev, features, coocc);
 
     double lambdas[] = {
         1e8, 1e7, 1e6, 1e5, 1e4,
@@ -240,7 +230,6 @@ uproc_substmat *train_substmat(const uproc_ecurve *fwd, const uproc_ecurve *rev)
 
     for (unsigned i = 0; i < ELEMENTS(lambdas); i++) {
         uproc_substmat *cand = make_candidate(features, coocc, lambdas[i]);
-        uproc_substmat_store(cand, UPROC_IO_STDIO, "substmat_%g", lambdas[i]);
         double f1 = score_candidate(fwd, rev, cand);
         if (f1 > f1_max || !best_candidate) {
             f1 = f1_max;
